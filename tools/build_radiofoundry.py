@@ -316,8 +316,9 @@ def prepare():
         ('void hrc_audio_pcm_hold(bool on);', 'void hrc_audio_pcm_hold(bool on);\n#if CONFIG_P25\nbool hrc_audio_pcm_amp_wanted(void);\n#endif'),
     ])
     # FIFO scheduling/queue fix from RadioFoundry RX audio PR #660 (MIT).
+    # Preserve upstream's PCM timer 6; the derivative native guard owns timer 4.
     transform("platform/hrc7000/platform.h", [
-        ('#define TIMER_BOARD', '#define TIMER_PCM\t\t6\t// speaker refill independent of block callbacks\n#define TIMER_BOARD'),
+        ('#define TIMER_BOARD', '#define TIMER_PCM\t\t6\t// speaker FIFO refill, independent of blocking voice decoders\n#define TIMER_BOARD'),
     ])
     transform("platform/hrc7000/audio_pcm.c", [
         ('// the task pushes the queue to the prompt FIFO, 32 samples at a time while b31 says there is room, as stock does. The', '// a 2 ms timer pushes the queue to the prompt FIFO, 32 samples at a time while b31 says there is room. The'),
@@ -580,7 +581,7 @@ def main():
     suffix += ("-lean" if args.lean else "") + ("-cpu" if args.cpu_profile else "") + ("-dev" if args.dev_update else "") + ("-tx" if args.tx_bench else "")
     if args.classic:
         suffix='classic'
-        identity='classic-0.1.0-rc1-r12'
+        identity='classic-0.1.0-rc1-r13'
     b = f"build/dm32-p25-{suffix}"
     command = ["make", "-j8", "BOARD=dm32", f"CROSS={ROOT}/toolchain/bin/csky-elf-", f"BUILD={b}",
         "CONFIG_P25=" + ("n" if args.disable else "y"), "CONFIG_P25_NATIVE="+("y" if native else "n"), "CONFIG_DMR_IP_GATEWAY=n", "CONFIG_NET_PPP=n",

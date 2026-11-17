@@ -53,6 +53,12 @@ def main():
     run([OUT/'test_audio_fifo'])
     run(['clang','-std=c11',*flags,'tests/test_pcm_clock.c','src/p25/pcm_clock.c','-o',OUT/'test_pcm_clock'])
     run([OUT/'test_pcm_clock'])
+    # Read the real assignment so a PCM/native-guard timer collision cannot pass
+    # against a test-only constant. IRQ timer numbers equal their timer index.
+    platform=(APP/'platform/hrc7000/platform.h').read_text()
+    timer=re.search(r'^#define TIMER_PCM[^\n]+',platform,re.M)
+    assert timer is not None
+    (OUT/'pcm_timer.inc').write_text(timer.group(0)+'\n')
     # Compile the actual generated DM32 route/amp functions into the PCM
     # fixture; board hardware and the source selector are the only doubles.
     board=(APP/'boards/dm32/radio_dm32.c').read_text()

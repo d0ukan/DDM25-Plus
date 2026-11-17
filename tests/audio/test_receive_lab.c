@@ -65,8 +65,9 @@ int native_lab_voice_read(uint32_t sid,nt_record *r) {
     memset(r,0,sizeof *r);r->sequence=send_index;r->time_us=send_due*1000u;
     memcpy(r->raw,raw[send_index++],36);send_due+=30;return 1;
 }
-void native_lab_voice_stop(uint32_t sid) { assert(sid==42); }
-int native_lab_voice_release(uint32_t sid) { assert(sid==42);native_owned=0;return 1; }
+static uint32_t release_at;
+void native_lab_voice_stop(uint32_t sid) { assert(sid==42);release_at=clock_ms+600; }
+int native_lab_voice_release(uint32_t sid) { assert(sid==42);if((int32_t)(clock_ms-release_at)<0)return 0;native_owned=0;return 1; }
 static uint8_t reply[1024];
 static unsigned call(const uint8_t *p,unsigned len,unsigned cap) { unsigned n=p25_lab_command(p,len,reply,cap);assert(!depth);return n; }
 static uint32_t word(unsigned n) { uint32_t x;memcpy(&x,reply+1+4*n,4);return x; }

@@ -63,6 +63,7 @@ void p25_lab_live_key(void) { }
 #include "dm32_native.inc"
 int main(void)
 {
+    timers[6]=1; /* upstream PCM can be active before native P25 setup */
     native_init();
     nt_config c={.frequency_hz=145500000,.mode=NT_TRANSMIT,.p25_sync=1,.audio=1};
     const uint32_t frequencies[]={145500000,435000000,150000000,440000000};
@@ -77,7 +78,7 @@ int main(void)
     /* Rejected setup cannot update the board cache or reach calibration/RF. */
     uint32_t before=rx_hz;c.mode=NT_TRANSMIT;c.frequency_hz=145500000;
     cal_valid=false;assert(!native_prepare(NULL,&c) && rx_hz==before);cal_valid=true;
-    timers[6]=1;assert(!native_prepare(NULL,&c) && rx_hz==before);timers[6]=0;
+    timers[HN_GUARD_TIMER]=1;assert(!native_prepare(NULL,&c) && rx_hz==before);timers[HN_GUARD_TIMER]=0;
     c.frequency_hz=100000000;assert(!native_prepare(NULL,&c) && rx_hz==before);
     assert(rx_calls==4 && tx_calls==2 && !depth);
     puts("PASS actual native board prepare/set_mode: current-session VHF/UHF calibration, unchanged rejection and RX/TX routing");

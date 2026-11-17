@@ -37,8 +37,9 @@ int native_lab_live_block(uint32_t sid,const uint8_t block[36],int last)
     memcpy(transmitted[blocks++],block,36);finished_tx=last;return 1;
 }
 int native_lab_live_go(uint32_t sid){assert(sid==42);go_calls++;return 1;}
-void native_lab_voice_stop(uint32_t sid){assert(sid==42);}
-int native_lab_voice_release(uint32_t sid){assert(sid==42);return 1;}
+static uint32_t release_at;
+void native_lab_voice_stop(uint32_t sid){assert(sid==42);release_at=test_clock+600;}
+int native_lab_voice_release(uint32_t sid){assert(sid==42);return (int32_t)(test_clock-release_at)>=0;}
 
 static void check_mic_conditioning(void)
 {
@@ -81,6 +82,7 @@ int main(void)
     assert(p25_lab_set_channel(0xF7E,call.nac,call.talkgroup,call.source_id,1));
     live_sid=42;assert(live_run());
     assert(finished_tx&&go_calls==1&&stops==2&&!critical);
+    assert(test_clock>=release_at);
     assert(live_mic_frames==1&&live_encoded==1&&!live_overflows&&!voice.fault);
     /* Three carrier lead records,333 CAI bytes in ten records, one seal.
      * Caller-side LDU padding would instead produce a second voice LDU. */

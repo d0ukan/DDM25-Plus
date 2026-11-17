@@ -19,7 +19,7 @@ void dm32_native_mic_route(bool on)
 static int native_prepare(void *ctx, const nt_config *c)
 {
     (void)ctx;
-    if (mode!=RADIO_MODE_FM || transmitting || (TMR_CTRL(6)&1u) || (TMR_CTRL(TIMER_PA)&1u)) return 0;
+    if (mode!=RADIO_MODE_FM || transmitting || (TMR_CTRL(HN_GUARD_TIMER)&1u) || (TMR_CTRL(TIMER_PA)&1u)) return 0;
 #if CONFIG_DEV_TX
     if(c->mode==NT_TRANSMIT && (!bf_cal_valid() || !board_in_band(c->frequency_hz,true) || c->power>=board.power_count))return 0;
 #if CONFIG_FIRSTBOOT

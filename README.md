@@ -25,7 +25,7 @@ Report firmware and P25 problems to **[Open25-DM32 issues](https://github.com/ty
 | Conventional P25 · White default theme | Trunked P25 · New interface |
 | ![Classic P25 channel settings with talkgroup and NAC](images/classic-settings.png) | ![Next P25 system settings with WACN and System ID](images/next-settings.png) |
 | P25 channel settings: talkgroup, NAC, and radio ID | Trunked system settings: WACN and System ID |
-| **0.1.0-rc1-r12 release candidate available** | **In development · source private.** |
+| **0.1.0-rc1-r13 release candidate available** | **In development · source private.** |
 
 | Feature | Classic | Next |
 | --- | --- | --- |
@@ -58,11 +58,27 @@ Encryption support is still being tested with other radios and systems.
 ## Release status
 
 **Classic and Next are alpha firmware, and testing is still underway.**
-Classic **0.1.0-rc1-r12** is available in the
+Classic **0.1.0-rc1-r13** is available in the
 [Flasher v3](https://kd8zmm.com/open25-dm32/v3/firmware.html), under
 **Open25-DM32 Classic → Standard · DM-32UV**. Final on-air qualification is
 incomplete; compatibility with every DM-32UV hardware revision is not established.
 Next remains unavailable, with its release date to be determined.
+
+Revision r13 fixes a timer collision introduced in r12 that could abort P25
+transmit startup after microphone capture began. The P25 guard now uses timer 4;
+speaker refill retains upstream timer 6 and the PA delay retains timer 3.
+Compile-time checks reject conflicting timer configurations. P25 transmit and
+receive workers also finish the existing hardware-release handshake when radio
+task cleanup takes longer than 500 ms, preventing an abandoned reservation from
+blocking later calls or channel changes.
+
+The real audio/native-port regression reproduces the r12 startup failure, and
+delayed-cleanup tests cover both P25 directions. Full host/sanitizer tests,
+target stack/ABI checks and an identical forced rebuild pass. A test build
+containing these fixes has booted and loaded saved FM/DMR/P25 channels on a
+DM-32UV; manual PTT, RF and speaker-quality qualification remains incomplete.
+Modes, codec gain, RFKV
+programming, RX-only defaults and normal transmit checks are unchanged.
 
 Revision r12 keeps the speaker FIFO fed by a 2 ms hardware timer while the
 block callback runs, and uses the existing scratch memory as one extra queued
@@ -110,9 +126,10 @@ The first-call DMR fix was confirmed on a DM-32UV. Full software regression,
 sanitizer, target stack/ABI checks and reproducible rebuild checks pass.
 P25 acoustic changes and every hardware revision have not been fully qualified.
 
-**Known issues:** PL/CTCSS signaling can drop while transmitting DTMF. An
-intermittent P25 PTT startup failure with no RF has been reported and remains
-under investigation.
+**Known issues:** PL/CTCSS signaling can drop while transmitting DTMF. Earlier
+intermittent P25 no-RF startup reports and DMR-only lockout reports remain under
+investigation; r13 fixes the reproduced timer and delayed-cleanup failures,
+without establishing that every reported lockout has the same cause.
 
 TX NAC defaults to **Same as RX**. It inherits the receive NAC, using `293`
 when RX is wildcard `F7E`. An explicit TX NAC, including `000` or a number equal

@@ -205,9 +205,25 @@ static void test_classic_saved_refresh(void)
     CHECK(!classic_retained && sm.view.zone_index==1 && sm.view.ch.mode==RADIO_MODE_FM);
     CHECK(sm.view.ch.rx_hz==145500000 && hw.rx_hz==145500000);
 }
+static void test_issue28_idle_dmr(void)
+{
+    const uint32_t idle_ms[]={1000u,60000u,600000u,1800000u,2147480u,2147490u,4294960u,4294970u,7200000u,2147480000u,4294950000u};
+    for(unsigned age=0;age<sizeof idle_ms/sizeof *idle_ms;age++) {
+        dmr_start(true);aud.feed=true;
+        now=idle_ms[age];radio_sm_poll(&sm,now);radio_sm_tick(&sm,now);
+        for(unsigned call=0;call<3;call++) {
+            unsigned began=sim.tx_begins;
+            req(RREQ_PTT,1);run(600);
+            CHECK(sm.ptt && sm.view.state==RS_TX && sim.tx_begins>began && sim.air_count>0);
+            req(RREQ_PTT,0);run(1000);
+            CHECK(!sm.ptt && sm.view.state==RS_IDLE && !sim.tx_active);
+        }
+        aud.feed=false;
+    }
+}
 int main(void)
 {
-    int prior=upstream_radio_main();test_classic_ownership();test_classic_idle_rearm();test_classic_saved_refresh();
+    int prior=upstream_radio_main();test_issue28_idle_dmr();test_classic_ownership();test_classic_idle_rearm();test_classic_saved_refresh();
     printf("Classic real FM/DMR/P25 admission and ownership: %d failures\n",failures);
     return prior || failures ? 1 : 0;
 }

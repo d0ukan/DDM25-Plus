@@ -6,7 +6,7 @@
 #define portYIELD_FROM_ISR(x) ((void)(x))
 #define IRQ_PCM_WR 28
 #define IRQ_TIMER6 6
-#define TIMER_PCM 6
+#include "../../build/audio-host/pcm_timer.inc"
 #include <setjmp.h>
 #include <assert.h>
 #include <stdio.h>
@@ -77,6 +77,7 @@ static void one_block(void)
 }
 int main(void)
 {
+    assert(TIMER_PCM==6); /* preserve upstream's independent speaker refill */
     uint32_t regs[1024]={0},diag[16];uint8_t buf[4096]={0};
     hrc7000_t chip={.regs=regs,.buf=buf};board_modem=&chip;hrc_audio_pcm_attach(&chip,dm32_speaker_pcm);
     speaker_pcm(true);playback_pace(true);

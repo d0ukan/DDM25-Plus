@@ -30,6 +30,15 @@ library with sanitizers, conventional protocol/FEC, codec,
 audio, native modem ownership, the FM/DMR state machine, P25 channel persistence
 and the original UI's P25 editor. Host checks do not establish RF interoperability.
 
+The audio FIFO scheduling fix follows RadioFoundry PR #660, including its PCM
+refill on timer 6. Classic's native P25 lease guard uses timer 4, reserved in
+`integration/radiofoundry/native/hrc_native_port.h`; the PA delay uses timer 3.
+Both board preparation and the interrupt port check that same guard reservation.
+Native P25 builds reject APRS because APRS also requires timer 4. The Classic
+preset already disables APRS. The native regression runs the generated PCM
+driver with the real P25 interrupt port to check TX/RX start, lease expiry,
+stop and cleanup without replacing or stopping the other owner's timer.
+
 Phase 1 wire coding and framing use the pinned library in
 `third_party/p25cai`; the existing conventional `p25.h` interface is retained.
 `sources.lock.json` owns the snapshot revision, exact file hashes and the two
@@ -55,7 +64,7 @@ ZIP offered by Flasher v3:
 ```sh
 python3 tools/prepare_web_firmware.py \
   --image build/radiofoundry-p25/build/dm32-p25-classic/rfoundry_dm32.bin \
-  --out artifacts/firmware/Open25-DM32-Classic-0.1.0-rc1-r11-rfkv-application.zip
+  --out artifacts/firmware/Open25-DM32-Classic-0.1.0-rc1-r13-p25-tx-cleanup-application.zip
 ```
 
 The packager verifies the application and linker-map hashes against the build
@@ -63,7 +72,7 @@ manifest, checks the reserved codec layout, and writes only `firmware.json` and
 `application.bin`. The manifest records `codecTablesEnd` from the verified
 linker map; older ZIPs without that field retain the old table limit. It refuses
 to replace an existing ZIP. The runtime version is
-`open25-classic-0.1.0-rc1-r11`; `r11` identifies this catalog/package revision.
+`open25-classic-0.1.0-rc1-r13`; `r13` identifies this catalog/package revision.
 Firmware binaries and ZIPs stay in ignored output directories and are never
 committed to GitHub. No build or packaging command opens or installs a radio.
 

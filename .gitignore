@@ -91,6 +91,7 @@
 !/tests/native/test_native.c
 !/tests/native/test_nrfb.inc
 !/tests/native/test_port.c
+!/tests/native/test_pcm_coexist.c
 !/tests/native/test_tx_owner.c
 !/tests/native/test_update_owner.c
 !/tests/protocol/build_target.sh

@@ -242,13 +242,12 @@ static int live_run(void)
     native_lab_voice_stop(sid);
     board.audio->stop();
     board.native_mic_route(false);
-    uint32_t end=hal_millis()+500;
-    int released;
-    while (!(released=native_lab_voice_release(sid)) && (int32_t)(hal_millis()-end)<0)
+    /* The radio task owns cleanup; do not abandon its reservation on a delay. */
+    while (!native_lab_voice_release(sid))
         vTaskDelay(pdMS_TO_TICKS(2));
     live_fifo_high=fifo.high_water;live_overflows=fifo.overflows;
     p25_voice_tx_abort(&voice);
-    return ok && !stop_requested && !live_overflows && released;
+    return ok && !stop_requested && !live_overflows;
 }
 #endif
 int p25_lab_busy(void) { return state==1; }
@@ -448,10 +447,8 @@ static int receive_run(void)
 #if CONFIG_P25_NATIVE
     if(session) {
         native_lab_voice_stop(session);
-        uint32_t end=hal_millis()+500;
-        int released;
-        while(!(released=native_lab_voice_release(session)) && (int32_t)(hal_millis()-end)<0)relax();
-        if(!released)ok=0;
+        /* Keep ownership until the radio task confirms hardware cleanup. */
+        while(!native_lab_voice_release(session))relax();
     }
 #endif
     if(sample_checks)pcm_crc^=0xffffffffu;
