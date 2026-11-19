@@ -16,10 +16,22 @@ OUT=ROOT/'build/classic-host'
 def run(args, **kw):
     return subprocess.run([str(a) for a in args],check=True,**kw)
 
+def test_turkish_glyphs():
+    for enabled in (0, 1):
+        glyph_test = OUT / f'test_turkish_glyphs_{enabled}'
+        run(['clang', '-std=gnu99', '-Wall', '-Wextra', '-Wno-unused-parameter', '-g',
+             '-fsanitize=address,undefined', '-fno-sanitize-recover=undefined', '-fno-omit-frame-pointer',
+             '-I'+str(APP/'core'), '-I'+str(APP/'hal'), '-D__attribute__(x)=',
+             '-DCONFIG_FONT_AA=1', '-DCONFIG_FONT_BIG=1', '-DCONFIG_FONT_XL=1',
+             f'-DCONFIG_FONT_TURKISH={enabled}', ROOT/'tests/classic/test_turkish_glyphs.c',
+             APP/'core/ui/fonts.c', APP/'core/ui/gfx.c', '-o', glyph_test], cwd=ROOT)
+        run([glyph_test], cwd=ROOT)
+
 def main():
     run(['python3',ROOT/'tools/sources.py','verify-vendored'],cwd=ROOT)
     run(['python3',ROOT/'tools/build_radiofoundry.py','--prepare-only'],cwd=ROOT)
     OUT.mkdir(parents=True,exist_ok=True)
+    test_turkish_glyphs()
     host=APP/'tests/host'
     # VERSION must advertise the saved-channel capability, not the lab engine.
     # Link the real handler/formatter/build_info; unused radio commands are discarded.

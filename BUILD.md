@@ -17,6 +17,11 @@ The embedded full-rate IMBE codec uses fixed-point C and caller-owned storage;
 no Rust toolchain, trunking or newer UI source is needed. Dependencies and codec
 snapshots are pinned in `sources.lock.json` and the build recipe.
 
+To include Turkish display glyphs in a Classic test build, run
+`python3 tools/build_radiofoundry.py --classic --turkish-glyphs --stack-check`.
+The build uses the `dm32-p25-classic-turkish` output directory. This option
+provides the glyphs needed by a future Turkish menu catalog.
+
 For a release candidate, also verify a forced rebuild:
 
 ```sh

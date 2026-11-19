@@ -243,6 +243,57 @@ NRFB_BOARD_PATCHES = [('#define FD_REG_RSSI\t\t0x67u',
   '\t\tif (rf_b) { fd6818_write(&fd, FD_REG_TX_AUX, FD_TX_AUX_FM); hal_delay_ms(1); }')]
 
 
+def prepare_turkish_fonts():
+    # Avoid 0x80..0x86, used for the existing UI symbols and icons.
+    glyphs = (
+        ("G_BREVE_UPPER", "Ğ"), ("G_BREVE_LOWER", "ğ"),
+        ("I_DOTTED", "İ"), ("I_DOTLESS", "ı"),
+        ("S_CEDILLA_UPPER", "Ş"), ("S_CEDILLA_LOWER", "ş"),
+    )
+    macros = "".join(f'#define GLYPH_TR_{name}\t"\\x{byte:02x}"\n'
+                     for byte, (name, _) in enumerate(glyphs, 0x90))
+    transform("core/ui/font.h", [
+        ("#define FONT_LATIN1_FIRST", "#ifndef CONFIG_FONT_TURKISH\n#define CONFIG_FONT_TURKISH 0\n#endif\n"
+         + macros
+         + "#define GLYPH_TURKISH_FIRST 0x90u\n"
+         + "#define GLYPH_TURKISH_LAST 0x95u\n"
+         + "#define GLYPH_TURKISH_COUNT (GLYPH_TURKISH_LAST - GLYPH_TURKISH_FIRST + 1u)\n"
+         + "#define FONT_LATIN1_FIRST"),
+    ])
+    transform("core/ui/fonts.c", [
+        ("// Latin-1 0xA0..0xFF", '#if CONFIG_FONT_TURKISH && CONFIG_FONT_AA\n#include "turkish_glyphs.h"\n#endif\n\n'
+         "// Latin-1 0xA0..0xFF"),
+        ("\treturn (uint8_t)c >= FONT_LATIN1_FIRST",
+         '#if CONFIG_FONT_TURKISH && CONFIG_FONT_AA\n'
+         '\tif ((uint8_t)c >= GLYPH_TURKISH_FIRST && (uint8_t)c <= GLYPH_TURKISH_LAST)\n'
+         '\t\treturn "GgIiSs"[(uint8_t)c - GLYPH_TURKISH_FIRST];\n'
+         '#endif\n'
+         "\treturn (uint8_t)c >= FONT_LATIN1_FIRST"),
+        ("\tunsigned slot;", """#if CONFIG_FONT_TURKISH && CONFIG_FONT_AA
+\tif (c >= GLYPH_TURKISH_FIRST) {
+\t\tint slot = turkish_slot(c);
+\t\tif (slot >= 0) {
+\t\t\tconst uint8_t *glyph = turkish_glyph(f, (unsigned)slot, top, rows);
+\t\t\tif (glyph != NULL)
+\t\t\t\treturn glyph;
+\t\t}
+\t}
+#endif
+\tunsigned slot;"""),
+    ])
+    python_macros = "".join(f'    "GLYPH_TR_{name}": (0x{byte:02X}, "\\u{ord(char):04x}"),\n'
+                            for byte, (name, char) in enumerate(glyphs, 0x90))
+    transform("tools/i18n.py", [
+        ('    "TEXT_ALT_OPEN":', python_macros + '    "TEXT_ALT_OPEN":'),
+    ])
+    for name, destination in (
+        ("turkish_glyphs.h", "core/ui/turkish_glyphs.h"),
+        ("turkish_jbmono.inc", "core/ui/fonts/turkish_jbmono.inc"),
+    ):
+        source = ROOT / "integration/radiofoundry/turkish" / name
+        write_owned(DEST / destination, source.read_bytes())
+
+
 def prepare():
     sources.verify_vendored()
     if not UP.exists():
@@ -255,6 +306,7 @@ def prepare():
     if git(DEST, "rev-parse", "HEAD") != PIN:
         raise SystemExit("Refusing incompatible derivative HEAD")
     run(["git", "-C", DEST, "submodule", "update", "--init", "third_party/FreeRTOS-Kernel"])
+    prepare_turkish_fonts()
     # RadioFoundry 88283f6: NRFB .050 tables extend 16 bytes beyond NRF .049.
     transform("boards/dm32/memory.ld", [
         ("0x18003E28", "0x18003E38", 2),
@@ -269,6 +321,11 @@ def prepare():
     registry["boards"]["dm32"]["codec_tables"][1] = table_end
     write_owned(DEST / registry_path, (json.dumps(registry, indent=1) + "\n").encode(), original_registry)
     transform("config/features.mk", [
+        ('FEATURE_DEFS := $(foreach f,$(FEATURES) DMR_DATA_CORE,-DCONFIG_$(f)=$(if $(call feature_on,$(f)),1,0))',
+         'FEATURE_DEFS := $(foreach f,$(FEATURES) DMR_DATA_CORE,-DCONFIG_$(f)=$(if $(call feature_on,$(f)),1,0))\n'
+         'ifeq ($(CONFIG_FONT_TURKISH)$(CONFIG_FONT_AA),yy)\n'
+         'FEATURE_DEFS += -DCONFIG_FONT_TURKISH=1\n'
+         'endif'),
         ('# Dependencies\n', 'CONFIG_P25 ?= n\nCONFIG_P25_NATIVE ?= n\nCONFIG_FIRSTBOOT ?= n\nCONFIG_P25_BENCH ?= y\nCONFIG_CPU_PROFILE ?= n\nCONFIG_DEV_UPDATE ?= n\nCONFIG_DEV_TX ?= n\nCONFIG_P25_CHANNELS ?= n\nFEATURES += P25 P25_NATIVE FIRSTBOOT P25_BENCH CPU_PROFILE DEV_UPDATE DEV_TX P25_CHANNELS\nifeq ($(CONFIG_DEV_TX),y)\nifneq ($(CONFIG_P25_NATIVE),y)\n$(error DEV_TX requires P25_NATIVE=y)\nendif\nendif\nifeq ($(CONFIG_DEV_UPDATE),y)\nifneq ($(CONFIG_FIRSTBOOT)$(CONFIG_STUB_ENTRY),yy)\n$(error DEV_UPDATE requires FIRSTBOOT=y STUB_ENTRY=y)\nendif\nendif\nifeq ($(CONFIG_FIRSTBOOT),y)\nifneq ($(CONFIG_CPS_OPENFW)$(CONFIG_CPS_FAST),nn)\n$(error FIRSTBOOT requires CPS_OPENFW=n CPS_FAST=n)\nendif\nifneq ($(CONFIG_STUB_ENTRY),$(CONFIG_DEV_UPDATE))\n$(error FIRSTBOOT requires STUB_ENTRY to match DEV_UPDATE)\nendif\nendif\nifeq ($(CONFIG_P25_NATIVE),y)\nifneq ($(CONFIG_P25)$(CONFIG_DMR),yy)\n$(error P25_NATIVE needs P25=y and DMR=y)\nendif\nendif\n\n# Dependencies\n'),
     ])
     transform("core/config.h", [
@@ -547,7 +604,10 @@ def main():
     ap.add_argument("--reuse-codec", action="store_true", help="reuse codec only when inputs/compiler/archive/call graphs match checked hashes")
     ap.add_argument("--tx-bench",action="store_true",help="bounded native TX on 145.500 MHz; retains ordinary PTT/storage guards")
     ap.add_argument('--classic', action='store_true', help='Classic FM/DMR/conventional P25 release preset')
+    ap.add_argument("--turkish-glyphs", action="store_true", help="include Turkish display glyphs in Classic")
     args = ap.parse_args()
+    if args.turkish_glyphs and not args.classic:
+        ap.error("--turkish-glyphs requires --classic")
     if args.classic:
         if args.first_boot or args.disable or args.disable_native or args.dev_update or args.tx_bench:
             ap.error('Classic is a separate normal-operation preset')
@@ -582,6 +642,8 @@ def main():
     if args.classic:
         suffix='classic'
         identity='classic-0.1.0-rc1-r13'
+        if args.turkish_glyphs:
+            suffix += "-turkish"
     b = f"build/dm32-p25-{suffix}"
     command = ["make", "-j8", "BOARD=dm32", f"CROSS={ROOT}/toolchain/bin/csky-elf-", f"BUILD={b}",
         "CONFIG_P25=" + ("n" if args.disable else "y"), "CONFIG_P25_NATIVE="+("y" if native else "n"), "CONFIG_DMR_IP_GATEWAY=n", "CONFIG_NET_PPP=n",
@@ -603,6 +665,8 @@ def main():
                       'DMR_LRRP','DMR_SIGNALING','DMR_EMERGENCY','DMR_ROAMING','DMR_UDP_COMPRESS',
                       'DMR_CONFIRMED','CRASH_REPORT','BCAST_FM','AM_RX','DUAL_WATCH','VOX','GPS',
                       'LANG_ES','LANG_IT')]]
+    if args.turkish_glyphs:
+        command.append("CONFIG_FONT_TURKISH=y")
     if args.first_boot:
         command += ["CONFIG_STUB_ENTRY="+("y" if args.dev_update else "n"), "CONFIG_CPS_OPENFW=n", "CONFIG_CPS_FAST=n", "CONFIG_AUDIO_PROBE=n"]
     log = ROOT / f"logs/radiofoundry-p25-{suffix}.log"

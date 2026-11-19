@@ -37,6 +37,8 @@
 !/integration/radiofoundry/p25_lab.h
 !/integration/radiofoundry/pcm_playback.inc
 !/integration/radiofoundry/rf/fd6818_setup_b.c
+!/integration/radiofoundry/turkish/turkish_glyphs.h
+!/integration/radiofoundry/turkish/turkish_jbmono.inc
 !/sources.lock.json
 !/src/codec/dm32_imbe.h
 !/src/modem/native_test.c
@@ -69,6 +71,7 @@
 !/tests/classic/test_p25_audio.c
 !/tests/classic/test_radio.inc
 !/tests/classic/test_start_new.c
+!/tests/classic/test_turkish_glyphs.c
 !/tests/classic/test_ui.c
 !/tests/classic/test_version.c
 !/tests/codec/test_slot.c
@@ -163,6 +166,7 @@
 !/tools/build_radiofoundry.py
 !/tools/classic_channels.py
 !/tools/codec_cache.py
+!/tools/generate_turkish_glyphs.py
 !/tools/prepare_web_firmware.py
 !/tools/sources.py
 !/tools/test_classic.py
