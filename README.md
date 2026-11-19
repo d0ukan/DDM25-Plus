@@ -1,220 +1,136 @@
-# Open25-DM32
+<div align="center">
 
-**Alpha firmware for the Baofeng DM-32UV, with two editions: Classic and Next.**
+<img src="images/ddm25/splash.png" alt="DDM25 Plus boot screen, dark and light theme" width="480">
 
-[![Donate via GitHub Sponsors](https://img.shields.io/badge/Donate-GitHub%20Sponsors-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/tylerwatt12?metadata_project=open25-dm32)
-[![Donate via Ko-fi](https://img.shields.io/badge/Donate-Ko--fi-FF6433?style=for-the-badge&logo=kofi&logoColor=white)](https://ko-fi.com/kd8zmm)
+# DDM25 Plus
 
-Open25-DM32 brings P25 to the DM-32, with on-radio programming and tools for
-firmware installation, backup, and recovery. Classic has a compact
-interface with a white default theme, FM, DMR, and conventional P25. Next
-introduces a new interface with FM and conventional/trunked P25.
+**Turkish-first open firmware for the Baofeng DM-32UV — P25, DMR, YSF, NXDN, dPMR, APRS, maps and much more.**
 
-Report firmware and P25 problems to **[Open25-DM32 issues](https://github.com/tylerwatt12/Open25-DM32/issues)**.
+by **d0ukan · TA2DOU**
 
-**[Open the tools](https://kd8zmm.com/open25-dm32/)** ·
-**[Classic CPS](https://kd8zmm.com/open25-dm32/classic-cps/)** ·
-**[Next CPS](https://kd8zmm.com/open25-dm32/cps/)** ·
-**[Flasher v3](https://kd8zmm.com/open25-dm32/v3/firmware.html)**
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSING.md)
+[![Based on Open25-DM32](https://img.shields.io/badge/based%20on-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
+[![Status: beta, not yet field-tested](https://img.shields.io/badge/status-beta%20%C2%B7%20not%20field--tested-orange)](#status)
 
-## Choose your edition
+[Türkçe README](README.tr.md)
 
-| Open25-DM32 Classic | Open25-DM32 Next |
+</div>
+
+> [!CAUTION]
+> ## ⚠️ DISCLAIMER — READ BEFORE USING
+>
+> DDM25 Plus is **unofficial, experimental** firmware and programming software. It is not affiliated with or
+> endorsed by Baofeng, RadioFoundry or Open25-DM32.
+>
+> - Flashing firmware **can permanently brick your radio**, erase calibration and channel data, and void your warranty.
+> - This software is provided **"AS IS", without warranty of any kind**, express or implied, including merchantability
+>   or fitness for a particular purpose.
+> - **You flash, install and use it entirely at your own risk and responsibility.** The authors (d0ukan / TA2DOU) and
+>   contributors accept **no liability for any malfunction, damage, data loss, or direct or indirect loss** to radios,
+>   computers or any other equipment.
+> - Transmitting is legal **only with a valid licence on authorised frequencies**; complying with radio regulations is
+>   solely your responsibility. **Do not rely** on this firmware for emergency or safety-of-life communication.
+> - Always make and keep a **full backup** before flashing.
+>
+> **By downloading, installing or using this software you confirm that you have read, understood and accepted these
+> terms. If you do not accept them, do not use it.**
+
+## Status
+
+DDM25 Plus is in **beta**. Every feature below is built and covered by host tests (a simulator of the radio's
+screens, radio core and modems), but **most of it has not yet been tried on a real radio**. The first public
+release will be marked as a pre-release. Radio test notes live in [`docs/plus-radio-test.md`](docs/plus-radio-test.md).
+
+## Where it comes from
+
+```
+RadioFoundry (MIT)  ──►  Open25-DM32 Classic r13 (MIT)  ──►  DDM25 Plus (GPL-3.0-or-later)
+open firmware base        P25, IMBE, native modem, CPS        this fork: everything below
+```
+
+DDM25 Plus is an independent fork. It is **not** an official RadioFoundry or Open25-DM32 release. Please report
+DDM25 Plus problems [here](https://github.com/d0ukan/DDM25-Plus/issues), not to the upstream projects. The upstream
+README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
+
+## Features
+
+### Digital and analogue modes
+
+| Mode | Receive | Transmit | Notes |
+| --- | :---: | :---: | --- |
+| FM / AM | ✅ | ✅ FM | AM on the air band and (if the receiver allows it) elsewhere; tone finder for CTCSS/DCS |
+| DMR Tier I/II | ✅ | ✅ | Any colour code / timeslot / talkgroup, roaming, SMS, emergency, Tier III trunk following (receive) |
+| P25 Phase 1 | ✅ | ✅ | NAC in hex **and decimal**, Any NAC/TG, split RX/TX NAC, emergency and unit-to-unit calls, trunk following |
+| YSF (C4FM) | ✅ DN + VW | ⚙️ VW (off by default) | callsigns from the header |
+| NXDN48 | ✅ | — | |
+| dPMR | ✅ | — | |
+
+### Listening
+
+- **Multi-watch 2–6 channels**: rows A–F on Home, each letter a channel **or its own VFO** in any mode.
+- **Every mode in the VFO**: type a frequency and pick FM / DMR / P25 / YSF / NXDN / dPMR / AM with all parameters,
+  including Any.
+- **Zone scan with P25** that catches short calls, **priority channel**, **temporary skip**.
+- P25 search, DMR search, spectrum and close call, fox hunt.
+
+| Multi-watch | A call on C |
 | :---: | :---: |
-| ![Classic conventional P25 home screen](images/classic-home.png) | ![Next trunked P25 home screen](images/next-home.png) |
-| Conventional P25 · White default theme | Trunked P25 · New interface |
-| ![Classic P25 channel settings with talkgroup and NAC](images/classic-settings.png) | ![Next P25 system settings with WACN and System ID](images/next-settings.png) |
-| P25 channel settings: talkgroup, NAC, and radio ID | Trunked system settings: WACN and System ID |
-| **0.1.0-rc1-r13 release candidate available** | **In development · source private.** |
+| ![Multi-watch with four rows](images/ddm25/multiwatch.png) | ![Multi-watch, a call on row C](images/ddm25/multiwatch-call.png) |
 
-| Feature | Classic | Next |
-| --- | --- | --- |
-| Analog FM | ✅ | ✅ |
-| DMR | ✅ | ❌ |
-| Conventional P25 | ✅ | ✅ |
-| Trunked P25 Phase 1 | ❌ | ✅ |
-| P25 encryption | ❌ | ✅ AES-256, DES-OFB, ADP/RC4 |
-| Programming | FPP · Classic CPS (FM/DMR/P25) | FPP · Next CPS |
+### Maps and position
 
-FPP means programming from the radio's front panel. **Open25-DM32 Classic CPS**
-supports Open25-DM32 Classic firmware R9 and newer, with FM, DMR and
-conventional P25 channels, including separate RX and TX NACs, talkgroup and
-radio ID. Use Classic CPS for Classic and Next CPS for Next; their supported
-modes and firmware requirements differ.
+- Offline **Turkey map**: 81 provinces, **973 districts**, repeaters, APRS stations heard, your track.
+- **Repeaters**: 252 built in (DMR and FM), grouped by province, nearest first, one key tunes the VFO;
+  **auto repeater** suggests a nearer one while you travel.
+- **APRS** receive and transmit, messages, SOS; GPS, Go-To with waypoints, sun and moon.
+- **Satellites**: passes, pass alarm, Doppler-corrected tracking.
+- **Airfields** (nearest first, AM tune) and a **marine VHF** table (receive only).
 
-The tools homepage lists Flasher v3, Classic CPS and Next CPS. Retired Flasher
-v1/v2 choices are removed; their former public entry URLs redirect to
-[Flasher v3](https://kd8zmm.com/open25-dm32/v3/firmware.html).
+| APRS on the map | Track | Repeater pick |
+| :---: | :---: | :---: |
+| ![APRS station on the map](images/ddm25/map-aprs.png) | ![Track on the map](images/ddm25/map-track.png) | ![A repeater picked on the map](images/ddm25/map-repeater.png) |
 
-Classic's P25 operation uses saved channels. P25 scanning, VFO operation, and
-private calls are not available in Classic.
+### Tools
 
-Next adds zones and scan lists, receive-only control-channel monitoring, site
-discovery, caller aliases, recent calls, and light/dark display modes.
-Encryption support is still being tested with other radios and systems.
+Tone finder (CTCSS/DCS), DTMF / SelCall decoder, CW decoder and practice, pager (POCSAG) and ACARS, SSTV receive,
+CW beacon, lone worker (sound, DMR emergency or APRS SOS), call history with QSO marks, battery graph with time
+left, MMDVM hotspot over the programming cable, FM caller ID, signal quality.
 
-**P25 Phase 2, LSM, and 700/800 MHz reception are not supported.**
+| Tools | Airfields | Marine VHF | Battery |
+| :---: | :---: | :---: | :---: |
+| ![Tools menu icons](images/ddm25/tools.png) | ![Airfields list](images/ddm25/airfields.png) | ![Marine VHF table](images/ddm25/marine.png) | ![Battery graph](images/ddm25/battery.png) |
 
-## Release status
+*Screenshots come from the firmware's own screen simulator (English UI; the radio runs Turkish by default). Photos
+from a real radio will follow.*
 
-**Classic and Next are alpha firmware, and testing is still underway.**
-Classic **0.1.0-rc1-r13** is available in the
-[Flasher v3](https://kd8zmm.com/open25-dm32/v3/firmware.html), under
-**Open25-DM32 Classic → Standard · DM-32UV**. Final on-air qualification is
-incomplete; compatibility with every DM-32UV hardware revision is not established.
-Next remains unavailable, with its release date to be determined.
+### Turkish first
 
-Revision r13 fixes a timer collision introduced in r12 that could abort P25
-transmit startup after microphone capture began. The P25 guard now uses timer 4;
-speaker refill retains upstream timer 6 and the PA delay retains timer 3.
-Compile-time checks reject conflicting timer configurations. P25 transmit and
-receive workers also finish the existing hardware-release handshake when radio
-task cleanup takes longer than 500 ms, preventing an abandoned reservation from
-blocking later calls or channel changes.
+The whole interface is translated to Turkish (and remains available in English). Technical names (RX, TX, NAC, VFO,
+…) stay as they are.
 
-The real audio/native-port regression reproduces the r12 startup failure, and
-delayed-cleanup tests cover both P25 directions. Full host/sanitizer tests,
-target stack/ABI checks and an identical forced rebuild pass. A test build
-containing these fixes has booted and loaded saved FM/DMR/P25 channels on a
-DM-32UV; manual PTT, RF and speaker-quality qualification remains incomplete.
-Modes, codec gain, RFKV
-programming, RX-only defaults and normal transmit checks are unchanged.
+## Installing
 
-Revision r12 keeps the speaker FIFO fed by a 2 ms hardware timer while the
-block callback runs, and uses the existing scratch memory as one extra queued
-block. A block can now be queued when space becomes free during its callback;
-transmit and route changes still discard stale audio. P25 gain, the IMBE codec,
-RFKV programming and supported modes are unchanged. The newer RadioFoundry
-codec's gain correction does not apply to this Classic codec. Full host,
-sanitizer, target stack/ABI and reproducible-build checks cover this release;
-physical-radio qualification of r12 has not been performed.
+A Windows programmer (no Python needed) with backup, install, restore, auto-update and a live panel is being
+prepared for the first release. Until then the firmware can be built from source (below); installing a self-built
+image is for experienced users only and **entirely at your own risk** (see the disclaimer above).
 
-Revision r11 fixes the missing P25 choice in Classic CPS after connecting to
-the radio (issue #27). The firmware now advertises its saved conventional P25
-capability in the VERSION response. Existing RFKV programming and the r10
-RX-only defaults are preserved. Regression tests exercise the real firmware
-VERSION handler and verify P25 selection in a codeplug with no P25 channels.
+## Building
 
-Revision r10 adds an RX-only default and one explicit transmit confirmation to
-Classic and its matching CPS. New or copied channels whose actual TX frequency
-is outside **144–148 MHz** or **420–450 MHz** start RX-only. Changing the actual
-TX frequency outside those ranges restores RX-only. Actual TX uses RX when
-Talkaround is enabled or no TX frequency is set; otherwise it uses TX.
+The build follows upstream's [`BUILD.md`](BUILD.md) (csky-elf toolchain, pinned sources). DDM25 Plus adds:
 
-Turning RX-only off outside those bands opens **Enable TX?**, showing the TX
-frequency. **Keep RX-only** is selected by default; choose **Enable TX** to
-allow transmitting. There is no prompt on each PTT press. Existing RFKV
-programming and imports keep their saved RX-only choices. Enabling TX does not
-bypass the existing P25 band restriction or normal transmit checks.
+```sh
+python3 tools/build_radiofoundry.py --plus --stack-check --verify-rebuild           # full DDM25 Plus
+python3 tools/build_radiofoundry.py --plus --public --stack-check --verify-rebuild  # public profile (no ID database)
+make test
+```
 
-Revision r9 switches saved P25 programming to RadioFoundry RFKV mode records
-and is released with the matching Classic CPS. Retired Classic A5/D/E records
-are no longer read or converted. Recreate older programming in the current CPS;
-the radio preserves unsupported old bytes until an explicit **Start new**.
-The software suites cover refusal without writes, explicit initialization,
-RFKV storage and P25 target validation. On-radio qualification of this revision
-remains incomplete; the existing intermittent P25 startup and PL/DTMF limitations
-remain documented below.
+Feature notes, RAM budget and design decisions: [`docs/plus.md`](docs/plus.md).
 
-Revision r8 publishes the project firmware, P25 CAI library and full-rate IMBE
-codec under MIT, with the dependencies' original notices retained. It adds
-separate RX/TX NAC settings, fixes silent first DMR transmissions caused by a
-microphone-routing timing gap, and adds small P25 microphone and amplifier
-changes to address startup clicks and idle hiss.
+## Licence and credits
 
-The first-call DMR fix was confirmed on a DM-32UV. Full software regression,
-sanitizer, target stack/ABI checks and reproducible rebuild checks pass.
-P25 acoustic changes and every hardware revision have not been fully qualified.
-
-**Known issues:** PL/CTCSS signaling can drop while transmitting DTMF. Earlier
-intermittent P25 no-RF startup reports and DMR-only lockout reports remain under
-investigation; r13 fixes the reproduced timer and delayed-cleanup failures,
-without establishing that every reported lockout has the same cause.
-
-TX NAC defaults to **Same as RX**. It inherits the receive NAC, using `293`
-when RX is wildcard `F7E`. An explicit TX NAC, including `000` or a number equal
-to RX, stays fixed when RX changes. Explicit TX `F7E` and `F7F` are refused.
-
-Revision r6 added RadioFoundry-compatible codec layouts through NRFB .050 and
-extended the modem table window to match. The flasher uses the codec
-read from your own radio. No proprietary codec is included.
-
-Revision r5 fixed **Start new** when the radio still contains another firmware's
-settings. It initializes Classic's storage only after that choice and reports
-success after the new codeplug and requested edit are saved.
-
-This repository contains **Classic source only**. Next source remains private.
-Firmware ZIPs are hosted on kd8zmm.com; GitHub contains no firmware downloads.
-See [BUILD.md](BUILD.md) to build Classic and its application-only installer ZIP,
-and [THIRD_PARTY.md](THIRD_PARTY.md) for dependency notices.
-
-### Installing Classic
-
-1. Open [Flasher v3](https://kd8zmm.com/open25-dm32/v3/firmware.html) in desktop Chrome or Edge and select Classic.
-2. Connect the radio and select the release candidate.
-3. Save and keep a verified full-radio backup before installing.
-4. Install the selected package and check that the radio starts normally.
-
-The package contains no proprietary DMR codec. The installer checks and preserves
-a compatible codec in the reserved location. For first installation from
-recognized OEM codec layouts (.032 through NRFB .050), it prepares the radio's
-own codec in that blank slot. Unknown layouts or a damaged reserved slot stop before writing.
-The bootloader and data flash are preserved during installation. Full-backup
-restoration can replace both complete flash images. Keep backups private and
-use only this radio's backup.
-
-## Programming and firmware tools
-
-- **[Next CPS](https://kd8zmm.com/open25-dm32/cps/):** program Next's channels,
-  zones, talkgroups, and trunked systems from your browser. Read and write the
-  radio over USB, or save your programming to a file.
-- **[Classic CPS](https://kd8zmm.com/open25-dm32/classic-cps/):** program Classic's
-  FM, DMR and conventional P25 channels in your browser, or save BIN/CSV files.
-- **[Flasher v3](https://kd8zmm.com/open25-dm32/v3/firmware.html):** install
-  or update firmware, make full-radio backups, restore a backup, or prepare a
-  factory update file.
-
-> [!WARNING]
-> **THERE IS NO EASY WAY TO RESTORE THE RADIO WITHOUT A BACKUP.**
->
-> **Keep a verified full-radio backup before installing firmware.**
-> A CPS codeplug file is **not** a full firmware backup.
->
-> **Use only DM-32 handheld hardware. Other models have not been validated.**
->
-> **I am not responsible for bricked radios.**
-
-Full backups can contain identifiers, keys, and factory calibration. Store them
-privately and restore only a backup belonging to that same radio.
-
-## Usage disclaimer
-
-This firmware is for amateur radio, authorized P25 communications, and technical
-research. Trunked monitoring is receive-only by default. The project does not
-provide assistance with unauthorized system access, subscriber impersonation,
-or bypassing system access controls.
-
-**On trunked systems, registration and affiliation transmit even without pressing
-PTT.** Only transmit on frequencies and systems you are authorized to use;
-registration and affiliation require the system operator's permission.
-Interference with public-safety communications can disrupt emergency response
-and cause loss of life.
-
-## Credits and license
-
-Open25-DM32 builds on [RadioFoundry](https://github.com/RadioFoundry/RadioFoundry)
-and other open-source projects. Project code, the P25 CAI library and the
-shared fixed-point C full-rate IMBE codec use the [MIT license](LICENSE).
-The earlier GPL IMBE implementation and patches are replaced in this source
-release. Other dependencies retain their original terms.
-Original dependency notices and attributions are preserved; see
-[THIRD_PARTY.md](THIRD_PARTY.md) for the component licenses.
-
-## Support development
-
-Donations help cover development and testing expenses.
-
-Report problems through [GitHub Issues](https://github.com/tylerwatt12/Open25-DM32/issues).
-Include your edition, build, radio model, and steps to reproduce the problem.
-Keep backups, keys, calibration, private identifiers, and private traffic out
-of public reports.
+- Upstream files (RadioFoundry, Open25-DM32) are **MIT**; DDM25 Plus additions are **GPL-3.0-or-later**; a DDM25
+  Plus firmware image is distributed under GPL-3.0-or-later. Details: [`LICENSING.md`](LICENSING.md).
+- Third-party code and data, with their terms: [`THIRD_PARTY.md`](THIRD_PARTY.md) — RadioFoundry, Open25-DM32,
+  FreeRTOS, DM32-nxdn-p25, MMDVMHost, dsdcc, Natural Earth, GeoNames (CC BY 4.0), OurAirports, RadioID.net, TRAC,
+  CelesTrak.
+- Many thanks to the RadioFoundry and Open25-DM32 authors, whose work this is built on.

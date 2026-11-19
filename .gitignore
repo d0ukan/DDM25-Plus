@@ -10,6 +10,10 @@
 !/LICENSES/mbelib-ISC.txt
 !/Makefile
 !/README.md
+!/README.tr.md
+!/docs/UPSTREAM-README.md
+!/images/ddm25/
+!/images/ddm25/*.png
 !/THIRD_PARTY.md
 !/experiments/codec/build.py
 !/experiments/codec/harness.cc
