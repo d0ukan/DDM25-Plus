@@ -38,3 +38,21 @@ codec are selected from RadioFoundry `9e1f7209` in `third_party/rf_codeplug`.
 Its `UPSTREAM.json` records the original files. Local extensions implement the
 specified continuation chain and preserve explicit TX NAC presence; MIT
 copyright notices remain with the imported source.
+
+## DDM25 Plus additions
+
+DDM25 Plus code is GPL-3.0-or-later (`LICENSES/GPL-3.0.txt`, `LICENSING.md`);
+a Plus firmware image is distributed under GPL-3.0-or-later. The sources and
+data below are used by its own files and generators only, never by `--classic`.
+
+| Component | Source / pin | Terms and use |
+| --- | --- | --- |
+| DM32-nxdn-p25 | `src/nxdn` file headers (ported files named there) | GPL-3.0-or-later; NXDN48 receive (demodulator, call layer, FEC) ported into `src/nxdn`. |
+| MMDVMHost (G4KLX) | named in `src/nxdn`, `src/ysf` headers; host cross-checks `tools/test_*_ref.sh` | GPL-2.0-or-later, used under GPL-3.0-or-later: the NXDN coding the DM32-nxdn-p25 port follows; YSF / P25 LC reference implementations for host cross-checks only (compiled from where they are, never copied into this tree or the firmware). |
+| dsdcc DSDdPMR (F4EXB) | named in `src/dpmr/dpmr.c` | GPL-3.0: the dPMR scrambler's register order; the framing follows ETSI TS 102 490 / TS 102 658. |
+| Natural Earth 1:10m Admin 1 (5.1.1) | `tools/turkey_map.py` (pinned SHA-256) | Public domain; province outlines of the Tools > Map screen. |
+| GeoNames `TR.zip` (2026-11-19) | `tools/turkey_districts.py` (pinned SHA-256) | CC BY 4.0, "District data: GeoNames"; 973 district points of the map. |
+| OurAirports `airports.csv`, `airport-frequencies.csv` (2026-11-19) | `tools/airfields.py` (pinned SHA-256) | Unlicense (public domain dedication), "Airfield data: OurAirports"; the Turkish airfields and frequencies of Tools > Airfields. |
+| RadioID.net user list and repeater list (`user.csv`, `rptrs.json`) | `tools/iddb.py`, `tools/rpt_list.py`; downloads kept in the git-ignored `research-data/` | Data © RadioID.net, credited on the radio ("Repeater data: RadioID.net"); the DMR ID database and the DMR repeaters of Tools > Repeaters. Never committed. |
+| TRAC (Telsiz ve Radyo Amatörleri Cemiyeti) repeater list | `tools/rpt_list.py` (`research-data/repeaters.csv`, the owner's copy of TRAC's published list) | Credited on the radio ("Repeater data: TRAC"); TRAC states no licence: the list is never committed, and an image that carries it is for the owner's radio until TRAC's permission is clear. |
+| CelesTrak amateur satellite elements | `tools/sat_tle.py`, `integration/radiofoundry/sat/tle.txt` | Public orbital element sets (NORAD / CelesTrak), Tools > Satellites. |
