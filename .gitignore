@@ -39,6 +39,13 @@
 !/integration/radiofoundry/rf/fd6818_setup_b.c
 !/integration/radiofoundry/turkish/turkish_glyphs.h
 !/integration/radiofoundry/turkish/turkish_jbmono.inc
+!/integration/radiofoundry/locales/menu-locales.patch
+!/integration/radiofoundry/locales/tr.po
+!/integration/radiofoundry/locales/ru.po
+!/integration/radiofoundry/locales/cyrillic_jbmono.inc
+!/integration/radiofoundry/locales/cyrillic_spleen.inc
+!/integration/radiofoundry/locales/cyrillic_small.inc
+!/integration/radiofoundry/locales/LicenseRef-X11-Fixed-Public-Domain.txt
 !/sources.lock.json
 !/src/codec/dm32_imbe.h
 !/src/modem/native_test.c
@@ -69,6 +76,7 @@
 !/tests/audio/test_tx_route.c
 !/tests/classic/test_channels.c
 !/tests/classic/test_p25_audio.c
+!/tests/classic/test_menu_locales.c
 !/tests/classic/test_radio.inc
 !/tests/classic/test_start_new.c
 !/tests/classic/test_turkish_glyphs.c

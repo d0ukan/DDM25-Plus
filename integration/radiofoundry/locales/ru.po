@@ -1,0 +1,3753 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 The RadioFoundry Authors
+#
+# The radio's strings in Русский (ru; docs/dev/translating.md). Kept in step with the source by
+# tools/i18n.py --sync: translate the empty msgstr lines; an empty one shows the English.
+msgid ""
+msgstr ""
+"Project-Id-Version: RadioFoundry\n"
+"Language: ru\n"
+"X-Language-Name: Русский\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: core/stubentry/stub_entry.h
+msgid "PC Loader Connected"
+msgstr "Загрузчик ПК подключён"
+
+#: core/stubentry/stub_entry.h
+msgid "Power-cycle to exit"
+msgstr "Для выхода перезапустите радио"
+
+#: core/ui/fmt.c core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Off"
+msgstr "Выкл."
+
+#: core/ui/fmt.c
+msgid " ago"
+msgstr " давно"
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "OK Menu  * Quick"
+msgstr "OK Menu  * Quick"
+
+#: core/ui/ui_app.c
+msgid "OK Menu  Hold OK Quick"
+msgstr "OK Menu  Удерж. OK быстрое меню"
+
+#: core/ui/ui_app.c
+msgid "Not saved"
+msgstr "Не спасли"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "All call"
+msgstr "Общий вызов"
+
+#: core/ui/ui_app.c
+msgid "For now only: save it in qdmr"
+msgstr "Оригинальное название: Save It in qdmr"
+
+#: core/ui/ui_app.c
+msgid "Talk target: not in this build"
+msgstr "Оригинальное название: Not in This Build"
+
+#: core/ui/ui_app.c
+msgid "Default now: "
+msgstr "Дефолт сейчас: "
+
+#: core/ui/ui_app.c
+msgid "Talking to "
+msgstr "Разговаривая с "
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "No calls heard yet"
+msgstr "Никаких звонков пока не слышал."
+
+#: core/ui/ui_app.c
+msgid "Message from "
+msgstr "Сообщение от "
+
+#: core/ui/ui_app.c
+msgid "Sent to "
+msgstr "Отправлено в "
+
+#: core/ui/ui_app.c
+msgid "Delivered to "
+msgstr "доставляемый в "
+
+#: core/ui/ui_app.c
+msgid "No answer from "
+msgstr "Нет ответа от "
+
+#: core/ui/ui_app.c
+msgid "Not delivered: send again"
+msgstr "Не доставлено: отправить еще раз"
+
+#: core/ui/ui_app.c
+msgid "Call alert from "
+msgstr "Предупреждение о вызове "
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "PTT replies"
+msgstr "PTT Ответы"
+
+#: core/ui/ui_app.c
+msgid "Private call from "
+msgstr "Частный звонок от "
+
+#: core/ui/ui_app.c
+msgid "answered ("
+msgstr "Отвечаю."
+
+#: core/ui/ui_app.c
+msgid "Off or out of range: try later"
+msgstr "Вне или вне диапазона: попробуйте позже"
+
+#: core/ui/ui_app.c
+msgid "Hotspot started by host"
+msgstr "Hotspot начинается с хоста"
+
+#: core/ui/ui_app.c
+msgid "OK stops it"
+msgstr "OK stops it"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "Couldn't save: try again"
+msgstr "Не удалось: попробуйте еще раз"
+
+#: core/ui/ui_app.c
+msgid "New codeplug started"
+msgstr "Начался новый код-плаг"
+
+#: core/ui/ui_app.c
+msgid " answered the alert"
+msgstr " Ответил тревога"
+
+#: core/ui/ui_app.c
+msgid "Couldn't switch off"
+msgstr "Не мог отключиться"
+
+#: core/ui/ui_app.c
+msgid "Turn the knob off"
+msgstr "Поверните ручку в положение выкл."
+
+#: core/ui/ui_app.c
+msgid "⤓ Channel from "
+msgstr "⤓ Channel from "
+
+#: core/ui/ui_app.c
+msgid "⤓ Zone from "
+msgstr "⤓ Zone from "
+
+#: core/ui/ui_app.c
+msgid "Not sent to "
+msgstr "Не отправлены в "
+
+#: core/ui/ui_app.c
+msgid "Try again on a DMR channel"
+msgstr "Попробуй еще раз на канале DMR"
+
+#: core/ui/ui_app.c
+msgid "Updated "
+msgstr "Обновлено "
+
+#: core/ui/ui_app.c
+msgid "Imported "
+msgstr "импортный "
+
+#: core/ui/ui_app.c
+msgid " channel, receive only"
+msgstr " Каналы только для получения"
+
+#: core/ui/ui_app.c
+msgid " channels, receive only"
+msgstr " Каналы получают только"
+
+#: core/ui/ui_app.c
+msgid "Zone not imported"
+msgstr "Зона не импортируется"
+
+#: core/ui/ui_app.c
+msgid "Bands: "
+msgstr "Группы: "
+
+#: core/ui/ui_app.c
+msgid "Type at least the MHz digits"
+msgstr "Type at least the MHz digits"
+
+#: core/ui/ui_app.c
+msgid "Not in a band: type more digits"
+msgstr "Не в полосе: введите больше цифр"
+
+#: core/ui/ui_app.c
+msgid "All digits typed: OK or # tunes"
+msgstr "Все цифры введены: OK или # настраивает"
+
+#: core/ui/ui_app.c
+msgid "Digital monitor on"
+msgstr "Цифровой монитор на"
+
+#: core/ui/ui_app.c
+msgid "Digital monitor off"
+msgstr "Цифровой монитор"
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "{Keys locked: hold * to unlock|Locked: hold * to unlock}"
+msgstr "{Запертые ключи: Hold * To Unlock|Оригинальное название: Hold * To Unlock}"
+
+#: core/ui/ui_app.c
+msgid "{Keys locked: hold Back to unlock|Locked: hold Back to unlock}"
+msgstr "{Закрытые ключи: удерживайте назад, чтобы разблокировать|Оригинальное название: Hold Back to Unlock}"
+
+#: core/ui/ui_app.c
+msgid "VFO settings save automatically"
+msgstr "Настройки VFO сохраняют автоматически"
+
+#: core/ui/ui_app.c
+msgid "Stop hotspot to save"
+msgstr "Остановите точку доступа, чтобы сэкономить"
+
+#: core/ui/ui_app.c
+msgid "Nothing to save"
+msgstr "Нечего спасать"
+
+#: core/ui/ui_app.c
+msgid "Pick a saved channel"
+msgstr "Выберите сохраненный канал"
+
+#: core/ui/ui_app.c
+msgid "Channel saving unavailable"
+msgstr "Канал спасения недоступен"
+
+#: core/ui/ui_app.c
+msgid "Saved to channel"
+msgstr "Сэкономил на канале"
+
+#: core/ui/ui_app.c
+msgid "Save busy: try again"
+msgstr "Сохраните занятость: попробуйте еще раз"
+
+#: core/ui/ui_app.c
+msgid "Home zone: "
+msgstr "Домашняя зона: "
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Zone: "
+msgstr "Зона: "
+
+#: core/ui/ui_app.c core/ui/ui_dual.c
+msgid "Only one zone"
+msgstr "Только одна зона"
+
+#: core/ui/ui_app.c
+msgid "Copied to VFO"
+msgstr "Копия для VFO"
+
+#: core/ui/ui_app.c
+msgid "Already in VFO"
+msgstr "Already in VFO"
+
+#: core/ui/ui_app.c
+msgid "VFO: no DMR in this build"
+msgstr "VFO: нет DMR в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "VFO: no FM in this build"
+msgstr "VFO: нет FM в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "VFO: frequency outside its bands"
+msgstr "VFO: частота вне диапазонов"
+
+#: core/ui/ui_app.c
+msgid "VFO: not in this build"
+msgstr "VFO: not in this build"
+
+#: core/ui/ui_app.c core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "Back to channels"
+msgstr "Вернуться в Каналы"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Scan: not in this build"
+msgstr "Сканирование: не в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "Scan stopped"
+msgstr "Сканирование остановилось"
+
+#: core/ui/ui_app.c
+msgid "Scanning the band"
+msgstr "Сканирование группы"
+
+#: core/ui/ui_app.c
+msgid "Scanning this zone"
+msgstr "Сканирование этой зоны"
+
+#: core/ui/ui_app.c
+msgid "Default: "
+msgstr "По умолчанию: "
+
+#: core/ui/ui_app.c
+msgid "Speed dial "
+msgstr "Дискография Speed Dial "
+
+#: core/ui/ui_app.c
+msgid " is empty: set it in qdmr"
+msgstr " Пусто: установите его в qdmr"
+
+#: core/ui/ui_app.c
+msgid "Reply ended"
+msgstr "Ответ закончился"
+
+#: core/ui/ui_app.c
+msgid "Changes undone"
+msgstr "Незавершенные изменения"
+
+#: core/ui/ui_app.c
+msgid "Can't transmit there"
+msgstr "Не могу передать туда"
+
+#: core/ui/ui_app.c
+msgid "Color code: not in this build"
+msgstr "Цветовой код: не в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "FM only: this is a DMR channel"
+msgstr "FM: это канал DMR."
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Not in this build"
+msgstr "Нет в этой сборке"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Privacy: not in this build"
+msgstr "Конфиденциальность: не в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "VFO: one mode in this build"
+msgstr "VFO: один режим в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "VOX: not on this radio yet"
+msgstr "VOX: пока нет на радио"
+
+#: core/ui/ui_app.c
+msgid "Bandwidth 25 kHz"
+msgstr "Bandwidth 25 kHz"
+
+#: core/ui/ui_app.c
+msgid "Bandwidth 12.5 kHz"
+msgstr "Bandwidth 12.5 kHz"
+
+#: core/ui/ui_app.c
+msgid "Up/Dn tone  # TX/RX"
+msgstr "Up/Dn tone  # TX/RX"
+
+#: core/ui/ui_app.c
+msgid "AM only in the air band"
+msgstr "AM только в воздушной полосе"
+
+#: core/ui/ui_app.c
+msgid "FM only in the broadcast band"
+msgstr "FM только в вещательной группе"
+
+#: core/ui/ui_app.c
+msgid "VOX off"
+msgstr "VOX off"
+
+#: core/ui/ui_app.c
+msgid "VOX on: speak to transmit"
+msgstr "VOX on: говорить, чтобы передать"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 1"
+msgstr "Временной слот 1"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 2"
+msgstr "Временной слот 2"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 1 for now"
+msgstr "Timeslot 1 на данный момент"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 2 for now"
+msgstr "Timeslot 2 на данный момент"
+
+#: core/ui/ui_app.c
+msgid "Privacy on for now"
+msgstr "Конфиденциальность на данный момент"
+
+#: core/ui/ui_app.c
+msgid "Privacy off"
+msgstr "Конфиденциальность"
+
+#: core/ui/ui_app.c
+msgid "No privacy key: set one in Settings > Privacy"
+msgstr "Нет ключа конфиденциальности: установите один в настройках > Конфиденциальность"
+
+#: core/ui/ui_app.c
+msgid "Power "
+msgstr "Мощность "
+
+#: core/ui/ui_app.c
+msgid "All digits typed: OK sets TX"
+msgstr "Все цифры введены: OK задаёт TX"
+
+#: core/ui/ui_app.c
+msgid "Tone for RX and TX"
+msgstr "Тон для RX и TX"
+
+#: core/ui/ui_app.c
+msgid "Tone for TX only"
+msgstr "Тон только для TX"
+
+#: core/ui/ui_app.c
+msgid "Tone for RX only"
+msgstr "Тон только для RX"
+
+#: core/ui/ui_app.c
+msgid "No actions here"
+msgstr "Никаких действий здесь"
+
+#: core/ui/ui_app.c
+msgid "Emergency acknowledged"
+msgstr "Экстренная ситуация признана"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Hotspot stopped"
+msgstr "Hotspot остановился"
+
+#: core/ui/ui_app.c
+msgid "Hotspot on: OK stops it"
+msgstr "Скриншоты из игры OK Stops It"
+
+#: core/ui/ui_app.c
+msgid "No item with that number"
+msgstr "Никаких элементов с этим номером"
+
+#: core/ui/ui_app.c
+msgid "Nothing to save here"
+msgstr "Здесь нечего спасать"
+
+#: core/ui/ui_app.c
+msgid "Nothing to open"
+msgstr "Нечего открывать"
+
+#: core/ui/ui_app.c
+msgid "Find: "
+msgstr "Поиск: "
+
+#: core/ui/ui_app.c core/ui/ui_find.c
+msgid "No match: Back deletes a key"
+msgstr "Нет совпадений: Back удаляет ключ"
+
+#: core/ui/ui_app.c
+msgid "Emergency: not in this build"
+msgstr "Экстренная ситуация: не в этом корпусе"
+
+#: core/ui/ui_app.c
+msgid "Emergency needs a DMR channel and ID"
+msgstr "Требуется канал DMR и ID"
+
+#: core/ui/ui_app.c
+msgid "EMERGENCY sent: hold again to cancel"
+msgstr "ЭМЕРГЕНЦИЯ отправлена: продержаться снова, чтобы отменить"
+
+#: core/ui/ui_app.c
+msgid "Emergency canceled"
+msgstr "Чрезвычайное положение отменено"
+
+#: core/ui/ui_app.c
+msgid "Call back: DMR only"
+msgstr "Обратная связь: только DMR"
+
+#: core/ui/ui_app.c
+msgid "PTT is off while locked: hold * to unlock"
+msgstr "PTT выключен, пока заблокирован: удерживайте *, чтобы разблокировать"
+
+#: core/ui/ui_app.c
+msgid "PTT is off while locked: hold Back to unlock"
+msgstr "PTT выключен, пока заблокирован: удерживайте назад, чтобы разблокировать"
+
+#: core/ui/ui_app.c
+msgid "Keys unlocked"
+msgstr "Ключи разблокированы"
+
+#: core/ui/ui_app.c
+msgid "Talk target: DMR channels only"
+msgstr "Цель разговора: DMR-каналы"
+
+#: core/ui/ui_app.c
+msgid "Volume: use the knob"
+msgstr "Альбом: Use the Knob"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Voice prompts: not in this build"
+msgstr "Голосовые подсказки: не в этой сборке"
+
+#: core/ui/ui_app.c
+msgid "Not used here"
+msgstr "Не используется здесь"
+
+#: core/ui/ui_app.c
+msgid "Switching off in 1 min"
+msgstr "Выключение через 1 мин."
+
+#: core/ui/ui_app.c
+msgid "Any key keeps it on"
+msgstr "Любой ключ держит его на"
+
+#: core/ui/ui_app.c
+msgid "Battery "
+msgstr "Аккумулятор "
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "%: charge soon"
+msgstr "%: скоро плата"
+
+#: core/ui/ui_app.c
+msgid "That zone was deleted"
+msgstr "Эта зона была удалена."
+
+#: core/ui/ui_app.c
+msgid "Moved to "
+msgstr "Перенесённый в "
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "1 min"
+msgstr "1 мин."
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "2 min"
+msgstr "2 мин."
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "5 min"
+msgstr "5 мин."
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "10 min"
+msgstr "10 мин."
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "30 min"
+msgstr "30 мин."
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "None"
+msgstr "Нет"
+
+#: core/ui/ui_aprs.c
+msgid "Both"
+msgstr "Оба"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "Auto"
+msgstr "Авто"
+
+#: core/ui/ui_aprs.c
+msgid "Computer"
+msgstr "Компьютер"
+
+#: core/ui/ui_aprs.c
+msgid "Fixed"
+msgstr "фиксированный"
+
+#: core/ui/ui_aprs.c
+msgid "N America"
+msgstr "Северная Америка"
+
+#: core/ui/ui_aprs.c
+msgid "Europe"
+msgstr "Европа"
+
+#: core/ui/ui_aprs.c
+msgid "Australia"
+msgstr "Австралия"
+
+#: core/ui/ui_aprs.c
+msgid "New Zealand"
+msgstr "Новая Зеландия"
+
+#: core/ui/ui_aprs.c
+msgid "Japan"
+msgstr "Япония"
+
+#: core/ui/ui_aprs.c
+msgid "China"
+msgstr "Китай"
+
+#: core/ui/ui_aprs.c
+msgid "Custom"
+msgstr "обычай"
+
+#: core/ui/ui_aprs.c
+msgid "Set your callsign (the radio name) in qdmr."
+msgstr "Установите свой позывной (радио) в qdmr."
+
+#: core/ui/ui_aprs.c
+msgid "No APRS frequency: pick a region."
+msgstr "Нет частоты APRS: выберите область."
+
+#: core/ui/ui_aprs.c
+msgid "Pick a frequency in a ham band this radio sends on."
+msgstr "Выберите частоту в полосе ветчины, которую посылает радио."
+
+#: core/ui/ui_aprs.c
+msgid "No APRS tones on this radio; DMR positions work."
+msgstr "Никаких тонов APRS на этом радио; позиции DMR работают."
+
+#: core/ui/ui_aprs.c
+msgid "APRS: not in this build"
+msgstr "APRS: not in this build"
+
+#: core/ui/ui_aprs.c
+msgid "No callsign"
+msgstr "Нет позывного"
+
+#: core/ui/ui_aprs.c
+msgid " on "
+msgstr " Вкл. "
+
+#: core/ui/ui_aprs.c
+msgid " (sending)"
+msgstr " (отправляет)"
+
+#: core/ui/ui_aprs.c
+msgid "No position"
+msgstr "Нет позиции"
+
+#: core/ui/ui_aprs.c
+msgid "Next in "
+msgstr "Следующий "
+
+#: core/ui/ui_aprs.c
+msgid "  Sent "
+msgstr "  отправленный "
+
+#: core/ui/ui_aprs.c
+msgid "Send position now"
+msgstr "Отправить позицию сейчас"
+
+#: core/ui/ui_aprs.c
+msgid "Automatic beacons"
+msgstr "Автоматические маяки"
+
+#: core/ui/ui_aprs.c
+msgid "Frequency"
+msgstr "Частота"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Power"
+msgstr "Мощность"
+
+#: core/ui/ui_aprs.c
+msgid "Path"
+msgstr "Маршрут"
+
+#: core/ui/ui_aprs.c
+msgid "Interval"
+msgstr "Интервал"
+
+#: core/ui/ui_aprs.c
+msgid "SmartBeaconing"
+msgstr "SmartBeaconing"
+
+#: core/ui/ui_aprs.c
+msgid "Send via"
+msgstr "Отправить через"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "Position"
+msgstr "Позиция"
+
+#: core/ui/ui_aprs.c
+msgid "Position in DMR calls"
+msgstr "Положение в DMR-звонках"
+
+#: core/ui/ui_aprs.c
+msgid "KISS on USB"
+msgstr "KISS на USB"
+
+#: core/ui/ui_aprs.c
+msgid "Stations heard"
+msgstr "Станции услышали"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "On"
+msgstr "Вкл."
+
+#: core/ui/ui_aprs.c
+msgid "As channel"
+msgstr "как канал"
+
+#: core/ui/ui_aprs.c
+msgid "Sending position"
+msgstr "Отправка позиции"
+
+#: core/ui/ui_aprs.c
+msgid "Set your callsign first"
+msgstr "Установите свой Callsign первым"
+
+#: core/ui/ui_aprs.c
+msgid "Can't send now"
+msgstr "Не могу отправить сейчас"
+
+#: core/ui/ui_aprs.c
+msgid "Beacons on"
+msgstr "\"Маяки\""
+
+#: core/ui/ui_aprs.c
+msgid "Beacons off"
+msgstr "Освободить маяки"
+
+#: core/ui/ui_aprs.c
+msgid "DMR position: not in this build"
+msgstr "Позиция DMR: не в этой сборке"
+
+#: core/ui/ui_aprs.c
+msgid "Position goes out in DMR calls"
+msgstr "Позиция выходит в DMR-звонках"
+
+#: core/ui/ui_aprs.c
+msgid "No position in DMR calls"
+msgstr "Нет позиции в DMR-звонках"
+
+#: core/ui/ui_aprs.c
+msgid "This radio can't receive APRS"
+msgstr "Радио не может принимать APRS."
+
+#: core/ui/ui_aprs.c
+msgid "Source"
+msgstr "Источник"
+
+#: core/ui/ui_aprs.c
+msgid "Latitude"
+msgstr "широта"
+
+#: core/ui/ui_aprs.c
+msgid "Longitude"
+msgstr "долгота"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "Not set"
+msgstr "Не установлен"
+
+#: core/ui/ui_aprs.c
+msgid "Up to 90 N/S, 180 E/W"
+msgstr "До 90 Н/С, 180 Е/Вт"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "OK change  Back"
+msgstr "OK изменить  Назад"
+
+#: core/ui/ui_aprs.c
+msgid "0-9 pick  Back"
+msgstr "0-9 pick  Назад"
+
+#: core/ui/ui_aprs.c
+msgid "Heard"
+msgstr "Принято"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Back"
+msgstr "Назад"
+
+#: core/ui/ui_aprs.c
+msgid "Nothing heard yet"
+msgstr "Пока ничего не слышно"
+
+#: core/ui/ui_dual.c core/ui/ui_screens.c
+msgid "No tone"
+msgstr "Нет тона"
+
+#: core/ui/ui_dual.c
+msgid "{Can't watch that channel: pick another|Can't watch that channel}"
+msgstr "{Не могу смотреть этот канал: выберите другой|Не могу смотреть этот канал.}"
+
+#: core/ui/ui_dual.c
+msgid "B is the channel you are on: pick another"
+msgstr "B - это канал, на котором вы находитесь: выберите другой."
+
+#: core/ui/ui_dual.c
+msgid "Dual watch on"
+msgstr "Двойное наблюдение вкл."
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: on B"
+msgstr "Двойное отключение: на B"
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: on A"
+msgstr "Оригинальное название: On A"
+
+#: core/ui/ui_dual.c
+msgid "{Press Back again to stop dual watch|Back again: stop watch}"
+msgstr "{Нажмите еще раз, чтобы остановить двойные часы|Вернуться назад: Stop Watch}"
+
+#: core/ui/ui_dual.c
+msgid "Talking on B"
+msgstr "Разговоры о B"
+
+#: core/ui/ui_dual.c
+msgid "Talking on A"
+msgstr "Разговаривая на А"
+
+#: core/ui/ui_dual.c
+msgid "Talk back on B"
+msgstr "Обратная связь с B"
+
+#: core/ui/ui_dual.c
+msgid "Talk back on A"
+msgstr "Обратно в А"
+
+#: core/ui/ui_dual.c
+msgid "That is A: pick another"
+msgstr "Это A: выберите другой"
+
+#: core/ui/ui_dual.c
+msgid "That is B: pick another"
+msgstr "B: Выберите другой"
+
+#: core/ui/ui_dual.c
+msgid "{Only one channel in this zone|One channel in zone}"
+msgstr "{Только один канал в этой зоне.|Один канал в зоне}"
+
+#: core/ui/ui_dual.c
+msgid "{No other channel here: A has it|A has the other channel}"
+msgstr "{Никакого другого канала здесь нет: у A есть|А имеет другой канал.}"
+
+#: core/ui/ui_dual.c
+msgid "{No other channel here: B has it|B has the other channel}"
+msgstr "{Никакого другого канала здесь нет: у Б есть|B имеет другой канал.}"
+
+#: core/ui/ui_dual.c
+msgid "{Turn on dual watch first|Dual watch is off}"
+msgstr "{Включите двойные часы первыми|Двойные часы отменяются}"
+
+#: core/ui/ui_dual.c
+msgid "B zone: "
+msgstr "Зона B: "
+
+#: core/ui/ui_dual.c
+msgid "A zone: "
+msgstr "Зона: "
+
+#: core/ui/ui_dual.c
+msgid "No other zone"
+msgstr "Никакой другой зоны"
+
+#: core/ui/ui_dual.c
+msgid "{No other channel to watch|No other channel}"
+msgstr "{Нет другого канала, чтобы смотреть|Никакого другого канала}"
+
+#: core/ui/ui_dual.c
+msgid "DMR call"
+msgstr "DMR call"
+
+#: core/ui/ui_dual.c
+msgid "FM signal"
+msgstr "FM сигнал"
+
+#: core/ui/ui_dual.c
+msgid " to you"
+msgstr " к тебе"
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: on "
+msgstr "Двойные часы: On "
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: scanning"
+msgstr "Двойное отключение: сканирование"
+
+#: core/ui/ui_dual.c
+msgid "B: VFO"
+msgstr "B: VFO"
+
+#: core/ui/ui_dual.c
+msgid "A: VFO"
+msgstr "A: VFO"
+
+#: core/ui/ui_dual.c
+msgid "Talk on B"
+msgstr "Поговорить о B"
+
+#: core/ui/ui_dual.c
+msgid "Talk on A"
+msgstr "Разговоры об А"
+
+#: core/ui/ui_dual.c
+msgid "Change A"
+msgstr "Изменение А"
+
+#: core/ui/ui_dual.c
+msgid "Change B"
+msgstr "Изменение B"
+
+#: core/ui/ui_dual.c
+msgid "Caller"
+msgstr "Вызывающий"
+
+#: core/ui/ui_dual.c
+msgid "Stop, stay on B"
+msgstr "Стоп, останься на Б"
+
+#: core/ui/ui_dual.c
+msgid "Stop, stay on A"
+msgstr "Стоп, стой на А."
+
+#: core/ui/ui_dual.c
+msgid "Dual Watch"
+msgstr "Двойное наблюдение"
+
+#: core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "1-5 pick  Back"
+msgstr "1-5 pick  Назад"
+
+#: core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "Zone"
+msgstr "Зона"
+
+#: core/ui/ui_dual.c
+msgid "Watch on"
+msgstr "Смотри."
+
+#: core/ui/ui_dual.c
+msgid "{OK watch  0-9 find  Back|OK watch  Back}"
+msgstr "{OK следить  0-9 поиск  Назад|OK следить  Назад}"
+
+#: core/ui/ui_dual.c
+msgid "Zone for"
+msgstr "Зона для"
+
+#: core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "OK pick  Back"
+msgstr "OK выбрать  Назад"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Contacts"
+msgstr "Контакты"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Messages"
+msgstr "Сообщения"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Recent"
+msgstr "Недавние"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Channels"
+msgstr "Каналы"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Tools"
+msgstr "Инструменты"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Settings"
+msgstr "Настройки"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Roaming"
+msgstr "Роуминг"
+
+#: core/ui/ui_find.c
+msgid "APRS position"
+msgstr "Позиция APRS"
+
+#: core/ui/ui_find.c
+msgid "Ch "
+msgstr "Чак. "
+
+#: core/ui/ui_find.c
+msgid "{Channel|}"
+msgstr "{Канал|}"
+
+#: core/ui/ui_find.c
+msgid "{Zone|}"
+msgstr "{Зона|}"
+
+#: core/ui/ui_find.c
+msgid "{Contact|}"
+msgstr "{Контакт|}"
+
+#: core/ui/ui_find.c
+msgid "Talk to TG "
+msgstr "Поговорите с TG "
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "{Not saved|}"
+msgstr "{Не спасли|}"
+
+#: core/ui/ui_find.c
+msgid "Private call "
+msgstr "Индивидуальный вызов "
+
+#: core/ui/ui_find.c
+msgid "Tune VFO to "
+msgstr "Настройка VFO "
+
+#: core/ui/ui_find.c
+msgid "Create contact "
+msgstr "Создайте контакт "
+
+#: core/ui/ui_find.c
+msgid "Menu"
+msgstr "Меню"
+
+#: core/ui/ui_find.c
+msgid "No actions for this result"
+msgstr "Никаких действий для этого результата"
+
+#: core/ui/ui_find.c
+msgid "PTT talk  OK open  # more"
+msgstr "PTT talk  OK открыть  # ещё"
+
+#: core/ui/ui_gps.c
+msgid "Status"
+msgstr "статус"
+
+#: core/ui/ui_gps.c
+msgid "Sky"
+msgstr "Небо"
+
+#: core/ui/ui_gps.c
+msgid "Signal"
+msgstr "Сигнал"
+
+#: core/ui/ui_gps.c core/ui/ui_menus.c
+msgid "Grid"
+msgstr "Квадрат"
+
+#: core/ui/ui_gps.c
+msgid " good"
+msgstr " хорошо"
+
+#: core/ui/ui_gps.c
+msgid " fair"
+msgstr " справедливый"
+
+#: core/ui/ui_gps.c
+msgid " poor"
+msgstr " бедный"
+
+#: core/ui/ui_gps.c
+msgid "3D Fix"
+msgstr "3D исправление"
+
+#: core/ui/ui_gps.c
+msgid "2D Fix"
+msgstr "2D фиксация"
+
+#: core/ui/ui_gps.c
+msgid "Fix"
+msgstr "Позиция"
+
+#: core/ui/ui_gps.c
+msgid "Searching"
+msgstr "Поиск"
+
+#: core/ui/ui_gps.c
+msgid "No signal"
+msgstr "Нет сигнала"
+
+#: core/ui/ui_gps.c
+msgid " used, "
+msgstr " использованный, "
+
+#: core/ui/ui_gps.c
+msgid " seen"
+msgstr " замеченный"
+
+#: core/ui/ui_gps.c
+msgid "Sats"
+msgstr "Сатс"
+
+#: core/ui/ui_gps.c
+msgid "Lat"
+msgstr "Широта"
+
+#: core/ui/ui_gps.c
+msgid "Lon"
+msgstr "Долгота"
+
+#: core/ui/ui_gps.c
+msgid "Alt"
+msgstr "Альт"
+
+#: core/ui/ui_gps.c
+msgid "Speed"
+msgstr "Скорость"
+
+#: core/ui/ui_gps.c
+msgid "No positions yet"
+msgstr "Позиции пока нет"
+
+#: core/ui/ui_gps.c
+msgid "No satellites yet"
+msgstr "Спутников пока нет"
+
+#: core/ui/ui_gps.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid " of "
+msgstr " из "
+
+#: core/ui/ui_gps.c
+msgid " in the fix"
+msgstr " в исправлении"
+
+#: core/ui/ui_gps.c
+msgid "No fix yet"
+msgstr "Пока нет исправлений."
+
+#: core/ui/ui_gps.c
+msgid "No GPS, or it is off"
+msgstr "Нет GPS, или он выключен"
+
+#: core/ui/ui_gps.c
+msgid "Settings > Location"
+msgstr "Настройки > Местоположение"
+
+#: core/ui/ui_gps.c
+msgid "Up Down page  Back"
+msgstr "Up Down page  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Last caller"
+msgstr "Последний вызов"
+
+#: core/ui/ui_menus.c
+msgid "Zones"
+msgstr "Зоны"
+
+#: core/ui/ui_menus.c
+msgid " new"
+msgstr " новый"
+
+#: core/ui/ui_menus.c
+msgid "Scanning"
+msgstr "Сканирование"
+
+#: core/ui/ui_menus.c
+msgid "Channels: not in this build"
+msgstr "Каналы: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "1-7 open  Back"
+msgstr "1-7 open  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Talk to "
+msgstr "Разговаривать "
+
+#: core/ui/ui_menus.c
+msgid "Private call"
+msgstr "Индивидуальный вызов"
+
+#: core/ui/ui_menus.c
+msgid "Message"
+msgstr "Сообщение"
+
+#: core/ui/ui_menus.c
+msgid "Radio check"
+msgstr "Проверка радио"
+
+#: core/ui/ui_menus.c
+msgid "Call alert"
+msgstr "Оповещение о вызове"
+
+#: core/ui/ui_menus.c
+msgid "In contacts"
+msgstr "В контактах"
+
+#: core/ui/ui_menus.c
+msgid "Save as contact"
+msgstr "Сохранить как контакт"
+
+#: core/ui/ui_menus.c
+msgid "Speak status"
+msgstr "Говорить о статусе"
+
+#: core/ui/ui_menus.c
+msgid "Save to channel"
+msgstr "Сохранить канал"
+
+#: core/ui/ui_menus.c
+msgid "Make channel default"
+msgstr "Сделать канал по умолчанию"
+
+#: core/ui/ui_menus.c
+msgid "Messages: not in this build"
+msgstr "Оригинальное название: Not in This Build"
+
+#: core/ui/ui_menus.c
+msgid "Checking "
+msgstr "Проверка "
+
+#: core/ui/ui_menus.c
+msgid "Radio check: not in this build"
+msgstr "Проверка по радио: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Call alert to "
+msgstr "Предупреждение о вызове "
+
+#: core/ui/ui_menus.c
+msgid "Call alert: not in this build"
+msgstr "Вызов тревоги: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Position requests: not in this build"
+msgstr "Позиционные запросы: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Already in your contacts"
+msgstr "Уже в ваших контактах"
+
+#: core/ui/ui_menus.c
+msgid "Add contacts in qdmr"
+msgstr "Добавить контакты в qdmr"
+
+#: core/ui/ui_menus.c
+msgid "1-9 pick  PTT talk  Back"
+msgstr "1-9 pick  PTT talk  Назад"
+
+#: core/ui/ui_menus.c
+msgid "OK"
+msgstr "OK"
+
+#: core/ui/ui_menus.c
+msgid "On my way"
+msgstr "On my way"
+
+#: core/ui/ui_menus.c
+msgid "Call me"
+msgstr "Call me"
+
+#: core/ui/ui_menus.c
+msgid "Can't talk now"
+msgstr "Can't talk now"
+
+#: core/ui/ui_menus.c
+msgid "Write..."
+msgstr "Пишите..."
+
+#: core/ui/ui_menus.c
+msgid "Couldn't send: try again"
+msgstr "Не могу отправить: попробуйте еще раз"
+
+#: core/ui/ui_menus.c
+msgid "Sending to "
+msgstr "Отправить в "
+
+#: core/ui/ui_menus.c
+msgid "Typing: not in this build"
+msgstr "Оригинальное название: Not in This Build"
+
+#: core/ui/ui_menus.c
+msgid "To"
+msgstr "Кому"
+
+#: core/ui/ui_menus.c
+msgid "OK send  Back"
+msgstr "OK отправить  Назад"
+
+#: core/ui/ui_menus.c
+msgid "(no name)"
+msgstr "(без имени)"
+
+#: core/ui/ui_menus.c
+msgid "New contact"
+msgstr "Новый контакт"
+
+#: core/ui/ui_menus.c
+msgid "{0-9 find  OK talk  # more|0-9  OK talk  # more}"
+msgstr "{0-9 поиск  OK talk  # ещё|0-9  OK talk  # ещё}"
+
+#: core/ui/ui_menus.c
+msgid "No contact matches"
+msgstr "Контактные матчи"
+
+#: core/ui/ui_menus.c
+msgid "No contacts: add them in qdmr"
+msgstr "Никаких контактов: добавьте их в qdmr"
+
+#: core/ui/ui_menus.c
+msgid "Contacts: not in this build"
+msgstr "Контакты: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "OK open  # reply  Back"
+msgstr "OK открыть  # ответить  Назад"
+
+#: core/ui/ui_menus.c
+msgid "No messages yet"
+msgstr "Пока нет сообщений"
+
+#: core/ui/ui_menus.c
+msgid "Reply \"OK\""
+msgstr "Reply \"OK\""
+
+#: core/ui/ui_menus.c
+msgid "Reply \"On my way\""
+msgstr "Ответ: \"На моем пути\""
+
+#: core/ui/ui_menus.c
+msgid "Call"
+msgstr "Вызов"
+
+#: core/ui/ui_menus.c
+msgid "Delete"
+msgstr "Удалить"
+
+#: core/ui/ui_menus.c
+msgid "Message deleted"
+msgstr "Сообщение удалено"
+
+#: core/ui/ui_menus.c
+msgid "Couldn't delete: try again"
+msgstr "Не удалось удалить: попробуйте еще раз"
+
+#: core/ui/ui_menus.c
+msgid "To "
+msgstr "Кому "
+
+#: core/ui/ui_menus.c
+msgid "From "
+msgstr "От "
+
+#: core/ui/ui_menus.c
+msgid "OK choose  # more  Back"
+msgstr "OK выбрать  # ещё  Назад"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "To you"
+msgstr "Тебе"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Private"
+msgstr "частный"
+
+#: core/ui/ui_menus.c
+msgid "PTT talk  # more  Back"
+msgstr "PTT talk  # ещё  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Create New Zone"
+msgstr "Создаем новую зону"
+
+#: core/ui/ui_menus.c
+msgid "Here, "
+msgstr "Вот, "
+
+#: core/ui/ui_menus.c
+msgid "Here"
+msgstr "Здесь"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid " channel"
+msgstr " Канал"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid " channels"
+msgstr " Каналы"
+
+#: core/ui/ui_menus.c
+msgid " ch"
+msgstr " чешский"
+
+#: core/ui/ui_menus.c
+msgid "VFO: type a frequency"
+msgstr "VFO: тип частоты"
+
+#: core/ui/ui_menus.c
+msgid "The VFO has no channel list"
+msgstr "The VFO has no channel list"
+
+#: core/ui/ui_menus.c
+msgid "{OK go  # channels  0-9 find|OK go  # channels}"
+msgstr "{OK перейти  # channels  0-9 поиск|OK перейти  # channels}"
+
+#: core/ui/ui_menus.c
+msgid "No zones"
+msgstr "Без зон"
+
+#: core/ui/ui_menus.c
+msgid "Couldn't save now: try again"
+msgstr "Не удалось спастись: попробуйте еще раз"
+
+#: core/ui/ui_menus.c
+msgid "Add channel"
+msgstr "Добавить канал"
+
+#: core/ui/ui_menus.c
+msgid "Zone options"
+msgstr "Варианты зон"
+
+#: core/ui/ui_menus.c
+msgid "⤒ Share zone to..."
+msgstr "Разделить зону на..."
+
+#: core/ui/ui_menus.c
+msgid "⤒ Share channel to..."
+msgstr "Поделиться каналом для..."
+
+#: core/ui/ui_menus.c
+msgid "Zone sharing: not in this build"
+msgstr "Обмен зонами: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Saving the zone: try again"
+msgstr "Сохранение зоны: попробуйте еще раз"
+
+#: core/ui/ui_menus.c
+msgid "Private ID "
+msgstr "Частный ID "
+
+#: core/ui/ui_menus.c
+msgid "Go to a DMR channel to send"
+msgstr "Перейдите на канал DMR, чтобы отправить"
+
+#: core/ui/ui_menus.c
+msgid "Can't send now: try again"
+msgstr "Не могу отправить сейчас: попробуйте еще раз"
+
+#: core/ui/ui_menus.c
+msgid " via "
+msgstr " через "
+
+#: core/ui/ui_menus.c
+msgid "Sending "
+msgstr "Отправка "
+
+#: core/ui/ui_menus.c
+msgid "Sending"
+msgstr "Отправка"
+
+#: core/ui/ui_menus.c
+msgid "Share To"
+msgstr "Поделиться с"
+
+#: core/ui/ui_menus.c
+msgid "{0-9 find or ID  OK send  Back|0-9 find or ID  OK send}"
+msgstr "{0-9 find or ID  OK отправить  Назад|0-9 find or ID  OK отправить}"
+
+#: core/ui/ui_menus.c
+msgid "No contacts: type an ID"
+msgstr "Никаких контактов: введите ID"
+
+#: core/ui/ui_menus.c
+msgid "Import"
+msgstr "импорт"
+
+#: core/ui/ui_menus.c
+msgid "Preview"
+msgstr "Preview"
+
+#: core/ui/ui_menus.c
+msgid "Reject"
+msgstr "Отклонить"
+
+#: core/ui/ui_menus.c
+msgid "Busy saving: try again"
+msgstr "Экономия: попробуйте еще раз"
+
+#: core/ui/ui_menus.c
+msgid "Importing..."
+msgstr "Импортировать..."
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "No channel in this radio's bands"
+msgstr "Ни одного канала в полосах этого радио."
+
+#: core/ui/ui_menus.c
+msgid "Offer rejected"
+msgstr "Предложение отклонено"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "Channel "
+msgstr "Канал "
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "Zone "
+msgstr "Зона "
+
+#: core/ui/ui_menus.c
+msgid ", from "
+msgstr ", от "
+
+#: core/ui/ui_menus.c
+msgid " not in band"
+msgstr " Не в группе"
+
+#: core/ui/ui_menus.c
+msgid "{Channel Share Received ⤓|Ch Share Received ⤓|Ch Received ⤓|Ch Received}"
+msgstr "{Channel Share Received ⤓|Ch Share Received ⤓|Ch Received ⤓|Ch Получено}"
+
+#: core/ui/ui_menus.c
+msgid "{Zone Share Received ⤓|Zone Received ⤓|Zone Received}"
+msgstr "{Zone Share Received ⤓|Zone Received ⤓|Зона получена}"
+
+#: core/ui/ui_menus.c
+msgid "No share waiting"
+msgstr "Никакого ожидания."
+
+#: core/ui/ui_menus.c
+msgid "{Not in band|Out}"
+msgstr "{Не в группе|Выходи.}"
+
+#: core/ui/ui_menus.c
+msgid "OK or Back returns"
+msgstr "OK или Back Returns"
+
+#: core/ui/ui_menus.c
+msgid "No zone offer waiting"
+msgstr "Нет зоны ожидания"
+
+#: core/ui/ui_menus.c
+msgid "{ channels| ch}"
+msgstr "{ Каналы| чешский}"
+
+#: core/ui/ui_menus.c
+msgid "Add to Zone"
+msgstr "Добавить в Зону"
+
+#: core/ui/ui_menus.c
+msgid "OK add  Back"
+msgstr "OK добавить  Назад"
+
+#: core/ui/ui_menus.c
+msgid "{OK go  # edit  0-9 find|OK go  # edit}"
+msgstr "{OK перейти  # edit  0-9 поиск|OK перейти  # edit}"
+
+#: core/ui/ui_menus.c
+msgid "{OK go  # share  0-9 find|OK go  # share}"
+msgstr "{OK перейти  # share  0-9 поиск|OK перейти  # share}"
+
+#: core/ui/ui_menus.c
+msgid "OK go  0-9 find  Back"
+msgstr "OK перейти  0-9 поиск  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Empty zone"
+msgstr "Пустая зона"
+
+#: core/ui/ui_menus.c
+msgid "New from current"
+msgstr "Новый от текущего"
+
+#: core/ui/ui_menus.c
+msgid "Not in any zone: add it to one to use it"
+msgstr "Не в какой-либо зоне: добавьте его к одному, чтобы использовать его"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_storage.c
+msgid "No free channel"
+msgstr "Бесплатный канал"
+
+#: core/ui/ui_menus.c
+msgid "{OK details  # go  0-9 find|OK details  # go}"
+msgstr "{OK подробнее  # go  0-9 поиск|OK подробнее  # go}"
+
+#: core/ui/ui_menus.c
+msgid "No channels"
+msgstr "Нет каналов"
+
+#: core/ui/ui_menus.c
+msgid "New Channel"
+msgstr "Новый канал"
+
+#: core/ui/ui_menus.c
+msgid " zone"
+msgstr " Зона"
+
+#: core/ui/ui_menus.c
+msgid " zones"
+msgstr " Зоны"
+
+#: core/ui/ui_menus.c
+msgid "Radio's"
+msgstr "Радио"
+
+#: core/ui/ui_menus.c
+msgid "Name"
+msgstr "Имя"
+
+#: core/ui/ui_menus.c
+msgid "Number"
+msgstr "Номер"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Mode"
+msgstr "Режим"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "RX only"
+msgstr "Только приём"
+
+#: core/ui/ui_menus.c
+msgid "Bandwidth"
+msgstr "Ширина полосы"
+
+#: core/ui/ui_menus.c
+msgid "RX CTCSS/DCS"
+msgstr "RX CTCSS/DCS"
+
+#: core/ui/ui_menus.c
+msgid "TX CTCSS/DCS"
+msgstr "TX CTCSS/DCS"
+
+#: core/ui/ui_menus.c
+msgid "Color code"
+msgstr "Цветовой код"
+
+#: core/ui/ui_menus.c
+msgid "Timeslot"
+msgstr "Временной слот"
+
+#: core/ui/ui_menus.c
+msgid "TX contact"
+msgstr "Контакт TX"
+
+#: core/ui/ui_menus.c
+msgid "RX group list"
+msgstr "Список групп RX"
+
+#: core/ui/ui_menus.c
+msgid "Own ID"
+msgstr "Собственный ID"
+
+#: core/ui/ui_menus.c
+msgid "Direct mode"
+msgstr "Прямой режим"
+
+#: core/ui/ui_menus.c
+msgid "Talk permit beeps"
+msgstr "Разрешение на болтовню"
+
+#: core/ui/ui_menus.c
+msgid "Talker alias TS1"
+msgstr "Оригинальное название: TS1"
+
+#: core/ui/ui_menus.c
+msgid "Talker alias TS2"
+msgstr "Оригинальное название: TS2"
+
+#: core/ui/ui_menus.c
+msgid "TX time-out"
+msgstr "Тайм-аут TX"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Scan"
+msgstr "СКАН"
+
+#: core/ui/ui_menus.c
+msgid "Battery saver"
+msgstr "Экономия заряда"
+
+#: core/ui/ui_menus.c
+msgid "Talkgroup"
+msgstr "Разговорная группа"
+
+#: core/ui/ui_menus.c
+msgid "P25 Radio ID"
+msgstr "ID радио P25"
+
+#: core/ui/ui_menus.c
+msgid "Tune to this ch"
+msgstr "Настройка для этого ch"
+
+#: core/ui/ui_menus.c
+msgid "Save"
+msgstr "Сохранить"
+
+#: core/ui/ui_menus.c
+msgid "Save as new channel"
+msgstr "Сохранить как новый канал"
+
+#: core/ui/ui_menus.c
+msgid "Default"
+msgstr "По умолчанию"
+
+#: core/ui/ui_menus.c
+msgid "Same as RX"
+msgstr "Как при приёме"
+
+#: core/ui/ui_menus.c
+msgid "Yes"
+msgstr "Да"
+
+#: core/ui/ui_menus.c
+msgid "No"
+msgstr "Нет"
+
+#: core/ui/ui_menus.c
+msgid "Skipped"
+msgstr "Пропущено"
+
+#: core/ui/ui_menus.c
+msgid "Scanned"
+msgstr "сканированный"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_storage.c
+msgid "Give it a name first"
+msgstr "Сначала дайте ему имя"
+
+#: core/ui/ui_menus.c
+msgid "RX is outside the radio's bands"
+msgstr "RX выходит за пределы радиодиапазона"
+
+#: core/ui/ui_menus.c
+msgid "TX can't transmit there: set RX only"
+msgstr "TX не может передавать там: установите только RX"
+
+#: core/ui/ui_menus.c
+msgid "Receive only band: set FM"
+msgstr "Оригинальное название: Set FM"
+
+#: core/ui/ui_menus.c
+msgid "Check P25 NAC, talkgroup and ID"
+msgstr "Проверьте P25 NAC, Talkgroup и ID."
+
+#: core/ui/ui_menus.c
+msgid "Pick a TX contact first"
+msgstr "Сначала выберите контакт TX"
+
+#: core/ui/ui_menus.c
+msgid "No changes to save"
+msgstr "Никаких изменений для сохранения"
+
+#: core/ui/ui_menus.c
+msgid "Saved as channel "
+msgstr "Спасено как канал "
+
+#: core/ui/ui_menus.c
+msgid "Saved channel "
+msgstr "Спасенный канал "
+
+#: core/ui/ui_menus.c
+msgid "Value too large"
+msgstr "Ценность слишком велика"
+
+#: core/ui/ui_menus.c
+msgid "IDs go up to 16776415"
+msgstr "Идентификаторы доходят до 16776415"
+
+#: core/ui/ui_menus.c
+msgid "DCS codes use digits 0-7"
+msgstr "Коды DCS используют цифры 0-7"
+
+#: core/ui/ui_menus.c
+msgid "Not changed: 0 to 495, steps of 15"
+msgstr "Не изменено: от 0 до 495, шаги 15"
+
+#: core/ui/ui_menus.c
+msgid "Not a DCS code"
+msgstr "Не код DCS"
+
+#: core/ui/ui_menus.c
+msgid "CTCSS goes 60.0 to 260.0"
+msgstr "CTCSS: 60.0 до 260.0"
+
+#: core/ui/ui_menus.c
+msgid "Save first: hold OK"
+msgstr "Сначала сохраните: удерживайте OK"
+
+#: core/ui/ui_menus.c
+msgid "Tones: not in this build"
+msgstr "Композиция: Not In This Build"
+
+#: core/ui/ui_menus.c
+msgid "Save as new channel to use another number"
+msgstr "Сохранить как новый канал, чтобы использовать другой номер"
+
+#: core/ui/ui_menus.c
+msgid "Zones: change them with qdmr for now"
+msgstr "Зоны: измените их с помощью qdmr"
+
+#: core/ui/ui_menus.c
+msgid "Empty channel"
+msgstr "Пустой канал"
+
+#: core/ui/ui_menus.c
+msgid "{OK change  hold OK save  Back|OK change  hold OK save}"
+msgstr "{OK изменить  Удерж. OK сохранить  Назад|OK изменить  Удерж. OK сохранить}"
+
+#: core/ui/ui_menus.c
+msgid "OK tunes to it  Back"
+msgstr "OK tunes to it  Назад"
+
+#: core/ui/ui_menus.c
+msgid "No, keep editing"
+msgstr "Нет, продолжайте редактировать"
+
+#: core/ui/ui_menus.c
+msgid "Yes, discard"
+msgstr "Да, выбросить"
+
+#: core/ui/ui_menus.c
+msgid "Discard this new contact?"
+msgstr "Откажитесь от этого нового контакта?"
+
+#: core/ui/ui_menus.c
+msgid "Discard the changes to this channel?"
+msgstr "Откажитесь от изменений в этом канале?"
+
+#: core/ui/ui_menus.c
+msgid "Unsaved Changes"
+msgstr "Несохранённые изменения"
+
+#: core/ui/ui_menus.c
+msgid "{OK choose  Back keep editing|OK choose  Back}"
+msgstr "{OK выбрать  Назад продолжить правку|OK выбрать  Назад}"
+
+#: core/ui/ui_menus.c
+msgid "That's the most it can hold"
+msgstr "Это самое большее, что он может выдержать."
+
+#: core/ui/ui_menus.c
+msgid "{Back delete  # ABC/123/abc  OK keep|Back del  # mode  OK}"
+msgstr "{Назад удалить  # ABC/123/abc  OK keep|Back del  # mode  OK}"
+
+#: core/ui/ui_menus.c
+msgid "Type"
+msgstr "Тип"
+
+#: core/ui/ui_menus.c
+msgid "Channel's"
+msgstr "Канал"
+
+#: core/ui/ui_menus.c
+msgid "Type its ID first"
+msgstr "Сначала введите ID"
+
+#: core/ui/ui_menus.c
+msgid "Private IDs go up to 16776415"
+msgstr "Частные удостоверения личности до 16776415"
+
+#: core/ui/ui_menus.c
+msgid "Talkgroups go up to 16777214"
+msgstr "Дискуссионные группы до 16777214"
+
+#: core/ui/ui_menus.c
+msgid "Already a contact: "
+msgstr "Уже есть контакт: "
+
+#: core/ui/ui_menus.c
+msgid "No room for more contacts"
+msgstr "Нет места для новых контактов"
+
+#: core/ui/ui_menus.c
+msgid "Saved contact "
+msgstr "Сохраненный контакт "
+
+#: core/ui/ui_menus.c
+msgid "IDs go up to 16777214"
+msgstr "Идентификаторы доходят до 16777214"
+
+#: core/ui/ui_menus.c
+msgid "New Contact"
+msgstr "Новый контакт"
+
+#: core/ui/ui_menus.c
+msgid "Move up"
+msgstr "Вставай."
+
+#: core/ui/ui_menus.c
+msgid "Move down"
+msgstr "Спускайся."
+
+#: core/ui/ui_menus.c
+msgid "Copy here"
+msgstr "Копировать здесь"
+
+#: core/ui/ui_menus.c
+msgid "Edit channel"
+msgstr "Редактировать канал"
+
+#: core/ui/ui_menus.c
+msgid "Remove from zone"
+msgstr "Удалить из зоны"
+
+#: core/ui/ui_menus.c
+msgid "Already first"
+msgstr "Уже первый"
+
+#: core/ui/ui_menus.c
+msgid "Already last"
+msgstr "Уже последний"
+
+#: core/ui/ui_menus.c
+msgid "Position "
+msgstr "Позиция "
+
+#: core/ui/ui_menus.c
+msgid "Zone full"
+msgstr "Зона заполнена"
+
+#: core/ui/ui_menus.c
+msgid "Removed from "
+msgstr "Удаленный из "
+
+#: core/ui/ui_menus.c
+msgid "1-6 pick  Back"
+msgstr "1-6 pick  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Added to "
+msgstr "Добавлено в "
+
+#: core/ui/ui_menus.c
+msgid "Add Channel"
+msgstr "Добавить канал"
+
+#: core/ui/ui_menus.c
+msgid "{OK add  0-9 find  Back|OK add  Back}"
+msgstr "{OK добавить  0-9 поиск  Назад|OK добавить  Назад}"
+
+#: core/ui/ui_menus.c
+msgid "Every channel is in it"
+msgstr "Каждый канал в нем"
+
+#: core/ui/ui_menus.c
+msgid "In"
+msgstr "в"
+
+#: core/ui/ui_menus.c
+msgid "Rename"
+msgstr "Переименовать"
+
+#: core/ui/ui_menus.c
+msgid "Copy as new zone"
+msgstr "Копировать как новая зона"
+
+#: core/ui/ui_menus.c
+msgid "Delete zone"
+msgstr "Зона удаления"
+
+#: core/ui/ui_menus.c
+msgid "Renamed"
+msgstr "Переименовано"
+
+#: core/ui/ui_menus.c
+msgid "Added "
+msgstr "Добавлено "
+
+#: core/ui/ui_menus.c core/ui/ui_svc_storage.c core/ui/ui_svc_zone.c
+msgid "No room for another zone"
+msgstr "Нет места для другой зоны"
+
+#: core/ui/ui_menus.c
+msgid "Copied as "
+msgstr "Копия "
+
+#: core/ui/ui_menus.c
+msgid "Empty zone: nothing to send"
+msgstr "Пустая зона: нечего отправлять"
+
+#: core/ui/ui_menus.c
+msgid "It holds every channel: it stays"
+msgstr "Он поддерживает каждый канал, он остается."
+
+#: core/ui/ui_menus.c
+msgid "1-4 pick  Back"
+msgstr "1-4 pick  Назад"
+
+#: core/ui/ui_menus.c
+msgid "1-3 pick  Back"
+msgstr "1-3 pick  Назад"
+
+#: core/ui/ui_menus.c
+msgid "No, keep it"
+msgstr "Нет, держи."
+
+#: core/ui/ui_menus.c
+msgid "Yes, delete"
+msgstr "Да, удалить"
+
+#: core/ui/ui_menus.c
+msgid "Deleted "
+msgstr "Удалено "
+
+#: core/ui/ui_menus.c
+msgid "Delete "
+msgstr "Удалить "
+
+#: core/ui/ui_menus.c
+msgid "? Channels stay."
+msgstr "Каналы остаются."
+
+#: core/ui/ui_menus.c
+msgid "Delete Zone"
+msgstr "Удалить зону"
+
+#: core/ui/ui_menus.c
+msgid "OK choose  Back cancel"
+msgstr "OK выбрать  Назад отмена"
+
+#: core/ui/ui_menus.c
+msgid "TX Contact"
+msgstr "Контакт TX"
+
+#: core/ui/ui_menus.c
+msgid "RX Group List"
+msgstr "Список групп RX"
+
+#: core/ui/ui_menus.c
+msgid "OK pick  0-9 find  Back"
+msgstr "OK выбрать  0-9 поиск  Назад"
+
+#: core/ui/ui_menus.c
+msgid "None stored"
+msgstr "Ни один не хранится"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Hotspot"
+msgstr "Хотспот"
+
+#: core/ui/ui_menus.c
+msgid "Battery"
+msgstr "Аккумулятор"
+
+#: core/ui/ui_menus.c
+msgid "About"
+msgstr "О программе"
+
+#: core/ui/ui_menus.c
+msgid "Codeplug"
+msgstr "Щелкните кодом"
+
+#: core/ui/ui_menus.c
+msgid "USB Network"
+msgstr "Сеть USB"
+
+#: core/ui/ui_menus.c
+msgid "Single-Freq Repeater"
+msgstr "Однократный повторитель Freq"
+
+#: core/ui/ui_menus.c
+msgid "Supply"
+msgstr "Питание"
+
+#: core/ui/ui_menus.c
+msgid "No GPS, or it is off (Settings > Location)"
+msgstr "Нет GPS, или он выключен (Настройки > Местоположение)"
+
+#: core/ui/ui_menus.c
+msgid "No fix yet. Go outside, away from buildings."
+msgstr "Пока не исправляйся, иди на улицу, подальше от зданий."
+
+#: core/ui/ui_menus.c
+msgid "Fix, "
+msgstr "Исправь, "
+
+#: core/ui/ui_menus.c
+msgid " satellites"
+msgstr " спутники"
+
+#: core/ui/ui_menus.c
+msgid "Altitude "
+msgstr "высота "
+
+#: core/ui/ui_menus.c
+msgid "Start MMDVMHost or Pi-Star on a computer on USB: hotspot mode starts by itself."
+msgstr "Запустите MMDVMHost или Pi-Star на компьютере по USB: режим горячей точки запускается сам по себе."
+
+#: core/ui/ui_menus.c
+msgid "Hotspot: not in this build"
+msgstr "Hotspot: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "None: built-in channels"
+msgstr "Нет: встроенные каналы"
+
+#: core/ui/ui_menus.c
+msgid "Built-in channels"
+msgstr "Встроенные каналы"
+
+#: core/ui/ui_menus.c
+msgid "Written by the CPS"
+msgstr "Написано CPS"
+
+#: core/ui/ui_menus.c
+msgid "Other firmware's codeplug: ignored"
+msgstr "Код-плаг прошивки: игнорируется"
+
+#: core/ui/ui_menus.c
+msgid "Zones: "
+msgstr "Зоны: "
+
+#: core/ui/ui_menus.c
+msgid "Channels: up to "
+msgstr "Каналы: до "
+
+#: core/ui/ui_menus.c
+msgid "USB is a network adapter: IP over DMR. qdmr and the hotspot are off until you switch back."
+msgstr "USB - это сетевой адаптер: IP по DMR. qdmr и точка доступа отключены до тех пор, пока вы не переключитесь обратно."
+
+#: core/ui/ui_menus.c
+msgid "USB is a serial port: qdmr, hotspot. As a network adapter it carries IP over DMR."
+msgstr "USB представляет собой последовательный порт: qdmr, hotspot. В качестве сетевого адаптера он переносит IP через DMR."
+
+#: core/ui/ui_menus.c
+msgid "USB network: not in this build"
+msgstr "Сеть USB: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "This channel has no SFR role. Set Repeater or User in the Codeplug Editor, on a channel with one frequency."
+msgstr "Этот канал не имеет роли SFR. Настройте повторитель или пользователя в редакторе Codeplug, на канале с одной частотой."
+
+#: core/ui/ui_menus.c
+msgid "Repeater (ERDM style)"
+msgstr "Повторитель (стиль ERDM)"
+
+#: core/ui/ui_menus.c
+msgid "Repeater"
+msgstr "ретранслятор"
+
+#: core/ui/ui_menus.c
+msgid "In TS"
+msgstr "В ТС"
+
+#: core/ui/ui_menus.c
+msgid ", out TS"
+msgstr "Выйди из ТС"
+
+#: core/ui/ui_menus.c
+msgid "Off: transmit not allowed now"
+msgstr "Выключено: передача не разрешена"
+
+#: core/ui/ui_menus.c
+msgid "Sending its CW ID"
+msgstr "Отправить свой CW ID"
+
+#: core/ui/ui_menus.c
+msgid "Repeating a call"
+msgstr "Повторение звонка"
+
+#: core/ui/ui_menus.c
+msgid "Hang time"
+msgstr "Время удержания"
+
+#: core/ui/ui_menus.c
+msgid "Listening"
+msgstr "слушать"
+
+#: core/ui/ui_menus.c
+msgid "User of an ERDM repeater"
+msgstr "Пользователь ретранслятора ERDM"
+
+#: core/ui/ui_menus.c
+msgid "User of a repeater"
+msgstr "Пользователь ретранслятора"
+
+#: core/ui/ui_menus.c
+msgid "Talk on TS"
+msgstr "Поговорим о ТС"
+
+#: core/ui/ui_menus.c
+msgid ", hear TS"
+msgstr "Слушать TS"
+
+#: core/ui/ui_menus.c
+msgid " and TS"
+msgstr " и ТС"
+
+#: core/ui/ui_menus.c
+msgid "Single-freq repeater: not in this build"
+msgstr "Однократный повторитель: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Switch USB to serial"
+msgstr "Переключите USB на серийный"
+
+#: core/ui/ui_menus.c
+msgid "Switch USB to network"
+msgstr "Переключите USB на сеть"
+
+#: core/ui/ui_menus.c
+msgid "Stop hotspot"
+msgstr "Остановите точку доступа"
+
+#: core/ui/ui_menus.c
+msgid "No USB network on this radio"
+msgstr "Нет USB-сети на этом радио."
+
+#: core/ui/ui_menus.c
+msgid "USB is a network adapter now"
+msgstr "USB теперь является сетевым адаптером"
+
+#: core/ui/ui_menus.c
+msgid "USB is a serial port again"
+msgstr "USB снова стал серийным портом"
+
+#: core/ui/ui_menus.c
+msgid "DMR ID"
+msgstr "DMR ID"
+
+#: core/ui/ui_menus.c
+msgid "Radio name"
+msgstr "Радио название"
+
+#: core/ui/ui_menus.c
+msgid "Boot 1"
+msgstr "Бут 1"
+
+#: core/ui/ui_menus.c
+msgid "Boot 2"
+msgstr "Ботинок 2"
+
+#: core/ui/ui_menus.c
+msgid "Saved in the codeplug"
+msgstr "Сохраненный в Codeplug"
+
+#: core/ui/ui_menus.c
+msgid "Radio: "
+msgstr "Радио: "
+
+#: core/ui/ui_menus.c
+msgid "Saved"
+msgstr "Сохранено"
+
+#: core/ui/ui_menus.c
+msgid "IDs start at 1"
+msgstr "Идентификаторы начинаются с 1"
+
+#: core/ui/ui_menus.c
+msgid "DMR ID saved"
+msgstr "DMR ID saved"
+
+#: core/ui/ui_menus.c
+msgid "My Radio"
+msgstr "Моё радио"
+
+#: core/ui/ui_menus.c
+msgid "0-9 type  OK edit/save  Back"
+msgstr "0-9 ввод  OK edit/save  Назад"
+
+#: core/ui/ui_menus.c
+msgid "OK edit  Back"
+msgstr "OK изменить  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Freq Trim"
+msgstr "Подстройка частоты"
+
+#: core/ui/ui_menus.c
+msgid "At "
+msgstr "в "
+
+#: core/ui/ui_menus.c
+msgid "+ to increase frequency"
+msgstr "+ для увеличения частоты"
+
+#: core/ui/ui_menus.c
+msgid "+ to increase freq"
+msgstr "+ для увеличения freq"
+
+#: core/ui/ui_menus.c
+msgid "0-9 type  # +/-  OK set"
+msgstr "0-9 ввод  # +/-  OK установить"
+
+#: core/ui/ui_menus.c
+msgid "Up Down  # +/-  OK done"
+msgstr "Up Down  # +/-  OK готово"
+
+#: core/ui/ui_menus.c
+msgid "Up to 10.0 ppm"
+msgstr "До 10.0 ppm"
+
+#: core/ui/ui_menus.c
+msgid "Firmware: "
+msgstr "Прошивка: "
+
+#: core/ui/ui_menus.c
+msgid "Release: "
+msgstr "Выпустить: "
+
+#: core/ui/ui_menus.c
+msgid "Build: "
+msgstr "Сборка: "
+
+#: core/ui/ui_menus.c
+msgid "Date: "
+msgstr "Дата: "
+
+#: core/ui/ui_menus.c
+msgid "License: "
+msgstr "Лицензия: "
+
+#: core/ui/ui_menus.c
+msgid "Authors:"
+msgstr "Авторы:"
+
+#: core/ui/ui_menus.c
+msgid "Author:"
+msgstr "Автор:"
+
+#: core/ui/ui_menus.c
+msgid "Spleen font: BSD-2-Clause"
+msgstr "Селезенка: BSD-2-Clause"
+
+#: core/ui/ui_menus.c
+msgid "JetBrains Mono font: OFL-1.1"
+msgstr "Монофон JetBrains: OFL-1.1"
+
+#: core/ui/ui_menus.c
+msgid "AMBE+2 codec: DVSI (stock)"
+msgstr "Кодек AMBE+2: DVSI (акция)"
+
+#: core/ui/ui_menus.c
+msgid "Synced"
+msgstr "синхронизированный"
+
+#: core/ui/ui_menus.c
+msgid "Per site"
+msgstr "За каждый сайт"
+
+#: core/ui/ui_menus.c
+msgid "Roaming works on channels, not the VFO."
+msgstr "Роуминг работает на каналах, а не на VFO."
+
+#: core/ui/ui_menus.c
+msgid "Off in this zone. On, the radio moves between the zone's repeaters."
+msgstr "В этой зоне радио перемещается между ретрансляторами зоны."
+
+#: core/ui/ui_menus.c
+msgid "This channel is not a repeater site."
+msgstr "Этот канал не является сайтом-ретранслятором."
+
+#: core/ui/ui_menus.c
+msgid "Needs two sites in the zone with the same talkgroup."
+msgstr "Нужны два сайта в зоне с одной и той же разговорной группой."
+
+#: core/ui/ui_menus.c
+msgid "Searching sites..."
+msgstr "Поиск сайтов..."
+
+#: core/ui/ui_menus.c
+msgid "Site "
+msgstr "Сайт "
+
+#: core/ui/ui_menus.c
+msgid "Signal "
+msgstr "Сигнал "
+
+#: core/ui/ui_menus.c
+msgid " dBm, weak"
+msgstr " ДБМ, слабый"
+
+#: core/ui/ui_menus.c
+msgid "Locked to this site"
+msgstr "Заперты на этом сайте"
+
+#: core/ui/ui_menus.c
+msgid "Beacons: surveying"
+msgstr "Маяки: геодезия"
+
+#: core/ui/ui_menus.c
+msgid "Beacons: learning"
+msgstr "Маяки: обучение"
+
+#: core/ui/ui_menus.c
+msgid "Roaming: not in this build"
+msgstr "Роуминг: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Roam in this zone"
+msgstr "Роум в этой зоне"
+
+#: core/ui/ui_menus.c
+msgid "Roam now"
+msgstr "Роум теперь"
+
+#: core/ui/ui_menus.c
+msgid "Lock to this site"
+msgstr "Заблокируйте этот сайт"
+
+#: core/ui/ui_menus.c
+msgid "Site survey"
+msgstr "Опрос сайта"
+
+#: core/ui/ui_menus.c
+msgid "Beacon interval"
+msgstr "Интервал маяка"
+
+#: core/ui/ui_menus.c
+msgid "Beacon length"
+msgstr "Длина маяка"
+
+#: core/ui/ui_menus.c
+msgid "Wake probe"
+msgstr "Проверка пробуждения"
+
+#: core/ui/ui_menus.c
+msgid "Must match the repeaters"
+msgstr "Должен соответствовать ретрансляторам"
+
+#: core/ui/ui_menus.c
+msgid "Wake probe on: transmits on silent sites"
+msgstr "Пробуждение зонда на: передачи на молчаливых сайтах"
+
+#: core/ui/ui_menus.c
+msgid "Wake probe off: listening only"
+msgstr "Пробуждение зонда: слушать только"
+
+#: core/ui/ui_menus.c
+msgid "Roaming works on channels"
+msgstr "Роуминг работает на каналах"
+
+#: core/ui/ui_menus.c
+msgid "Roaming on for "
+msgstr "Роуминг для "
+
+#: core/ui/ui_menus.c
+msgid "Roaming off"
+msgstr "Роуминг выкл."
+
+#: core/ui/ui_menus.c
+msgid "Turn roaming on first"
+msgstr "Включите роуминг первым"
+
+#: core/ui/ui_menus.c
+msgid "Can't roam on this channel"
+msgstr "Не могу бродить по этому каналу."
+
+#: core/ui/ui_menus.c
+msgid "Already searching"
+msgstr "Уже ищем"
+
+#: core/ui/ui_menus.c
+msgid "Searching sites"
+msgstr "Поиск сайтов"
+
+#: core/ui/ui_menus.c
+msgid "Locked to "
+msgstr "Запертый в "
+
+#: core/ui/ui_menus.c
+msgid "Roaming again"
+msgstr "Снова роуминг"
+
+#: core/ui/ui_menus.c
+msgid "1-7 pick  Back"
+msgstr "1-7 pick  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Ask"
+msgstr "Спрашивать"
+
+#: core/ui/ui_menus.c
+msgid "No crash recorded."
+msgstr "Никакой аварии не зафиксировано."
+
+#: core/ui/ui_menus.c
+msgid "Restarted after a crash. Send the report to "
+msgstr "Перезапуск после аварии. "
+
+#: core/ui/ui_menus.c
+msgid "Report sent"
+msgstr "Доклад отправлен"
+
+#: core/ui/ui_menus.c
+msgid " crashes in a row"
+msgstr " аварии подряд"
+
+#: core/ui/ui_menus.c
+msgid "Ran for "
+msgstr "Бегите. "
+
+#: core/ui/ui_menus.c
+msgid ", build "
+msgstr "строить "
+
+#: core/ui/ui_menus.c
+msgid "Send report"
+msgstr "Отправить доклад"
+
+#: core/ui/ui_menus.c
+msgid "Send to"
+msgstr "Кому"
+
+#: core/ui/ui_menus.c
+msgid "After a crash"
+msgstr "После аварии"
+
+#: core/ui/ui_menus.c
+msgid "Clear"
+msgstr "Очистить"
+
+#: core/ui/ui_menus.c
+msgid "Not now"
+msgstr "Не сейчас."
+
+#: core/ui/ui_menus.c
+msgid "No crash recorded"
+msgstr "Ни одна авария не зафиксирована"
+
+#: core/ui/ui_menus.c
+msgid "Pick Send to first"
+msgstr "Выберите отправку первым"
+
+#: core/ui/ui_menus.c
+msgid "Sending crash report"
+msgstr "Отправка отчета о крушении"
+
+#: core/ui/ui_menus.c
+msgid "Pick Send to as well"
+msgstr "Выберите отправку также"
+
+#: core/ui/ui_menus.c
+msgid "Crash record cleared"
+msgstr "Запись крушения раскрыта"
+
+#: core/ui/ui_menus.c
+msgid "Crash Log"
+msgstr "Журнал сбоев"
+
+#: core/ui/ui_menus.c
+msgid "Crash reports to "
+msgstr "Крушения отчитываются "
+
+#: core/ui/ui_menus.c
+msgid "this contact"
+msgstr "Этот контакт"
+
+#: core/ui/ui_menus.c
+msgid "Send To"
+msgstr "Кому"
+
+#: core/ui/ui_menus.c
+msgid "0-9 find  OK pick  Back"
+msgstr "0-9 поиск  OK выбрать  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Crash report sent"
+msgstr "Отправлено сообщение об аварии"
+
+#: core/ui/ui_menus.c
+msgid "Crash report not sent"
+msgstr "Отчет о крушении не отправлен"
+
+#: core/ui/ui_menus.c
+msgid " open  Back"
+msgstr " Открыть  Назад"
+
+#: core/ui/ui_menus.c
+msgid "USB network"
+msgstr "Сеть USB"
+
+#: core/ui/ui_menus.c
+msgid "Single-freq repeater"
+msgstr "Однократный повторитель freq"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Diagnostics"
+msgstr "Диагностика"
+
+#: core/ui/ui_menus.c
+msgid "Zones/Chs Received"
+msgstr "Полученные зоны/ЧС"
+
+#: core/ui/ui_menus.c
+msgid "Dual watch"
+msgstr "Двойное наблюдение"
+
+#: core/ui/ui_menus.c
+msgid "Network"
+msgstr "Сеть"
+
+#: core/ui/ui_menus.c
+msgid "Serial"
+msgstr "серийный"
+
+#: core/ui/ui_menus.c
+msgid "Never"
+msgstr "Никогда"
+
+#: core/ui/ui_menus.c
+msgid "Dark"
+msgstr "Тёмная"
+
+#: core/ui/ui_menus.c
+msgid "Light"
+msgstr "Свет"
+
+#: core/ui/ui_menus.c
+msgid "High contrast"
+msgstr "Высокий контраст"
+
+#: core/ui/ui_menus.c
+msgid "Red"
+msgstr "Красный"
+
+#: core/ui/ui_menus.c
+msgid "Orange"
+msgstr "Оранжевый"
+
+#: core/ui/ui_menus.c
+msgid "Yellow"
+msgstr "желтый"
+
+#: core/ui/ui_menus.c
+msgid "Teal"
+msgstr "Тил"
+
+#: core/ui/ui_menus.c
+msgid "Light blue"
+msgstr "Светлый синий"
+
+#: core/ui/ui_menus.c
+msgid "Purple"
+msgstr "фиолетовый"
+
+#: core/ui/ui_menus.c
+msgid "Pink"
+msgstr "Розовый"
+
+#: core/ui/ui_menus.c
+msgid "3 min"
+msgstr "3 мин."
+
+#: core/ui/ui_menus.c
+msgid "Degrees"
+msgstr "степеней"
+
+#: core/ui/ui_menus.c
+msgid "Deg min sec"
+msgstr "Дег мин сек"
+
+#: core/ui/ui_menus.c
+msgid "15 min"
+msgstr "15 мин."
+
+#: core/ui/ui_menus.c
+msgid "Nothing"
+msgstr "Пусто"
+
+#: core/ui/ui_menus.c
+msgid "Monitor"
+msgstr "Мониторинг"
+
+#: core/ui/ui_menus.c
+msgid "Talk target"
+msgstr "Цель разговора"
+
+#: core/ui/ui_menus.c
+msgid "Power level"
+msgstr "Уровень мощности"
+
+#: core/ui/ui_menus.c
+msgid "Next zone"
+msgstr "Следующая зона"
+
+#: core/ui/ui_menus.c
+msgid "Previous zone"
+msgstr "Предыдущая зона"
+
+#: core/ui/ui_menus.c
+msgid "Key lock"
+msgstr "Блокировка клавиш"
+
+#: core/ui/ui_menus.c
+msgid "Home zone"
+msgstr "Домашняя зона"
+
+#: core/ui/ui_menus.c
+msgid "Copy to VFO"
+msgstr "Копия для VFO"
+
+#: core/ui/ui_menus.c
+msgid "Call back"
+msgstr "Перезвонить"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Emergency"
+msgstr "Тревога"
+
+#: core/ui/ui_menus.c
+msgid "Channel"
+msgstr "Канал"
+
+#: core/ui/ui_menus.c
+msgid "ETSI short"
+msgstr "Короткий ETSI"
+
+#: core/ui/ui_menus.c
+msgid "By DMR ID"
+msgstr "Идентификатор DMR"
+
+#: core/ui/ui_menus.c
+msgid "First copy"
+msgstr "Первая копия"
+
+#: core/ui/ui_menus.c
+msgid "Dual-path RX"
+msgstr "Двухканальный RX"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Volume"
+msgstr "Громкость"
+
+#: core/ui/ui_menus.c
+msgid "Key tones"
+msgstr "Звуки клавиш"
+
+#: core/ui/ui_menus.c
+msgid "Tone volume"
+msgstr "Громкость тона"
+
+#: core/ui/ui_menus.c
+msgid "Talk permit tone"
+msgstr "Разрешение на разговор тон"
+
+#: core/ui/ui_menus.c
+msgid "Voice prompts"
+msgstr "Голосовые подсказки"
+
+#: core/ui/ui_menus.c
+msgid "Message tone"
+msgstr "Тон сообщения"
+
+#: core/ui/ui_menus.c
+msgid "Vibrate"
+msgstr "Вибрировать"
+
+#: core/ui/ui_menus.c
+msgid "Brightness"
+msgstr "Яркость"
+
+#: core/ui/ui_menus.c
+msgid "Backlight Dim/Off"
+msgstr "Задняя подсветка Dim/Off"
+
+#: core/ui/ui_menus.c
+msgid "Theme"
+msgstr "Тема"
+
+#: core/ui/ui_menus.c
+msgid "Highlight color"
+msgstr "Выделить цвет"
+
+#: core/ui/ui_menus.c
+msgid "Filled status bar"
+msgstr "Заполненный статус бар"
+
+#: core/ui/ui_menus.c
+msgid "Large text"
+msgstr "Большой текст"
+
+#: core/ui/ui_menus.c
+msgid "Hint row"
+msgstr "Подсказочный ряд"
+
+#: core/ui/ui_menus.c
+msgid "Language"
+msgstr "Язык"
+
+#: core/ui/ui_menus.c
+msgid "Reply window"
+msgstr "Ответить Окно"
+
+#: core/ui/ui_menus.c
+msgid "TX timeout"
+msgstr "TX timeout"
+
+#: core/ui/ui_menus.c
+msgid "Default squelch"
+msgstr "По умолчанию Squelch"
+
+#: core/ui/ui_menus.c
+msgid "VFO step"
+msgstr "VFO шаг вперед"
+
+#: core/ui/ui_menus.c
+msgid "FM broadcast step"
+msgstr "Шаг трансляций FM"
+
+#: core/ui/ui_menus.c
+msgid "Mic gain"
+msgstr "Мик-прибыль"
+
+#: core/ui/ui_menus.c
+msgid "Mic AGC"
+msgstr "Мик АГК"
+
+#: core/ui/ui_menus.c
+msgid "Mic noise reduction"
+msgstr "Мик шумоподавление"
+
+#: core/ui/ui_menus.c
+msgid "Monitor by default"
+msgstr "Монитор по умолчанию"
+
+#: core/ui/ui_menus.c
+msgid "Show talker alias"
+msgstr "Имя говорящего"
+
+#: core/ui/ui_menus.c
+msgid "Dual watch talk back"
+msgstr "Двойные часы Talk Back"
+
+#: core/ui/ui_menus.c
+msgid "Dual watch delay"
+msgstr "Задержка наблюдения"
+
+#: core/ui/ui_menus.c
+msgid "SFR receive"
+msgstr "СФР получает"
+
+#: core/ui/ui_menus.c
+msgid "SFR CW ID"
+msgstr "Идентификатор SFR CW"
+
+#: core/ui/ui_menus.c
+msgid "Key type"
+msgstr "Тип ключа"
+
+#: core/ui/ui_menus.c
+msgid "Key"
+msgstr "Ключ"
+
+#: core/ui/ui_menus.c
+msgid "Auto lock"
+msgstr "Автоблокировка"
+
+#: core/ui/ui_menus.c
+msgid "PTT when locked"
+msgstr "PTT когда запирается"
+
+#: core/ui/ui_menus.c
+msgid "Position format"
+msgstr "Формат позиции"
+
+#: core/ui/ui_menus.c
+msgid "Send position"
+msgstr "Отправить позицию"
+
+#: core/ui/ui_menus.c
+msgid "Answer GPS requests"
+msgstr "Ответы на запросы GPS"
+
+#: core/ui/ui_menus.c
+msgid "Hotspot allowed"
+msgstr "Горячая точка разрешена"
+
+#: core/ui/ui_menus.c
+msgid "Answer radio checks"
+msgstr "Ответы на радио-проверки"
+
+#: core/ui/ui_menus.c
+msgid "Answer call alerts"
+msgstr "Оповещения о звонках"
+
+#: core/ui/ui_menus.c
+msgid "TFTP codeplug write"
+msgstr "TFTP codeplug писать"
+
+#: core/ui/ui_menus.c
+msgid "Message format"
+msgstr "Формат сообщения"
+
+#: core/ui/ui_menus.c
+msgid "Accept zone shares"
+msgstr "Акции акцепт-зоны"
+
+#: core/ui/ui_menus.c
+msgid "USB network at start"
+msgstr "Сеть USB в начале"
+
+#: core/ui/ui_menus.c
+msgid "PC answers data"
+msgstr "PC отвечает на данные"
+
+#: core/ui/ui_menus.c
+msgid "USB address"
+msgstr "USB адрес"
+
+#: core/ui/ui_menus.c
+msgid "Auto power off"
+msgstr "Автовыключение"
+
+#: core/ui/ui_menus.c
+msgid "Low battery warning"
+msgstr "Низкий уровень заряда батареи"
+
+#: core/ui/ui_menus.c
+msgid "Key "
+msgstr "Ключ "
+
+#: core/ui/ui_menus.c
+msgid " hold"
+msgstr " Удержание"
+
+#: core/ui/ui_menus.c
+msgid "Long press time"
+msgstr "Длинное время печати"
+
+#: core/ui/ui_menus.c
+msgid "Key repeat"
+msgstr "Повтор клавиш"
+
+#: core/ui/ui_menus.c
+msgid "Up/Down on Home"
+msgstr "Вверх/вниз по дому"
+
+#: core/ui/ui_menus.c
+msgid "DMR ID and name"
+msgstr "DMR ID и имя"
+
+#: core/ui/ui_menus.c
+msgid "Factory reset"
+msgstr "Сброс настроек"
+
+#: core/ui/ui_menus.c
+msgid "Crash log"
+msgstr "Журнал сбоев"
+
+#: core/ui/ui_menus.c
+msgid "Freq trim"
+msgstr "Подстройка частоты"
+
+#: core/ui/ui_menus.c
+msgid "Sound"
+msgstr "Звук"
+
+#: core/ui/ui_menus.c
+msgid "Display"
+msgstr "Экран"
+
+#: core/ui/ui_menus.c
+msgid "Talk & listen"
+msgstr "Говорить и слушать"
+
+#: core/ui/ui_menus.c
+msgid "Talk & Listen"
+msgstr "Поговорите и послушайте"
+
+#: core/ui/ui_menus.c
+msgid "Privacy"
+msgstr "Конфиденциальность"
+
+#: core/ui/ui_menus.c
+msgid "Location"
+msgstr "Местоположение"
+
+#: core/ui/ui_menus.c
+msgid "Connections"
+msgstr "Связь"
+
+#: core/ui/ui_menus.c
+msgid "Keys"
+msgstr "Ключи"
+
+#: core/ui/ui_menus.c
+msgid "My radio"
+msgstr "Моё радио"
+
+#: core/ui/ui_menus.c
+msgid "Advanced"
+msgstr "Дополнительно"
+
+#: core/ui/ui_menus.c
+msgid "0-9 open  Back"
+msgstr "0-9 open  Назад"
+
+#: core/ui/ui_menus.c
+msgid "Talk permit tone: not in this build"
+msgstr "Разрешение на разговор тон: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "This radio has no vibration motor"
+msgstr "У этого радио нет вибрационного двигателя."
+
+#: core/ui/ui_menus.c
+msgid "Colors are for color screens"
+msgstr "Цвета предназначены для цветных экранов"
+
+#: core/ui/ui_menus.c
+msgid "Mic gain: not in this build"
+msgstr "Оригинальное название: Not in This Build"
+
+#: core/ui/ui_menus.c
+msgid "Mic AGC sets the level"
+msgstr "Mic AGC устанавливает уровень"
+
+#: core/ui/ui_menus.c
+msgid "Noise reduction: not in this build"
+msgstr "Уменьшение шума: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Not on this radio"
+msgstr "Не на этом радио"
+
+#: core/ui/ui_menus.c
+msgid "Mic AGC: not in this build"
+msgstr "Mic AGC: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Digital monitor: not in this build"
+msgstr "Цифровой монитор: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Talker alias: not in this build"
+msgstr "Оригинальное название: Not in This Build"
+
+#: core/ui/ui_menus.c
+msgid "Pick a key type first"
+msgstr "Сначала выберите тип ключа"
+
+#: core/ui/ui_menus.c
+msgid "No GPS on this radio"
+msgstr "Нет GPS на этом радио."
+
+#: core/ui/ui_menus.c
+msgid "Diagnostics: not in this build"
+msgstr "Диагностика: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Settings are saved as you change them"
+msgstr "Настройки сохраняются по мере их изменения"
+
+#: core/ui/ui_menus.c
+msgid "Not changed: "
+msgstr "Не изменено: "
+
+#: core/ui/ui_menus.c
+msgid " to "
+msgstr " Кому "
+
+#: core/ui/ui_menus.c
+msgid ", steps of "
+msgstr "Шагами, шагами "
+
+#: core/ui/ui_menus.c
+msgid "Keep RX-only"
+msgstr "Оставить только приём"
+
+#: core/ui/ui_menus.c
+msgid "Enable TX"
+msgstr "Разрешить передачу"
+
+#: core/ui/ui_menus.c
+msgid "No, keep settings"
+msgstr "Нет, сохраняйте настройки."
+
+#: core/ui/ui_menus.c
+msgid "Yes, reset"
+msgstr "Да, перезагрузка"
+
+#: core/ui/ui_menus.c
+msgid "Factory settings restored"
+msgstr "Восстановлены заводские настройки"
+
+#: core/ui/ui_menus.c
+msgid "Reset: not in this build"
+msgstr "Сброс: не в этой сборке"
+
+#: core/ui/ui_menus.c
+msgid "Outside ham bands"
+msgstr "Вне хэм-групп"
+
+#: core/ui/ui_menus.c
+msgid "PTT may transmit."
+msgstr "PTT может передавать."
+
+#: core/ui/ui_menus.c
+msgid "Reset all settings to factory defaults? Channels stay. This can't be undone."
+msgstr "Сброс всех настроек на заводские дефолты? Каналы остаются. Это нельзя отменить."
+
+#: core/ui/ui_menus.c
+msgid "Enable TX?"
+msgstr "Разрешить передачу?"
+
+#: core/ui/ui_menus.c
+msgid "Factory Reset"
+msgstr "Сброс настроек"
+
+#: core/ui/ui_menus.c
+msgid "Set them with qdmr"
+msgstr "Установите их с помощью qdmr"
+
+#: core/ui/ui_menus.c
+msgid "Current"
+msgstr "Текущий"
+
+#: core/ui/ui_menus.c
+msgid "Reply"
+msgstr "Ответить"
+
+#: core/ui/ui_menus.c
+msgid "Listen"
+msgstr "Слушай."
+
+#: core/ui/ui_menus.c
+msgid "Type a number..."
+msgstr "Введите число..."
+
+#: core/ui/ui_menus.c
+msgid "Select contact..."
+msgstr "Выберите контакт..."
+
+#: core/ui/ui_menus.c
+msgid "Talk to"
+msgstr "Разговаривать"
+
+#: core/ui/ui_menus.c
+msgid "{PTT once  OK use  Hold OK set|OK use  Hold OK set}"
+msgstr "{PTT once  OK use  Hold OK set|OK use  Hold OK set}"
+
+#: core/ui/ui_menus.c
+msgid "Skip channel for now"
+msgstr "Скип-канал на сегодня"
+
+#: core/ui/ui_menus.c
+msgid "Stay here"
+msgstr "Оставайся здесь."
+
+#: core/ui/ui_menus.c
+msgid "Always skip"
+msgstr "Всегда пропускать"
+
+#: core/ui/ui_menus.c
+msgid "Skipped until the scan stops"
+msgstr "Пропущено до тех пор, пока сканирование не прекратится"
+
+#: core/ui/ui_menus.c
+msgid "Nothing to skip yet"
+msgstr "Пока нечего пропустить"
+
+#: core/ui/ui_menus.c
+msgid "Scan stopped here"
+msgstr "Сканирование остановилось здесь"
+
+#: core/ui/ui_menus.c
+msgid "Edit scan lists in qdmr"
+msgstr "Редактировать списки сканирования в qdmr"
+
+#: core/ui/ui_menus.c
+msgid "In use"
+msgstr "Выбрано"
+
+#: core/ui/ui_menus.c
+msgid "Cancel"
+msgstr "Отмена"
+
+#: core/ui/ui_menus.c
+msgid "Start new"
+msgstr "Начать заново"
+
+#: core/ui/ui_menus.c
+msgid "Use anyway"
+msgstr "Используйте в любом случае"
+
+#: core/ui/ui_menus.c
+msgid "Creating codeplug"
+msgstr "Создание Codeplug"
+
+#: core/ui/ui_menus.c
+msgid "Old codeplug kept: edit again"
+msgstr "Сохранился старый кодплуг: редактировать снова"
+
+#: core/ui/ui_menus.c
+msgid "Another firmware's codeplug? Start new erases contacts, callsign and DMR ID. Back up first."
+msgstr "Запуск новой прошивки стирает контакты, позывной и DMR ID. Сначала резервное копирование."
+
+#: core/ui/ui_menus.c
+msgid "Old codeplug"
+msgstr "Старый код-плаг"
+
+#: core/ui/ui_screens.c
+msgid "IDLE"
+msgstr "ОЖИД."
+
+#: core/ui/ui_screens.c
+msgid "NO TX"
+msgstr "НЕТ TX"
+
+#: core/ui/ui_screens.c
+msgid "DUAL"
+msgstr "ДВА"
+
+#: core/ui/ui_screens.c
+msgid "SCAN"
+msgstr "СКАН"
+
+#: core/ui/ui_screens.c
+msgid "ROAM"
+msgstr "РОУМ"
+
+#: core/ui/ui_screens.c
+msgid "Step "
+msgstr "Шаг вперед. "
+
+#: core/ui/ui_screens.c
+msgid "DMR: not in this build"
+msgstr "DMR: not in this build"
+
+#: core/ui/ui_screens.c
+msgid "No TX frequency"
+msgstr "Нет TX частоты"
+
+#: core/ui/ui_screens.c
+msgid "Air Band AM"
+msgstr "Исполнитель: Air Band AM"
+
+#: core/ui/ui_screens.c
+msgid "Broadcast FM"
+msgstr "Трансляция FM"
+
+#: core/ui/ui_screens.c
+msgid "This channel is RX only"
+msgstr "Этот канал только RX."
+
+#: core/ui/ui_screens.c
+msgid "Bands "
+msgstr "Банда "
+
+#: core/ui/ui_screens.c
+msgid "TX time-out reached"
+msgstr "TX тайм-аут достигнут"
+
+#: core/ui/ui_screens.c
+msgid "No TX frequency set"
+msgstr "Нет частоты TX"
+
+#: core/ui/ui_screens.c
+msgid "Mode: not in this build"
+msgstr "Режим: не в этой сборке"
+
+#: core/ui/ui_screens.c
+msgid "No codec: voice off"
+msgstr "Нет кодека: звук отключён"
+
+#: core/ui/ui_screens.c
+msgid "DMR modem not running"
+msgstr "DMR modem not running"
+
+#: core/ui/ui_screens.c
+msgid "Channel busy"
+msgstr "Канал занят"
+
+#: core/ui/ui_screens.c
+msgid "No repeater answered"
+msgstr "Ни один повторитель не ответил"
+
+#: core/ui/ui_screens.c
+msgid "Modem refused to send"
+msgstr "Модем отказался отправлять"
+
+#: core/ui/ui_screens.c
+msgid "Hotspot mode: PTT off"
+msgstr "Режим Hotspot: PTT off"
+
+#: core/ui/ui_screens.c
+msgid "No DMR ID in codeplug"
+msgstr "DMR ID в Codeplug отсутствует"
+
+#: core/ui/ui_screens.c
+msgid "Air band: receive only"
+msgstr "Воздушная полоса: принимать только"
+
+#: core/ui/ui_screens.c
+msgid "Broadcast: receive only"
+msgstr "Трансляция: получайте только"
+
+#: core/ui/ui_screens.c
+msgid "Repeater channel: PTT off"
+msgstr "Канал ретранслятора: PTT off"
+
+#: core/ui/ui_screens.c
+msgid "Not allowed here"
+msgstr "Не допускается сюда"
+
+#: core/ui/ui_screens.c
+msgid "Tune into a band, then PTT"
+msgstr "Настройка в группу, затем PTT"
+
+#: core/ui/ui_screens.c
+msgid "Pick another channel"
+msgstr "Выберите другой канал"
+
+#: core/ui/ui_screens.c
+msgid "Release PTT to talk again"
+msgstr "PTT снова заговорят"
+
+#: core/ui/ui_screens.c
+msgid "Add codec with rfoundry"
+msgstr "Добавьте кодек через rfoundry"
+
+#: core/ui/ui_screens.c
+msgid "Wait for the call to end"
+msgstr "Дождитесь окончания призыва"
+
+#: core/ui/ui_screens.c
+msgid "Check CC and range"
+msgstr "Проверьте CC и дальность"
+
+#: core/ui/ui_screens.c
+msgid "Release PTT, try again"
+msgstr "Отпустите PTT, попробуйте еще раз"
+
+#: core/ui/ui_screens.c
+msgid "OK stop hotspot"
+msgstr "OK stop hotspot"
+
+#: core/ui/ui_screens.c
+msgid "Set your DMR ID in qdmr"
+msgstr "Установите DMR ID в qdmr"
+
+#: core/ui/ui_screens.c
+msgid "Tune out of the band"
+msgstr "Настройка вне диапазона"
+
+#: core/ui/ui_screens.c
+msgid "Pick a user channel to talk"
+msgstr "Выберите пользовательский канал для разговора"
+
+#: core/ui/ui_screens.c
+msgid "Private to you"
+msgstr "Частный для вас"
+
+#: core/ui/ui_screens.c
+msgid "Private to "
+msgstr "Частный для "
+
+#: core/ui/ui_screens.c
+msgid "Reply→ "
+msgstr "Ответить "
+
+#: core/ui/ui_screens.c
+msgid "Sending ID"
+msgstr "Отправить ID"
+
+#: core/ui/ui_screens.c
+msgid "Repeating"
+msgstr "Повторение"
+
+#: core/ui/ui_screens.c
+msgid "SFR repeater"
+msgstr "ретранслятор SFR"
+
+#: core/ui/ui_screens.c
+msgid "DMR modem off"
+msgstr "Модем DMR выключен"
+
+#: core/ui/ui_screens.c
+msgid "Lock"
+msgstr "Блокировка"
+
+#: core/ui/ui_screens.c
+msgid "Roam?"
+msgstr "Роам?"
+
+#: core/ui/ui_screens.c
+msgid "Roam"
+msgstr "РОУМ"
+
+#: core/ui/ui_screens.c
+msgid "DMon"
+msgstr "Демон"
+
+#: core/ui/ui_screens.c
+msgid "Priv"
+msgstr "Частный"
+
+#: core/ui/ui_screens.c
+msgid "Private "
+msgstr "частный "
+
+#: core/ui/ui_screens.c
+msgid "TALKING"
+msgstr "ВЫЗОВ"
+
+#: core/ui/ui_screens.c
+msgid "WAKING RPT"
+msgstr "Проснуться"
+
+#: core/ui/ui_screens.c
+msgid "WAITING"
+msgstr "В ожидании"
+
+#: core/ui/ui_screens.c
+msgid "ADMITTED"
+msgstr "ПОДПИСАННЫЙ"
+
+#: core/ui/ui_screens.c
+msgid "ENDING"
+msgstr "Конец"
+
+#: core/ui/ui_screens.c
+msgid " Private"
+msgstr " частный"
+
+#: core/ui/ui_screens.c
+msgid " Group"
+msgstr " Группа"
+
+#: core/ui/ui_screens.c
+msgid "Finishing the call"
+msgstr "Окончание звонка"
+
+#: core/ui/ui_screens.c
+msgid "Release PTT to stop"
+msgstr "PTT прекращают выпускать"
+
+#: core/ui/ui_screens.c
+msgid " late"
+msgstr " поздно"
+
+#: core/ui/ui_screens.c
+msgid " EMERGENCY"
+msgstr " Тревога"
+
+#: core/ui/ui_screens.c
+msgid "Encrypted: not played"
+msgstr "Зашифровано: не играется"
+
+#: core/ui/ui_screens.c
+msgid "Other TG: not played"
+msgstr "TG: не играется"
+
+#: core/ui/ui_screens.c
+msgid "MON: digital monitor"
+msgstr "MON: цифровой монитор"
+
+#: core/ui/ui_screens.c
+msgid "Squelch open"
+msgstr "Шумоподавитель открыт"
+
+#: core/ui/ui_screens.c
+msgid "Receiving"
+msgstr "получающий"
+
+#: core/ui/ui_screens.c
+msgid "SENDING"
+msgstr "Отправка"
+
+#: core/ui/ui_screens.c
+msgid " left of "
+msgstr " левый "
+
+#: core/ui/ui_screens.c
+msgid "No time limit"
+msgstr "Нет ограничений по времени"
+
+#: core/ui/ui_screens.c
+msgid "Can't transmit"
+msgstr "Не может передавать"
+
+#: core/ui/ui_screens.c
+msgid "Last activity "
+msgstr "Последняя активность "
+
+#: core/ui/ui_screens.c
+msgid "No activity yet"
+msgstr "Никакой активности пока"
+
+#: core/ui/ui_screens.c
+msgid "OK tune  Back delete"
+msgstr "OK настроить  Назад удалить"
+
+#: core/ui/ui_screens.c
+msgid "# skip  Back stop scan"
+msgstr "# skip  Back stop scan"
+
+#: core/ui/ui_screens.c
+msgid "# caller  Back end reply"
+msgstr "# caller  Back end reply"
+
+#: core/ui/ui_screens.c
+msgid "Digital monitor  Back off"
+msgstr "Цифровой монитор  Back off"
+
+#: core/ui/ui_screens.c
+msgid "Back undo  Hold OK save"
+msgstr "Back undo  Удерж. OK сохранить"
+
+#: core/ui/ui_screens.c
+msgid "{Back: VFO's talk target|Back default target}"
+msgstr "{Оригинальное название: VFO's Talk Target|Обратная цель по умолчанию}"
+
+#: core/ui/ui_screens.c
+msgid "{Back: channel's talkgroup|Back default target}"
+msgstr "{Скриншоты из игры Channel's Talkgroup|Обратная цель по умолчанию}"
+
+#: core/ui/ui_screens.c
+msgid "0-9 freq  * Quick  Up/Dn"
+msgstr "0-9 freq  * Quick  Up/Dn"
+
+#: core/ui/ui_screens.c
+msgid "Heard "
+msgstr "Принято "
+
+#: core/ui/ui_screens.c
+msgid "Busy"
+msgstr "Занято"
+
+#: core/ui/ui_screens.c
+msgid "SENDING on "
+msgstr "ВНИМАНИЕ "
+
+#: core/ui/ui_screens.c
+msgid "TALKING on "
+msgstr "Разговаривая "
+
+#: core/ui/ui_screens.c
+msgid "Receiving on A and B"
+msgstr "Получение на A и B"
+
+#: core/ui/ui_screens.c
+msgid "Receiving on "
+msgstr "Принимать на "
+
+#: core/ui/ui_screens.c
+msgid ", muted"
+msgstr "приглушенный"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 back to B  Back stop|# 1 back to B}"
+msgstr "{# 1 Вернуться в B  Back stop|# 1 Вернуться в B}"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 back to A  Back stop|# 1 back to A}"
+msgstr "{#1 Вернуться в А  Back stop|#1 Вернуться в А}"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 talk on B  Back stop|# 1 talk on B}"
+msgstr "{# 1 Поговорить о B  Back stop|# 1 Поговорить о B}"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 talk on A  Back stop|# 1 talk on A}"
+msgstr "{# 1 Поговорим об А  Back stop|# 1 Поговорим об А}"
+
+#: core/ui/ui_screens.c
+msgid "# options  Back stop"
+msgstr "# options  Back stop"
+
+#: core/ui/ui_screens.c
+msgid "# Open"
+msgstr "#Открыто #"
+
+#: core/ui/ui_screens.c
+msgid "# Actions"
+msgstr "#Действия"
+
+#: core/ui/ui_screens.c
+msgid "Back hide"
+msgstr "Назад скрыть"
+
+#: core/ui/ui_screens.c
+msgid "Up/Dn more  Back"
+msgstr "Up/Dn more  Назад"
+
+#: core/ui/ui_screens.c
+msgid "EMERGENCY"
+msgstr "Тревога"
+
+#: core/ui/ui_screens.c
+msgid "OK acknowledge  Back hide"
+msgstr "OK подтвердить  Назад скрыть"
+
+#: core/ui/ui_screens.c
+msgid "Muted"
+msgstr "приглушенный"
+
+#: core/ui/ui_screens.c
+msgid "Up Down change  OK done"
+msgstr "Up Down change  OK готово"
+
+#: core/ui/ui_screens.c
+msgid "STARTING"
+msgstr "начинать"
+
+#: core/ui/ui_screens.c
+msgid "TX NET"
+msgstr "TX NET"
+
+#: core/ui/ui_screens.c
+msgid "RX RF"
+msgstr "RX RF"
+
+#: core/ui/ui_screens.c
+msgid "READY"
+msgstr "Готовый"
+
+#: core/ui/ui_screens.c
+msgid "No frequency yet"
+msgstr "Пока нет частоты"
+
+#: core/ui/ui_screens.c
+msgid "Net "
+msgstr "нет "
+
+#: core/ui/ui_screens.c
+msgid "No calls yet"
+msgstr "Никаких звонков."
+
+#: core/ui/ui_screens.c
+msgid "{Squelch|SQL}"
+msgstr "{Шумоподавитель|SQL}"
+
+#: core/ui/ui_screens.c
+msgid "Tone"
+msgstr "Тон"
+
+#: core/ui/ui_screens.c
+msgid "{Monitor|MON}"
+msgstr "{Мониторинг|МОН}"
+
+#: core/ui/ui_screens.c
+msgid "{Dual watch|Dual}"
+msgstr "{Двойное наблюдение|ДВА}"
+
+#: core/ui/ui_screens.c
+msgid "Width"
+msgstr "широта"
+
+#: core/ui/ui_screens.c
+msgid "Bright"
+msgstr "Яркий"
+
+#: core/ui/ui_screens.c
+msgid "{Timeslot|Slot}"
+msgstr "{Временной слот|слот}"
+
+#: core/ui/ui_screens.c
+msgid "Color"
+msgstr "цвет"
+
+#: core/ui/ui_screens.c
+msgid "{Digital monitor|DMon}"
+msgstr "{Цифровой монитор|Демон}"
+
+#: core/ui/ui_screens.c
+msgid "{Privacy|Priv}"
+msgstr "{Конфиденциальность|Частный}"
+
+#: core/ui/ui_screens.c
+msgid "{Talk to|Talk}"
+msgstr "{Разговаривать|Разговор}"
+
+#: core/ui/ui_screens.c
+msgid "{Copy to VFO|To VFO}"
+msgstr "{Копия для VFO|To VFO}"
+
+#: core/ui/ui_screens.c
+msgid "{TX freq|TXFreq}"
+msgstr "{TX freq|TXFreq}"
+
+#: core/ui/ui_screens.c
+msgid "Tone TX"
+msgstr "Тон TX"
+
+#: core/ui/ui_screens.c
+msgid "Tone RX"
+msgstr "Тон RX"
+
+#: core/ui/ui_screens.c
+msgid "Copy"
+msgstr "Копировать"
+
+#: core/ui/ui_screens.c
+msgid "All"
+msgstr "Все"
+
+#: core/ui/ui_screens.c
+msgid "{Up/Dn: +/- offset  Type: TX freq|Up/Dn +/- offset  0-9 TX freq|Up/Dn offset  0-9 TX freq|Up/Dn +/-  0-9 TX freq}"
+msgstr "{Up/Dn: +/- offset  Type: TX freq|Up/Dn +/- offset  0-9 TX freq|Up/Dn offset  0-9 TX freq|Up/Dn +/-  0-9 TX freq}"
+
+#: core/ui/ui_screens.c
+msgid "  OK sets"
+msgstr "  OK установить"
+
+#: core/ui/ui_screens.c
+msgid "Quick"
+msgstr "Быстрое меню"
+
+#: core/ui/ui_screens.c
+msgid "1-9 change  Hold OK save"
+msgstr "1-9 change  Удерж. OK сохранить"
+
+#: core/ui/ui_screens.c
+msgid "0 All settings  Hold OK save"
+msgstr "0 All settings  Удерж. OK сохранить"
+
+#: core/ui/ui_screens.c
+msgid "* more  Back"
+msgstr "* more  Назад"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't write the codeplug: not saved"
+msgstr "Не удалось написать кодплаг: не сохранился"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't read the channel: not saved"
+msgstr "Не удалось прочесть канал: не спасли"
+
+#: core/ui/ui_svc_storage.c
+msgid "Zone full: not saved"
+msgstr "Полная зона: не сохранено"
+
+#: core/ui/ui_svc_storage.c
+msgid "Already in this zone"
+msgstr "Уже в этой зоне"
+
+#: core/ui/ui_svc_storage.c
+msgid "Already at the end"
+msgstr "Уже в конце"
+
+#: core/ui/ui_svc_storage.c
+msgid "That zone is gone"
+msgstr "Эта зона исчезла"
+
+#: core/ui/ui_svc_storage.c
+msgid "That channel is gone"
+msgstr "Этот канал исчез."
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't read the channel: for now only"
+msgstr "Не смог прочесть канал: пока только"
+
+#: core/ui/ui_svc_storage.c
+msgid "Codeplug not written: for now only"
+msgstr "Кодплуг не написан: пока только"
+
+#: core/ui/ui_svc_storage.c
+msgid "Not a stored contact: for now only"
+msgstr "Не сохраненный контакт: пока только"
+
+#: core/ui/ui_svc_storage.c
+msgid "Reset: the settings couldn't be saved"
+msgstr "Reset: настройки не могут быть сохранены"
+
+#: core/ui/ui_svc_storage.c
+msgid "Reset: native area couldn't be erased"
+msgstr "Перезагрузка: местность не может быть стерта"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't save the keys: for now only"
+msgstr "Не удалось сохранить ключи: пока только"
+
+#: core/ui/ui_svc_zone.c
+msgid "That zone is full"
+msgstr "Эта зона заполнена"
+
+#: core/ui/ui_svc_zone.c
+msgid "Not enough free channels"
+msgstr "Недостаточно свободных каналов"
+
+#: core/ui/ui_svc_zone.c
+msgid "Not enough free contacts"
+msgstr "Недостаточно свободных контактов"
+
+#: core/ui/ui_svc_zone.c
+msgid "Not a zone this radio reads"
+msgstr "Это не зона, это радио читает"
+
+#: core/ui/ui_svc_zone.c
+msgid "The offer is gone"
+msgstr "Предложение ушло"

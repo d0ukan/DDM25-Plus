@@ -32,6 +32,18 @@ def main():
     run(['python3',ROOT/'tools/build_radiofoundry.py','--prepare-only'],cwd=ROOT)
     OUT.mkdir(parents=True,exist_ok=True)
     test_turkish_glyphs()
+    menu_gen = OUT / "menu-gen"
+    menu_gen.mkdir(exist_ok=True)
+    run(["python3", APP / "tools/i18n.py", "--check", "tr", "ru"], cwd=APP)
+    run(["python3", APP / "tools/i18n.py", "--gen", menu_gen / "lang_tables.h"], cwd=APP)
+    menu_test = OUT / "test_menu_locales"
+    run(["clang", "-std=gnu99", "-Wall", "-Wextra", "-Wno-unused-parameter", "-g",
+         "-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-D__attribute__(x)=",
+         "-DCONFIG_LANG_TR=1", "-DCONFIG_LANG_RU=1", "-DCONFIG_FONT_TURKISH=1", "-DCONFIG_LANG_ES=0",
+         "-DCONFIG_LANG_IT=0", "-I" + str(APP / "hal"), "-I" + str(APP / "core"), "-I" + str(menu_gen),
+         ROOT / "tests/classic/test_menu_locales.c", APP / "core/ui/gfx.c", APP / "core/ui/fonts.c",
+         APP / "core/ui/i18n.c", "-o", menu_test], cwd=ROOT)
+    run([menu_test], cwd=ROOT)
     host=APP/'tests/host'
     # VERSION must advertise the saved-channel capability, not the lab engine.
     # Link the real handler/formatter/build_info; unused radio commands are discarded.

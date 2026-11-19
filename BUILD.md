@@ -20,7 +20,10 @@ snapshots are pinned in `sources.lock.json` and the build recipe.
 To include Turkish display glyphs in a Classic test build, run
 `python3 tools/build_radiofoundry.py --classic --turkish-glyphs --stack-check`.
 The build uses the `dm32-p25-classic-turkish` output directory. This option
-provides the glyphs needed by a future Turkish menu catalog.
+provides the Turkish glyphs alone. To include both Turkish and Russian menus,
+run `python3 tools/build_radiofoundry.py --classic --menu-locales --stack-check`.
+The output is in `dm32-p25-classic-locales`. Choose Türkçe or Русский from
+Settings > Display > Language.
 
 For a release candidate, also verify a forced rebuild:
 

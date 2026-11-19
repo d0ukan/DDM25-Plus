@@ -15,6 +15,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
@@ -292,6 +293,33 @@ def prepare_turkish_fonts():
     ):
         source = ROOT / "integration/radiofoundry/turkish" / name
         write_owned(DEST / destination, source.read_bytes())
+
+
+def prepare_menu_locales():
+    source = ROOT / "integration/radiofoundry/locales"
+    patched_files = (
+        "core/config.h", "config/features.mk", "core/ui/font.h", "core/ui/fonts.c",
+        "core/ui/gfx.h", "core/ui/gfx.c", "core/ui/ui_screens.c", "tools/i18n.py", "docs/build-config.md",
+    )
+    pristine_files = {"core/ui/gfx.h", "core/ui/gfx.c", "core/ui/ui_screens.c", "docs/build-config.md"}
+    with tempfile.TemporaryDirectory() as directory:
+        scratch = Path(directory)
+        for name in patched_files:
+            path = scratch / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            original = UP if name in pristine_files else DEST
+            shutil.copyfile(original / name, path)
+        run(["git", "apply", "--whitespace=error", source / "menu-locales.patch"], cwd=scratch)
+        for name in patched_files:
+            path = DEST / name
+            original = UP / name if name in pristine_files else path
+            write_owned(path, (scratch / name).read_bytes(), original.read_bytes())
+    for name in ("tr.po", "ru.po"):
+        write_owned(DEST / "core/ui/lang" / name, (source / name).read_bytes())
+    for name in ("cyrillic_small.inc", "cyrillic_spleen.inc", "cyrillic_jbmono.inc"):
+        write_owned(DEST / "core/ui/fonts" / name, (source / name).read_bytes())
+    license_name = "LicenseRef-X11-Fixed-Public-Domain.txt"
+    write_owned(DEST / "LICENSES" / license_name, (source / license_name).read_bytes())
 
 
 def prepare():
@@ -578,6 +606,7 @@ def prepare():
         "See COPYING-OPEN25, COPYING-P25-CAI, COPYING-P25-IMBE and the source manifest.\n"
         "Classic supports saved conventional P25 channels; final RF qualification is incomplete.\n"
     ).encode())
+    prepare_menu_locales()
     OWNED_FILE.write_text(json.dumps(OWNED, indent=2) + "\n")
     changed=subprocess.check_output(["git","-C",str(DEST),"diff","--name-only","-z","HEAD"]).decode().split("\0")
     extra=subprocess.check_output(["git","-C",str(DEST),"ls-files","--others","--exclude-standard","-z"]).decode().split("\0")
@@ -605,9 +634,12 @@ def main():
     ap.add_argument("--tx-bench",action="store_true",help="bounded native TX on 145.500 MHz; retains ordinary PTT/storage guards")
     ap.add_argument('--classic', action='store_true', help='Classic FM/DMR/conventional P25 release preset')
     ap.add_argument("--turkish-glyphs", action="store_true", help="include Turkish display glyphs in Classic")
+    ap.add_argument("--menu-locales", action="store_true", help="include Turkish and Russian menus in Classic")
     args = ap.parse_args()
     if args.turkish_glyphs and not args.classic:
         ap.error("--turkish-glyphs requires --classic")
+    if args.menu_locales and not args.classic:
+        ap.error("--menu-locales requires --classic")
     if args.classic:
         if args.first_boot or args.disable or args.disable_native or args.dev_update or args.tx_bench:
             ap.error('Classic is a separate normal-operation preset')
@@ -642,7 +674,9 @@ def main():
     if args.classic:
         suffix='classic'
         identity='classic-0.1.0-rc1-r13'
-        if args.turkish_glyphs:
+        if args.menu_locales:
+            suffix += "-locales"
+        elif args.turkish_glyphs:
             suffix += "-turkish"
     b = f"build/dm32-p25-{suffix}"
     command = ["make", "-j8", "BOARD=dm32", f"CROSS={ROOT}/toolchain/bin/csky-elf-", f"BUILD={b}",
@@ -667,6 +701,8 @@ def main():
                       'LANG_ES','LANG_IT')]]
     if args.turkish_glyphs:
         command.append("CONFIG_FONT_TURKISH=y")
+    if args.menu_locales:
+        command += ["CONFIG_LANG_TR=y", "CONFIG_LANG_RU=y"]
     if args.first_boot:
         command += ["CONFIG_STUB_ENTRY="+("y" if args.dev_update else "n"), "CONFIG_CPS_OPENFW=n", "CONFIG_CPS_FAST=n", "CONFIG_AUDIO_PROBE=n"]
     log = ROOT / f"logs/radiofoundry-p25-{suffix}.log"

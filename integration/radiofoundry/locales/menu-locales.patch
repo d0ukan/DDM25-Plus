@@ -1,0 +1,408 @@
+--- a/core/config.h
++++ b/core/config.h
+@@ -189,7 +189,19 @@
+ #ifndef CONFIG_LANG_IT
+ #define CONFIG_LANG_IT			0
+ #endif
+-#define CONFIG_LANG_ANY			(CONFIG_LANG_ES || CONFIG_LANG_IT)
++#ifndef CONFIG_LANG_TR
++#define CONFIG_LANG_TR 0
++#endif
++#ifndef CONFIG_LANG_RU
++#define CONFIG_LANG_RU 0
++#endif
++#ifndef CONFIG_LANG_DEFAULT_TR
++#define CONFIG_LANG_DEFAULT_TR 0
++#endif
++#ifndef CONFIG_LANG_DEFAULT_RU
++#define CONFIG_LANG_DEFAULT_RU 0
++#endif
++#define CONFIG_LANG_ANY			(CONFIG_LANG_ES || CONFIG_LANG_IT || CONFIG_LANG_TR || CONFIG_LANG_RU)
+ // The language the radio starts in until the user picks one (CONFIG_LANG_DEFAULT_<CODE>, needs its CONFIG_LANG_<CODE>):
+ // all 0 = English
+ #ifndef CONFIG_LANG_DEFAULT_ES
+--- a/config/features.mk
++++ b/config/features.mk
+@@ -158,6 +158,10 @@
+ # Italian on the radio (core/ui/lang/it.po): off by default, listed dimmed; the web flasher offers it to Italian
+ # browsers. About 17 KB with Spanish on
+ CONFIG_LANG_IT ?= n
++CONFIG_LANG_TR ?= n
++CONFIG_LANG_RU ?= n
++CONFIG_LANG_DEFAULT_TR ?= n
++CONFIG_LANG_DEFAULT_RU ?= n
+ # the language the radio starts in, until the user picks one in Settings > Display > Language: one switch per language,
+ # at most one on (with more, the first listed wins), off = English. Needs that language's switch. No flash cost
+ CONFIG_LANG_DEFAULT_ES ?= n
+@@ -263,7 +267,7 @@
+ 
+ 
+ FEATURES := FM SUBTONE DMR DMR_PRIVACY DMR_TALKER_ALIAS DMR_GPS DMR_SMS DMR_TMS DMR_ARS DMR_LRRP DMR_SIGNALING DMR_EMERGENCY DMR_ROAMING DMR_IP_GATEWAY ZONE_SHARE DMR_UDP_COMPRESS DMR_CONFIRMED NET_TCP NET_KISS NET_HTTP NET_HTTP_GZIP NET_WEBCTL NET_RIGCTL NET_APRSIS NET_USRP MDNS TFTP TFTP_IDDB IDDB_COMPACT DMR_CONTROL_STATION SNMP SFR SFR_DUALPATH_RX SFR_CWID TASK_STACKS \
+-	USB HOSTLINK USB_NETWORK NET_PPP HOTSPOT HOTSPOT_SPLIT DEBUGLINK CPS_OPENFW CPS_FAST VFO VFO_FM VFO_DMR DIAG FONT_XL FONT_AA FONT_BIG LANG_ES LANG_IT LANG_DEFAULT_ES LANG_DEFAULT_IT UI_COLOR UI_SETTINGS SCAN DUAL_WATCH BEEP FM_TX_TONES DTMF \
++	USB HOSTLINK USB_NETWORK NET_PPP HOTSPOT HOTSPOT_SPLIT DEBUGLINK CPS_OPENFW CPS_FAST VFO VFO_FM VFO_DMR DIAG FONT_XL FONT_AA FONT_BIG LANG_ES LANG_IT LANG_DEFAULT_ES LANG_DEFAULT_IT LANG_TR LANG_RU LANG_DEFAULT_TR LANG_DEFAULT_RU UI_COLOR UI_SETTINGS SCAN DUAL_WATCH BEEP FM_TX_TONES DTMF \
+ 	VOX REF_TRIM BATTERY_SAVE VIBRATE GPS AUDIO_PROBE STUB_ENTRY NAND_STORAGE CRASH_LOG CRASH_SCREEN CRASH_REPORT WATCHDOG FAULT_TRACE AM_RX BCAST_FM APRS APRS_RX APRS_IGATE GPS_SKY KEY_ASSIGN CHANNEL_LIST CHANNEL_EDIT ZONE_EDIT CONTACT_EDIT
+ 
+ CONFIG_P25 ?= n
+@@ -299,6 +303,8 @@
+ endif
+ endif
+ 
++$(if $(and $(filter y,$(CONFIG_LANG_DEFAULT_TR)),$(filter-out y,$(CONFIG_LANG_TR))),$(error CONFIG_LANG_DEFAULT_TR=y needs CONFIG_LANG_TR=y))
++$(if $(and $(filter y,$(CONFIG_LANG_DEFAULT_RU)),$(filter-out y,$(CONFIG_LANG_RU))),$(error CONFIG_LANG_DEFAULT_RU=y needs CONFIG_LANG_RU=y))
+ # Dependencies
+ feature_on = $(filter y,$(CONFIG_$(1)))
+ ifneq ($(call feature_on,SUBTONE),)
+@@ -472,6 +478,9 @@
+ CONFIG_DMR_DATA_CORE := $(if $(strip $(foreach f,DMR_SMS DMR_ARS DMR_LRRP DMR_SIGNALING DMR_EMERGENCY DMR_IP_GATEWAY ZONE_SHARE CRASH_REPORT,$(call feature_on,$(f)))),y,n)
+ 
+ FEATURE_DEFS := $(foreach f,$(FEATURES) DMR_DATA_CORE,-DCONFIG_$(f)=$(if $(call feature_on,$(f)),1,0))
++ifeq ($(CONFIG_LANG_TR),y)
++override CONFIG_FONT_TURKISH := y
++endif
+ ifeq ($(CONFIG_FONT_TURKISH)$(CONFIG_FONT_AA),yy)
+ FEATURE_DEFS += -DCONFIG_FONT_TURKISH=1
+ endif
+--- a/docs/build-config.md
++++ b/docs/build-config.md
+@@ -233,3 +233,7 @@
+    can't do, such as SFR on a modem chip lacking what the glue uses) or `BOARD_NOT_WRITTEN` (what its code doesn't do yet). Leaving the not-written switches out keeps the maximal build to code that
+    runs on the radio: built on, they can fill a radio's memory (one radio's maximal build reached 99% of its CCM
+    RAM), and any shared addition would then fail CI on unrelated pull requests.
++
++
++The Classic integration can include Turkish (`CONFIG_LANG_TR`) and Russian (`CONFIG_LANG_RU`).
++The default language can be selected with `CONFIG_LANG_DEFAULT_TR` or `CONFIG_LANG_DEFAULT_RU`.
+--- a/core/ui/font.h
++++ b/core/ui/font.h
+@@ -52,6 +52,9 @@
+ 	// bytes, MSB = left (the blank rows above and below aren't stored). index: where each glyph starts in bits
+ 	const uint8_t *bits;
+ 	const uint16_t *index;
++#if CONFIG_LANG_RU
++	const uint8_t *cyrillic;
++#endif
+ } font_t;
+ 
+ extern const font_t font_5x8, font_6x12, font_8x16, font_12x24;
+@@ -94,4 +97,12 @@
+ // A Latin-1 byte (0xA0..0xFF) as plain ASCII, the letter without its accent ("\xF3" is 'o'); any other byte as it is
+ char font_fold(char c);
+ 
++#if CONFIG_LANG_RU
++// The catalog encoder uses 0x9f followed by 0xa0 plus the glyph index.
++#define CYRILLIC_PREFIX 0x9fu
++#define CYRILLIC_BASE 0x100u
++#define CYRILLIC_COUNT 66u
++const uint8_t *font_cyrillic(const font_t *f, unsigned glyph, int *top, int *rows);
+ #endif
++
++#endif
+--- a/core/ui/fonts.c
++++ b/core/ui/fonts.c
+@@ -6,8 +6,25 @@
+ // LICENSES/OFL-1.1.txt). Both converted by tools/fontconv.py.
+ #include "font.h"
+ 
++#if CONFIG_LANG_RU
++#include "fonts/cyrillic_small.inc"
++#include "fonts/cyrillic_spleen.inc"
++#include "fonts/cyrillic_jbmono.inc"
++#define CYRILLIC(n) , n##_cyrillic
++
++const uint8_t *font_cyrillic(const font_t *f, unsigned glyph, int *top, int *rows)
++{
++	unsigned stride = (f->w * f->bpp + 7u) / 8u;
++	*top = 0;
++	*rows = f->h;
++	return f->cyrillic + glyph * stride * f->h;
++}
++#else
++#define CYRILLIC(n)
++#endif
++
+ #define FONT(var, n, N, bpp) \
+-	const font_t var = { N##_W, N##_H, N##_ASCENT, N##_MISSING, bpp, FONT_LATIN1 && N##_LATIN1, n##_bits, n##_index }
++	const font_t var = { N##_W, N##_H, N##_ASCENT, N##_MISSING, bpp, FONT_LATIN1 && N##_LATIN1, n##_bits, n##_index CYRILLIC(n) }
+ 
+ #include "fonts/spleen_5x8.inc"
+ FONT(font_5x8, spleen_5x8, SPLEEN_5X8, 1);
+--- a/tools/i18n.py
++++ b/tools/i18n.py
+@@ -48,6 +48,8 @@
+ }
+ BYTE_TO_TEXT = {b: t for b, t in MACROS.values()}
+ TEXT_TO_BYTE = {t: b for b, t in MACROS.values()}
++CYRILLIC = {char: bytes((0x9F, slot)) for slot, char in enumerate(
++    "".join(chr(cp) for cp in range(0x410, 0x450)) + "Ёё", 0xA0)}
+ MAX_BYTES = 255
+ 
+ 
+@@ -112,6 +114,8 @@
+     for ch in text:
+         if ch in TEXT_TO_BYTE:
+             out.append(TEXT_TO_BYTE[ch])
++        elif ch in CYRILLIC:
++            out += CYRILLIC[ch]
+         elif 0x20 <= ord(ch) < 0x7F or 0xA0 <= ord(ch) <= 0xFF:
+             out.append(ord(ch))
+         else:
+@@ -552,12 +556,16 @@
+         lines.append("#define LANG_%s_TABLE\tNULL" % code.upper())
+         lines.append("#endif")
+         lines.append("")
++    for code, name, sw in langs:
++        if code == "ru":
++            lines.extend(("#if CONFIG_LANG_RU", "#define LANG_RU_NAME " + c_bytes(text_to_bytes(name, code)),
++                          "#else", '#define LANG_RU_NAME "Russian"', "#endif"))
+     lines.append("// Every language a catalog exists for, English first; built = its switch is on")
+     lines.append("#define LANG_KNOWN\t%d" % (len(langs) + 1))
+     lines.append("#define LANG_LIST\t{ \\")
+     lines.append("\t{ \"en\", \"English\", true, NULL }, \\")
+     for code, name, sw in langs:
+-        lines.append("\t{ \"%s\", %s, %s, LANG_%s_TABLE }, \\" % (code, c_bytes(text_to_bytes(name, code)), sw,
++        lines.append("\t{ \"%s\", %s, %s, LANG_%s_TABLE }, \\" % (code, "LANG_RU_NAME" if code == "ru" else c_bytes(text_to_bytes(name, code)), sw,
+                                        code.upper()))
+     lines.append("}")
+     lines.append("// The language an empty setting means: the first CONFIG_LANG_DEFAULT_<CODE> on, else English")
+@@ -573,10 +581,10 @@
+     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+     old = None
+     if os.path.exists(out_path):
+-        with open(out_path, encoding="latin-1") as f:
++        with open(out_path, encoding="utf-8", errors="replace") as f:
+             old = f.read()
+     if old != text:
+-        with open(out_path, "w", encoding="latin-1") as f:
++        with open(out_path, "w", encoding="utf-8") as f:
+             f.write(text)
+         print("changed")
+ 
+--- a/core/ui/gfx.h
++++ b/core/ui/gfx.h
+@@ -84,6 +84,10 @@
+ size_t gfx_text_alt(const char *s, int level, char *out, size_t cap, bool *more);
+ // Copy s into out, shortened from the middle with an ellipsis so it is at most max_w pixels wide
+ void gfx_text_fit(const font_t *f, const char *s, int max_w, char *out, size_t out_len);
++#if CONFIG_LANG_RU
++uint32_t gfx_utf8_next(const char *s, int *len);
++bool gfx_text_fit_cyrillic(const font_t *f, const char *s, int max_w, char *out, size_t cap);
++#endif
+ #ifdef GFX_FIT_TRACE
+ // Host builds only: called whenever gfx_text_fit had to shorten a text (the simulator lists them per screen)
+ void gfx_fit_trace(const char *src, const char *out);
+--- a/core/ui/gfx.c
++++ b/core/ui/gfx.c
+@@ -451,7 +451,63 @@
+ 	return n;
+ }
+ 
+-#define ALT_TEXT_MAX	96
++#if CONFIG_LANG_RU
++#define ALT_TEXT_MAX 160
++uint32_t gfx_utf8_next(const char *s, int *len)
++{
++	const uint8_t *b = (const uint8_t *)s;
++#if CONFIG_LANG_RU
++	if (b[0] == CYRILLIC_PREFIX && b[1] >= 0xa0 && b[1] < 0xa0 + CYRILLIC_COUNT) {
++		*len = 2;
++		return CYRILLIC_BASE + b[1] - 0xa0u;
++	}
++#endif
++	*len = 1;			// ASCII, a glyph byte (0x80..0x85), or Latin-1 text
++	return b[0];
++}
++
++static size_t text_cells(const char *s)
++{
++	size_t cells = 0;
++	while (*s) {
++		int seq;
++		gfx_utf8_next(s, &seq);
++		s += seq;
++		cells++;
++	}
++	return cells;
++}
++
++bool gfx_text_fit_cyrillic(const font_t *f, const char *s, int max_w, char *out, size_t len)
++{
++	if (strchr(s, CYRILLIC_PREFIX) == NULL || len == 0)
++		return false;
++	size_t cells = text_cells(s);
++	size_t space = max_w <= 0 ? 0 : (size_t)(max_w / f->w);
++	bool trim = cells > space;
++	size_t cap = len - 1;
++	size_t n = 0;
++	if (trim && space && cap) {
++		space--;
++		cap--;
++	}
++	while (s[n] && space > 0) {
++		int seq;
++		gfx_utf8_next(s + n, &seq);
++		if (n + (size_t)seq > cap)
++			break;
++		n += (size_t)seq;
++		space--;
++	}
++	memcpy(out, s, n);
++	if (trim && n < len - 1 && max_w >= f->w)
++		out[n++] = GLYPH_ELLIPSIS[0];
++	out[n] = 0;
++	return true;
++}
++#else
++#define ALT_TEXT_MAX 96
++#endif
+ 
+ size_t gfx_text_alt(const char *s, int level, char *out, size_t cap, bool *more)
+ {
+@@ -471,7 +527,15 @@
+ 	int x0 = x;
+ #endif
+ 	int bytes = (f->w * f->bpp + 7) / 8;
+-	for (; *s; s++, x += f->w) {
++	for (; *s; x += f->w) {
++		const uint8_t c = (uint8_t)*s;
++#if CONFIG_LANG_RU
++		int seq;
++		uint32_t glyph = gfx_utf8_next(s, &seq);
++		s += seq;
++#else
++		s++;
++#endif
+ 		int px = x + ox, py = y + oy;	// panel coordinates for the clip tests and spans
+ 		if (px >= clip_x1)
+ 			break;
+@@ -480,9 +544,15 @@
+ 		if (opaque)
+ 			gfx_fill(x, y, f->w, f->h, bg);
+ 		int top, rows;
+-		const uint8_t *g = font_glyph(f, (uint8_t)*s, &top, &rows);
++		const uint8_t *g;
++#if CONFIG_LANG_RU
++		if (glyph >= CYRILLIC_BASE)
++			g = font_cyrillic(f, glyph - CYRILLIC_BASE, &top, &rows);
++		else
++#endif
++			g = font_glyph(f, c, &top, &rows);
+ 		if (g == NULL) {
+-			fallback_glyph(f, x, y, (uint8_t)*s, fg);
++			fallback_glyph(f, x, y, c, fg);
+ 			continue;
+ 		}
+ 		for (int r = 0; r < rows; r++, g += bytes) {
+@@ -510,7 +580,7 @@
+ 		}
+ 	}
+ #ifdef GFX_FIT_TRACE
+-	trace(GFX_TRACE_TEXT, x0, y, (int)strlen(s0) * f->w, f->h, s0);	// after the glyph cells gfx_text_bg fills
++	trace(GFX_TRACE_TEXT, x0, y, x - x0, f->h, s0);	// after the glyph cells gfx_text_bg fills
+ #endif
+ 	return x;
+ }
+@@ -530,9 +600,18 @@
+ 	if (strchr(s, TEXT_ALT_OPEN[0])) {
+ 		char first[ALT_TEXT_MAX];
+ 		bool more;
++		#if CONFIG_LANG_RU
++		alt_expand(s, 0, first, sizeof first, &more);
++		return (int)text_cells(first) * f->w;
++#else
+ 		return (int)alt_expand(s, 0, first, sizeof first, &more) * f->w;
+-	}
++#endif
++	}
++#if CONFIG_LANG_RU
++	return (int)text_cells(s) * f->w;
++#else
+ 	return (int)strlen(s) * f->w;
++#endif
+ }
+ 
+ void gfx_text_fit(const font_t *f, const char *src, int max_w, char *out, size_t out_len)
+@@ -550,11 +629,19 @@
+ 		bool more = true;
+ 		for (int level = 0; more; level++) {
+ 			n = alt_expand(src, level, alt, sizeof alt, &more);
++#if CONFIG_LANG_RU
++			if (text_cells(alt) * f->w <= (size_t)(max_w > 0 ? max_w : 0) && n < out_len)
++#else
+ 			if (n <= fit)
++#endif
+ 				break;
+ 		}
+ 		s = alt;
+ 	}
++#if CONFIG_LANG_RU
++	if (gfx_text_fit_cyrillic(f, s, max_w, out, out_len))
++		return;
++#endif
+ 	if (n <= fit) {
+ 		memcpy(out, s, n + 1);
+ 		return;
+--- a/core/ui/ui_screens.c
++++ b/core/ui/ui_screens.c
+@@ -2178,6 +2178,43 @@
+ // word longer than the line, never shortening), returns where the next line starts
+ static const char *wrap_line(const font_t *f, const char *t, int max_w, char *line, size_t cap)
+ {
++#if CONFIG_LANG_RU
++	// A character at a time: a CJK character may end a line as well as a space, and the width is measured on whole
++	// characters, so a line never holds half of one
++	int n = 0, cut = 0;
++	while (t[n] && t[n] != '\n') {
++		int seq;
++		uint32_t cp = gfx_utf8_next(t + n, &seq);
++		if (n + seq > (int)cap - 1)
++			break;
++		memcpy(line + n, t + n, (size_t)seq);
++		n += seq;
++		line[n] = 0;
++		if (gfx_text_width(f, line) > max_w) {
++			n -= seq;
++			line[n] = 0;
++			break;
++		}
++		if (t[n - seq] == ' ' || cp >= 0x800)
++			cut = n;
++	}
++	bool fits_all = t[n] == 0 || t[n] == '\n';
++	if (!fits_all && cut > 0)
++		n = cut;
++	if (n == 0 && t[0] && t[0] != '\n') {
++		int seq;
++		gfx_utf8_next(t, &seq);		// narrower than one character: still move on
++		n = seq < (int)cap ? seq : (int)cap - 1;
++	}
++	line[n] = 0;
++	t += n;
++	if (*t == '\n')
++		t++;		// an empty line ("\n\n") stays one line
++	else
++		while (*t == ' ')
++			t++;
++	return t;
++#else
+ 	int n = 0, cut = 0;
+ 	while (t[n] && t[n] != '\n' && n < (int)cap - 1) {
+ 		line[n] = t[n];
+@@ -2201,6 +2238,7 @@
+ 		while (*t == ' ')
+ 			t++;
+ 	return t;
++#endif
+ }
+ 
+ // Word wrap into lines of the screen's width; draws them (when draw) and returns the y after the last line
+@@ -2291,6 +2329,10 @@
+ // message), where the start is what matters
+ static void fit_end(const font_t *f, const char *s, int max_w, char *out, size_t len)
+ {
++#if CONFIG_LANG_RU
++	if (gfx_text_fit_cyrillic(f, s, max_w, out, len))
++		return;
++#endif
+ 	size_t n = strlen(s), fit = max_w <= 0 ? 0 : (size_t)(max_w / f->w);
+ 	if (fit >= len)
+ 		fit = len - 1;
