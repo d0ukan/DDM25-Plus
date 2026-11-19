@@ -426,3 +426,16 @@ __pycache__/
 # DDM25 Plus name, signature and public build (tools/plus_brand.py)
 !/tools/plus_brand.py
 !/tests/plus/art_host_ui.h
+# DDM25 Plus PC programmer (pc/README.en.md): sources, tests and docs only; never backups, builds or binaries
+!/pc/*.py
+!/pc/*.ps1
+!/pc/README.md
+!/pc/README.en.md
+!/pc/docs/*.md
+!/pc/ddm25_app/*.py
+!/pc/radiotools/*.py
+!/pc/release/*.py
+!/pc/tests/*.py
+/pc/build/
+/pc/dist/
+/pc/research/
