@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // DM32 Plus art (integration/radiofoundry/art): the tables tools/art_build.py generated match the text sources in
-// art/, and art.c draws exactly those pixels, in the right colors, inside the right box.
+// art/, and art.c draws exactly those pixels, in the right colors, inside the right box; the whole boot screen
+// (splash_plus.c) keeps the callsign on the bottom line, centred, inside the panel.
 //
 // From firmware/ (one command; docs/art.md):
 //   cc -std=gnu11 -Wall -Wextra -Wshadow -Wconversion -Werror -fsanitize=address,undefined -DART_HOST_TEST
-//      -Iintegration/radiofoundry/art tests/plus/test_art.c integration/radiofoundry/art/art.c
-//      integration/radiofoundry/art/art_data.c -o test_art && ./test_art art
+//      -Iintegration/radiofoundry/art -Itests/plus tests/plus/test_art.c integration/radiofoundry/art/art.c
+//      integration/radiofoundry/art/art_data.c integration/radiofoundry/art/splash_plus.c -o test_art && ./test_art art
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "art.h"
+#include "art_host_ui.h"
 
 #define FB_W	240
 #define FB_H	320
@@ -314,6 +316,132 @@ static void test_splash(void)
 	CHECK(other == 0, "mono splash has %d pixels of other colors", other);
 }
 
+// --- the whole boot screen (splash_plus.c) on stand-ins for gfx, the layout and sbuf (art_host_ui.h) ---
+
+static int panel_w = FB_W, panel_h = FB_H, panel_bpp = 4;
+static const font_t f_tiny = { 8, 16 }, f_small = { 9, 18 }, f_medium = { 12, 24 };
+ui_layout_t ui_layout = { &f_tiny, &f_small, &f_medium };
+ui_colors_t ui_col = { 0x0004, 0x0003, 0x0005 };
+
+#define MAX_TEXTS	16
+static struct {
+	const font_t *f;
+	int x, y, w;
+	color_t c;
+	char s[48];
+} texts[MAX_TEXTS];
+static int n_texts;
+
+int gfx_width(void) { return panel_w; }
+int gfx_height(void) { return panel_h; }
+int gfx_bpp(void) { return panel_bpp; }
+
+void gfx_clear(color_t c)
+{
+	for (int y = 0; y < FB_H; y++)
+		for (int x = 0; x < FB_W; x++)
+			fb[y][x] = x < panel_w && y < panel_h ? c : PAPER;
+}
+
+void gfx_hline(int x, int y, int w, color_t c)
+{
+	gfx_fill(x, y, w, 1, c);
+}
+
+int gfx_text_width(const font_t *f, const char *s)
+{
+	return f->w * (int)strlen(s);
+}
+
+// Each glyph a solid cell, so the text's box is what the frame shows
+int gfx_text(const font_t *f, int x, int y, const char *s, color_t fg)
+{
+	int w = gfx_text_width(f, s);
+	if (n_texts < MAX_TEXTS) {
+		texts[n_texts].f = f;
+		texts[n_texts].x = x;
+		texts[n_texts].y = y;
+		texts[n_texts].w = w;
+		texts[n_texts].c = fg;
+		snprintf(texts[n_texts].s, sizeof texts[n_texts].s, "%s", s);
+		n_texts++;
+	}
+	if (w > 0)
+		gfx_fill(x, y, w, f->h, fg);
+	if (x < 0 || y < 0 || x + w > panel_w || y + f->h > panel_h)
+		outside++;
+	return x + w;
+}
+
+void sb_init(sbuf_t *b, char *buf, size_t len)
+{
+	b->p = buf;
+	b->end = buf + len - 1;
+	*b->p = 0;
+}
+
+void sb_str(sbuf_t *b, const char *s)
+{
+	while (*s && b->p < b->end)
+		*b->p++ = *s++;
+	*b->p = 0;
+}
+
+static int find_text(const char *s)
+{
+	for (int i = 0; i < n_texts; i++)
+		if (strstr(texts[i].s, s) != NULL)
+			return i;
+	return -1;
+}
+
+static void test_splash_screen(int w, int h, int bpp, const char *line1, const char *line2)
+{
+	clear();
+	n_texts = 0;
+	panel_w = w;
+	panel_h = h;
+	panel_bpp = bpp;
+	bool drawn = ui_draw_splash_plus("DM-32UV", "dm32-plus-0.1.0-dev", line1, line2);
+	CHECK(drawn, "%dx%d: splash not drawn", w, h);
+	if (!drawn)
+		return;
+	CHECK(outside == 0, "%dx%d: splash drew outside the panel", w, h);
+	// The callsign: tiny font, bottom line, centred, inside the panel, in the accent color (mono: fg)
+	int c = find_text(ART_CALLSIGN);
+	CHECK(c >= 0, "%dx%d: no %s on the splash", w, h, ART_CALLSIGN);
+	if (c < 0)
+		return;
+	const font_t *f = texts[c].f;
+	CHECK(f == ui_layout.tiny, "%dx%d: callsign not in the tiny font", w, h);
+	CHECK(strcmp(texts[c].s, ART_CALLSIGN) == 0, "%dx%d: callsign line is \"%s\"", w, h, texts[c].s);
+	CHECK(texts[c].y + f->h == h, "%dx%d: callsign at y %d, not on the bottom line", w, h, texts[c].y);
+	CHECK(abs(2 * texts[c].x + texts[c].w - w) <= 1, "%dx%d: callsign not centred (x %d, width %d)", w, h,
+	      texts[c].x, texts[c].w);
+	CHECK(texts[c].x >= 0 && texts[c].x + texts[c].w <= w, "%dx%d: callsign outside the panel", w, h);
+	CHECK(texts[c].c == (bpp == 1 ? ui_col.fg : art_accent()), "%dx%d: callsign color %04x", w, h, texts[c].c);
+	// The footer (board and version) right above it, and nothing else on the callsign's line
+	int ft = find_text("dm32-plus");
+	CHECK(ft >= 0, "%dx%d: no footer", w, h);
+	if (ft < 0)
+		return;
+	CHECK(texts[ft].y + texts[ft].f->h <= texts[c].y, "%dx%d: footer overlaps the callsign", w, h);
+	int stray = 0;
+	for (int y = texts[c].y; y < h; y++)
+		for (int x = 0; x < w; x++)
+			stray += fb[y][x] != ui_col.bg && (x < texts[c].x || x >= texts[c].x + texts[c].w);
+	CHECK(stray == 0, "%dx%d: %d other pixels on the callsign's line", w, h, stray);
+	// The boot text lines and the art stay above the footer
+	for (int i = 0; i < n_texts; i++)
+		if (i != c && i != ft)
+			CHECK(texts[i].y + texts[i].f->h <= texts[ft].y, "%dx%d: \"%s\" runs into the footer", w, h, texts[i].s);
+	for (int y = texts[ft].y; y < h; y++)
+		for (int x = 0; x < w; x++)
+			if (fb[y][x] != ui_col.bg && fb[y][x] != ui_col.dim && fb[y][x] != texts[c].c)
+				stray++;
+	CHECK(stray == 0, "%dx%d: the art runs into the footer", w, h);
+}
+
 int main(int argc, char **argv)
 {
 	const char *dir = argc > 1 ? argv[1] : "art";
@@ -321,6 +449,13 @@ int main(int argc, char **argv)
 	test_mark(dir);
 	test_wordmark(dir);
 	test_splash();
+	test_splash_screen(240, 320, 4, "TA0XXX", "P25 RX");	// DM-32UV
+	test_splash_screen(240, 320, 4, "", "");
+	test_splash_screen(160, 128, 4, "Line one", "Line two");	// 1x art, the lines left out where they don't fit
+	test_splash_screen(160, 128, 1, "", "");			// mono
+	panel_w = 100;
+	panel_h = 60;
+	CHECK(!ui_draw_splash_plus("X", "v", "", ""), "a panel too small for the art still drew it");
 	printf("art: %d icons, %d bytes of tables: %s\n", ART_ICON_COUNT, ART_DATA_BYTES, fails ? "FAILED" : "ok");
 	return fails != 0;
 }

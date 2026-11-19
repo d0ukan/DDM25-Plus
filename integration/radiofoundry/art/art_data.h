@@ -53,12 +53,12 @@ extern const uint8_t art_mark_ink[3];	// on a 1 bpp panel: 1 ink, 0 paper
 
 // The wordmark: 1 bit a pixel, MSB first, rows of ART_WORD_STRIDE bytes; columns from ART_WORD_SPLIT on
 // take the accent color
-#define ART_WORD_W	70
+#define ART_WORD_W	79
 #define ART_WORD_H	12
-#define ART_WORD_STRIDE	9
-#define ART_WORD_SPLIT	42
+#define ART_WORD_STRIDE	10
+#define ART_WORD_SPLIT	51
 extern const uint8_t art_word_bits[ART_WORD_H * ART_WORD_STRIDE];
 
-#define ART_DATA_BYTES	1797	// flash taken by the tables above
+#define ART_DATA_BYTES	1809	// flash taken by the tables above
 
 #endif

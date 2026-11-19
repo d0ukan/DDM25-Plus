@@ -5,7 +5,7 @@
 Sources (plain text, one character a pixel):
   art/icons.txt     16x16 icons, 1 bit a pixel ('#' ink, '.' none), each after a line "icon <name>"
   art/mark.txt      the splash mark, 2 bits a pixel ('.' none, 'a' 'b' 'c' its three colors)
-  art/wordmark.txt  "DM32 Plus" in a pixel face, 1 bit a pixel; columns from "split" on take the accent color
+  art/wordmark.txt  "DDM25 Plus" in a pixel face, 1 bit a pixel; columns from "split" on take the accent color
 Lines starting with ';' are comments.
 
   python3 tools/art_build.py                 write integration/radiofoundry/art/art_data.[ch]
@@ -337,14 +337,15 @@ def q(c):
 
 def splash_layout(mark, word, n_lines, line_h, foot_h, w=240, h=320):
     """Where splash_plus.c ui_draw_splash_plus puts things on a w x h panel (keep the two in step):
-    scale, mark x/y, wordmark x/y, rule y, first line y, footer y."""
+    scale, mark x/y, wordmark x/y, rule y, first line y, footer y, callsign y (the bottom line)."""
     mw, mh = mark[0]['size']
     ww, wh = word[0]['size']
     sw = lambda k: max(mw, ww) * k
     k = 2 if w >= sw(2) + 16 and h >= 200 else 1
     gap = 6 * k
     art_h = (mh + 6 + wh) * k
-    foot_y = h - foot_h
+    call_y = h - foot_h
+    foot_y = call_y - foot_h
     total = art_h + gap + 1
     while n_lines > 0 and total + gap + n_lines * line_h > foot_y - 2:
         n_lines -= 1
@@ -353,7 +354,7 @@ def splash_layout(mark, word, n_lines, line_h, foot_h, w=240, h=320):
     y = max(0, (foot_y - total) // 2)
     rule_y = y + art_h + gap
     return (k, w // 2 - mw * k // 2, y, w // 2 - ww * k // 2, y + (mh + 6) * k, rule_y, rule_y + 1 + gap,
-            foot_y)
+            foot_y, call_y)
 
 
 def mock_splash(mark, word, fonts, theme):
@@ -362,7 +363,7 @@ def mock_splash(mark, word, fonts, theme):
     cv = Canvas(240, 320, t['bg'])
     lines = ['TA0XXX', 'P25 RX']
     lf, tiny = fonts.get('12x24', fonts['9x18']), fonts.get('8x16', fonts['9x18'])
-    k, mx, my, wx, wy, rule_y, ly, foot_y = splash_layout(mark, word, len(lines), lf.h, tiny.h)
+    k, mx, my, wx, wy, rule_y, ly, foot_y, call_y = splash_layout(mark, word, len(lines), lf.h, tiny.h)
     draw_mark(cv, mark, mx, my, k)
     accent = q(mark[0]['color']['a'][0])
     draw_word(cv, word, wx, wy, k, t['fg'], accent)
@@ -372,6 +373,8 @@ def mock_splash(mark, word, fonts, theme):
         ly += lf.h
     foot = 'DM-32UV  plus-r7'
     tiny.text(cv, (240 - tiny.width(foot)) // 2, foot_y, foot, t['dim'])
+    call = 'TA2DOU'	# art.h ART_CALLSIGN
+    tiny.text(cv, (240 - tiny.width(call)) // 2, call_y, call, accent)
     return cv
 
 

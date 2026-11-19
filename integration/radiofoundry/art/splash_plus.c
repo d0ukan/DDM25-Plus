@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The DM32 Plus boot screen (CONFIG_PLUS_ART): the mark and the wordmark (art.c), a rule, the owner's two boot text
-// lines (the CPS boot text, left out when empty) and board and version small and dim along the bottom. Called first
-// thing in ui_draw_splash (tools/plus_features.py), so the boot path and the stub entry screen both get it.
+// The DDM25 Plus boot screen (CONFIG_PLUS_ART): the mark and the wordmark (art.c), a rule, the owner's two boot text
+// lines (the CPS boot text, left out when empty), board and version small and dim, and under them, on the bottom
+// line, the author's callsign (ART_CALLSIGN) small and centred. Called first thing in ui_draw_splash
+// (tools/plus_features.py), so the boot path and the stub entry screen both get it.
 // tools/art_build.py splash_layout() mirrors this layout for the mock-up; keep the two in step.
 #include "art.h"
+#ifdef ART_HOST_TEST
+#include "art_host_ui.h"	// tests/plus: stand-ins for gfx, the layout, the colors and sbuf
+#else
 #include "gfx.h"
 #include "ui_screens.h"
 #include "fmt.h"
+#endif
 
 #if ART_ENABLED
 
@@ -16,7 +21,7 @@ bool ui_draw_splash_plus(const char *board_name, const char *version, const char
 	const ui_layout_t *L = &ui_layout;
 	// 2x on panels with room for it (240 x 320: a 112 px mark), else 1x; too small even for that: the stock screen
 	int k = w >= art_splash_w(2) + 16 && h >= 200 ? 2 : 1;
-	if (w < art_splash_w(1) + 4 || h < art_splash_h(1) + L->tiny->h + 4)
+	if (w < art_splash_w(1) + 4 || h < art_splash_h(1) + 2 * L->tiny->h + 4)
 		return false;
 	bool mono = gfx_bpp() == 1;
 	gfx_clear(ui_col.bg);
@@ -43,7 +48,8 @@ bool ui_draw_splash_plus(const char *board_name, const char *version, const char
 		if (gfx_text_width(ff, foot) <= w)
 			break;
 	}
-	int foot_y = h - ff->h;
+	int call_y = h - ff->h;		// the callsign on the bottom line, the footer right above it
+	int foot_y = call_y - ff->h;
 
 	// Stack: art, rule, lines; centered above the footer. Lines that don't fit under the art are left out (the
 	// stock screen never drops them, but it shrinks its mark; the art has two sizes only)
@@ -73,6 +79,7 @@ bool ui_draw_splash_plus(const char *board_name, const char *version, const char
 		}
 	}
 	gfx_text(ff, (w - gfx_text_width(ff, foot)) / 2, foot_y, foot, ui_col.dim);
+	gfx_text(ff, (w - gfx_text_width(ff, ART_CALLSIGN)) / 2, call_y, ART_CALLSIGN, mono ? ui_col.fg : art_accent());
 	return true;
 }
 

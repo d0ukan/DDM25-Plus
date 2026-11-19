@@ -180,6 +180,7 @@ def prepare(transform, install):
     prepare_cw_rx(transform, install)
     prepare_rpt_prov(transform)
     __import__((__package__ + "." if __package__ else "") + "plus_p25nac", fromlist=["x"]).prepare_p25_txnac(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_brand", fromlist=["x"]).prepare_brand(transform)
 
 
 def prepare_sat_alarm(transform):

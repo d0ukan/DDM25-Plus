@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# DM32 Plus (working name)
+# DDM25 Plus (working name until 2026-11-19: DM32 Plus)
 
 Our own build on top of upstream Classic `0.1.0-rc1-r13` (`a13e27d`; until 2026-11-20 Classic r7, `19420686`).
 Branch `ddm25` (the r7-based work: branch `plus`), remote `upstream` = `tylerwatt12/Open25-DM32`. Not published under
@@ -1929,3 +1929,46 @@ Queued by the owner (2026-11-18), with the feasibility notes from the discussion
   ERDM outbound color code; the Codeplug Editor is no longer needed. Upstream marks standalone SFR experimental
   (host and SDR bench tested, not reliable end to end). The repeater roles transmit by themselves (unattended
   repeater: licence conditions apply); the user roles are ordinary talking. Radio rows SR1-SR6.
+- [built, radio rows BR1-BR3] Name and public build (`tools/plus_brand.py`, `prepare_brand`; owner's request
+  2026-11-19): "Name and public build" below.
+
+## Name and public build
+
+The product's name on the radio is **DDM25 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file
+names, `dm32-plus-…` version string, `docs/plus*.md`).
+
+| Where | What |
+|---|---|
+| Splash (`CONFIG_PLUS_ART`) | wordmark "DDM25 Plus" (`art/wordmark.txt`, 79x12, 158 px wide at 2x); under board and version, on the bottom line, **TA2DOU** in the tiny font, centred, in the mark's teal (mono: fg) |
+| Settings > About | first line "DDM25 Plus · d0ukan · TA2DOU", then "Based on Open25-DM32 Classic" in place of Classic r13's "Firmware: Open25-DM32 Classic" and its issue tracker lines (a Plus image is not Classic; its bugs are not upstream's); "DDM25 Plus: GPL-3.0-or-later" right above upstream's "License: MIT, (c) 2026 Open25-DM32 contributors"; upstream's other lines unchanged ("Based on RadioFoundry", its MIT line, its authors and third-party list); with the repeater list, "Repeater data: RadioID.net, TRAC" ("sample" without a download) at the end |
+
+Names and callsign live in `art.h` (`ART_PRODUCT`, `ART_AUTHOR`, `ART_CALLSIGN`) and are not translated; "Repeater
+data: " is (Turkish "Röle verisi: "). Cost on the r13 base: +276 B flash, 0 B RAM (About's buffer is Classic r13's
+688 B with the ID database; its text with every line, a 5-digit ID count and a 12-character release name: English
+518 B, Turkish 540 B, the terminator included; on the r7 base it was +352 B flash, +16 B RAM). `tests/plus/test_art.c`
+draws the whole boot screen (`splash_plus.c` on stand-ins,
+`tests/plus/art_host_ui.h`) on 240x320, 160x128 and mono: callsign on the bottom line, centred within 1 px, inside
+the panel, nothing else on its line, the footer and the art above it.
+
+**Public build**: `python3 tools/build_radiofoundry.py --plus --public --stack-check --verify-rebuild` →
+`build/dm32-p25-plus-public/` (logs `*-plus-public.log`; the owner's `dm32-p25-plus/` is never touched). The same
+firmware with `CONFIG_ID_DB=n`: nothing generated from `research-data/user.csv` (RadioID.net users) is compiled, and
+About has no "ID database" line. The repeater list ships (RadioID.net repeaters + the owner's TRAC list). Guards:
+`--public` needs `--plus` and refuses `--feature ID_DB=…`; `plus_brand.public_command` refuses a make command whose
+last `CONFIG_ID_DB` is not `n`; after the link `plus_brand.public_audit` refuses an ELF holding any `iddb_*` symbol
+(manifest: `public_enabled`, `audits.public_id_db_absent`). `make test` runs `tools/plus_brand.py --self-test`:
+the refusals on made-up inputs, and the tree's public ELF when there is one. 2026-11-19: owner build 833,956 B flash,
+210,152 B RAM; public 755,184 B flash, 210,104 B RAM (the 78 KB table and its About line gone). 2026-11-20 on the
+r13 base: owner build 841,040 B flash, 210,584 B RAM (872 B free), bin sha256 `9d1daa59…58ce`; public 762,264 B
+flash, 210,536 B RAM, bin sha256 `ff6b2606…68cd`; both zero warnings, forced rebuild identical, stack check ok.
+
+**Codec and private data** (checked 2026-11-19 on both r7-based images, read only; the r13 numbers below): the build never opens
+`research/originals` (only `--with-local-stock` would, and Plus never uses it; manifest `codec_slot`: "reserved; no
+stock AMBE merged") nor `backups/`. The linker's FLASH region ends at `__codec_slot` (0x030E8000), the image ends at
+0x030D79A4 (public 0x030C45F0), and `tools/install_plus.py` writes only sectors below 0xE8000; the codec in the slot is
+the radio's own, put there by the Firmware Utility. Byte search: every 32-byte window of the stock codec code (047
+and 049, 83,456 B) at every 4 bytes: none in either image; of its tables (12,152 B): 57 windows, all one 256-byte
+stretch that equals our IMBE codec's `cos_table` (open-source `imbe_vocoder` `math_sub.cc`, a Q15 cosine table both
+carry); every 32-byte window of the backup's data chip (calibration, codeplug): none. On the r13 base (2026-11-20, map
+and size only, the byte search not repeated): `__codec_slot` still 0x030E8000, the image ends at 0x030D9550 (public
+0x030C6198), `__codec_*` symbols as `tools/install_plus.py` expects.

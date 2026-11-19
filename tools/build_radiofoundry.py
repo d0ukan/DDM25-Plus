@@ -18,7 +18,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from tools import codec_cache, classic_channels, classic_standard, sources, plus_features
+from tools import codec_cache, classic_channels, classic_standard, sources, plus_features, plus_brand
 UP = ROOT / "research/upstream/radiofoundry"
 PIN = "dfbaf20c400c73e2ccf6edb80af7d1d255bee418"
 DEST = ROOT / "build/radiofoundry-p25"
@@ -580,7 +580,13 @@ def main():
     ap.add_argument('--plus', action='store_true', help='Classic plus the RadioFoundry features that fit (our own build)')
     ap.add_argument('--feature', action='append', default=[], metavar='NAME=y|n',
                     help='override one CONFIG_ switch on top of the preset (RAM/flash experiments)')
+    ap.add_argument('--public', action='store_true',
+                    help='with --plus: the shareable DDM25 Plus build, no RadioID user/ID database (tools/plus_brand.py)')
     args = ap.parse_args()
+    if args.public and not args.plus:
+        ap.error('--public goes with --plus')
+    if args.public and any(f.startswith('ID_DB=') for f in args.feature):
+        ap.error('--public builds never carry the ID database')
     # Plus is Classic plus features: it takes the whole Classic preset, the O3 speed codec above all (with the -Os
     # codec the live P25 encoder needs ~41 ms per 20 ms frame and PTT stops after ~300 ms on the mic FIFO overflow)
     if args.plus:
@@ -621,7 +627,7 @@ def main():
     if args.plus:
         args.classic=True
     if args.classic:
-        suffix='plus' if args.plus else 'classic'
+        suffix=('plus-public' if args.public else 'plus') if args.plus else 'classic'
         identity='plus-0.1.0-dev' if args.plus else 'classic-0.1.0-rc1-r13'
     for item in args.feature:
         if not re.fullmatch(r'[A-Z0-9_]+=[yn]', item):
@@ -668,7 +674,7 @@ def main():
         "CONFIG_MSG_RX="+("y" if args.plus else "n"),
         "CONFIG_SSTV="+("y" if args.plus else "n"),
         "CONFIG_APRS_MSG="+("y" if args.plus else "n"),
-        "CONFIG_ID_DB="+("y" if args.plus else "n"),
+        "CONFIG_ID_DB="+("y" if args.plus and not args.public else "n"),
         "CONFIG_REPEATERS="+("y" if args.plus else "n"),
         "CONFIG_NAC_DEC="+("y" if args.plus else "n"),
         "CONFIG_PLUS_ART="+("y" if args.plus else "n"),
@@ -715,6 +721,8 @@ def main():
     command += ['CONFIG_'+item for item in args.feature]
     if args.first_boot:
         command += ["CONFIG_STUB_ENTRY="+("y" if args.dev_update else "n"), "CONFIG_CPS_OPENFW=n", "CONFIG_CPS_FAST=n", "CONFIG_AUDIO_PROBE=n"]
+    if args.public:
+        plus_brand.public_command(command)  # DDM25 Plus public: refuses a command with the ID database on
     log = ROOT / f"logs/radiofoundry-p25-{suffix}.log"
     log.parent.mkdir(exist_ok=True)
     with log.open("w") as f:
@@ -778,6 +786,10 @@ def main():
         firstboot_audits.update(plus_features.ram_reclaim_audit(
             subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),"-S",str(prefix.with_suffix(".elf"))],text=True),
             subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-size"),"-A",str(prefix.with_suffix(".elf"))],text=True)))
+    if args.public:
+        # DDM25 Plus public: no ID database table or code in the image (research-data/user.csv never ships)
+        firstboot_audits.update(plus_brand.public_audit(
+            subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),str(prefix.with_suffix(".elf"))],text=True)))
     if args.first_boot:
         symbols=subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),str(prefix.with_suffix(".elf"))],text=True)
         names={line.split()[-1] for line in symbols.splitlines() if line.split()}
@@ -815,7 +827,7 @@ def main():
         inputs += sorted(p for p in (ROOT / "tools").glob("plus_*.py")) + [ROOT / "tools/turkish_ui.py",
                   ROOT / "LICENSES/GPL-3.0.txt", ROOT / "LICENSING.md"] + [p for folder in
                   (ROOT / "src/ysf", ROOT / "src/nxdn", ROOT / "src/dpmr") for p in folder.rglob("*") if p.is_file()]
-    manifest = {"kind": ("DM32 Plus development build (Classic r13 base); hardware qualification required" if args.plus else "Open25-DM32 Classic release candidate; hardware qualification required") if args.classic else "RadioFoundry P25 laboratory image",
+    manifest = {"kind": (("DDM25 Plus public build (Classic r13 base, no ID database)" if args.public else "DDM25 Plus development build (Classic r13 base)") + "; hardware qualification required" if args.plus else "Open25-DM32 Classic release candidate; hardware qualification required") if args.classic else "RadioFoundry P25 laboratory image",
         "upstream_commit": PIN, "freertos_commit": git(DEST / "third_party/FreeRTOS-Kernel", "rev-parse", "HEAD"),
         "command": [str(x) for x in command], "p25_enabled": not args.disable, "native_interface_enabled":native,
         "firstboot_restrictions_enabled": args.first_boot,
@@ -823,7 +835,7 @@ def main():
         "audits": {"unresolved_symbols": [], "high_register_instructions": 0, "compiler_warnings": 0,**firstboot_audits},
         "forced_rebuild_identical": args.verify_rebuild,
         "codec_speed_build":args.speed_codec, "bench_enabled":not args.lean, "cpu_profile_enabled":args.cpu_profile, "dev_update_enabled":args.dev_update,
-        "native_tx_bench_enabled":args.tx_bench, "classic_enabled":args.classic, "plus_enabled":args.plus, "plus_features":list(PLUS_FEATURES) if args.plus else [], "feature_overrides":args.feature,
+        "native_tx_bench_enabled":args.tx_bench, "classic_enabled":args.classic, "plus_enabled":args.plus, "public_enabled":args.public, "plus_features":list(PLUS_FEATURES) if args.plus else [], "feature_overrides":args.feature,
         "firstboot_flags":47 if args.tx_bench else 15 if args.dev_update else 31,
         "codec_slot": "recognized local stock merged separately" if args.with_local_stock else "reserved; no stock AMBE merged",
         "sources": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(inputs)},

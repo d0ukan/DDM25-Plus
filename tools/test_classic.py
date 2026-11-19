@@ -501,8 +501,11 @@ def main():
          APP/'core/aprs/aprs_fmt.c','-lm','-o',OUT/'test_mapnav'],cwd=ROOT)
     run([OUT/'test_mapnav'],cwd=ROOT)
     run(['python3',ROOT/'tools/art_build.py','--check'],cwd=ROOT)
-    run(['clang',*flags,'-DART_HOST_TEST','-I'+str(ROOT/'integration/radiofoundry/art'),ROOT/'tests/plus/test_art.c',
-         ROOT/'integration/radiofoundry/art/art.c',ROOT/'integration/radiofoundry/art/art_data.c','-o',OUT/'test_art'],cwd=ROOT)
+    run(['clang',*flags,'-DART_HOST_TEST','-I'+str(ROOT/'integration/radiofoundry/art'),'-I'+str(ROOT/'tests/plus'),
+         ROOT/'tests/plus/test_art.c',ROOT/'integration/radiofoundry/art/art.c',ROOT/'integration/radiofoundry/art/art_data.c',
+         ROOT/'integration/radiofoundry/art/splash_plus.c','-o',OUT/'test_art'],cwd=ROOT)
+    # DDM25 Plus public build profile (tools/plus_brand.py): no ID database, the check that refuses one
+    run(['python3',ROOT/'tools/plus_brand.py','--self-test'],cwd=ROOT)
     run([OUT/'test_art',ROOT/'art'],cwd=ROOT)
     iddb_tests(flags)
     rpt_tests(flags)

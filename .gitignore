@@ -419,3 +419,6 @@ __pycache__/
 !/LICENSING.md
 !/src/p25/p25_lcx.c
 !/src/p25/p25_lcx.h
+# DDM25 Plus name, signature and public build (tools/plus_brand.py)
+!/tools/plus_brand.py
+!/tests/plus/art_host_ui.h

@@ -3321,6 +3321,10 @@ msgid "ID database: "
 msgstr "ID veritabanı: "
 
 #: core/ui/ui_menus.c
+msgid "Repeater data: "
+msgstr "Röle verisi: "
+
+#: core/ui/ui_menus.c
 msgid "Synced"
 msgstr "Eşzamanlı"
 
