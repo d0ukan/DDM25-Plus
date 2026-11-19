@@ -17,11 +17,27 @@
 #if CONFIG_BEEP
 #include "radio/beep.h"
 #endif
+#if CONFIG_SIGNAL_QUALITY
+#include "radio/sigq.h"
+#endif
+#if CONFIG_P25_EXTRAS
+#include "ui/i18n.h"
+#endif
 #if CONFIG_DEV_TX
 #include "input/input.h"
 #endif
 #if CONFIG_P25_NATIVE
 #include "native_modem/native_lab.h"
+#if CONFIG_YSF
+#include "ysf/ysf.h"
+#include "ysf/ysf_vw.h"
+#include "p25.h"
+#include "dmr/ambe/ambeVoice.h"
+#include "dmr/ambe/ambeFec.h"
+#if CONFIG_YSF_TX
+#include "ysf/ysf_tx.h"
+#endif
+#endif
 #endif
 
 static p25_voice voice;
@@ -39,7 +55,11 @@ static uint8_t request_mode, play_requested, delay_seconds;
 static volatile uint8_t stop_requested;
 static uint32_t stack_free;
 #if CONFIG_P25_BENCH
-static struct { uint8_t kind,raw[36]; } replay[64];
+/* Cable bench replay records; a product build keeps one (docs/plus.md, RAM) */
+#ifndef P25_REPLAY_RECORDS
+#define P25_REPLAY_RECORDS 64
+#endif
+static struct { uint8_t kind,raw[36]; } replay[P25_REPLAY_RECORDS];
 #endif
 static uint16_t expected,loaded,nac,group;
 static uint32_t frequency,duration_ms;
@@ -57,6 +77,74 @@ static uint16_t channel_rx_nac;
 static uint8_t channel_selective;
 static uint32_t channel_voice_ms;
 static bool channel_voice_seen;
+#if CONFIG_P25_SCAN
+/* The last valid frame of the channel's kind, 0 = none yet (not cleared when the receive starts over: the scan
+ * compares it with its take, native_lab.c) */
+static volatile uint32_t channel_sync_ms;
+static void channel_synced(void) { uint32_t ms=hal_millis();channel_sync_ms=ms?ms:1u; }
+#endif
+#if CONFIG_P25_TRUNK
+/* DM32 Plus P25 trunk following: the channel receive also frames TSDUs (the pinned CAI library's control channel
+ * receiver, voice.c); each valid TSBK waits here for the radio task (native_lab.c hands it to radio/p25trunk.c), the
+ * oldest dropped when nobody took them in time */
+enum { TSBK_RING=8 };
+static bool trunk_rx;
+static uint8_t tsbk_ring[TSBK_RING][10],tsbk_head,tsbk_count;
+static p25_lab_trunk_t trunk_counts;
+#if CONFIG_YSF
+/* RAM (Classic r13 base): a trunk following receive is never a YSF one (p25_lab_set_trunk and p25_lab_set_ysf turn
+ * the other off), so the TSDU receiver shares the YSF framer's storage */
+#define P25_LAB_RX_SHARED 1
+static union { ysf_framer_t ysf; p25cai_control_receiver tsdu; } rx_shared;
+#define tsdu_rx rx_shared.tsdu
+#define ysf_fr rx_shared.ysf
+static bool ysf_rx;
+#else
+static p25cai_control_receiver tsdu_rx;
+#endif
+int p25_lab_set_trunk(int on)
+{
+    taskENTER_CRITICAL();
+    int ok=state!=1;
+    if(ok) { trunk_rx=on!=0;tsbk_head=tsbk_count=0; }
+#if CONFIG_YSF
+    if(ok && on)ysf_rx=false;
+#endif
+    taskEXIT_CRITICAL();
+    return ok;
+}
+int p25_lab_tsbk_pop(uint8_t out[10])
+{
+    taskENTER_CRITICAL();
+    int ok=tsbk_count!=0;
+    if(ok) {
+        memcpy(out,tsbk_ring[tsbk_head],10);
+        tsbk_head=(uint8_t)((tsbk_head+1u)%TSBK_RING);tsbk_count--;
+    }
+    taskEXIT_CRITICAL();
+    return ok;
+}
+void p25_lab_trunk_counts(p25_lab_trunk_t *out)
+{
+    taskENTER_CRITICAL();*out=trunk_counts;taskEXIT_CRITICAL();
+}
+/* voice.c: a TSDU the control receiver completed (its blocks' CRCs held), or (unit NULL) one it dropped on a block
+ * that failed */
+static void trunk_tsdu(void *ctx,const p25cai_control *unit)
+{
+    (void)ctx;
+    taskENTER_CRITICAL();
+    if(!unit)trunk_counts.bad++;
+    else trunk_counts.nac=unit->nac;
+    for(unsigned i=0;unit && i<unit->count;i++) {
+        if(tsbk_count==TSBK_RING) {
+            tsbk_head=(uint8_t)((tsbk_head+1u)%TSBK_RING);tsbk_count--;trunk_counts.dropped++;
+        }
+        memcpy(tsbk_ring[(tsbk_head+tsbk_count)%TSBK_RING],unit->block[i],10);tsbk_count++;
+    }
+    taskEXIT_CRITICAL();
+}
+#endif
 int p25_lab_set_channel(uint16_t receive_nac,uint16_t transmit_nac,uint16_t talkgroup,uint32_t radio_id,int selective)
 {
     taskENTER_CRITICAL();
@@ -65,12 +153,486 @@ int p25_lab_set_channel(uint16_t receive_nac,uint16_t transmit_nac,uint16_t talk
         channel_rx_nac=receive_nac;channel_selective=selective!=0;
         channel_call=(p25_call){.nac=transmit_nac,.talkgroup=talkgroup,.source_id=radio_id};
     }
+#if CONFIG_P25_TRUNK
+    if(ok)trunk_rx=false;   /* a channel of its own: no TSDUs (p25_lab_set_trunk after this for trunk following) */
+#endif
     taskEXIT_CRITICAL();
     return ok;
 }
 void p25_lab_channel_stop(void) { stop_requested=1; }
+#if CONFIG_P25_SEARCH
+/* DM32 Plus P25 search: valid P25 frames heard on the channel receive (encrypted or not), when the last one came,
+ * and its NAC; the search's probe decides "P25 here" from them */
+static volatile uint32_t channel_frames, channel_frame_ms;
+uint32_t p25_lab_channel_frames(uint32_t *last_ms,uint16_t *heard_nac)
+{
+    taskENTER_CRITICAL();
+    uint32_t n=channel_frames;
+    if(last_ms)*last_ms=channel_frame_ms;
+    if(heard_nac)*heard_nac=voice.active_nac;
+    taskEXIT_CRITICAL();
+    return n;
+}
+#endif
+#if CONFIG_P25_CALLER
+/* DM32 Plus: the talkgroup and source ID of the P25 call being heard (from its link control), for Home */
+static uint16_t p25_tg, p25_nac=P25_NAC_ANY;
+static uint32_t p25_src;
+static volatile uint32_t p25_caller_seq;
+uint32_t p25_lab_p25_caller(uint16_t *tg,uint32_t *src)
+{
+    taskENTER_CRITICAL();
+    if(tg)*tg=p25_tg;
+    if(src)*src=p25_src;
+    uint32_t seq=p25_caller_seq;
+    taskEXIT_CRITICAL();
+    return seq;
+}
+#if CONFIG_P25_EXTRAS
+/* DM32 Plus P25 extras: that call's kind (P25_LAB_EMERGENCY, P25_LAB_PRIVATE) and the unit a unit-to-unit call is for */
+static uint32_t p25_target;
+static uint8_t p25_kind;
+static unsigned voice_kind(void)
+{ return (voice.emergency?(unsigned)P25_LAB_EMERGENCY:0u)|(voice.private_call?(unsigned)P25_LAB_PRIVATE:0u); }
+unsigned p25_lab_p25_kind(uint32_t *target)
+{
+    taskENTER_CRITICAL();
+    unsigned kind=p25_kind;
+    if(target)*target=p25_target;
+    taskEXIT_CRITICAL();
+    return kind;
+}
+#endif
+#if CONFIG_SIGNAL_QUALITY
+/* DM32 Plus signal quality: the channel receive's IMBE FEC corrections over the last second (radio/sigq.h) */
+static sigq_t p25_q;
+static uint32_t q_frames,q_bits,q_lost;
+static void quality_track(void)
+{
+    if(voice.rx_fec_frames<q_frames || voice.rx_fec_lost<q_lost)q_frames=q_bits=q_lost=0;   /* a new receive */
+    uint32_t frames=voice.rx_fec_frames-q_frames,bits=voice.rx_fec_bits-q_bits,lost=voice.rx_fec_lost-q_lost;
+    if(!frames && !lost)return;
+    q_frames=voice.rx_fec_frames;q_bits=voice.rx_fec_bits;q_lost=voice.rx_fec_lost;
+    uint32_t now=hal_millis();
+    taskENTER_CRITICAL();
+    sigq_add(&p25_q,bits+lost*SIGQ_P25_LOST,(frames+lost)*SIGQ_P25_BITS,now);
+    taskEXIT_CRITICAL();
+}
+int p25_lab_ber_permille(void)
+{
+    uint32_t now=hal_millis();
+    taskENTER_CRITICAL();
+    int ber=sigq_ber_permille(&p25_q,now);
+    taskEXIT_CRITICAL();
+    return ber;
+}
+#endif
+#if CONFIG_CALL_LOG
+/* DM32 Plus call history: P25 calls as calls (a new one after a 1.5 s gap or another talkgroup/NAC), each with
+ * whether a clear-voice superframe (LDU2 ALGID 0x80) was seen; none in its first 0.5 s = encrypted */
+#define CALL_GAP_MS 1500u
+#define CALL_ENC_MS 500u
+static p25_lab_call_t call_now;
+static void call_track(uint32_t now)
+{
+    p25_lab_call_t *c=&call_now;
+    bool fresh=c->n==0 || now-c->last_ms>CALL_GAP_MS || voice.active_group!=c->tg || voice.active_nac!=c->nac;
+#if CONFIG_P25_EXTRAS
+    /* another kind of call, or a unit-to-unit call to another unit: a new call */
+    fresh=fresh || (voice.private_call!=0)!=c->priv || voice.active_target!=c->target;
+#endif
+    taskENTER_CRITICAL();
+    if(fresh) {
+        c->n++;c->start_ms=now;c->clear=false;c->src=0;
+        c->tg=voice.active_group;c->nac=voice.active_nac;
+#if CONFIG_P25_EXTRAS
+        c->priv=voice.private_call!=0;c->target=voice.active_target;c->emergency=false;
+#endif
+    }
+#if CONFIG_P25_EXTRAS
+    if(voice.emergency)c->emergency=true;   /* any LDU1 of the call */
+#endif
+    if(voice.active_source)c->src=voice.active_source;   /* late entry: the source comes with LDU1 */
+    if(voice.crypto_clear)c->clear=true;
+    c->last_ms=now;
+    c->encrypted=!c->clear && now-c->start_ms>=CALL_ENC_MS;
+    taskEXIT_CRITICAL();
+}
+uint32_t p25_lab_call(p25_lab_call_t *out)
+{
+    taskENTER_CRITICAL();
+    *out=call_now;
+    taskEXIT_CRITICAL();
+    return out->n;
+}
+#endif
+/* The caller line as text alternates (core/ui/font.h: open 0x1D, next 0x1F, close 0x1E), longest first */
+typedef struct { char *p; size_t left; bool cut; } line_t;   /* cut: something did not fit */
+static void line_str(line_t *l,const char *s)
+{ while(*s && l->left>1){*l->p++=*s++;l->left--;} if(*s)l->cut=true; *l->p='\0'; }
+static void line_u32(line_t *l,uint32_t v)
+{
+    char d[10];unsigned n=0;
+    do{d[n++]=(char)('0'+v%10u);v/=10u;}while(v && n<sizeof d);
+    while(n && l->left>1){*l->p++=d[--n];l->left--;}
+    if(n)l->cut=true;
+    *l->p='\0';
+}
+static void line_hex3(line_t *l,uint16_t v)
+{
+    for(int shift=8;shift>=0;shift-=4) {
+        if(l->left<=1){l->cut=true;break;}
+        *l->p++="0123456789ABCDEF"[(v>>shift)&15u];l->left--;
+    }
+    *l->p='\0';
+}
+size_t p25_lab_p25_caller_line(char *out,size_t cap,bool pane)
+{
+    if(!out || !cap)return 0;
+    out[0]='\0';
+    taskENTER_CRITICAL();
+    uint16_t tg=p25_tg,heard_nac=p25_nac;uint32_t src=p25_src;
+#if CONFIG_P25_EXTRAS
+    uint32_t target=p25_target;unsigned kind=p25_kind;
+#endif
+    taskEXIT_CRITICAL();
+#if CONFIG_P25_EXTRAS
+    bool unit=(kind&P25_LAB_PRIVATE)!=0;
+    if(!tg && !unit)return 0;
+#else
+    if(!tg)return 0;
+#endif
+#if CONFIG_SIGNAL_QUALITY
+    int ber=pane?-1:p25_lab_ber_permille();
+#endif
+    line_t l={out,cap,false};
+    /* Home: "P25 TG 101 ID 77285 NAC 659" | "TG101 ID77285 NAC659" | "TG101 ID77285";
+     * a dual watch pane: "TG 101 ID 77285 NAC 659" | "TG101 ID77285".
+     * DM32 Plus P25 extras: "EMERGENCY " leads every form (instead of "P25 "); a unit-to-unit call shows
+     * "Private 77285 > 1234" | "Private 77285>1234" instead of the talkgroup and ID. When the whole does not fit cap
+     * the longest forms are left out (they are the ones too wide for the screen anyway) */
+    for(unsigned first=pane?1u:0u;first<3u;first++) {
+    l=(line_t){out,cap,false};
+    line_str(&l,"\x1d");
+    for(unsigned alt=first;alt<3u;alt++) {
+        bool tight=alt>=(pane?2u:1u);
+        if(alt>first)line_str(&l,"\x1f");
+#if CONFIG_P25_EXTRAS
+        if(kind&P25_LAB_EMERGENCY){line_str(&l,TR("EMERGENCY"));line_str(&l," ");}
+        else
+#endif
+        if(alt==0)line_str(&l,"P25 ");
+#if CONFIG_P25_EXTRAS
+        if(unit) {
+            line_str(&l,TR("Private"));line_str(&l," ");
+            line_u32(&l,src);line_str(&l,tight?">":" > ");line_u32(&l,target);
+        } else
+#endif
+        {
+            line_str(&l,tight?"TG":"TG ");line_u32(&l,tg);
+            if(src){line_str(&l,tight?" ID":" ID ");line_u32(&l,src);}
+        }
+        if(heard_nac!=P25_NAC_ANY && alt<2u){
+            line_str(&l,tight?" NAC":" NAC ");
+#if CONFIG_NAC_DEC
+            /* DM32 Plus: "$125" marks hex; the wide form adds the decimal some factory radios use ("$125/293") */
+            line_str(&l,"$");line_hex3(&l,heard_nac);
+            if(!tight){line_str(&l,"/");line_u32(&l,heard_nac);}
+#else
+            line_hex3(&l,heard_nac);
+#endif
+        }
+#if CONFIG_SIGNAL_QUALITY
+        /* DM32 Plus signal quality on Home, every form: "... BER 1.2%" | "... BER1.2%" */
+        if(ber>=0) {
+            line_str(&l,tight?" BER":" BER ");line_u32(&l,(uint32_t)ber/10u);
+            line_str(&l,".");line_u32(&l,(uint32_t)ber%10u);line_str(&l,"%");
+        }
+#endif
+    }
+    line_str(&l,"\x1e");
+    if(!l.cut)break;
+    }
+    return (size_t)(l.p-out);
+}
+#endif
+#if CONFIG_YSF
+/* DM32 Plus YSF receive (docs/plus.md): the channel worker's air bits go to the YSF framer instead of P25's;
+ * V/D mode 2 voice becomes DMR AMBE frames for the DMR vocoder (it streams and switches the speaker itself). */
+#ifndef P25_LAB_RX_SHARED
+static bool ysf_rx;
+static ysf_framer_t ysf_fr;
+#endif
+static bool ysf_call, ysf_dn_open, ysf_vw_open;
+static void sink(void *ctx,const int16_t pcm[160]);
+static int start_audio(void);
+static uint8_t ysf_dgid;
+static uint32_t ysf_frames, ysf_voice, ysf_bad, ysf_other, ysf_unsupported, ysf_vw_erasures;
+/* The call's callsigns from the V/D mode 2 data channel (FN 1 source, FN 0 destination), "" until heard; the
+ * sequence counts changes so the radio task can redraw Home (p25_lab_ysf_caller) */
+static char ysf_src[11], ysf_dst[11];
+static volatile uint32_t ysf_caller_seq;
+static void ysf_take_call(char dst[11], const uint8_t csd[10])
+{
+    char s[11];
+    unsigned n=10;
+    for(unsigned i=0;i<10u;i++)s[i]=(csd[i]>=0x20u && csd[i]<0x7Fu)?(char)csd[i]:' ';
+    while(n && s[n-1]==' ')n--;
+    s[n]='\0';
+    if(strcmp(s,dst)!=0) {
+        taskENTER_CRITICAL();memcpy(dst,s,sizeof s);ysf_caller_seq++;taskEXIT_CRITICAL();
+    }
+}
+uint32_t p25_lab_ysf_caller(char src[11],char dst[11])
+{
+    taskENTER_CRITICAL();
+    uint32_t seq=ysf_caller_seq;
+    if(src)memcpy(src,ysf_call?ysf_src:"",ysf_call?sizeof ysf_src:1u);
+    if(dst)memcpy(dst,ysf_call?ysf_dst:"",ysf_call?sizeof ysf_dst:1u);
+    taskEXIT_CRITICAL();
+    return seq;
+}
+int p25_lab_set_ysf(int on,uint8_t dgid)
+{
+    taskENTER_CRITICAL();
+    int ok=state!=1;
+    if(ok) { ysf_rx=on!=0;ysf_dgid=dgid; }
+#ifdef P25_LAB_RX_SHARED
+    if(ok && on)trunk_rx=false;   /* the YSF framer and the TSDU receiver share their storage */
+#endif
+    taskEXIT_CRITICAL();
+    return ok;
+}
+#if CONFIG_YSF_TX
+static char ysf_tx_call[11];    /* the callsign the next YSF transmission sends, "" = none (no transmission) */
+int p25_lab_set_ysf_tx(const char *call)
+{
+    /* Read only when a transmission starts (ysf_live_run, after the PTT request that set it) */
+    unsigned n=0;
+    taskENTER_CRITICAL();
+    while(call && n<10u && call[n]!='\0') { ysf_tx_call[n]=call[n];n++; }
+    ysf_tx_call[n]='\0';
+    taskEXIT_CRITICAL();
+    return 1;
+}
+#endif
+static void ysf_end_call(void)
+{
+    if(!ysf_call)return;
+    if(ysf_dn_open) {
+        const dmr_voice_sink_t *s=ambeVoiceSink();
+        if(s->end)s->end(s->ctx);
+        ysf_dn_open=false;
+    }
+    if(ysf_vw_open) {
+        /* Let the P25 PCM path play out what it holds; the worker stops it when the channel is given back */
+        taskENTER_CRITICAL();fifo.draining=1;taskEXIT_CRITICAL();
+        ysf_vw_open=false;
+    }
+    taskENTER_CRITICAL();ysf_call=false;ysf_src[0]=ysf_dst[0]='\0';ysf_caller_seq++;taskEXIT_CRITICAL();
+}
+/* A lost or unusable record: the frame in hand has a hole, so drop it and hunt for the next sync (a voice channel
+ * has no CRC: playing a frame with bits from later in the stream would sound as noise) */
+static void ysf_resync(void)
+{
+    ysf_framer_init(&ysf_fr);
+}
+static void ysf_call_open(void)
+{
+    if(ysf_call)return;
+    taskENTER_CRITICAL();ysf_call=true;ysf_src[0]=ysf_dst[0]='\0';ysf_caller_seq++;taskEXIT_CRITICAL();
+}
+/* V/D mode 2 ("DN"): five AMBE+2 frames for the DMR vocoder */
+static void ysf_play_dn(void)
+{
+    const dmr_voice_sink_t *s=ambeVoiceSink();
+    if(!ysf_dn_open) {
+        if(s->begin)s->begin(NULL,s->ctx);
+        ysf_dn_open=true;
+    }
+    for(unsigned j=0;j<YSF_VCH_PER_FRAME;j++) {
+        uint8_t params[YSF_AMBE_BITS],a72[AMBE_FRAME_BYTES];
+        ysf_vd2_voice(ysf_fr.frame,j,params);
+        ambeFecEncode(params,a72);
+        s->frame(a72,s->ctx);
+    }
+}
+/* Voice FR ("VW"): P25 IMBE frames, decoded and gated as P25 receive does (voice.c), played on the P25 PCM path */
+static void ysf_play_vw(const ysf_fich_t *f)
+{
+    unsigned n=ysf_vw_voice_count(f);
+    if(!n)return;
+    if(!ysf_vw_open) {
+        dm32_imbe_init(&voice.codec);
+        taskENTER_CRITICAL();fifo.head=fifo.tail=fifo.count=fifo.playing=fifo.draining=0;taskEXIT_CRITICAL();
+        if(!audio_on && !start_audio())return;
+        ysf_vw_open=true;
+    }
+    for(unsigned k=0;k<n;k++) {
+        uint8_t cw[YSF_VW_IMBE_BYTES],u0e=0;
+        uint16_t u[8];
+        int16_t pcm[160]={0};
+        int ok=ysf_vw_voice(ysf_fr.frame,f,k,cw);
+        int corrected=ok?p25_imbe_decode(cw,u,&u0e):-1;
+        ok=corrected>=0 && u0e<=3u && corrected<=10 && dm32_imbe_decode(&voice.codec,u,pcm);
+        if(!ok) {
+            memset(pcm,0,sizeof pcm);
+            ysf_vw_erasures++;
+            dm32_imbe_init(&voice.codec);
+        }
+        sink(NULL,pcm);
+    }
+}
+static void ysf_frame(void)
+{
+    ysf_fich_t f;
+    ysf_frames++;
+    if(!ysf_fich_decode(ysf_fr.frame,&f)) { ysf_bad++;return; }
+#if CONFIG_P25_SCAN
+    channel_synced();
+#endif
+    /* A voice call's header names its source and destination (CSD1): DN and VW alike, before any voice */
+    if(f.fi==YSF_FI_HEADER && (f.dt==YSF_DT_VD2 || f.dt==YSF_DT_VOICE_FR) && (!ysf_dgid || f.dgid==ysf_dgid)) {
+        uint8_t csd[YSF_CSD_BYTES];
+        if(ysf_csd_get(ysf_fr.frame,YSF_CSD1,csd)) {
+            ysf_call_open();
+            ysf_take_call(ysf_src,csd+10);
+            if(csd[0]!='*')ysf_take_call(ysf_dst,csd);  /* "**********": any radio, not a name */
+        }
+        ysf_other++;return;
+    }
+    if(f.fi==YSF_FI_TERMINATOR) { ysf_end_call();return; }
+    /* Voice of the channel's DG-ID (0: any): V/D mode 2 (DN) and Voice FR (VW). V/D mode 1 and data: not yet */
+    bool dn=f.dt==YSF_DT_VD2, vw=f.dt==YSF_DT_VOICE_FR;
+    if(f.fi!=YSF_FI_COMMS || !(dn || vw) || (ysf_dgid && f.dgid!=ysf_dgid)) { ysf_other++;return; }
+    ysf_call_open();
+    if(dn && f.fn<=1u) {
+        uint8_t csd[10];
+        if(ysf_vd2_data(ysf_fr.frame,csd))ysf_take_call(f.fn==1u?ysf_src:ysf_dst,csd);
+    }
+    if(dn)ysf_play_dn(); else ysf_play_vw(&f);
+    ysf_voice++;
+    channel_voice_ms=hal_millis();channel_voice_seen=true;
+}
+static void ysf_consume(uint8_t kind,const uint8_t raw[36])
+{
+    uint8_t air[36];
+    if(p25_phy_rx_air(raw,kind,air)) { ysf_unsupported++;ysf_resync();return; }
+    for(unsigned i=0;i<288u;i++)
+        if(ysf_framer_bit(&ysf_fr,(uint8_t)((air[i>>3]>>(7u-(i&7u)))&1u)))ysf_frame();
+}
+#endif
+#if CONFIG_CALL_REPLAY
+/* DM32 Plus call replay (docs/plus.md): the last P25 call's IMBE frames (the last REPLAY_FRAMES of it, 20 ms each,
+ * packed 88 bits in 11 bytes) kept in RAM as they decode; Tools > Last call plays them again through the channel
+ * receiver's own audio path while no live call is heard (a live call ends the replay at once). Receive only. */
+enum { REPLAY_FRAMES=400, REPLAY_BYTES=11, REPLAY_GAP_MS=1500, REPLAY_TAKE_MS=2000 };
+static uint8_t rp_buf[REPLAY_FRAMES][REPLAY_BYTES];
+static uint16_t rp_head, rp_count, rp_pos, rp_tg, rp_nac;
+static uint32_t rp_src, rp_last_ms, rp_request_ms, rp_voice_seen, rp_end_ms;
+static volatile uint8_t rp_request, rp_playing;
+static const uint8_t rp_width[8]={12,12,12,12,11,11,11,7};
+static void sink(void *ctx,const int16_t pcm[160]);
+static void rp_pack(const uint16_t u[8],uint8_t out[REPLAY_BYTES])
+{
+    uint32_t acc=0;unsigned bits=0,n=0;
+    memset(out,0,REPLAY_BYTES);
+    for(unsigned i=0;i<8u;i++) {
+        acc=(acc<<rp_width[i])|(u[i]&((1u<<rp_width[i])-1u));bits+=rp_width[i];
+        while(bits>=8u){bits-=8u;out[n++]=(uint8_t)(acc>>bits);}
+    }
+}
+static void rp_unpack(const uint8_t in[REPLAY_BYTES],uint16_t u[8])
+{
+    uint32_t acc=0;unsigned bits=0,n=0;
+    for(unsigned i=0;i<8u;i++) {
+        while(bits<rp_width[i]){acc=(acc<<8)|in[n++];bits+=8u;}
+        bits-=rp_width[i];u[i]=(uint16_t)((acc>>bits)&((1u<<rp_width[i])-1u));
+    }
+}
+static void replay_tap(void *ctx,const uint16_t u[8])
+{
+    (void)ctx;
+    if(rp_playing)return;
+    uint32_t now=hal_millis();
+    taskENTER_CRITICAL();
+    if(!rp_count || now-rp_last_ms>REPLAY_GAP_MS ||
+       (voice.have_group && (voice.active_group!=rp_tg || voice.active_source!=rp_src))) {
+        rp_head=rp_count=0;     /* a new call: the old one is dropped */
+        rp_tg=voice.active_group;rp_src=voice.active_source;rp_nac=voice.active_nac;
+    }
+    rp_pack(u,rp_buf[rp_head]);
+    rp_head=(uint16_t)((rp_head+1u)%REPLAY_FRAMES);
+    if(rp_count<REPLAY_FRAMES)rp_count++;
+    rp_last_ms=now;
+    taskEXIT_CRITICAL();
+}
+uint16_t p25_lab_replay_info(uint16_t *tg,uint32_t *src,uint16_t *heard_nac)
+{
+    taskENTER_CRITICAL();
+    if(tg)*tg=rp_tg;
+    if(src)*src=rp_src;
+    if(heard_nac)*heard_nac=rp_nac;
+    uint16_t n=rp_count;
+    taskEXIT_CRITICAL();
+    return n;
+}
+int p25_lab_replay(int start)
+{
+    if(!start) { rp_request=0;rp_playing=0;return 1; }
+    if(!rp_count || rp_playing)return 0;
+    rp_request_ms=hal_millis();rp_request=1;
+    return 1;
+}
+int p25_lab_replaying(void) { return rp_playing || rp_request; }
+/* The receive loop's turn: start a pending replay, or put the next frame into the audio FIFO while it has room */
+static void replay_service(void)
+{
+    if(rp_request) {
+        rp_request=0;
+        if(!audio_on || (uint32_t)(hal_millis()-rp_request_ms)>REPLAY_TAKE_MS)return;
+        rp_pos=0;rp_voice_seen=voice.rx_voice;
+        dm32_imbe_init(&voice.codec);
+        taskENTER_CRITICAL();fifo.draining=0;taskEXIT_CRITICAL();
+        rp_playing=1;
+    }
+    if(!rp_playing)return;
+    if(voice.rx_voice!=rp_voice_seen || rp_pos>=rp_count) {
+        rp_playing=0;    /* a live call (it wins) or the end of the recording */
+        rp_end_ms=hal_millis();
+        dm32_imbe_init(&voice.codec);
+        taskENTER_CRITICAL();fifo.draining=1;taskEXIT_CRITICAL();
+        return;
+    }
+    if(fifo.count>=P25_AUDIO_BLOCKS-2u)return;
+    uint16_t u[8];
+    int16_t pcm[160];
+    taskENTER_CRITICAL();
+    rp_unpack(rp_buf[(rp_head+REPLAY_FRAMES-rp_count+rp_pos)%REPLAY_FRAMES],u);
+    taskEXIT_CRITICAL();
+    rp_pos++;
+    if(!dm32_imbe_decode(&voice.codec,u,pcm)) { memset(pcm,0,sizeof pcm);dm32_imbe_init(&voice.codec); }
+    sink(NULL,pcm);
+}
+#endif
 int p25_lab_channel_receiving(void)
-{ return state==1 && request_mode==5 && channel_voice_seen && (uint32_t)(hal_millis()-channel_voice_ms)<650u; }
+{
+#if CONFIG_CALL_REPLAY
+    if(state==1 && request_mode==5 && (rp_playing || (rp_end_ms && (uint32_t)(hal_millis()-rp_end_ms)<700u)))
+        return 1;  /* the speaker opens for the replay and its last blocks */
+#endif
+    return state==1 && request_mode==5 && channel_voice_seen && (uint32_t)(hal_millis()-channel_voice_ms)<650u;
+}
+#if CONFIG_P25_SCAN
+uint32_t p25_lab_channel_last_voice_ms(void)
+{
+    taskENTER_CRITICAL();
+    uint32_t ms=channel_voice_seen?channel_voice_ms:0u;
+    taskEXIT_CRITICAL();
+    return ms;
+}
+uint32_t p25_lab_channel_last_sync_ms(void) { return channel_sync_ms; }
+#endif
 #endif
 static volatile uint8_t live_released,live_capturing;
 static volatile uint32_t live_key_frame;
@@ -84,6 +646,12 @@ int p25_lab_live_begin(uint32_t sid)
     taskENTER_CRITICAL();
     int ok=worker && state!=1 && board.native_mic_route && board.audio &&
            board.audio->start && board.audio->stop;
+#if CONFIG_YSF_TX
+    /* DM32 Plus: a YSF channel transmits YSF Voice FR, and only with a callsign (docs/ysf-nxdn-tx.md) */
+    ok=ok && (!ysf_rx || ysf_tx_call[0]!='\0');
+#elif CONFIG_YSF
+    ok=ok && !ysf_rx;   /* never P25 on a YSF channel: this build has no YSF transmitter */
+#endif
     if (ok) {
         live_sid=sid;
         live_released=live_capturing=stop_requested=0;
@@ -146,8 +714,133 @@ static unsigned queued_symbols(void)
     return symbols-voice.packet_symbol;
 }
 
+#if CONFIG_YSF_TX
+/* DM32 Plus YSF Voice FR transmission (docs/ysf-nxdn-tx.md), the P25 live path's twin: the same microphone FIFO,
+ * IMBE encoder (the P25 codec context, idle while we send) and native modem blocks, gates and drain; only the
+ * framing differs (ysf_tx.h). The frame being sent lives in the YSF receive framer's buffer (no receive runs now).
+ * Air: 3 blocks of the 0x77 preamble (as P25), the header, the sub-header, voice frames, the terminator; the block
+ * the terminator ends in is filled up with the preamble pattern, then one more preamble block keeps the PA on through
+ * the hardware pipeline (sealed, as P25's last block). */
+static void ysf_fill_preamble(uint8_t raw[36],unsigned from)
+{
+    for(unsigned i=from;i<288u;i++) {
+        uint8_t m=(uint8_t)(0x80u>>(i&7u));
+        raw[i>>3]=(0x77u&m)?(uint8_t)(raw[i>>3]|m):(uint8_t)(raw[i>>3]&~m);
+    }
+}
+static int ysf_live_run(void)
+{
+    int16_t pcm[160];
+    uint16_t u[8];
+    uint8_t raw[36],queued=0;
+    unsigned lead=3,fill=0;
+    bool kicked=false,sealed=false;
+    uint32_t sid=live_sid;
+    ysf_tx_t tx;
+    p25_mic_condition conditioner;  /* the microphone conditioning P25's live_run applies (Classic r8) */
+    p25_mic_condition_init(&conditioner);
+    live_mic_frames=live_peak=live_encode_max=live_encode_us=live_slow=live_encoded=0;
+    live_first_us=live_last_us=live_fifo_high=live_overflows=0;
+    live_key_frame=UINT32_MAX;
+    native_state=NT_ARMED;
+    native_reason=NT_OK;
+    p25_audio_fifo_reset(&fifo);
+    dm32_imbe_init(&voice.codec);
+    ysf_tx_begin(&tx,ysf_fr.frame,ysf_tx_call,ysf_dgid);
+    bool ok=ysf_tx_call[0]!='\0';
+    if (ok) {
+        board.native_mic_route(true);
+        live_capturing=1;
+        ok=board.audio->start(mic_block,NULL);
+    }
+    uint32_t last_input=hal_millis();
+    while (ok && !stop_requested) {
+        if (!native_lab_live_poll(sid,&native_state,&native_reason,&queued) || native_state==NT_FAULT) { ok=false;break; }
+        if (native_state==NT_STOPPED) { ok=sealed && native_reason==NT_TX_COMPLETE;break; }
+        bool closing=live_released || !input_ptt_down();
+        if (closing && live_capturing) {
+            live_capturing=0;
+            board.audio->stop();
+        }
+        while (!sealed && queued<NT_TX_CAP) {
+            if (lead) {
+                memset(raw,0x77,sizeof raw);
+                lead--;
+            } else if (ysf_tx_done(&tx)) {
+                /* The rest of the terminator's block, then one whole preamble block to seal the call */
+                if (!fill) sealed=true;
+                ysf_fill_preamble(raw,fill);
+                fill=0;
+            } else {
+                fill+=ysf_tx_take(&tx,raw,fill,288u-fill);
+                if (fill<288u && !ysf_tx_done(&tx)) break;  /* the next frame waits for voice */
+                if (fill<288u) continue;                   /* the terminator ended inside this block */
+                fill=0;
+            }
+            if (!native_lab_live_block(sid,raw,sealed)) { ok=false;break; }
+            queued++;
+        }
+        if (!ok) break;
+        if (!kicked && (queued>=7 || sealed)) {
+            kicked=native_lab_live_go(sid)!=0;
+            if (!kicked) { ok=false;break; }
+        }
+        if (ysf_tx_need_voice(&tx)) {
+            taskENTER_CRITICAL();
+            int have=p25_audio_fifo_take(&fifo,pcm);
+            taskEXIT_CRITICAL();
+            if (have) {
+                last_input=hal_millis();
+                for (unsigned i=0;i<160;i++) {
+                    int sample=pcm[i];
+                    unsigned magnitude=(unsigned)(sample<0?-sample:sample);
+                    if (magnitude>live_peak) live_peak=magnitude;
+                }
+                p25_mic_condition_block(&conditioner,pcm,live_encoded==live_key_frame);
+            } else if (closing && !tx.imbe) {
+                break;                      /* an empty PTT: nothing was keyed (the preamble alone never starts) */
+            } else if (closing && !tx.closing) {
+                ysf_tx_close(&tx);          /* a voice frame not begun becomes the terminator */
+                continue;
+            } else if (closing) {
+                memset(pcm,0,sizeof pcm);   /* pad the frame begun with encoded silence */
+                have=1;
+            }
+            if (have) {
+                uint32_t at=hal_micros();
+                ok=dm32_imbe_encode(&voice.codec,pcm,u)!=0;
+                if (ok) ysf_tx_voice(&tx,u);
+                uint32_t elapsed=hal_micros()-at;
+                live_encode_us+=elapsed;
+                live_encoded++;
+                if (elapsed>live_encode_max) live_encode_max=elapsed;
+                if (elapsed>20000u) live_slow++;
+                /* Give the idle watchdog time to run even while catching up. */
+                vTaskDelay(1);
+                continue;
+            }
+        }
+        if (!closing && hal_millis()-last_input>300u) { ok=false;break; }
+        vTaskDelay(pdMS_TO_TICKS(2));
+    }
+    live_capturing=0;
+    native_lab_voice_stop(sid);
+    board.audio->stop();
+    board.native_mic_route(false);
+    /* As P25's live_run (Classic r13): the radio task owns cleanup; do not abandon its reservation on a delay */
+    while (!native_lab_voice_release(sid))
+        vTaskDelay(pdMS_TO_TICKS(2));
+    live_fifo_high=fifo.high_water;live_overflows=fifo.overflows;
+    ysf_framer_init(&ysf_fr);   /* the transmit frame was in the receive framer's buffer */
+    return ok && !stop_requested && !live_overflows;
+}
+#endif
+
 static int live_run(void)
 {
+#if CONFIG_YSF_TX
+    if (ysf_rx) return ysf_live_run();
+#endif
 #if CONFIG_P25_CHANNELS
     const p25_call call=channel_call;
 #else
@@ -298,6 +991,9 @@ static void sink(void *ctx,const int16_t pcm[160])
 #if CONFIG_P25_NATIVE
 static void reset_stream(void)
 {
+#if CONFIG_YSF
+    if(ysf_rx)ysf_resync();   /* a gap in the records: the YSF frame in hand is broken too (only YSF owns it) */
+#endif
     p25_voice_rx_reset(&voice);
     taskENTER_CRITICAL();fifo.head=fifo.tail=fifo.count=fifo.playing=0;taskEXIT_CRITICAL();
     memset(&phy,0,sizeof phy);
@@ -311,6 +1007,9 @@ static void consume(uint32_t seq,uint8_t kind,const uint8_t raw[36])
 #if CONFIG_P25_CHANNELS
     uint32_t prior_voice=voice.rx_voice;
 #endif
+#if CONFIG_P25_TRUNK
+    uint32_t prior_framed=voice.framer.complete_frames;    /* frames of the voice framer (TSDUs: trunk_tsdu) */
+#endif
     if(p25_phy_rx_record(&phy,&voice,seq,kind,raw)) {
         gaps+=phy.gaps-prior_gaps;unsupported=phy.unsupported;
         if(unsupported)stop_requested=1;
@@ -318,8 +1017,47 @@ static void consume(uint32_t seq,uint8_t kind,const uint8_t raw[36])
     }
 #if CONFIG_P25_CHANNELS
     if(voice.rx_voice!=prior_voice) { channel_voice_ms=hal_millis();channel_voice_seen=true; }
+#if CONFIG_P25_TRUNK
+    if(trunk_rx && voice.rx_frames!=prior_frames) {
+        uint8_t duid=voice.framer.nid.duid;
+        uint32_t now=hal_millis();
+        taskENTER_CRITICAL();
+        trunk_counts.frames+=voice.rx_frames-prior_frames;trunk_counts.last_ms=now;
+        if(voice.framer.complete_frames!=prior_framed) {
+            trunk_counts.nac=voice.framer.nid.nac;
+            if(duid==P25_DUID_TDU || duid==P25_DUID_TDULC)trunk_counts.terms++;
+        }
+        taskEXIT_CRITICAL();
+    }
+#endif
+#if CONFIG_P25_CALLER
+#if CONFIG_P25_EXTRAS
+    if(voice.have_group && (voice.active_group!=p25_tg || voice.active_source!=p25_src || voice.active_nac!=p25_nac ||
+                            voice.active_target!=p25_target || voice_kind()!=p25_kind)) {
+        taskENTER_CRITICAL();
+        p25_target=voice.active_target;p25_kind=(uint8_t)voice_kind();
+#else
+    if(voice.have_group && (voice.active_group!=p25_tg || voice.active_source!=p25_src || voice.active_nac!=p25_nac)) {
+        taskENTER_CRITICAL();
+#endif
+        p25_tg=voice.active_group;p25_src=voice.active_source;p25_nac=voice.active_nac;p25_caller_seq++;
+        taskEXIT_CRITICAL();
+    }
+#if CONFIG_CALL_LOG
+    if(voice.rx_frames!=prior_frames && voice.have_group)call_track(hal_millis());
+#endif
+#if CONFIG_SIGNAL_QUALITY
+    quality_track();
+#endif
+#endif
 #endif
     if(voice.rx_frames!=prior_frames) {
+#if CONFIG_DEV_TX && CONFIG_P25_CHANNELS && CONFIG_P25_SCAN
+        channel_synced();
+#endif
+#if CONFIG_P25_SEARCH
+        taskENTER_CRITICAL();channel_frames++;channel_frame_ms=hal_millis();taskEXIT_CRITICAL();
+#endif
         taskENTER_CRITICAL();
         fifo.draining=voice.framer.nid.duid==P25_DUID_TDU || voice.framer.nid.duid==P25_DUID_TDULC;
         taskEXIT_CRITICAL();
@@ -363,6 +1101,19 @@ static int receive_run(void)
     session=gaps=unsupported=0;native_state=native_reason=0;pcm_crc=sample_checks?0xffffffffu:0;
     memset(&phy,0,sizeof phy);p25_audio_fifo_reset(&fifo);
     p25_voice_init(&voice,nac,group,sink,NULL);voice.micros=sample_checks?hal_micros:NULL;
+#if CONFIG_DEV_TX && CONFIG_P25_CHANNELS && CONFIG_P25_TRUNK
+    /* The control receiver takes the receive's NAC filter (P25_NAC_ANY is the library's any NAC); no trellis
+     * budget of its own: each block's CRC decides */
+    if(trunk_rx && request_mode==5 && p25cai_control_receiver_init(&tsdu_rx,nac,196u)==0)
+        p25_voice_set_tsdu(&voice,&tsdu_rx,trunk_tsdu,NULL);
+#endif
+#if CONFIG_DEV_TX && CONFIG_P25_CHANNELS && CONFIG_P25_EXTRAS
+    /* DM32 Plus P25 extras: our unit ID on this channel; a unit-to-unit call for it plays on a talkgroup channel too */
+    if(request_mode==5)voice.own_unit=channel_call.source_id;
+#endif
+#if CONFIG_CALL_REPLAY
+    voice.tap=request_mode==5 ? replay_tap : NULL;  /* P25 channel receive only (a YSF one never decodes IMBE here) */
+#endif
     int ok=1;
 #if CONFIG_P25_NATIVE
     /* Playback also borrows native RX ownership to exclude normal beeps/PTT and
@@ -370,6 +1121,10 @@ static int receive_run(void)
     if(request_mode==3 || request_mode==5 || play_requested) {
         session=native_lab_voice_start(frequency,duration_ms);
         if(!session || !wait_native())ok=0;
+#if CONFIG_YSF
+        if(ysf_rx && request_mode==5) { ysf_framer_init(&ysf_fr);ysf_call=ysf_dn_open=ysf_vw_open=false; }
+        else
+#endif
         if(ok && play_requested && !start_audio())ok=0;
     }
 #else
@@ -395,6 +1150,9 @@ static int receive_run(void)
             if(request_mode==2) { nt_record discard;while(native_lab_voice_read(session,&discard)) {} }
         }
 #endif
+#if CONFIG_CALL_REPLAY
+        if(request_mode==5)replay_service();
+#endif
         if((int32_t)(hal_millis()-due)<0) { relax();continue; }
         if(request_mode==2) {
 #if CONFIG_P25_BENCH
@@ -413,6 +1171,13 @@ static int receive_run(void)
                 last_tick=r.time_us;last_record_at=hal_millis();silent_reset=0;
                 if(!records)last_valid_at=hal_millis();
                 uint32_t prior_frames=voice.rx_frames;
+#if CONFIG_YSF
+                if(ysf_rx && request_mode==5) {
+                    uint32_t prior_ysf=ysf_frames-ysf_bad;
+                    ysf_consume((uint8_t)(r.rx_info&3u),r.raw);records++;
+                    if(ysf_frames-ysf_bad!=prior_ysf)last_valid_at=hal_millis();
+                } else
+#endif
                 consume(r.sequence,(uint8_t)(r.rx_info&3u),r.raw);
                 if(voice.rx_frames!=prior_frames)last_valid_at=hal_millis();
                 if (request_mode==5) vTaskDelay(1);
@@ -425,7 +1190,11 @@ static int receive_run(void)
             /* Noise records cannot keep old PHY synchronization alive. Let
              * the normal channel owner rearm between complete frames. */
             if(request_mode==5 && records && !voice.framer.symbols &&
-               (uint32_t)(hal_millis()-last_valid_at)>=500u)break;
+               (uint32_t)(hal_millis()-last_valid_at)>=500u
+#if CONFIG_CALL_REPLAY
+               && !rp_playing && !rp_request && (uint32_t)(hal_millis()-rp_end_ms)>=700u  /* a replay keeps the receiver until its audio has played */
+#endif
+               )break;
 #else
             ok=0;
 #endif
@@ -444,6 +1213,9 @@ static int receive_run(void)
         if(fifo.count || (board.audio->spk_pending && board.audio->spk_pending()))ok=0;
     }
     stop_audio();
+#if CONFIG_YSF
+    if(ysf_rx && request_mode==5) { ysf_end_call();ambeVoiceStop(); }
+#endif
 #if CONFIG_P25_NATIVE
     if(session) {
         native_lab_voice_stop(session);
@@ -475,10 +1247,12 @@ static void run(void *ctx)
         taskENTER_CRITICAL();stack_free=free_bytes;state=ok?2:3;taskEXIT_CRITICAL();
     }
 }
+#ifndef P25_WORKER_WORDS /* DM32 Plus sets its own from the stack check (docs/plus.md, RAM) */
 #if CONFIG_P25_BENCH || CONFIG_DEV_TX
 #define P25_WORKER_WORDS 2048 /* synthetic encoder is the deepest path */
 #else
 #define P25_WORKER_WORDS 1024 /* RX: static bound 2368 B; >1.5 KiB margin */
+#endif
 #endif
 void p25_lab_start(void)
 {
@@ -579,7 +1353,7 @@ size_t p25_lab_command(const uint8_t *req,uint16_t len,uint8_t *out,size_t cap)
 #if CONFIG_P25_BENCH
     else if(req[0]==12 && len==2 && req[1]<=1) { sample_checks=req[1];out[0]=DL_ST_OK; }
     else if(req[0]==9 && len==2 && req[1]<=1) { pcm_paced=req[1];out[0]=DL_ST_OK; }
-    else if(req[0]==2 && len==3 && u16(req+1)>=1 && u16(req+1)<=64) {
+    else if(req[0]==2 && len==3 && u16(req+1)>=1 && u16(req+1)<=P25_REPLAY_RECORDS) {
         expected=u16(req+1);loaded=0;out[0]=DL_ST_OK;
     } else if(req[0]==3 && len==40 && loaded<expected && u16(req+1)==loaded && req[3]<=2) {
         replay[loaded].kind=req[3];memcpy(replay[loaded].raw,req+4,36);loaded++;out[0]=DL_ST_OK;

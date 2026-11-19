@@ -11,8 +11,22 @@ uint32_t hal_micros(void) { return now*1000u; }
 static bool classic_on(void) { return true; }
 static uint16_t classic_battery(void) { return 8000; }
 int p25_lab_busy(void) { return classic_busy; }
-int p25_lab_set_channel(uint16_t n,uint16_t tx,uint16_t t,uint32_t i)
-{ CHECK(n==0x293 && tx==0x293 && t==42 && i==3101234);return !classic_busy; }
+static uint16_t classic_set_nac,classic_set_tx_nac,classic_set_tg;
+static unsigned classic_sets;
+int p25_lab_set_channel(uint16_t n,uint16_t tx,uint16_t t,uint32_t i,int selective)
+{
+    (void)selective;
+    /* Classic: the channel, RX and TX NAC the same. DDM25 Plus: the channel edited to NAC/talkgroup Any (TX NAC
+     * inherited from Any: $293, Classic r13), the P25 search's any/any, trunk following, a TX NAC of its own */
+    CHECK((n==0x293 && tx==0x293 && t==42 && i==3101234) ||
+          (n==0xF7E && (tx==0x293 || tx==0xF7E) && t==0 && (i==0 || i==3101234)) ||
+          (n==0xF7E && tx==0x293 && t==42 && i==3101234) ||
+          (CONFIG_P25_TRUNK && n==0x293 && tx==0x293 && t==0 && i==0) ||  /* trunk following: the channel NAC, any group */
+          (CONFIG_P25_TXNAC && t==42 && i==3101234) ||  /* RX $293 or Any + a TX NAC of its own */
+          CONFIG_VFO_MODES);   /* the VFO's own NACs and talkgroups (tests/plus/test_vfox_radio.inc) */
+    if(!classic_busy){classic_set_nac=n;classic_set_tx_nac=tx;classic_set_tg=t;classic_sets++;}
+    return !classic_busy;
+}
 void p25_lab_channel_stop(void) { classic_stop=true; }
 int p25_lab_channel_receiving(void) { return classic_receiving; }
 int p25_lab_channel_rx(uint32_t hz)
@@ -113,6 +127,28 @@ static void test_classic_ownership(void)
     uint8_t raw_arm[17]={1},reply[512];
     CHECK(native_lab_command(raw_arm,sizeof raw_arm,reply,sizeof reply)==1 && reply[0]!=0);
 }
+#if CONFIG_P25_ANY
+/* A saved edit reaches the core through codeplug_serial(), not a request: the receiver restarts with the new NAC */
+static void test_plus_edit_reselect(void)
+{
+    classic_select(true);
+    CHECK(classic_set_nac==0x293 && classic_set_tg==42);
+    unsigned sets=classic_sets;uint32_t old=classic_sid;
+    classic_pump();classic_pump();CHECK(classic_sets==sets && classic_sid==old);  /* unchanged: no restart */
+    sm.view.ch.p25_nac=0xF7E;sm.view.ch.p25_tg=0;sm.view.ch.rx_only=true;
+    for(unsigned i=0;i<4;i++)classic_pump();
+    CHECK(classic_sets==sets+1 && classic_set_nac==0xF7E && classic_set_tg==0);
+    CHECK(classic_sid!=old && classic_live->state==NT_RX && native_lab_owns());
+    /* And back to a fixed NAC/talkgroup */
+    sm.view.ch.p25_nac=0x293;sm.view.ch.p25_tg=42;sm.view.ch.rx_only=false;
+    for(unsigned i=0;i<4;i++)classic_pump();
+    CHECK(classic_set_nac==0x293);
+    /* Edited to FM: the native receiver lets go and the FM path is tuned again */
+    sm.view.ch.mode=RADIO_MODE_FM;
+    for(unsigned i=0;i<4;i++)classic_pump();
+    CHECK(!native_lab_owns());
+}
+#endif
 static void test_classic_idle_rearm(void)
 {
     classic_select(true);
@@ -221,9 +257,82 @@ static void test_issue28_idle_dmr(void)
         aud.feed=false;
     }
 }
+#if CONFIG_HOTSPOT
+/* DM32 Plus MMDVM hotspot from a P25 channel (docs/plus.md, "Hotspot"): RREQ_HS_ENTER takes the channel from the
+ * native receiver like any request, the receiver stays off while hotspot mode has the modem (no restart, no session),
+ * and takes the channel again once hotspot mode ends. Several rounds: nothing left over from the last one. */
+static void test_plus_hotspot_p25(void)
+{
+    classic_select(true);
+    for(unsigned round=0;round<3;round++) {
+        unsigned sets=classic_sets,starts=classic_starts;uint32_t old=classic_sid;
+        CHECK(classic_live->state==NT_RX && native_lab_owns() && !sm.hotspot);
+        radio_req_t enter={.type=RREQ_HS_ENTER,.arg=446000000};
+        CHECK(native_lab_request(&sm,&enter)==NATIVE_REQUEST_WAIT && native_lab_owns());
+        classic_pump();
+        CHECK(native_lab_request(&sm,&enter)==0 && !native_lab_owns());
+        radio_sm_request(&sm,&enter,now);
+        CHECK(sm.hotspot && sm.board_mode==RADIO_MODE_DMR && hw.rx_hz==446000000);
+        for(unsigned i=0;i<10;i++) { now+=100;classic_pump(); }
+        CHECK(classic_sets==sets && classic_starts==starts && classic_sid==old && !classic_busy);
+        CHECK(!native_lab_owns() && !native_lab_reserved() && classic_live->state==NT_STOPPED && !hw.tx_calls);
+        /* PTT in hotspot mode: the radio core's (on a P25 channel it ignores PTT), never the P25 transmitter */
+        radio_req_t ptt={.type=RREQ_PTT,.arg=1};
+        CHECK(native_lab_request(&sm,&ptt)==0);
+        radio_sm_request(&sm,&ptt,now);
+        classic_pump();classic_pump();
+        CHECK(!native_lab_owns() && classic_starts==starts && classic_sets==sets && !hw.tx_calls);
+        CHECK(sm.view.state!=RS_TX && sm.hotspot);
+        ptt.arg=0;CHECK(native_lab_request(&sm,&ptt)==0);
+        radio_sm_request(&sm,&ptt,now);
+        CHECK(!sm.ptt && sm.view.state!=RS_TX);
+        radio_req_t leave={.type=RREQ_HS_LEAVE};
+        CHECK(native_lab_request(&sm,&leave)==0);
+        radio_sm_request(&sm,&leave,now);
+        CHECK(!sm.hotspot);
+        /* The channel is the P25 one again (the fixture's codeplug has no P25 channel: tune() loaded FM) */
+        sm.view.ch.mode=RADIO_MODE_P25;sm.view.ch.bw=RADIO_BW_12K5;
+        sm.view.ch.p25_nac=0x293;sm.view.ch.p25_tg=42;sm.view.ch.p25_id=3101234;
+        classic_pump();classic_pump();
+        CHECK(classic_sets==sets+1 && classic_sid!=old && classic_live->state==NT_RX && native_lab_owns());
+        CHECK(!hw.tx_calls);
+    }
+}
+#endif
+#if CONFIG_P25_SCAN
+#include "test_scan.inc"
+#endif
+#if CONFIG_DMR_SEARCH
+#include "test_dmrsearch_sm.inc"
+#endif
+#if CONFIG_P25_TRUNK
+#include "test_trunk_sm.inc"
+#endif
+#if CONFIG_DMR_TRUNK
+#include "test_dmrtrunk_sm.inc"
+#endif
 int main(void)
 {
-    int prior=upstream_radio_main();test_issue28_idle_dmr();test_classic_ownership();test_classic_idle_rearm();test_classic_saved_refresh();
+    int prior=upstream_radio_main();test_issue28_idle_dmr();test_classic_ownership();test_classic_idle_rearm();
+    test_classic_saved_refresh();
+#if CONFIG_P25_ANY
+    test_plus_edit_reselect();
+#endif
+#if CONFIG_HOTSPOT
+    test_plus_hotspot_p25();
+#endif
+#if CONFIG_P25_SCAN
+    test_plus_scan();
+#endif
+#if CONFIG_DMR_SEARCH
+    test_plus_dmrsearch_sm();
+#endif
+#if CONFIG_P25_TRUNK
+    test_plus_trunk_sm();
+#endif
+#if CONFIG_DMR_TRUNK
+    test_plus_dmrtrunk_sm();
+#endif
     printf("Classic real FM/DMR/P25 admission and ownership: %d failures\n",failures);
     return prior || failures ? 1 : 0;
 }

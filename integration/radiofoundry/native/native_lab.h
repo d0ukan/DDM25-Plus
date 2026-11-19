@@ -24,6 +24,13 @@ int native_lab_voice_release(uint32_t session);
 enum { NATIVE_REQUEST_WAIT=2 };
 int native_lab_request(radio_sm_t *, const radio_req_t *);
 size_t native_lab_command(const uint8_t *, uint16_t, uint8_t *, size_t);
+#if defined(CONFIG_P25_SCAN) && CONFIG_P25_SCAN
+/* DM32 Plus, P25 in a zone scan (docs/plus.md): the radio core's scan on a P25 channel, every poll past the settle.
+ * stop: the scan's stop count (a new value is a new stop); carrier: something is on the frequency. Counted for the
+ * debug link (0x21 [12]). True while the channel at zone position pos is in its cooldown after a take that heard
+ * nothing of ours: the scan does not stop there for now */
+bool native_lab_scan_stop(uint16_t pos, uint8_t stop, bool carrier);
+#endif
 /* Local mic/PTT owner. Cable ARM cannot select this audio mode. */
 #define NATIVE_PHYSICAL_PTT_DOWN 3
 #define NATIVE_PHYSICAL_PTT_UP 4

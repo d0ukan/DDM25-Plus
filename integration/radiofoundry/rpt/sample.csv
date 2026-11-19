@@ -1,0 +1,10 @@
+callsign,city,lat,lon,locator,rx_mhz,tx_mhz,offset_mhz,ctcss,mode,cc,ts,bw
+# Fictional sample repeaters (tools/rpt_list.py without research-data): not real stations, for a build without a list
+TA0RPA,Ankara,39.9500,32.8000,,145.6000,,-0.600,88.5,FM,,,25
+TA0RPB,Istanbul,,,KN41ka,145.6250,145.0250,,88.5,FM,,,25
+TA0RPC,İzmir,,,,439.1500,,-7.600,,DMR,1,1+2,
+TA0RPD,Bursa,40.1800,29.0700,,439.2000,,-7.600,,DMR,2,2,
+TA0RPE,Antalya,36.9000,30.7000,,145.7250,,-0.600,123.0,FM,,,12.5
+TA0RPF,Konya,,,,439.3000,,-7.600,,C4FM,,,
+TA0RPG,Samsun,41.2900,36.3300,,439.3500,,-7.600,,D-STAR,,,
+TA0RPH,,,,,145.5000,,,,FM,,,

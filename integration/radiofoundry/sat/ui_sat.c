@@ -1,0 +1,612 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* DM32 Plus Tools > Satellites (sat.h): every satellite's next pass, soonest first (rise in local time, the highest
+ * elevation, how long), and for the one in focus the live azimuth, elevation, range, range rate and the Doppler
+ * corrected RX / TX with the shifts in kHz. Up / Down: focus, Left / Right: the local offset from UTC in half hours
+ * (+03:00 at first), OK: track the pass in the VFO (under way or due within 10 minutes) or stop; on a satellite with
+ * nothing to track OK opens the pass alarm page (0 opens it from any). #: the arming tone while tracking (SO-50); on
+ * the ISS while it is above the horizon, # sends one APRS position through its digipeater (145.825 MHz corrected for
+ * Doppler, path ARISS; aprs_iss_send). The radio task does the math (sat_svc.c); this screen only draws its view.
+ *
+ * The pass alarm page: Up / Down a row, Left / Right its value (For: a satellite or any; Before AOS: 2, 5, 10 min;
+ * Min. elevation: 0 .. 45 degrees; a change while armed arms it again), OK arms it or turns it off, Back the list.
+ * When it is due (ui_sat_alarm, every UI tick on any screen): a tone and a banner. */
+#include "config.h"
+#if CONFIG_SATELLITES
+#include <stdlib.h>
+#include "ui_nav.h"
+#include "ui_screens.h"
+#include "fmt.h"
+#include "i18n.h"
+#include "gfx.h"
+#include "radio/sat.h"
+#include "radio/beep.h"
+#include "aprs/aprs.h"
+
+#define TLE_OLD_S	(14L * 86400L)	/* elements older than this: the age in the warning color */
+#define SOON_S		600
+
+static uint8_t sel;
+static int16_t tz_min = 180;
+/* The pass alarm page: open, its row, what it shows (the alarm's own values once armed) */
+static bool alarm_page;
+static uint8_t a_row, a_for, a_lead = 1, a_el;
+static const uint8_t lead_min[] = { 2, 5, 10 };
+static const uint8_t min_el[] = { 0, 10, 20, 30, 45 };
+#define A_ROWS	3
+
+static int32_t sort_key(const sat_view_t *v, uint8_t i)
+{
+	const sat_pass_t *p = &v->pass[i];
+	return p->state == SAT_PASS_OK ? p->aos : INT32_MAX - 3 + p->state;
+}
+
+/* The satellites soonest first (under way first of all) */
+static uint8_t order(const sat_view_t *v, uint8_t *idx)
+{
+	uint8_t n = sat_count;
+	for (uint8_t i = 0; i < n; i++) {
+		uint8_t j = i;
+		int32_t k = sort_key(v, i);
+		while (j > 0 && sort_key(v, idx[j - 1]) > k) {
+			idx[j] = idx[j - 1];
+			j--;
+		}
+		idx[j] = i;
+	}
+	return n;
+}
+
+static void sb_hhmm_at(sbuf_t *b, int32_t s2000)
+{
+	int32_t day = (s2000 + tz_min * 60L) % 86400L;
+	if (day < 0)
+		day += 86400L;
+	sb_u32(b, (uint32_t)day / 3600u, 2);
+	sb_chr(b, ':');
+	sb_u32(b, (uint32_t)day / 60u % 60u, 2);
+}
+
+/* Minutes:seconds under an hour, else hours and minutes */
+static void sb_until(sbuf_t *b, int32_t s)
+{
+	if (s < 0)
+		s = 0;
+	if (s < 3600) {
+		sb_mmss(b, (uint32_t)s);
+		return;
+	}
+	sb_u32(b, (uint32_t)s / 3600u, 1);
+	sb_chr(b, 'h');
+	sb_u32(b, (uint32_t)s / 60u % 60u, 2);
+}
+
+/* Signed kHz with one decimal: "+10.2" */
+static void sb_khz(sbuf_t *b, int32_t hz)
+{
+	sb_chr(b, hz < 0 ? '-' : '+');
+	uint32_t a = (uint32_t)(hz < 0 ? -hz : hz) + 50u;
+	sb_u32(b, a / 1000u, 1);
+	sb_chr(b, '.');
+	sb_u32(b, a / 100u % 10u, 1);
+}
+
+static void sb_deg(sbuf_t *b, int v)
+{
+	sb_u32(b, (uint32_t)(v < 0 ? 0 : v), 1);
+	sb_str(b, GLYPH_DEGREE);
+}
+
+static bool can_track(const sat_view_t *v, uint8_t i)
+{
+	const sat_pass_t *p = &v->pass[i];
+	return v->clock == SAT_CLOCK_OK && p->state == SAT_PASS_OK && p->aos - v->now <= SOON_S && v->now <= p->los;
+}
+
+static void row(int y, int h, const sat_view_t *v, uint8_t i, bool focus)
+{
+	char buf[32];
+	sbuf_t b;
+	const font_t *f = ui_layout.medium;
+	int w = gfx_width(), cw = f->w;
+	const sat_pass_t *p = &v->pass[i];
+	if (focus)
+		gfx_fill(0, y, w, h, ui_col.focus);
+	color_t fg = focus ? ui_col.focus_fg : ui_col.fg, dim = focus ? ui_col.focus_fg : ui_col.dim;
+	int ty = y + (h - f->h) / 2;
+	int x = gfx_text(f, 2, ty, sat_table[i].name, v->track == i ? (focus ? fg : ui_col.rx) : fg) + cw / 2;
+	if (x < cw * 7)
+		x = cw * 7;		/* the times in a column */
+	sb_init(&b, buf, sizeof buf);
+	if (p->state == SAT_PASS_UNKNOWN) {
+		sb_str(&b, GLYPH_ELLIPSIS);
+	} else if (p->state == SAT_PASS_NONE) {
+		sb_str(&b, TR("no pass soon"));
+	} else if (p->state == SAT_PASS_BAD) {
+		sb_str(&b, TR("bad elements"));
+	} else {
+		bool now = p->aos <= v->now;
+		if (now)
+			sb_str(&b, TR("now"));
+		else
+			sb_hhmm_at(&b, p->aos);
+		gfx_text(f, x, ty, buf, now ? (focus ? fg : ui_col.rx) : fg);
+		sb_init(&b, buf, sizeof buf);
+		sb_deg(&b, p->max_el);
+		x = gfx_text(f, x + gfx_text_width(f, "00:00") + cw / 2, ty, buf, fg);
+		/* how long, in the small font at the right where there is room */
+		const font_t *sm = ui_layout.small;
+		sb_init(&b, buf, sizeof buf);
+		sb_u32(&b, (uint32_t)(p->los - p->aos + 30) / 60u, 1);
+		sb_chr(&b, 'm');
+		int dw = gfx_text_width(sm, buf);
+		if (x + sm->w <= w - dw - 2)
+			gfx_text(sm, w - dw - 2, y + (h - sm->h) / 2, buf, dim);
+		return;
+	}
+	const font_t *sm = ui_layout.small;	/* "no pass soon" fits after a long name in this one */
+	gfx_text(p->state == SAT_PASS_UNKNOWN ? f : sm, x, p->state == SAT_PASS_UNKNOWN ? ty : y + (h - sm->h) / 2, buf,
+		 p->state == SAT_PASS_BAD ? ui_col.warn : dim);
+}
+
+/* The alarm in a line: "Alarm 14:27: ISS 47°" (the tone's time), or what it is doing; false when it is off */
+static bool sb_alarm(sbuf_t *b, const sat_view_t *v)
+{
+	const sat_alarm_t *a = &v->alarm;
+	if (a->target == SAT_NONE)
+		return false;
+	if (a->state == SAT_AL_ARMED && a->sat < sat_count) {
+		sb_str(b, TR("Alarm "));
+		sb_hhmm_at(b, a->aos - (int32_t)a->lead_min * 60);
+		sb_str(b, ": ");
+		sb_str(b, sat_table[a->sat].name);
+		sb_chr(b, ' ');
+		sb_deg(b, a->max_el);
+	} else if (a->state == SAT_AL_NONE) {
+		sb_str(b, TR("Alarm: none in 36 h"));
+	} else {
+		sb_str(b, TR("Alarm: searching"));
+		sb_str(b, GLYPH_ELLIPSIS);
+	}
+	return true;
+}
+
+/* The focused satellite (or the one tracked) now */
+static int live(int y, const sat_view_t *v)
+{
+	char buf[40];
+	sbuf_t b;
+	const font_t *s = ui_layout.small, *m = ui_layout.medium;
+	uint8_t i = v->live;
+	if (i >= sat_count || !v->live_ok)
+		return y;
+	const sat_info_t *t = &sat_table[i];
+	const sat_pass_t *p = &v->pass[i];
+	bool up = v->el10 >= 0;
+	sb_init(&b, buf, sizeof buf);
+	sb_str(&b, t->name);
+	sb_chr(&b, ' ');
+	if (p->state == SAT_PASS_OK && p->aos > v->now) {
+		sb_str(&b, TR("AOS in "));
+		sb_until(&b, p->aos - v->now);
+	} else if (p->state == SAT_PASS_OK && v->now <= p->los) {
+		sb_str(&b, TR("LOS in "));
+		sb_until(&b, p->los - v->now);
+	}
+	gfx_text(m, 0, y, buf, up ? ui_col.rx : ui_col.fg);
+	y += m->h + 1;
+	sb_init(&b, buf, sizeof buf);
+	sb_str(&b, TR("Az "));
+	sb_u32(&b, (uint32_t)(v->az10 + 5) / 10u % 360u, 1);
+	sb_str(&b, GLYPH_DEGREE "  ");
+	sb_str(&b, TR("El "));
+	if (v->el10 < 0)
+		sb_chr(&b, '-');
+	sb_u32(&b, (uint32_t)abs(v->el10) / 10u, 1);
+	sb_chr(&b, '.');
+	sb_u32(&b, (uint32_t)abs(v->el10) % 10u, 1);
+	sb_str(&b, GLYPH_DEGREE);
+	gfx_text(m, 0, y, buf, up ? ui_col.fg : ui_col.dim);
+	y += m->h + 1;
+	/* Range and range rate (km/s, two decimals; positive: going away) */
+	sb_init(&b, buf, sizeof buf);
+	sb_u32(&b, v->range_km, 1);
+	sb_str(&b, " km  ");
+	uint32_t r = (uint32_t)abs(v->rate_ms) + 5u;
+	sb_chr(&b, v->rate_ms < 0 ? '-' : '+');
+	sb_u32(&b, r / 1000u, 1);
+	sb_chr(&b, '.');
+	sb_u32(&b, r / 10u % 100u, 2);
+	sb_str(&b, " km/s");
+	gfx_text(s, 0, y, buf, up ? ui_col.fg : ui_col.dim);
+	y += s->h + 1;
+	/* Doppler: what the radio hears the downlink on and must send the uplink on, and the shifts */
+	float rate = (float)v->rate_ms / 1000.0f;
+	int32_t dd = sat_doppler_rx(t->down_hz, rate), du = sat_doppler_tx(t->up_hz, rate);
+	sb_init(&b, buf, sizeof buf);
+	sb_str(&b, "RX ");
+	sb_freq(&b, v->track == i ? v->rx_hz : sat_tune_hz(t->down_hz, dd));
+	sb_chr(&b, ' ');
+	sb_khz(&b, dd);
+	sb_str(&b, " kHz");
+	gfx_text(s, 0, y, buf, ui_col.fg);
+	y += s->h + 1;
+	/* TX, its shift and the uplink tone (the arming tone while it is on); " kHz" where the line has room */
+	for (int k = 0; k < 2; k++) {
+		sb_init(&b, buf, sizeof buf);
+		sb_str(&b, "TX ");
+		sb_freq(&b, v->track == i ? v->tx_hz : sat_tune_hz(t->up_hz, du));
+		sb_chr(&b, ' ');
+		sb_khz(&b, du);
+		if (k == 0)
+			sb_str(&b, " kHz");
+		if (t->ctcss10) {
+			subtone_t tone = { TONE_CTCSS, v->track == i && v->arm && t->arm10 ? t->arm10 : t->ctcss10 };
+			sb_chr(&b, ' ');
+			sb_tone(&b, &tone);
+		}
+		if (gfx_text_width(s, buf) <= gfx_width())
+			break;
+	}
+	gfx_text(s, 0, y, buf, ui_col.fg);
+	y += s->h + 1;
+	sb_init(&b, buf, sizeof buf);
+	color_t c = ui_col.dim;
+	if (v->track == i) {
+		sb_str(&b, TR("Tracking Doppler"));
+		c = ui_col.rx;
+	} else if (v->track_state == SAT_TRK_LEFT && v->track == SAT_NONE) {
+		sb_str(&b, TR("Stopped: VFO changed"));
+		c = ui_col.warn;
+	} else if (can_track(v, i)) {
+		sb_str(&b, TR("OK: track in the VFO"));
+		c = ui_col.fg;
+	} else if (sb_alarm(&b, v)) {
+		c = v->alarm.state == SAT_AL_ARMED ? ui_col.fg : ui_col.dim;
+	} else if (v->track_state == SAT_TRK_LOS && v->track == SAT_NONE) {
+		sb_str(&b, TR("Over: VFO on nominal"));
+	}
+	gfx_text(s, 0, y, buf, c);
+	return y + s->h + 1;
+}
+
+static bool is_iss(uint8_t i)
+{
+	return i < sat_count && sat_table[i].catnum == SAT_ISS_CATNUM;
+}
+
+/* # on the ISS: one APRS position through its digipeater, the uplink corrected for the Doppler of now. The engine
+ * checks the rest (aprs.h aprs_iss_send: callsign, position, amateur frequency, 30 s apart) and keys as for any APRS
+ * frame (CSMA on the frequency first). noinline: off sat_key's frame, which holds a sat_view_t */
+static void __attribute__((noinline)) iss_send(const sat_view_t *v)
+{
+	if (v->live != sel || !v->live_ok) {
+		ui_toast(TR("Can't send now"));
+		return;
+	}
+	if (v->el10 <= 0) {
+		ui_toast(TR("ISS below the horizon: wait for its pass"));
+		return;
+	}
+	uint32_t hz = sat_tune_hz(SAT_ISS_APRS_HZ, sat_doppler_tx(SAT_ISS_APRS_HZ, (float)v->rate_ms / 1000.0f));
+	switch (aprs_iss_send(hz)) {
+	case APRS_OK: ui_toast(TR("Sent via ISS (ARISS)")); break;
+	case APRS_NO_CALL: ui_toast(TR("Set your callsign (the radio name) in qdmr.")); break;
+	case APRS_NO_POSITION: ui_toast(TR("No position: GPS or a fixed one")); break;
+	case APRS_ISS_WAIT: ui_toast(TR("ISS: 30 s between sends")); break;
+	default: ui_toast(TR("Can't send now")); break;
+	}
+}
+
+/* --- The pass alarm page --- */
+
+static bool armed(const sat_view_t *v)
+{
+	return v->alarm.target != SAT_NONE;
+}
+
+static void alarm_open(const sat_view_t *v)
+{
+	alarm_page = true;
+	a_row = 0;
+	a_for = sel;
+	if (armed(v)) {
+		/* what is armed */
+		a_for = v->alarm.target;
+		for (uint8_t k = 0; k < sizeof lead_min; k++)
+			if (lead_min[k] == v->alarm.lead_min)
+				a_lead = k;
+		for (uint8_t k = 0; k < sizeof min_el; k++)
+			if (min_el[k] == v->alarm.min_el)
+				a_el = k;
+	}
+}
+
+static void alarm_arm(void)
+{
+	sat_alarm_set(a_for, lead_min[a_lead], min_el[a_el]);
+}
+
+static void __attribute__((noinline)) alarm_draw(int y, const sat_view_t *v)
+{
+	char buf[40];
+	sbuf_t b;
+	const font_t *s = ui_layout.small, *m = ui_layout.medium;
+	int w = gfx_width(), rh = m->h + 6;
+	static const char *const labels[A_ROWS] = { TRN("For"), TRN("Before AOS"), TRN("Min. elevation") };
+	for (uint8_t r = 0; r < A_ROWS; r++) {
+		bool focus = r == a_row;
+		if (focus)
+			gfx_fill(0, y, w, rh, ui_col.focus);
+		color_t fg = focus ? ui_col.focus_fg : ui_col.fg;
+		int ty = y + (rh - m->h) / 2;
+		gfx_text(m, 2, ty, tr(labels[r]), focus ? fg : ui_col.dim);
+		sb_init(&b, buf, sizeof buf);
+		if (r == 0) {
+			sb_str(&b, a_for < sat_count ? sat_table[a_for].name : TR("Any satellite"));
+		} else if (r == 1) {
+			sb_u32(&b, lead_min[a_lead], 1);
+			sb_str(&b, TR(" min"));
+		} else {
+			sb_deg(&b, min_el[a_el]);
+		}
+		gfx_text(m, w - gfx_text_width(m, buf) - 2, ty, buf, fg);
+		y += rh;
+	}
+	y += 4;
+	const sat_alarm_t *a = &v->alarm;
+	sb_init(&b, buf, sizeof buf);
+	color_t c = ui_col.dim;
+	if (!armed(v)) {
+		sb_str(&b, TR("Off: OK arms it"));
+	} else if (v->clock != SAT_CLOCK_OK) {
+		sb_str(&b, TR("Armed: waits for GPS"));
+	} else if (a->state == SAT_AL_ARMED && a->sat < sat_count) {
+		/* the pass: "SO-50 13:01 23°", then when the tone sounds */
+		sb_str(&b, sat_table[a->sat].name);
+		sb_chr(&b, ' ');
+		sb_hhmm_at(&b, a->aos);
+		sb_chr(&b, ' ');
+		sb_deg(&b, a->max_el);
+		gfx_text(m, 0, y, buf, ui_col.rx);
+		y += m->h + 2;
+		sb_init(&b, buf, sizeof buf);
+		sb_str(&b, a->soon ? TR("Tone again at AOS") : TR("Tone at "));
+		if (!a->soon)
+			sb_hhmm_at(&b, a->aos - (int32_t)a->lead_min * 60);
+		c = ui_col.fg;
+	} else {
+		sb_alarm(&b, v);
+	}
+	gfx_text(s, 0, y, buf, c);
+	y += s->h + 2;
+	gfx_text(s, 0, y, TR("Off after a power cycle"), ui_col.dim);
+	if (v->cost_us) {
+		/* the slowest propagation measured on this radio (the list's clock line has no room for it) */
+		y += s->h + 2;
+		sb_init(&b, buf, sizeof buf);
+		sb_str(&b, TR("SGP4 at most "));
+		sb_u32(&b, (v->cost_us + 50u) / 1000u, 1);
+		sb_chr(&b, '.');
+		sb_u32(&b, (v->cost_us + 50u) / 100u % 10u, 1);
+		sb_str(&b, " ms");
+		gfx_text(s, 0, y, buf, ui_col.dim);
+	}
+}
+
+static bool alarm_key(const input_event_t *ev, const sat_view_t *v)
+{
+	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
+	if (ev->action == ACT_BACK && ev->gesture == GESTURE_PRESS) {
+		alarm_page = false;
+		ui_dirty();
+		return true;
+	}
+	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN)) {
+		a_row = (uint8_t)((a_row + (ev->action == ACT_NAV_DOWN ? 1u : A_ROWS - 1u)) % A_ROWS);
+		ui_dirty();
+		return true;
+	}
+	if ((press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) || ev->action == ACT_ENC_STEP) {
+		bool up = ev->action == ACT_ENC_STEP ? ev->value > 0 : ev->action == ACT_NAV_RIGHT;
+		if (a_row == 0) {
+			/* the satellites, then any */
+			uint8_t n = (uint8_t)(sat_count + 1u), at = a_for < sat_count ? a_for : sat_count;
+			at = (uint8_t)((at + (up ? 1u : n - 1u)) % n);
+			a_for = at < sat_count ? at : (uint8_t)SAT_ALARM_ANY;
+		} else if (a_row == 1) {
+			a_lead = (uint8_t)((a_lead + (up ? 1u : sizeof lead_min - 1u)) % sizeof lead_min);
+		} else {
+			a_el = (uint8_t)((a_el + (up ? 1u : sizeof min_el - 1u)) % sizeof min_el);
+		}
+		if (armed(v))
+			alarm_arm();	/* a change while armed: armed again with it */
+		ui_dirty();
+		return true;
+	}
+	if (ev->action == ACT_SELECT && ev->gesture == GESTURE_PRESS) {
+		if (armed(v)) {
+			sat_alarm_set(SAT_NONE, 0, 0);
+			ui_toast(TR("Pass alarm off"));
+		} else {
+			alarm_arm();
+			ui_toast(TR("Pass alarm armed"));
+		}
+		ui_dirty();
+		return true;
+	}
+	return false;
+}
+
+/* Every UI tick (ui_app.c), on any screen: an alarm due sounds its tone here and gives its text for the banner */
+const char *ui_sat_alarm(void)
+{
+	static char text[40];
+	sat_alarm_event_t ev;
+	if (!sat_alarm_take(&ev) || ev.sat >= sat_count)
+		return NULL;
+	sbuf_t b;
+	sb_init(&b, text, sizeof text);
+	sb_str(&b, sat_table[ev.sat].name);
+	if (ev.kind == SAT_ALARM_SOON) {
+		sb_str(&b, TR(" in "));
+		sb_u32(&b, (uint32_t)(ev.in_s < 60 ? 1 : (ev.in_s + 30) / 60), 1);
+		sb_str(&b, TR(" min, max "));
+	} else {
+		sb_str(&b, TR(" AOS now, max "));
+	}
+	sb_deg(&b, ev.max_el);
+	radio_req_beep(ev.kind == SAT_ALARM_SOON ? BEEP_TOT_WARN : BEEP_SCAN_HOLD);
+	return text;
+}
+
+/* --- The screen --- */
+
+static void sat_draw(void)
+{
+	char buf[40];
+	sbuf_t b;
+	sat_view_t v;
+	uint8_t idx[SAT_MAX];
+	gfx_clear(ui_col.bg);
+	int y = ui_draw_top(ui_view(), &ui_st, alarm_page ? TR("Pass alarm") : TR("Satellites"), "") + 2;
+	const font_t *s = ui_layout.small, *m = ui_layout.medium;
+	if (sel >= sat_count)
+		sel = 0;
+	sat_seen(sel);
+	sat_view(&v);
+	if (alarm_page) {
+		alarm_draw(y + 2, &v);
+		ui_draw_bottom(&ui_st, armed(&v) ? TR("OK off  <> change") : TR("OK arm  ^v<> change"));
+		ui_draw_banner(&ui_st);
+		return;
+	}
+	if (v.clock != SAT_CLOCK_OK) {
+		gfx_text(s, 0, y, v.clock == SAT_CLOCK_NONE ? TR("Waiting for the GPS time") : TR("Waiting for a GPS position"),
+			 ui_col.warn);
+		gfx_text(s, 0, y + s->h + 2, TR("Needs a GPS fix: Settings > Location"), ui_col.dim);
+		ui_draw_bottom(&ui_st, TR("Back"));
+		ui_draw_banner(&ui_st);
+		return;
+	}
+	/* The time, the offset, the focused satellite's elements' age */
+	int32_t age = v.now - (int32_t)sat_table[sel].el.epoch;
+	sb_init(&b, buf, sizeof buf);
+	sb_hhmm_at(&b, v.now);
+	sb_str(&b, " UTC");
+	sb_chr(&b, tz_min < 0 ? '-' : '+');
+	int16_t z = tz_min < 0 ? (int16_t)-tz_min : tz_min;
+	sb_u32(&b, (uint32_t)z / 60u, 2);
+	sb_chr(&b, ':');
+	sb_u32(&b, (uint32_t)z % 60u, 2);
+	sb_str(&b, TR("  TLE "));
+	sb_i32(&b, age / 86400L);
+	sb_str(&b, TR(" d"));
+	bool old = age > TLE_OLD_S || age < -86400L;
+	int lw = gfx_text(s, 0, y, buf, old ? ui_col.warn : ui_col.dim);
+	if (v.cost_us) {
+		/* the slowest propagation, where there is room for it */
+		sb_init(&b, buf, sizeof buf);
+		sb_u32(&b, (v.cost_us + 50u) / 1000u, 1);
+		sb_chr(&b, '.');
+		sb_u32(&b, (v.cost_us + 50u) / 100u % 10u, 1);
+		sb_str(&b, " ms");
+		int cw = gfx_text_width(s, buf);
+		if (lw + s->w <= gfx_width() - cw)
+			gfx_text(s, gfx_width() - cw, y, buf, ui_col.dim);
+	}
+	y += s->h + 3;
+	/* The passes, as many rows as leave room for the live lines */
+	int rh = m->h + 4;
+	int rows = (ui_layout.hint_y - y - (2 * m->h + 4 * s->h + 11)) / rh;
+	uint8_t n = order(&v, idx), pos = 0;
+	for (uint8_t k = 0; k < n; k++)
+		if (idx[k] == sel)
+			pos = k;
+	if (rows < 1)
+		rows = 1;
+	uint8_t first = pos >= rows ? (uint8_t)(pos - rows + 1) : 0;
+	for (uint8_t k = first; k < n && k < first + rows; k++) {
+		row(y, rh, &v, idx[k], idx[k] == sel);
+		y += rh;
+	}
+	gfx_hline(0, y + 2, gfx_width(), ui_col.line);
+	live(y + 5, &v);
+	bool can = can_track(&v, sel);
+	ui_draw_bottom(&ui_st, v.track == sel && sat_table[sel].arm10 ? TR("OK stop  # arm tone  <> UTC")
+				: is_iss(sel) ? (v.track == sel ? TR("OK stop  # APRS via ISS")
+						: can ? TR("OK track  # APRS via ISS") : TR("OK alarm  # APRS via ISS"))
+				: v.track == sel ? TR("OK stop  ^v pick  <> UTC")
+				: can ? TR("^v pick  OK track  <> UTC") : TR("^v pick  OK alarm  <> UTC"));
+	ui_draw_banner(&ui_st);
+}
+
+static bool sat_key(const input_event_t *ev)
+{
+	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
+	sat_view_t v;
+	if (alarm_page) {
+		sat_view(&v);
+		return alarm_key(ev, &v);
+	}
+	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {
+		uint8_t idx[SAT_MAX], pos = 0;
+		sat_view(&v);
+		uint8_t n = order(&v, idx);
+		for (uint8_t k = 0; k < n; k++)
+			if (idx[k] == sel)
+				pos = k;
+		int dir = ev->action == ACT_ENC_STEP ? (ev->value > 0 ? 1 : -1) : ev->action == ACT_NAV_DOWN ? 1 : -1;
+		if (n)
+			sel = idx[(pos + n + dir) % n];
+		sat_seen(sel);
+		ui_dirty();
+		return true;
+	}
+	if (press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) {
+		tz_min = (int16_t)(tz_min + (ev->action == ACT_NAV_RIGHT ? 30 : -30));
+		if (tz_min > 14 * 60)
+			tz_min = -12 * 60;
+		if (tz_min < -12 * 60)
+			tz_min = 14 * 60;
+		ui_dirty();
+		return true;
+	}
+	if ((ev->action == ACT_SELECT || ev->action == ACT_DIGIT_0) && ev->gesture == GESTURE_PRESS) {
+		sat_view(&v);
+		if (ev->action == ACT_DIGIT_0 || (v.track != sel && !can_track(&v, sel))) {
+			alarm_open(&v);		/* nothing to track: the alarm for its next pass */
+		} else if (v.track == sel) {
+			sat_track(SAT_NONE);
+			ui_toast(TR("Tracking off: VFO stays"));
+		} else {
+			sat_track(sel);
+			ui_toast(TR("VFO tracks the pass"));
+		}
+		ui_dirty();
+		return true;
+	}
+	if (ev->action == ACT_CONTEXT && ev->gesture == GESTURE_PRESS) {
+		sat_view(&v);
+		if (v.track == sel && sat_table[sel].arm10) {
+			sat_arm(!v.arm);
+			ui_toast(v.arm ? TR("Uplink tone: the CTCSS") : TR("Uplink tone: arming"));
+		} else if (is_iss(sel)) {
+			iss_send(&v);	/* only on this key press, never by itself */
+		}
+		ui_dirty();
+		return true;
+	}
+	return false;
+}
+
+static void sat_enter(void)
+{
+	alarm_page = false;
+	sat_seen(sel);
+	ui_dirty();
+}
+
+const ui_scr_def_t ui_sat_screen = {
+	.name = "satellites", .flags = SF_FIELD, .key = sat_key, .draw = sat_draw, .enter = sat_enter,
+};
+#endif

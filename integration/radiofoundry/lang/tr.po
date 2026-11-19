@@ -1,0 +1,5221 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 The RadioFoundry Authors
+#
+# The radio's strings in Türkçe (tr; docs/dev/translating.md). Kept in step with the source by
+# tools/i18n.py --sync: translate the empty msgstr lines; an empty one shows the English.
+msgid ""
+msgstr ""
+"Project-Id-Version: RadioFoundry\n"
+"Language: tr\n"
+"X-Language-Name: Türkçe\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: core/p25/p25_lab.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "EMERGENCY"
+msgstr "ACİL DURUM"
+
+#: core/p25/p25_lab.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Private"
+msgstr "Özel"
+
+#: core/stubentry/stub_entry.h
+msgid "PC Loader Connected"
+msgstr "PC Yükleyici bağlı"
+
+#: core/stubentry/stub_entry.h
+msgid "Power-cycle to exit"
+msgstr "Çıkmak için kapat-aç"
+
+#: core/ui/fmt.c core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_beacon.c core/ui/ui_lone.c core/ui/ui_menus.c core/ui/ui_scanx.c core/ui/ui_screens.c
+msgid "Off"
+msgstr "Kapalı"
+
+#: core/ui/fmt.c core/ui/ui_menus.c
+msgid " ago"
+msgstr " önce"
+
+#: core/ui/ui.c core/ui/ui_app.c
+msgid "Emergency canceled"
+msgstr "Acil durum iptal edildi"
+
+#: core/ui/ui.c core/ui/ui_aprsmsg.c
+msgid "SOS off"
+msgstr "SOS kapalı"
+
+#: core/ui/ui.c
+msgid "Lone worker: ALARM"
+msgstr "Lone worker: ALARM"
+
+#: core/ui/ui.c
+msgid "Lone worker: press a key"
+msgstr "Lone worker: tuşa bas"
+
+#: core/ui/ui_airfield.c
+msgid "No frequencies in the data"
+msgstr "Veride frekans yok"
+
+#: core/ui/ui_airfield.c core/ui/ui_rpt.c
+msgid "Nearest first"
+msgstr "En yakın önce"
+
+#: core/ui/ui_airfield.c
+msgid "No position: by code"
+msgstr "Konum yok: koda göre"
+
+#: core/ui/ui_airfield.c
+msgid "Large airport"
+msgstr "Büyük havalimanı"
+
+#: core/ui/ui_airfield.c
+msgid "Airport"
+msgstr "Havalimanı"
+
+#: core/ui/ui_airfield.c
+msgid "Small airfield"
+msgstr "Küçük meydan"
+
+#: core/ui/ui_airfield.c
+msgid "AM, RX only"
+msgstr "AM, yalnız RX"
+
+#: core/ui/ui_airfield.c
+msgid "Not for navigation"
+msgstr "Seyrüsefer için değil"
+
+#: core/ui/ui_airfield.c core/ui/ui_menus.c
+msgid "Airfields"
+msgstr "Havalimanları"
+
+#: core/ui/ui_airfield.c
+msgid "OK listen  ^v pick  Back"
+msgstr "OK dinle  ^v seç  Geri"
+
+#: core/ui/ui_airfield.c core/ui/ui_rpt.c
+msgid "^v pick  OK info  # nearest"
+msgstr "^v seç  OK bilgi  # en yakın"
+
+#: core/ui/ui_airfield.c
+msgid "No AM receive on this radio"
+msgstr "Bu telsizde AM alım yok"
+
+#: core/ui/ui_airfield.c core/ui/ui_marine.c core/ui/ui_rpt.c
+msgid "Can't tune while transmitting"
+msgstr "Yayın sırasında ayarlanamaz"
+
+#: core/ui/ui_airfield.c core/ui/ui_marine.c core/ui/ui_rpt.c
+msgid "Not in the radio's bands"
+msgstr "Telsizin bantlarında değil"
+
+#: core/ui/ui_airfield.c
+msgid ": AM, RX only"
+msgstr ": AM, yalnız RX"
+
+#: core/ui/ui_almanac.c
+msgid "New moon"
+msgstr "Yeni ay"
+
+#: core/ui/ui_almanac.c
+msgid "Waxing crescent"
+msgstr "Büyüyen hilal"
+
+#: core/ui/ui_almanac.c
+msgid "First quarter"
+msgstr "İlk dördün"
+
+#: core/ui/ui_almanac.c
+msgid "Waxing gibbous"
+msgstr "Büyüyen şişkin ay"
+
+#: core/ui/ui_almanac.c
+msgid "Full moon"
+msgstr "Dolunay"
+
+#: core/ui/ui_almanac.c
+msgid "Waning gibbous"
+msgstr "Küçülen şişkin ay"
+
+#: core/ui/ui_almanac.c
+msgid "Last quarter"
+msgstr "Son dördün"
+
+#: core/ui/ui_almanac.c
+msgid "Waning crescent"
+msgstr "Küçülen hilal"
+
+#: core/ui/ui_almanac.c core/ui/ui_menus.c
+msgid "Sun & Moon"
+msgstr "Güneş ve Ay"
+
+#: core/ui/ui_almanac.c
+msgid "Needs a GPS fix (and its date)"
+msgstr "GPS konumu (ve tarihi) gerekli"
+
+#: core/ui/ui_almanac.c core/ui/ui_gps.c
+msgid "Settings > Location"
+msgstr "Ayarlar > Konum"
+
+#: core/ui/ui_almanac.c core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_rpt.c core/ui/ui_sat.c core/ui/ui_screens.c core/ui/ui_sstv.c
+msgid "Back"
+msgstr "Geri"
+
+#: core/ui/ui_almanac.c
+msgid "Sun up/down"
+msgstr "Güneş doğ/bat"
+
+#: core/ui/ui_almanac.c
+msgid "Dawn/dusk"
+msgstr "Şafak/alacakaranlık"
+
+#: core/ui/ui_almanac.c
+msgid "Day "
+msgstr "Gün "
+
+#: core/ui/ui_almanac.c
+msgid "no sunrise or sunset"
+msgstr "gün doğumu/batımı yok"
+
+#: core/ui/ui_almanac.c
+msgid "% lit, "
+msgstr "% aydınlık, "
+
+#: core/ui/ui_almanac.c
+msgid " days"
+msgstr " gün"
+
+#: core/ui/ui_almanac.c
+msgid "<> UTC offset  Back"
+msgstr "<> UTC farkı  Geri"
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "OK Menu  * Quick"
+msgstr "OK Menü  * Hızlı"
+
+#: core/ui/ui_app.c
+msgid "OK Menu  Hold OK Quick"
+msgstr "OK Menü  OK tut Hızlı"
+
+#: core/ui/ui_app.c
+msgid "Not saved"
+msgstr "Kaydedilmedi"
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "Encrypted: not played"
+msgstr "Şifreli: çalınmadı"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "All call"
+msgstr "Herkese çağrı"
+
+#: core/ui/ui_app.c
+msgid "For now only: save it in qdmr"
+msgstr "Şimdilik: qdmr ile kaydet"
+
+#: core/ui/ui_app.c
+msgid "Talk target: not in this build"
+msgstr "Konuşma hedefi: bu sürümde yok"
+
+#: core/ui/ui_app.c
+msgid "Default now: "
+msgstr "Varsayılan: "
+
+#: core/ui/ui_app.c
+msgid "Talking to "
+msgstr "Konuşulan: "
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_qso.c core/ui/ui_screens.c
+msgid "No calls heard yet"
+msgstr "Henüz çağrı duyulmadı"
+
+#: core/ui/ui_app.c
+msgid "Message from "
+msgstr "Mesaj: "
+
+#: core/ui/ui_app.c
+msgid "Sent to "
+msgstr "Gönderildi: "
+
+#: core/ui/ui_app.c core/ui/ui_aprsmsg.c
+msgid "Delivered to "
+msgstr "İletildi: "
+
+#: core/ui/ui_app.c
+msgid "No answer from "
+msgstr "Yanıt yok: "
+
+#: core/ui/ui_app.c
+msgid "Not delivered: send again"
+msgstr "İletilmedi: tekrar gönder"
+
+#: core/ui/ui_app.c
+msgid "Call alert from "
+msgstr "Çağrı uyarısı: "
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "PTT replies"
+msgstr "PTT yanıtlar"
+
+#: core/ui/ui_app.c
+msgid "Private call from "
+msgstr "Özel çağrı: "
+
+#: core/ui/ui_app.c
+msgid "answered ("
+msgstr "yanıtladı ("
+
+#: core/ui/ui_app.c
+msgid "Off or out of range: try later"
+msgstr "Kapalı veya menzil dışı: sonra dene"
+
+#: core/ui/ui_app.c
+msgid "Hotspot started by host"
+msgstr "Hotspot host tarafından başlatıldı"
+
+#: core/ui/ui_app.c
+msgid "OK stops it"
+msgstr "OK durdurur"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_scanx.c core/ui/ui_svc_zone.c
+msgid "Couldn't save: try again"
+msgstr "Kaydedilemedi: tekrar dene"
+
+#: core/ui/ui_app.c
+msgid "New codeplug started"
+msgstr "Yeni codeplug başlatıldı"
+
+#: core/ui/ui_app.c
+msgid " answered the alert"
+msgstr " uyarıyı yanıtladı"
+
+#: core/ui/ui_app.c
+msgid "Couldn't switch off"
+msgstr "Kapatılamadı"
+
+#: core/ui/ui_app.c
+msgid "Turn the knob off"
+msgstr "Düğmeden kapatın"
+
+#: core/ui/ui_app.c
+msgid "⤓ Channel from "
+msgstr "⤓ Kanal gönderen: "
+
+#: core/ui/ui_app.c
+msgid "⤓ Zone from "
+msgstr "⤓ Bölge gönderen: "
+
+#: core/ui/ui_app.c
+msgid "Not sent to "
+msgstr "Gönderilemedi: "
+
+#: core/ui/ui_app.c
+msgid "Try again on a DMR channel"
+msgstr "DMR kanalında tekrar dene"
+
+#: core/ui/ui_app.c
+msgid "Updated "
+msgstr "Güncellendi "
+
+#: core/ui/ui_app.c
+msgid "Imported "
+msgstr "Alındı "
+
+#: core/ui/ui_app.c
+msgid " channel, receive only"
+msgstr " kanal, yalnız RX"
+
+#: core/ui/ui_app.c
+msgid " channels, receive only"
+msgstr " kanal, yalnız RX"
+
+#: core/ui/ui_app.c
+msgid "Zone not imported"
+msgstr "Bölge alınmadı"
+
+#: core/ui/ui_app.c
+msgid "Bands: "
+msgstr "Bantlar: "
+
+#: core/ui/ui_app.c
+msgid "Type at least the MHz digits"
+msgstr "En az MHz hanelerini gir"
+
+#: core/ui/ui_app.c
+msgid "Not in a band: type more digits"
+msgstr "Bant dışı: daha fazla hane gir"
+
+#: core/ui/ui_app.c
+msgid "All digits typed: OK or # tunes"
+msgstr "Haneler tamam: OK veya # ayarlar"
+
+#: core/ui/ui_app.c
+msgid "Digital monitor on"
+msgstr "Dijital dinleme açık"
+
+#: core/ui/ui_app.c
+msgid "Digital monitor off"
+msgstr "Dijital dinleme kapalı"
+
+#: core/ui/ui_app.c core/ui/ui_screens.c
+msgid "{Keys locked: hold * to unlock|Locked: hold * to unlock}"
+msgstr "{Tuşlar kilitli: açmak için * basılı tut|Kilitli: * basılı tut}"
+
+#: core/ui/ui_app.c
+msgid "{Keys locked: hold Back to unlock|Locked: hold Back to unlock}"
+msgstr "{Tuşlar kilitli: açmak için Geri basılı tut|Kilitli: Geri basılı tut}"
+
+#: core/ui/ui_app.c
+msgid "VFO settings save automatically"
+msgstr "VFO ayarları kendiliğinden kaydedilir"
+
+#: core/ui/ui_app.c core/ui/ui_fmdec.c
+msgid "Stop hotspot to save"
+msgstr "Kaydetmek için hotspotu durdur"
+
+#: core/ui/ui_app.c
+msgid "Nothing to save"
+msgstr "Kaydedilecek bir şey yok"
+
+#: core/ui/ui_app.c core/ui/ui_fmdec.c
+msgid "Pick a saved channel"
+msgstr "Kayıtlı bir kanal seç"
+
+#: core/ui/ui_app.c
+msgid "Channel saving unavailable"
+msgstr "Kanal kaydı kullanılamıyor"
+
+#: core/ui/ui_app.c
+msgid "Saved to channel"
+msgstr "Kanala kaydedildi"
+
+#: core/ui/ui_app.c
+msgid "Save busy: try again"
+msgstr "Kayıt meşgul: tekrar dene"
+
+#: core/ui/ui_app.c
+msgid "Home zone: "
+msgstr "Ana bölge: "
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Zone: "
+msgstr "Bölge: "
+
+#: core/ui/ui_app.c core/ui/ui_dual.c
+msgid "Only one zone"
+msgstr "Tek bölge var"
+
+#: core/ui/ui_app.c
+msgid "Copied to VFO"
+msgstr "VFO'ya kopyalandı"
+
+#: core/ui/ui_app.c
+msgid "Already in VFO"
+msgstr "Zaten VFO'da"
+
+#: core/ui/ui_app.c
+msgid "VFO: no DMR in this build"
+msgstr "VFO: bu sürümde DMR yok"
+
+#: core/ui/ui_app.c
+msgid "VFO: no FM in this build"
+msgstr "VFO: bu sürümde FM yok"
+
+#: core/ui/ui_app.c
+msgid "VFO: frequency outside its bands"
+msgstr "VFO: frekans bant dışında"
+
+#: core/ui/ui_app.c
+msgid "VFO: not in this build"
+msgstr "VFO: bu sürümde yok"
+
+#: core/ui/ui_app.c core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "Back to channels"
+msgstr "Kanallara dön"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c core/ui/ui_scanx.c
+msgid "Scan: not in this build"
+msgstr "Tarama: bu sürümde yok"
+
+#: core/ui/ui_app.c
+msgid "Scan stopped"
+msgstr "Tarama durdu"
+
+#: core/ui/ui_app.c
+msgid "Scanning the band"
+msgstr "Bant taranıyor"
+
+#: core/ui/ui_app.c
+msgid "Scanning this zone"
+msgstr "Bu bölge taranıyor"
+
+#: core/ui/ui_app.c
+msgid "Default: "
+msgstr "Varsayılan: "
+
+#: core/ui/ui_app.c
+msgid "Speed dial "
+msgstr "Hızlı arama "
+
+#: core/ui/ui_app.c
+msgid " is empty: set it in qdmr"
+msgstr " boş: qdmr ile ayarla"
+
+#: core/ui/ui_app.c
+msgid "Reply ended"
+msgstr "Yanıt bitti"
+
+#: core/ui/ui_app.c
+msgid "Changes undone"
+msgstr "Değişiklikler geri alındı"
+
+#: core/ui/ui_app.c
+msgid "Can't transmit there"
+msgstr "Orada yayın yapılamaz"
+
+#: core/ui/ui_app.c
+msgid "Color code: not in this build"
+msgstr "Color code: bu sürümde yok"
+
+#: core/ui/ui_app.c
+msgid "FM only: this is a DMR channel"
+msgstr "Yalnız FM: bu bir DMR kanalı"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Not in this build"
+msgstr "Bu sürümde yok"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Privacy: not in this build"
+msgstr "Gizlilik: bu sürümde yok"
+
+#: core/ui/ui_app.c
+msgid "VFO: one mode in this build"
+msgstr "VFO: bu sürümde tek mod"
+
+#: core/ui/ui_app.c
+msgid "VOX: not on this radio yet"
+msgstr "VOX: bu telsizde henüz yok"
+
+#: core/ui/ui_app.c
+msgid "Bandwidth 25 kHz"
+msgstr "Bant genişliği 25 kHz"
+
+#: core/ui/ui_app.c
+msgid "Bandwidth 12.5 kHz"
+msgstr "Bant genişliği 12.5 kHz"
+
+#: core/ui/ui_app.c
+msgid "Up/Dn tone  # TX/RX"
+msgstr "Yuk/Aşa ton  # TX/RX"
+
+#: core/ui/ui_app.c
+msgid "AM only in the air band"
+msgstr "Airbandnda yalnız AM"
+
+#: core/ui/ui_app.c
+msgid "FM only in the broadcast band"
+msgstr "Yayın bandında yalnız FM"
+
+#: core/ui/ui_app.c
+msgid "VOX off"
+msgstr "VOX kapalı"
+
+#: core/ui/ui_app.c
+msgid "VOX on: speak to transmit"
+msgstr "VOX açık: konuşunca yayın"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 1"
+msgstr "Timeslot 1"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 2"
+msgstr "Timeslot 2"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 1 for now"
+msgstr "Şimdilik Timeslot 1"
+
+#: core/ui/ui_app.c
+msgid "Timeslot 2 for now"
+msgstr "Şimdilik Timeslot 2"
+
+#: core/ui/ui_app.c
+msgid "Privacy on for now"
+msgstr "Gizlilik şimdilik açık"
+
+#: core/ui/ui_app.c
+msgid "Privacy off"
+msgstr "Gizlilik kapalı"
+
+#: core/ui/ui_app.c
+msgid "No privacy key: set one in Settings > Privacy"
+msgstr "Gizlilik anahtarı yok: Ayarlar > Gizlilik"
+
+#: core/ui/ui_app.c
+msgid "Power "
+msgstr "Güç "
+
+#: core/ui/ui_app.c
+msgid "All digits typed: OK sets TX"
+msgstr "Haneler tamam: OK TX'i ayarlar"
+
+#: core/ui/ui_app.c
+msgid "Tone for RX and TX"
+msgstr "RX ve TX için ton"
+
+#: core/ui/ui_app.c
+msgid "Tone for TX only"
+msgstr "Yalnız TX için ton"
+
+#: core/ui/ui_app.c
+msgid "Tone for RX only"
+msgstr "Yalnız RX için ton"
+
+#: core/ui/ui_app.c
+msgid "No actions here"
+msgstr "Burada işlem yok"
+
+#: core/ui/ui_app.c
+msgid "Emergency acknowledged"
+msgstr "Acil durum onaylandı"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Hotspot stopped"
+msgstr "Hotspot durdu"
+
+#: core/ui/ui_app.c
+msgid "Hotspot on: OK stops it"
+msgstr "Hotspot açık: OK durdurur"
+
+#: core/ui/ui_app.c
+msgid "No item with that number"
+msgstr "Bu numarada öğe yok"
+
+#: core/ui/ui_app.c
+msgid "Nothing to save here"
+msgstr "Burada kaydedilecek şey yok"
+
+#: core/ui/ui_app.c
+msgid "Nothing to open"
+msgstr "Açılacak bir şey yok"
+
+#: core/ui/ui_app.c
+msgid "Find: "
+msgstr "Bul: "
+
+#: core/ui/ui_app.c core/ui/ui_find.c
+msgid "No match: Back deletes a key"
+msgstr "Eşleşme yok: Geri bir tuş siler"
+
+#: core/ui/ui_app.c
+msgid "Emergency: not in this build"
+msgstr "Acil durum: bu sürümde yok"
+
+#: core/ui/ui_app.c
+msgid "Emergency needs a DMR channel and ID"
+msgstr "Acil durum için DMR kanalı ve ID gerekli"
+
+#: core/ui/ui_app.c
+msgid "EMERGENCY sent: hold again to cancel"
+msgstr "ACİL gönderildi: iptal için yine basılı tut"
+
+#: core/ui/ui_app.c
+msgid "Call back: DMR only"
+msgstr "Arayanı arama: yalnız DMR"
+
+#: core/ui/ui_app.c
+msgid "PTT is off while locked: hold * to unlock"
+msgstr "Kilitliyken PTT kapalı: açmak için * basılı tut"
+
+#: core/ui/ui_app.c
+msgid "PTT is off while locked: hold Back to unlock"
+msgstr "Kilitliyken PTT kapalı: açmak için Geri basılı tut"
+
+#: core/ui/ui_app.c
+msgid "Keys unlocked"
+msgstr "Tuş kilidi açıldı"
+
+#: core/ui/ui_app.c
+msgid "Talk target: DMR channels only"
+msgstr "Konuşma hedefi: yalnız DMR kanalı"
+
+#: core/ui/ui_app.c
+msgid "Volume: use the knob"
+msgstr "Ses: düğmeyi kullan"
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "Voice prompts: not in this build"
+msgstr "Sesli bildirim: bu sürümde yok"
+
+#: core/ui/ui_app.c
+msgid "Not used here"
+msgstr "Burada kullanılmıyor"
+
+#: core/ui/ui_app.c
+msgid "Switching off in 1 min"
+msgstr "1 dk içinde kapanıyor"
+
+#: core/ui/ui_app.c
+msgid "Any key keeps it on"
+msgstr "Bir tuş açık tutar"
+
+#: core/ui/ui_app.c
+msgid "Battery "
+msgstr "Pil "
+
+#: core/ui/ui_app.c core/ui/ui_menus.c
+msgid "%: charge soon"
+msgstr "%: yakında şarj et"
+
+#: core/ui/ui_app.c
+msgid "That zone was deleted"
+msgstr "O bölge silinmiş"
+
+#: core/ui/ui_app.c
+msgid "Moved to "
+msgstr "Taşındı: "
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "1 min"
+msgstr "1 dk"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "2 min"
+msgstr "2 dk"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "5 min"
+msgstr "5 dk"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "10 min"
+msgstr "10 dk"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "30 min"
+msgstr "30 dk"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "None"
+msgstr "Yok"
+
+#: core/ui/ui_aprs.c
+msgid "Both"
+msgstr "İkisi"
+
+#: core/ui/ui_aprs.c core/ui/ui_fmdec.c core/ui/ui_menus.c
+msgid "Auto"
+msgstr "Otomatik"
+
+#: core/ui/ui_aprs.c
+msgid "Computer"
+msgstr "Bilgisayar"
+
+#: core/ui/ui_aprs.c
+msgid "Fixed"
+msgstr "Sabit"
+
+#: core/ui/ui_aprs.c
+msgid "N America"
+msgstr "K Amerika"
+
+#: core/ui/ui_aprs.c
+msgid "Europe"
+msgstr "Avrupa"
+
+#: core/ui/ui_aprs.c
+msgid "Australia"
+msgstr "Avustralya"
+
+#: core/ui/ui_aprs.c
+msgid "New Zealand"
+msgstr "Yeni Zelanda"
+
+#: core/ui/ui_aprs.c
+msgid "Japan"
+msgstr "Japonya"
+
+#: core/ui/ui_aprs.c
+msgid "China"
+msgstr "Çin"
+
+#: core/ui/ui_aprs.c
+msgid "Custom"
+msgstr "Özel"
+
+#: core/ui/ui_aprs.c core/ui/ui_sat.c
+msgid "Set your callsign (the radio name) in qdmr."
+msgstr "Çağrı işaretini (telsiz adı) qdmr ile ayarla."
+
+#: core/ui/ui_aprs.c
+msgid "No APRS frequency: pick a region."
+msgstr "APRS frekansı yok: bölge seç."
+
+#: core/ui/ui_aprs.c
+msgid "Pick a frequency in a ham band this radio sends on."
+msgstr "Telsizin yayın yaptığı amatör bantta frekans seç."
+
+#: core/ui/ui_aprs.c
+msgid "No APRS tones on this radio; DMR positions work."
+msgstr "Bu telsizde APRS tonu yok; DMR konumu çalışır."
+
+#: core/ui/ui_aprs.c
+msgid "APRS: not in this build"
+msgstr "APRS: bu sürümde yok"
+
+#: core/ui/ui_aprs.c
+msgid "No callsign"
+msgstr "Çağrı işareti yok"
+
+#: core/ui/ui_aprs.c
+msgid " on "
+msgstr " - "
+
+#: core/ui/ui_aprs.c
+msgid " (sending)"
+msgstr " (gönderiliyor)"
+
+#: core/ui/ui_aprs.c core/ui/ui_rpt.c
+msgid "No position"
+msgstr "Konum yok"
+
+#: core/ui/ui_aprs.c core/ui/ui_beacon.c
+msgid "Next in "
+msgstr "Sonraki: "
+
+#: core/ui/ui_aprs.c
+msgid "  Sent "
+msgstr "  Gönd. "
+
+#: core/ui/ui_aprs.c
+msgid "Send position now"
+msgstr "Konumu şimdi gönder"
+
+#: core/ui/ui_aprs.c
+msgid "Automatic beacons"
+msgstr "Otomatik beacon"
+
+#: core/ui/ui_aprs.c
+msgid "Frequency"
+msgstr "Frekans"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Power"
+msgstr "Güç"
+
+#: core/ui/ui_aprs.c
+msgid "Path"
+msgstr "Yol"
+
+#: core/ui/ui_aprs.c
+msgid "Interval"
+msgstr "Aralık"
+
+#: core/ui/ui_aprs.c
+msgid "SmartBeaconing"
+msgstr "SmartBeaconing"
+
+#: core/ui/ui_aprs.c
+msgid "Send via"
+msgstr "Gönderim yolu"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "Position"
+msgstr "Konum"
+
+#: core/ui/ui_aprs.c
+msgid "Position in DMR calls"
+msgstr "DMR çağrılarında konum"
+
+#: core/ui/ui_aprs.c
+msgid "KISS on USB"
+msgstr "USB üzerinden KISS"
+
+#: core/ui/ui_aprs.c
+msgid "Stations heard"
+msgstr "Duyulan istasyonlar"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Messages"
+msgstr "Mesajlar"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c
+msgid "New message"
+msgstr "Yeni mesaj"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c
+msgid "SOS (emergency)"
+msgstr "SOS (acil durum)"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "On"
+msgstr "Açık"
+
+#: core/ui/ui_aprs.c
+msgid "As channel"
+msgstr "Kanal gibi"
+
+#: core/ui/ui_aprs.c
+msgid "Sending position"
+msgstr "Konum gönderiliyor"
+
+#: core/ui/ui_aprs.c
+msgid "Set your callsign first"
+msgstr "Önce çağrı işaretini ayarla"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_sat.c
+msgid "Can't send now"
+msgstr "Şimdi gönderilemez"
+
+#: core/ui/ui_aprs.c
+msgid "Beacons on"
+msgstr "Beacon açık"
+
+#: core/ui/ui_aprs.c
+msgid "Beacons off"
+msgstr "Beacon kapalı"
+
+#: core/ui/ui_aprs.c
+msgid "DMR position: not in this build"
+msgstr "DMR konumu: bu sürümde yok"
+
+#: core/ui/ui_aprs.c
+msgid "Position goes out in DMR calls"
+msgstr "Konum DMR çağrılarında gider"
+
+#: core/ui/ui_aprs.c
+msgid "No position in DMR calls"
+msgstr "DMR çağrılarında konum yok"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c
+msgid "This radio can't receive APRS"
+msgstr "Bu telsiz APRS alamaz"
+
+#: core/ui/ui_aprs.c
+msgid "Source"
+msgstr "Kaynak"
+
+#: core/ui/ui_aprs.c
+msgid "Latitude"
+msgstr "Enlem"
+
+#: core/ui/ui_aprs.c
+msgid "Longitude"
+msgstr "Boylam"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "Not set"
+msgstr "Ayarlanmadı"
+
+#: core/ui/ui_aprs.c
+msgid "Up to 90 N/S, 180 E/W"
+msgstr "En çok 90 K/G, 180 D/B"
+
+#: core/ui/ui_aprs.c core/ui/ui_menus.c
+msgid "OK change  Back"
+msgstr "OK değiştir  Geri"
+
+#: core/ui/ui_aprs.c core/ui/ui_aprsmsg.c
+msgid "0-9 pick  Back"
+msgstr "0-9 seç  Geri"
+
+#: core/ui/ui_aprs.c core/ui/ui_msg.c
+msgid "Heard"
+msgstr "Duyulan"
+
+#: core/ui/ui_aprs.c core/ui/ui_fmdec.c
+msgid "Nothing heard yet"
+msgstr "Henüz bir şey duyulmadı"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_sat.c
+msgid "No position: GPS or a fixed one"
+msgstr "Konum yok: GPS veya sabit konum"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "OK open  # reply  Back"
+msgstr "OK aç  # yanıtla  Geri"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c core/ui/ui_msg.c
+msgid "No messages yet"
+msgstr "Henüz mesaj yok"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "Reply"
+msgstr "Yanıtla"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c core/ui/ui_msg.c
+msgid "Message deleted"
+msgstr "Mesaj silindi"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "From "
+msgstr "Gönderen: "
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_beacon.c core/ui/ui_menus.c core/ui/ui_msg.c
+msgid "Message"
+msgstr "Mesaj"
+
+#: core/ui/ui_aprsmsg.c
+msgid "OK reply  Back"
+msgstr "OK yanıtla  Geri"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "To"
+msgstr "Alıcı"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "Text"
+msgstr "Metin"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Canned text"
+msgstr "Hazır metin"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Send"
+msgstr "Gönder"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Sending message"
+msgstr "Mesaj gönderiliyor"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Type a callsign, like TA1ABC-7"
+msgstr "Çağrı işareti yazın, ör. TA1ABC-7"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Type a text or pick one"
+msgstr "Metin yazın veya birini seçin"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Wait: the last message is still going"
+msgstr "Bekleyin: önceki mesaj hala gönderiliyor"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "Sending to "
+msgstr "Gönderiliyor: "
+
+#: core/ui/ui_aprsmsg.c
+msgid ", try "
+msgstr ", deneme "
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_gps.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid " of "
+msgstr " / "
+
+#: core/ui/ui_aprsmsg.c
+msgid "Acks are heard on the APRS frequency only"
+msgstr "Ack yalnız APRS frekansında duyulur"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Not delivered to "
+msgstr "İletilemedi: "
+
+#: core/ui/ui_aprsmsg.c
+msgid ": no ack"
+msgstr ": ack yok"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Type the call and the text, then Send"
+msgstr "Çağrı işaretini ve metni yazın, sonra Gönder"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Send SOS"
+msgstr "SOS gönder"
+
+#: core/ui/ui_aprsmsg.c
+msgid "SOS on: sending"
+msgstr "SOS açık: gönderiliyor"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Send an emergency position now and every 2 minutes until turned off?"
+msgstr "Acil durum konumu şimdi ve kapatılana kadar 2 dakikada bir gönderilsin mi?"
+
+#: core/ui/ui_aprsmsg.c
+msgid "OK yes  Back no"
+msgstr "OK evet  Geri hayır"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid " new"
+msgstr " yeni"
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_menus.c
+msgid "Sending"
+msgstr "Gönderiliyor"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Delivered"
+msgstr "İletildi"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Not delivered"
+msgstr "İletilemedi"
+
+#: core/ui/ui_aprsmsg.c
+msgid "On, next "
+msgstr "Açık, sonraki "
+
+#: core/ui/ui_aprsmsg.c
+msgid "EMERGENCY: "
+msgstr "ACİL DURUM: "
+
+#: core/ui/ui_aprsmsg.c
+msgid "New APRS message"
+msgstr "Yeni APRS mesajı"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Message delivered"
+msgstr "Mesaj iletildi"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Message not delivered"
+msgstr "Mesaj iletilemedi"
+
+#: core/ui/ui_aprsmsg.c
+msgid "Message sent, try "
+msgstr "Mesaj gönderildi, deneme "
+
+#: core/ui/ui_aprsmsg.c core/ui/ui_lone.c
+msgid "SOS position sent"
+msgstr "SOS konumu gönderildi"
+
+#: core/ui/ui_battgraph.c
+msgid "First point in 2 min"
+msgstr "İlk nokta 2 dk sonra"
+
+#: core/ui/ui_battgraph.c
+msgid "Time left: "
+msgstr "Kalan süre: "
+
+#: core/ui/ui_battgraph.c
+msgid "Collecting: needs 30 min"
+msgstr "Toplanıyor: 30 dk gerekli"
+
+#: core/ui/ui_battgraph.c
+msgid "Charging"
+msgstr "Şarj oluyor"
+
+#: core/ui/ui_battgraph.c
+msgid "Not steady"
+msgstr "Kararsız"
+
+#: core/ui/ui_battgraph.c core/ui/ui_menus.c
+msgid "Battery"
+msgstr "Pil"
+
+#: core/ui/ui_battgraph.c core/ui/ui_sat.c
+msgid "now"
+msgstr "şimdi"
+
+#: core/ui/ui_battgraph.c
+msgid "A point every 2 min  Back"
+msgstr "2 dk'da bir nokta  Geri"
+
+#: core/ui/ui_beacon.c
+msgid "DE call K"
+msgstr "DE call K"
+
+#: core/ui/ui_beacon.c
+msgid "CQ"
+msgstr "CQ"
+
+#: core/ui/ui_beacon.c
+msgid "SOS"
+msgstr "SOS"
+
+#: core/ui/ui_beacon.c
+msgid "Once"
+msgstr "Bir kez"
+
+#: core/ui/ui_beacon.c core/ui/ui_menus.c
+msgid "CW beacon"
+msgstr "CW beacon"
+
+#: core/ui/ui_beacon.c
+msgid "Repeat"
+msgstr "Tekrar"
+
+#: core/ui/ui_beacon.c
+msgid "TX"
+msgstr "TX"
+
+#: core/ui/ui_beacon.c core/ui/ui_screens.c
+msgid "Radio name must be a callsign"
+msgstr "Telsiz adı çağrı işareti olmalı"
+
+#: core/ui/ui_beacon.c core/ui/ui_screens.c
+msgid "Settings > My radio"
+msgstr "Ayarlar > Telsizim"
+
+#: core/ui/ui_beacon.c
+msgid "On air"
+msgstr "Yayında"
+
+#: core/ui/ui_beacon.c
+msgid "Refused: can't transmit here"
+msgstr "Reddedildi: burada yayın yapılamaz"
+
+#: core/ui/ui_beacon.c
+msgid "Sent "
+msgstr "Gönderildi "
+
+#: core/ui/ui_beacon.c core/ui/ui_p25search.c
+msgid "OK stop  Back"
+msgstr "OK durdur  Geri"
+
+#: core/ui/ui_beacon.c
+msgid "OK send  ^v <> pick"
+msgstr "OK gönder  ^v <> seç"
+
+#: core/ui/ui_cw.c
+msgid "Not enough memory for CW"
+msgstr "CW için bellek yetersiz"
+
+#: core/ui/ui_cw.c
+msgid "CW: tune an FM or AM channel"
+msgstr "CW: bir FM veya AM kanalına geçin"
+
+#: core/ui/ui_cw.c core/ui/ui_fmdec.c core/ui/ui_msg.c core/ui/ui_sstv.c
+msgid "Waiting for receive audio"
+msgstr "RX sesi bekleniyor"
+
+#: core/ui/ui_cw.c
+msgid "Listening: MCW tone 400-1000 Hz"
+msgstr "Dinleniyor: MCW tonu 400-1000 Hz"
+
+#: core/ui/ui_cw.c
+msgid "Decoding"
+msgstr "Çözülüyor"
+
+#: core/ui/ui_cw.c core/ui/ui_menus.c
+msgid "CW decoder"
+msgstr "CW çözücü"
+
+#: core/ui/ui_cw.c
+msgid "{OK clear  # practice  Back|OK clear  # practice}"
+msgstr "{OK sil  # alıştırma  Geri|OK sil  # alıştırma}"
+
+#: core/ui/ui_cw.c
+msgid "Score reset"
+msgstr "Puan sıfırlandı"
+
+#: core/ui/ui_cw.c
+msgid "CW practice"
+msgstr "CW alıştırma"
+
+#: core/ui/ui_cw.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Mode"
+msgstr "Mod"
+
+#: core/ui/ui_cw.c
+msgid "Characters"
+msgstr "Karakterler"
+
+#: core/ui/ui_cw.c
+msgid "Groups"
+msgstr "Gruplar"
+
+#: core/ui/ui_cw.c
+msgid "Koch"
+msgstr "Koch"
+
+#: core/ui/ui_cw.c core/ui/ui_gps.c
+msgid "Speed"
+msgstr "Hız"
+
+#: core/ui/ui_cw.c core/ui/ui_screens.c
+msgid "Tone"
+msgstr "Ton"
+
+#: core/ui/ui_cw.c
+msgid "OK plays the first one"
+msgstr "OK ilkini çalar"
+
+#: core/ui/ui_cw.c
+msgid "Listen..."
+msgstr "Dinleyin..."
+
+#: core/ui/ui_cw.c
+msgid "Type what you heard, OK"
+msgstr "Duyduğunuzu yazın, OK"
+
+#: core/ui/ui_cw.c
+msgid "Right:"
+msgstr "Doğru:"
+
+#: core/ui/ui_cw.c
+msgid "Sent:"
+msgstr "Gönderilen:"
+
+#: core/ui/ui_cw.c
+msgid "Score"
+msgstr "Puan"
+
+#: core/ui/ui_cw.c
+msgid "{OK check  < del  > next|OK check <del >next}"
+msgstr "{OK kontrol  < sil  > sonraki|OK kontr <sil >sonra}"
+
+#: core/ui/ui_cw.c
+msgid "{OK play  hold OK: again|OK play  hold: again}"
+msgstr "{OK çal  OK basılı: tekrar|OK çal  basılı: tekrar}"
+
+#: core/ui/ui_cw.c
+msgid "Not while transmitting"
+msgstr "TX sırasında olmaz"
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_menus.c
+msgid "DMR search"
+msgstr "DMR arama"
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "Range "
+msgstr "Aralık "
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_dmrtrunk.c core/ui/ui_p25search.c core/ui/ui_p25trunk.c
+msgid "Stopped: OK starts"
+msgstr "Durdu: OK başlatır"
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "Sweep "
+msgstr "Tarama "
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "Probe "
+msgstr "Deneme "
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "Pass "
+msgstr "Tur "
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "  hits "
+msgstr "  bulgu "
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "  floor "
+msgstr "  taban "
+
+#: core/ui/ui_dmrsearch.c
+msgid "No DMR found yet"
+msgstr "Henüz DMR bulunmadı"
+
+#: core/ui/ui_dmrsearch.c
+msgid "from "
+msgstr "kaynak "
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_menus.c
+msgid "Encrypted"
+msgstr "Şifreli"
+
+#: core/ui/ui_dmrsearch.c
+msgid "OK tune  ^v pick"
+msgstr "OK ayarla  ^v seç"
+
+#: core/ui/ui_dmrsearch.c
+msgid "OK stop  ^v pick"
+msgstr "OK durdur  ^v seç"
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "OK start  <> range"
+msgstr "OK başlat  <> aralık"
+
+#: core/ui/ui_dmrsearch.c
+msgid "Repeater: set the TX offset"
+msgstr "Röle: TX ofsetini ayarlayın"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "band"
+msgstr "bant"
+
+#: core/ui/ui_dmrtrunk.c
+msgid "priv"
+msgstr "özel"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "busy"
+msgstr "meşgul"
+
+#: core/ui/ui_dmrtrunk.c
+msgid "System unknown"
+msgstr "Sistem bilinmiyor"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_menus.c core/ui/ui_p25trunk.c
+msgid "Site "
+msgstr "Site "
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_menus.c
+msgid "DMR trunk"
+msgstr "DMR trunk"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "all groups"
+msgstr "tüm gruplar"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_gps.c core/ui/ui_p25trunk.c
+msgid "Searching"
+msgstr "Aranıyor"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "Control locked"
+msgstr "Kontrol kilitli"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "Voice "
+msgstr "Ses "
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "/s bad "
+msgstr "/sn hatalı "
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "No grants heard yet"
+msgstr "Henüz grant duyulmadı"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "OK stop  <> groups"
+msgstr "OK durdur  <> gruplar"
+
+#: core/ui/ui_dmrtrunk.c core/ui/ui_p25trunk.c
+msgid "OK start  <> groups"
+msgstr "OK başlat  <> gruplar"
+
+#: core/ui/ui_dmrtrunk.c
+msgid "Select a DMR channel first"
+msgstr "Önce bir DMR kanalı seçin"
+
+#: core/ui/ui_dual.c core/ui/ui_fmdec.c core/ui/ui_screens.c
+msgid "No tone"
+msgstr "Ton yok"
+
+#: core/ui/ui_dual.c
+msgid "{Can't watch that channel: pick another|Can't watch that channel}"
+msgstr "{O kanal izlenemez: başka seç|O kanal izlenemez}"
+
+#: core/ui/ui_dual.c
+msgid "B is the channel you are on: pick another"
+msgstr "B bulunduğun kanal: başka seç"
+
+#: core/ui/ui_dual.c
+msgid "Dual watch on"
+msgstr "Dual watch açık"
+
+#: core/ui/ui_dual.c
+msgid "Watch off: on "
+msgstr "İzleme kapalı: kanal "
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: on B"
+msgstr "Dual watch kapalı: B'de"
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: on A"
+msgstr "Dual watch kapalı: A'da"
+
+#: core/ui/ui_dual.c
+msgid "{Press Back again to stop dual watch|Back again: stop watch}"
+msgstr "{Geri tekrar basılınca dual watch durur|Geri tekrar: izleme durur}"
+
+#: core/ui/ui_dual.c
+msgid "Talking on B"
+msgstr "B'de konuşuluyor"
+
+#: core/ui/ui_dual.c
+msgid "Talking on A"
+msgstr "A'da konuşuluyor"
+
+#: core/ui/ui_dual.c
+msgid "Talk back on B"
+msgstr "B'de yanıtla"
+
+#: core/ui/ui_dual.c
+msgid "Talk back on A"
+msgstr "A'da yanıtla"
+
+#: core/ui/ui_dual.c
+msgid "{Watched already: pick another|Watched already}"
+msgstr "{Zaten izleniyor: başka seçin|Zaten izleniyor}"
+
+#: core/ui/ui_dual.c
+msgid "That is A: pick another"
+msgstr "O A: başka seç"
+
+#: core/ui/ui_dual.c
+msgid "That is B: pick another"
+msgstr "O B: başka seç"
+
+#: core/ui/ui_dual.c
+msgid "{Only one channel in this zone|One channel in zone}"
+msgstr "{Bu bölgede tek kanal var|Bölgede tek kanal}"
+
+#: core/ui/ui_dual.c
+msgid "{No other channel here: A has it|A has the other channel}"
+msgstr "{Başka kanal yok: A'da kullanılıyor|Diğer kanal A'da}"
+
+#: core/ui/ui_dual.c
+msgid "{No other channel here: B has it|B has the other channel}"
+msgstr "{Başka kanal yok: B'de kullanılıyor|Diğer kanal B'de}"
+
+#: core/ui/ui_dual.c
+msgid "{Turn on dual watch first|Dual watch is off}"
+msgstr "{Önce dual watch'u aç|Dual watch kapalı}"
+
+#: core/ui/ui_dual.c
+msgid " zone: "
+msgstr " zone: "
+
+#: core/ui/ui_dual.c
+msgid "B zone: "
+msgstr "B bölge: "
+
+#: core/ui/ui_dual.c
+msgid "A zone: "
+msgstr "A bölge: "
+
+#: core/ui/ui_dual.c
+msgid "No other zone"
+msgstr "Başka bölge yok"
+
+#: core/ui/ui_dual.c
+msgid "{No other channel to watch|No other channel}"
+msgstr "{İzlenecek başka kanal yok|Başka kanal yok}"
+
+#: core/ui/ui_dual.c
+msgid "DMR call"
+msgstr "DMR çağrısı"
+
+#: core/ui/ui_dual.c
+msgid "FM signal"
+msgstr "FM sinyali"
+
+#: core/ui/ui_dual.c
+msgid " to you"
+msgstr " sana"
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: on "
+msgstr "Dual watch kapalı: "
+
+#: core/ui/ui_dual.c
+msgid "Dual watch off: scanning"
+msgstr "Dual watch kapalı: tarama"
+
+#: core/ui/ui_dual.c
+msgid ": VFO"
+msgstr ": VFO"
+
+#: core/ui/ui_dual.c
+msgid "B: VFO"
+msgstr "B: VFO"
+
+#: core/ui/ui_dual.c
+msgid "A: VFO"
+msgstr "A: VFO"
+
+#: core/ui/ui_dual.c
+msgid "Talk on B"
+msgstr "B'de konuş"
+
+#: core/ui/ui_dual.c
+msgid "Talk on A"
+msgstr "A'da konuş"
+
+#: core/ui/ui_dual.c
+msgid "Change A"
+msgstr "A'yı değiştir"
+
+#: core/ui/ui_dual.c
+msgid "Change B"
+msgstr "B'yi değiştir"
+
+#: core/ui/ui_dual.c
+msgid "Caller"
+msgstr "Arayan"
+
+#: core/ui/ui_dual.c
+msgid "Stop, stay on B"
+msgstr "Durdur, B'de kal"
+
+#: core/ui/ui_dual.c
+msgid "Stop, stay on A"
+msgstr "Durdur, A'da kal"
+
+#: core/ui/ui_dual.c
+msgid "Dual Watch"
+msgstr "Çift İzleme"
+
+#: core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "1-5 pick  Back"
+msgstr "1-5 seç  Geri"
+
+#: core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "Zone"
+msgstr "Bölge"
+
+#: core/ui/ui_dual.c
+msgid "Watch on"
+msgstr "İzle"
+
+#: core/ui/ui_dual.c
+msgid "{OK watch  0-9 find  Back|OK watch  Back}"
+msgstr "{OK izle  0-9 bul  Geri|OK izle  Geri}"
+
+#: core/ui/ui_dual.c
+msgid "Zone for"
+msgstr "Bölge seç"
+
+#: core/ui/ui_dual.c core/ui/ui_menus.c
+msgid "OK pick  Back"
+msgstr "OK seç  Geri"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Contacts"
+msgstr "Kişiler"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Recent"
+msgstr "Son çağrılar"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Channels"
+msgstr "Kanallar"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Tools"
+msgstr "Araçlar"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Settings"
+msgstr "Ayarlar"
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "Roaming"
+msgstr "Roaming"
+
+#: core/ui/ui_find.c
+msgid "APRS position"
+msgstr "APRS konumu"
+
+#: core/ui/ui_find.c core/ui/ui_marine.c
+msgid "Ch "
+msgstr "Kn "
+
+#: core/ui/ui_find.c
+msgid "{Channel|}"
+msgstr "{Kanal|}"
+
+#: core/ui/ui_find.c
+msgid "{Zone|}"
+msgstr "{Bölge|}"
+
+#: core/ui/ui_find.c
+msgid "{Contact|}"
+msgstr "{Kişi|}"
+
+#: core/ui/ui_find.c
+msgid "Talk to TG "
+msgstr "TG ile konuş "
+
+#: core/ui/ui_find.c core/ui/ui_menus.c
+msgid "{Not saved|}"
+msgstr "{Kayıtsız|}"
+
+#: core/ui/ui_find.c
+msgid "Private call "
+msgstr "Özel çağrı "
+
+#: core/ui/ui_find.c
+msgid "Tune VFO to "
+msgstr "VFO'yu ayarla: "
+
+#: core/ui/ui_find.c
+msgid "Create contact "
+msgstr "Kişi oluştur "
+
+#: core/ui/ui_find.c
+msgid "Menu"
+msgstr "Menü"
+
+#: core/ui/ui_find.c
+msgid "No actions for this result"
+msgstr "Bu sonuç için işlem yok"
+
+#: core/ui/ui_find.c
+msgid "PTT talk  OK open  # more"
+msgstr "PTT konuş  OK aç  # diğer"
+
+#: core/ui/ui_fmdec.c core/ui/ui_msg.c
+msgid "Listening on this frequency"
+msgstr "Bu frekans dinleniyor"
+
+#: core/ui/ui_fmdec.c core/ui/ui_menus.c
+msgid "Tone finder"
+msgstr "Ton bulucu"
+
+#: core/ui/ui_fmdec.c
+msgid "Not enough memory"
+msgstr "Yeterli bellek yok"
+
+#: core/ui/ui_fmdec.c
+msgid "Tone finder: tune an FM channel"
+msgstr "Ton bulucu: bir FM kanalına geçin"
+
+#: core/ui/ui_fmdec.c
+msgid "Searching..."
+msgstr "Aranıyor..."
+
+#: core/ui/ui_fmdec.c
+msgid "Last"
+msgstr "Son"
+
+#: core/ui/ui_fmdec.c
+msgid "OK write  Back"
+msgstr "OK yaz  Geri"
+
+#: core/ui/ui_fmdec.c
+msgid "No tone found yet"
+msgstr "Henüz ton bulunmadı"
+
+#: core/ui/ui_fmdec.c
+msgid "RX and TX"
+msgstr "RX ve TX"
+
+#: core/ui/ui_fmdec.c core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "RX only"
+msgstr "Yalnız RX"
+
+#: core/ui/ui_fmdec.c
+msgid "TX only"
+msgstr "Yalnız TX"
+
+#: core/ui/ui_fmdec.c
+msgid "FM only: this is not an FM channel"
+msgstr "Yalnız FM: bu bir FM kanalı değil"
+
+#: core/ui/ui_fmdec.c
+msgid "VFO tone set"
+msgstr "VFO tonu ayarlandı"
+
+#: core/ui/ui_fmdec.c core/ui/ui_menus.c
+msgid "Couldn't save now: try again"
+msgstr "Şimdi kaydedilemedi: tekrar dene"
+
+#: core/ui/ui_fmdec.c core/ui/ui_menus.c
+msgid "Saved channel "
+msgstr "Kaydedildi, kanal "
+
+#: core/ui/ui_fmdec.c
+msgid "Write tone"
+msgstr "Tonu yaz"
+
+#: core/ui/ui_fmdec.c
+msgid "DTMF / SelCall: tune an FM channel"
+msgstr "DTMF / SelCall: bir FM kanalına geçin"
+
+#: core/ui/ui_fmdec.c core/ui/ui_menus.c
+msgid "DTMF / SelCall"
+msgstr "DTMF / SelCall"
+
+#: core/ui/ui_fmdec.c
+msgid "# tone set  Back"
+msgstr "# ton seti  Geri"
+
+#: core/ui/ui_fox.c core/ui/ui_menus.c
+msgid "Fox hunt"
+msgstr "Fox hunt"
+
+#: core/ui/ui_fox.c core/ui/ui_spectrum.c
+msgid "Peak "
+msgstr "Tepe "
+
+#: core/ui/ui_fox.c
+msgid "Att -"
+msgstr "Zay -"
+
+#: core/ui/ui_fox.c
+msgid "<> att  OK peak  Back"
+msgstr "<> zay  OK tepe  Geri"
+
+#: core/ui/ui_goto.c core/ui/ui_menus.c
+msgid "Go-To"
+msgstr "Hedefe git"
+
+#: core/ui/ui_goto.c
+msgid "No targets: OK saves here"
+msgstr "Hedef yok: OK burayı kaydeder"
+
+#: core/ui/ui_goto.c core/ui/ui_map.c
+msgid "No GPS fix"
+msgstr "GPS konumu yok"
+
+#: core/ui/ui_goto.c
+msgid "ETA "
+msgstr "Varış "
+
+#: core/ui/ui_goto.c
+msgid "North up (standing)"
+msgstr "Kuzey yukarı (dururken)"
+
+#: core/ui/ui_goto.c
+msgid "^v target  OK save  hold del"
+msgstr "^v hedef  OK kaydet  tut sil"
+
+#: core/ui/ui_goto.c
+msgid "Waypoint deleted"
+msgstr "Nokta silindi"
+
+#: core/ui/ui_goto.c
+msgid "Saved here"
+msgstr "Buraya kaydedildi"
+
+#: core/ui/ui_gps.c
+msgid "Status"
+msgstr "Durum"
+
+#: core/ui/ui_gps.c
+msgid "Sky"
+msgstr "Gökyüzü"
+
+#: core/ui/ui_gps.c
+msgid "Signal"
+msgstr "Sinyal"
+
+#: core/ui/ui_gps.c core/ui/ui_menus.c
+msgid "Grid"
+msgstr "Kare"
+
+#: core/ui/ui_gps.c
+msgid " good"
+msgstr " iyi"
+
+#: core/ui/ui_gps.c
+msgid " fair"
+msgstr " orta"
+
+#: core/ui/ui_gps.c
+msgid " poor"
+msgstr " zayıf"
+
+#: core/ui/ui_gps.c
+msgid "3D Fix"
+msgstr "3D Konum"
+
+#: core/ui/ui_gps.c
+msgid "2D Fix"
+msgstr "2D Konum"
+
+#: core/ui/ui_gps.c
+msgid "Fix"
+msgstr "Konum"
+
+#: core/ui/ui_gps.c
+msgid "No signal"
+msgstr "Sinyal yok"
+
+#: core/ui/ui_gps.c
+msgid " used, "
+msgstr " kullanılan, "
+
+#: core/ui/ui_gps.c
+msgid " seen"
+msgstr " görülen"
+
+#: core/ui/ui_gps.c
+msgid "Sats"
+msgstr "Uydu"
+
+#: core/ui/ui_gps.c
+msgid "Lat"
+msgstr "Enl"
+
+#: core/ui/ui_gps.c
+msgid "Lon"
+msgstr "Boy"
+
+#: core/ui/ui_gps.c
+msgid "Alt"
+msgstr "Rkm"
+
+#: core/ui/ui_gps.c
+msgid "No positions yet"
+msgstr "Henüz konum yok"
+
+#: core/ui/ui_gps.c
+msgid "No satellites yet"
+msgstr "Henüz uydu yok"
+
+#: core/ui/ui_gps.c
+msgid " in the fix"
+msgstr " konumda"
+
+#: core/ui/ui_gps.c
+msgid "No fix yet"
+msgstr "Henüz konum yok"
+
+#: core/ui/ui_gps.c
+msgid "No GPS, or it is off"
+msgstr "GPS yok veya kapalı"
+
+#: core/ui/ui_gps.c
+msgid "Up Down page  Back"
+msgstr "Yuk Aşa sayfa  Geri"
+
+#: core/ui/ui_lone.c
+msgid "DMR emergency sent"
+msgstr "DMR acil durum gönderildi"
+
+#: core/ui/ui_lone.c
+msgid "Not sent: needs a DMR channel"
+msgstr "Gönderilmedi: DMR kanalı gerek"
+
+#: core/ui/ui_lone.c
+msgid "SOS not sent: no position"
+msgstr "SOS gönderilmedi: konum yok"
+
+#: core/ui/ui_lone.c
+msgid "SOS not sent: APRS not ready"
+msgstr "SOS gitmedi: APRS hazır değil"
+
+#: core/ui/ui_lone.c
+msgid "Sound only"
+msgstr "Yalnız ses"
+
+#: core/ui/ui_lone.c
+msgid "DMR emergency"
+msgstr "DMR acil durum"
+
+#: core/ui/ui_lone.c
+msgid "APRS SOS"
+msgstr "APRS SOS"
+
+#: core/ui/ui_lone.c core/ui/ui_menus.c
+msgid "Lone worker"
+msgstr "Lone worker"
+
+#: core/ui/ui_lone.c core/ui/ui_sat.c
+msgid " min"
+msgstr " dk"
+
+#: core/ui/ui_lone.c
+msgid "On alarm"
+msgstr "Alarmda"
+
+#: core/ui/ui_lone.c
+msgid "Alarm in "
+msgstr "Alarm: "
+
+#: core/ui/ui_lone.c
+msgid "Press a key! "
+msgstr "Tuşa bas! "
+
+#: core/ui/ui_lone.c
+msgid "ALARM"
+msgstr "ALARM"
+
+#: core/ui/ui_lone.c
+msgid "No key or PTT this long: warning,"
+msgstr "Bu süre tuş veya PTT yoksa: uyarı,"
+
+#: core/ui/ui_lone.c
+msgid "then the alarm until a key"
+msgstr "sonra tuşa basılana dek alarm"
+
+#: core/ui/ui_lone.c
+msgid "then the alarm and it TRANSMITS"
+msgstr "sonra alarm ve telsiz YAYIN YAPAR"
+
+#: core/ui/ui_lone.c
+msgid "<> time  ^v on alarm"
+msgstr "<> süre  ^v alarmda"
+
+#: core/ui/ui_map.c
+msgid "Outside Turkey"
+msgstr "Türkiye dışında"
+
+#: core/ui/ui_map.c
+msgid "OK message  0 next  Back"
+msgstr "OK mesaj  0 sonraki  Geri"
+
+#: core/ui/ui_map.c
+msgid "OK details  0 next  # repeater  Back clear"
+msgstr "OK ayrıntı  0 sonraki  # röle  Geri bırak"
+
+#: core/ui/ui_map.c
+msgid "0 next  Back"
+msgstr "0 sonraki  Geri"
+
+#: core/ui/ui_map.c
+msgid "OK details  # next  0 APRS  Back clear"
+msgstr "OK ayrıntı  # sonraki  0 APRS  Geri bırak"
+
+#: core/ui/ui_map.c
+msgid "# repeater  0 APRS  ^v<> pan  knob zoom  OK follow"
+msgstr "# röle  0 APRS  ^v<> kaydır  düğme zoom  OK takip"
+
+#: core/ui/ui_map.c
+msgid "0 APRS  ^v<> pan  knob zoom  OK follow"
+msgstr "0 APRS  ^v<> kaydır  düğme zoom  OK takip"
+
+#: core/ui/ui_map.c core/ui/ui_menus.c
+msgid "Map"
+msgstr "Harita"
+
+#: core/ui/ui_map.c
+msgid "No APRS station with a position"
+msgstr "Konumlu APRS istasyonu yok"
+
+#: core/ui/ui_map.c
+msgid "No track yet"
+msgstr "Henüz iz yok"
+
+#: core/ui/ui_map.c
+msgid "Start saved as a waypoint"
+msgstr "Başlangıç nokta olarak kaydedildi"
+
+#: core/ui/ui_map.c
+msgid "Track cleared"
+msgstr "İz silindi"
+
+#: core/ui/ui_map.c
+msgid "Hold 7 to clear the track"
+msgstr "İzi silmek için 7'ye basılı tutun"
+
+#: core/ui/ui_map.c core/ui/ui_rpt.c
+msgid "No repeaters in this build"
+msgstr "Bu sürümde röle yok"
+
+#: core/ui/ui_map.c
+msgid "Following GPS"
+msgstr "GPS takip ediliyor"
+
+#: core/ui/ui_mapnav.c
+msgid "Nearest: "
+msgstr "En yakın: "
+
+#: core/ui/ui_mapnav.c
+msgid "Nearer: "
+msgstr "Daha yakın: "
+
+#: core/ui/ui_mapnav.c
+msgid "# tunes the VFO"
+msgstr "# VFO'yu ayarlar"
+
+#: core/ui/ui_mapnav.c
+msgid "Auto repeater off"
+msgstr "Otomatik röle kapalı"
+
+#: core/ui/ui_mapnav.c
+msgid "Auto repeater on"
+msgstr "Otomatik röle açık"
+
+#: core/ui/ui_mapnav.c
+msgid "Auto repeater on: waiting for GPS"
+msgstr "Otomatik röle açık: GPS bekleniyor"
+
+#: core/ui/ui_marine.c
+msgid "Public corr., port"
+msgstr "Kamu hab., liman"
+
+#: core/ui/ui_marine.c
+msgid "Port ops, intership"
+msgstr "Liman, gemiler arası"
+
+#: core/ui/ui_marine.c
+msgid "Intership only"
+msgstr "Yalnız gemiler arası"
+
+#: core/ui/ui_marine.c
+msgid "Distress, calling"
+msgstr "Tehlike, çağrı"
+
+#: core/ui/ui_marine.c
+msgid "DSC data, no voice"
+msgstr "DSC verisi, ses yok"
+
+#: core/ui/ui_marine.c
+msgid "Intership, SAR"
+msgstr "Gemiler arası, SAR"
+
+#: core/ui/ui_marine.c
+msgid "Bridge to bridge"
+msgstr "Köprüüstü arası"
+
+#: core/ui/ui_marine.c
+msgid "On board, 1 W"
+msgstr "Gemi içi, 1 W"
+
+#: core/ui/ui_marine.c
+msgid "Navigation, 1 W"
+msgstr "Seyir, 1 W"
+
+#: core/ui/ui_marine.c
+msgid "AIS data, no voice"
+msgstr "AIS verisi, ses yok"
+
+#: core/ui/ui_marine.c core/ui/ui_menus.c
+msgid "Marine VHF"
+msgstr "Deniz VHF"
+
+#: core/ui/ui_marine.c
+msgid "Ship/coast MHz, RX only"
+msgstr "Gemi/kıyı MHz, yalnız RX"
+
+#: core/ui/ui_marine.c
+msgid "OK listen  # ch 16  ^v pick"
+msgstr "OK dinle  # kn 16  ^v seç"
+
+#: core/ui/ui_marine.c
+msgid "Ch 70 is DSC data: not tuned for voice"
+msgstr "Kn 70 DSC verisi: ses için ayarlanmaz"
+
+#: core/ui/ui_marine.c
+msgid "AIS is data: not tuned"
+msgstr "AIS veridir: ayarlanmaz"
+
+#: core/ui/ui_marine.c core/ui/ui_rpt.c
+msgid "No VFO for this mode"
+msgstr "Bu mod için VFO yok"
+
+#: core/ui/ui_marine.c
+msgid ": RX only"
+msgstr ": yalnız RX"
+
+#: core/ui/ui_menus.c
+msgid "Last caller"
+msgstr "Son arayan"
+
+#: core/ui/ui_menus.c
+msgid "Zones"
+msgstr "Bölgeler"
+
+#: core/ui/ui_menus.c
+msgid "Scanning"
+msgstr "Taranıyor"
+
+#: core/ui/ui_menus.c
+msgid "Channels: not in this build"
+msgstr "Kanallar: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "1-7 open  Back"
+msgstr "1-7 aç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Talk to "
+msgstr "Konuş: "
+
+#: core/ui/ui_menus.c
+msgid "Private call"
+msgstr "Özel çağrı"
+
+#: core/ui/ui_menus.c
+msgid "Radio check"
+msgstr "Telsiz kontrolü"
+
+#: core/ui/ui_menus.c
+msgid "Call alert"
+msgstr "Çağrı uyarısı"
+
+#: core/ui/ui_menus.c
+msgid "In contacts"
+msgstr "Kişilerde"
+
+#: core/ui/ui_menus.c
+msgid "Save as contact"
+msgstr "Kişi olarak kaydet"
+
+#: core/ui/ui_menus.c
+msgid "Speak status"
+msgstr "Durumu seslendir"
+
+#: core/ui/ui_menus.c
+msgid "Save to channel"
+msgstr "Kanala kaydet"
+
+#: core/ui/ui_menus.c
+msgid "Make channel default"
+msgstr "Kanalı varsayılan yap"
+
+#: core/ui/ui_menus.c
+msgid "Messages: not in this build"
+msgstr "Mesajlar: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Checking "
+msgstr "Kontrol: "
+
+#: core/ui/ui_menus.c
+msgid "Radio check: not in this build"
+msgstr "Telsiz kontrolü: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Call alert to "
+msgstr "Çağrı uyarısı: "
+
+#: core/ui/ui_menus.c
+msgid "Call alert: not in this build"
+msgstr "Çağrı uyarısı: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Position requests: not in this build"
+msgstr "Konum isteme: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Already in your contacts"
+msgstr "Zaten kişilerinde"
+
+#: core/ui/ui_menus.c
+msgid "Add contacts in qdmr"
+msgstr "Kişileri qdmr ile ekle"
+
+#: core/ui/ui_menus.c
+msgid "1-9 pick  PTT talk  Back"
+msgstr "1-9 seç  PTT konuş  Geri"
+
+#: core/ui/ui_menus.c
+msgid "OK"
+msgstr "OK"
+
+#: core/ui/ui_menus.c
+msgid "On my way"
+msgstr "Yoldayım"
+
+#: core/ui/ui_menus.c
+msgid "Call me"
+msgstr "Beni ara"
+
+#: core/ui/ui_menus.c
+msgid "Can't talk now"
+msgstr "Şimdi konuşamam"
+
+#: core/ui/ui_menus.c
+msgid "Write..."
+msgstr "Yaz..."
+
+#: core/ui/ui_menus.c
+msgid "Couldn't send: try again"
+msgstr "Gönderilemedi: tekrar dene"
+
+#: core/ui/ui_menus.c
+msgid "Typing: not in this build"
+msgstr "Yazma: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "OK send  Back"
+msgstr "OK gönder  Geri"
+
+#: core/ui/ui_menus.c
+msgid "(no name)"
+msgstr "(adsız)"
+
+#: core/ui/ui_menus.c
+msgid "New contact"
+msgstr "Yeni kişi"
+
+#: core/ui/ui_menus.c
+msgid "{0-9 find  OK talk  # more|0-9  OK talk  # more}"
+msgstr "{0-9 bul  OK konuş  # diğer|0-9  OK konuş  # diğer}"
+
+#: core/ui/ui_menus.c
+msgid "No contact matches"
+msgstr "Eşleşen kişi yok"
+
+#: core/ui/ui_menus.c
+msgid "No contacts: add them in qdmr"
+msgstr "Kişi yok: qdmr ile ekle"
+
+#: core/ui/ui_menus.c
+msgid "Contacts: not in this build"
+msgstr "Kişiler: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Reply \"OK\""
+msgstr "Yanıtla \"OK\""
+
+#: core/ui/ui_menus.c
+msgid "Reply \"On my way\""
+msgstr "Yanıtla \"Yoldayım\""
+
+#: core/ui/ui_menus.c
+msgid "Call"
+msgstr "Ara"
+
+#: core/ui/ui_menus.c
+msgid "Delete"
+msgstr "Sil"
+
+#: core/ui/ui_menus.c
+msgid "Couldn't delete: try again"
+msgstr "Silinemedi: tekrar dene"
+
+#: core/ui/ui_menus.c
+msgid "To "
+msgstr "Alıcı: "
+
+#: core/ui/ui_menus.c
+msgid "OK choose  # more  Back"
+msgstr "OK seç  # diğer  Geri"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Emergency"
+msgstr "Acil durum"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "To you"
+msgstr "Sana"
+
+#: core/ui/ui_menus.c
+msgid "PTT talk  * QSO  # more"
+msgstr "PTT konuş  * QSO  # diğer"
+
+#: core/ui/ui_menus.c
+msgid "PTT talk  # more  Back"
+msgstr "PTT konuş  # diğer  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Create New Zone"
+msgstr "Yeni Bölge Oluştur"
+
+#: core/ui/ui_menus.c
+msgid "Here, "
+msgstr "Burası, "
+
+#: core/ui/ui_menus.c
+msgid "Here"
+msgstr "Burası"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid " channel"
+msgstr " kanal"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid " channels"
+msgstr " kanal"
+
+#: core/ui/ui_menus.c
+msgid " ch"
+msgstr " kn"
+
+#: core/ui/ui_menus.c
+msgid "VFO: type a frequency"
+msgstr "VFO: frekans gir"
+
+#: core/ui/ui_menus.c
+msgid "The VFO has no channel list"
+msgstr "VFO'nun kanal listesi yok"
+
+#: core/ui/ui_menus.c
+msgid "{OK go  # channels  0-9 find|OK go  # channels}"
+msgstr "{OK git  # kanallar  0-9 bul|OK git  # kanallar}"
+
+#: core/ui/ui_menus.c
+msgid "No zones"
+msgstr "Bölge yok"
+
+#: core/ui/ui_menus.c
+msgid "Add channel"
+msgstr "Kanal ekle"
+
+#: core/ui/ui_menus.c
+msgid "Zone options"
+msgstr "Bölge seçenekleri"
+
+#: core/ui/ui_menus.c
+msgid "⤒ Share zone to..."
+msgstr "⤒ Bölgeyi paylaş..."
+
+#: core/ui/ui_menus.c
+msgid "⤒ Share channel to..."
+msgstr "⤒ Kanalı paylaş..."
+
+#: core/ui/ui_menus.c
+msgid "Zone sharing: not in this build"
+msgstr "Bölge paylaşımı: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Saving the zone: try again"
+msgstr "Bölge kaydediliyor: tekrar dene"
+
+#: core/ui/ui_menus.c
+msgid "Private ID "
+msgstr "Özel ID "
+
+#: core/ui/ui_menus.c
+msgid "Go to a DMR channel to send"
+msgstr "Göndermek için DMR kanalına geç"
+
+#: core/ui/ui_menus.c
+msgid "Can't send now: try again"
+msgstr "Şimdi gönderilemez: tekrar dene"
+
+#: core/ui/ui_menus.c
+msgid " via "
+msgstr " ile "
+
+#: core/ui/ui_menus.c
+msgid "Sending "
+msgstr "Gönderiliyor "
+
+#: core/ui/ui_menus.c
+msgid "Share To"
+msgstr "Paylaş"
+
+#: core/ui/ui_menus.c
+msgid "{0-9 find or ID  OK send  Back|0-9 find or ID  OK send}"
+msgstr "{0-9 bul veya ID  OK gönder  Geri|0-9 bul veya ID  OK gönder}"
+
+#: core/ui/ui_menus.c
+msgid "No contacts: type an ID"
+msgstr "Kişi yok: ID gir"
+
+#: core/ui/ui_menus.c
+msgid "Import"
+msgstr "Al"
+
+#: core/ui/ui_menus.c
+msgid "Preview"
+msgstr "Önizle"
+
+#: core/ui/ui_menus.c
+msgid "Reject"
+msgstr "Reddet"
+
+#: core/ui/ui_menus.c
+msgid "Busy saving: try again"
+msgstr "Kayıt meşgul: tekrar dene"
+
+#: core/ui/ui_menus.c
+msgid "Importing..."
+msgstr "Alınıyor..."
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "No channel in this radio's bands"
+msgstr "Telsizin bantlarında kanal yok"
+
+#: core/ui/ui_menus.c
+msgid "Offer rejected"
+msgstr "Teklif reddedildi"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "Channel "
+msgstr "Kanal "
+
+#: core/ui/ui_menus.c core/ui/ui_svc_zone.c
+msgid "Zone "
+msgstr "Bölge "
+
+#: core/ui/ui_menus.c
+msgid ", from "
+msgstr ", gönderen "
+
+#: core/ui/ui_menus.c
+msgid " not in band"
+msgstr " bant dışı"
+
+#: core/ui/ui_menus.c
+msgid "{Channel Share Received ⤓|Ch Share Received ⤓|Ch Received ⤓|Ch Received}"
+msgstr "{Kanal Paylaşımı Alındı ⤓|Kanal Paylaşıldı ⤓|Kanal Alındı ⤓|Kanal Alındı}"
+
+#: core/ui/ui_menus.c
+msgid "{Zone Share Received ⤓|Zone Received ⤓|Zone Received}"
+msgstr "{Bölge Paylaşımı Alındı ⤓|Bölge Alındı ⤓|Bölge Alındı}"
+
+#: core/ui/ui_menus.c
+msgid "No share waiting"
+msgstr "Bekleyen paylaşım yok"
+
+#: core/ui/ui_menus.c
+msgid "{Not in band|Out}"
+msgstr "{Bant dışı|Dışı}"
+
+#: core/ui/ui_menus.c
+msgid "OK or Back returns"
+msgstr "OK veya Geri döner"
+
+#: core/ui/ui_menus.c
+msgid "No zone offer waiting"
+msgstr "Bekleyen bölge teklifi yok"
+
+#: core/ui/ui_menus.c
+msgid "{ channels| ch}"
+msgstr "{ kanal| kn}"
+
+#: core/ui/ui_menus.c
+msgid "Add to Zone"
+msgstr "Bölgeye Ekle"
+
+#: core/ui/ui_menus.c
+msgid "OK add  Back"
+msgstr "OK ekle  Geri"
+
+#: core/ui/ui_menus.c
+msgid "{OK go  # edit  0-9 find|OK go  # edit}"
+msgstr "{OK git  # düzenle  0-9 bul|OK git  # düzenle}"
+
+#: core/ui/ui_menus.c
+msgid "{OK go  # share  0-9 find|OK go  # share}"
+msgstr "{OK git  # paylaş  0-9 bul|OK git  # paylaş}"
+
+#: core/ui/ui_menus.c
+msgid "OK go  0-9 find  Back"
+msgstr "OK git  0-9 bul  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Empty zone"
+msgstr "Boş bölge"
+
+#: core/ui/ui_menus.c
+msgid "New from current"
+msgstr "Mevcuttan yeni"
+
+#: core/ui/ui_menus.c
+msgid "Not in any zone: add it to one to use it"
+msgstr "Hiçbir bölgede değil: kullanmak için bir bölgeye ekle"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_storage.c
+msgid "No free channel"
+msgstr "Boş kanal yok"
+
+#: core/ui/ui_menus.c
+msgid "{OK details  # go  0-9 find|OK details  # go}"
+msgstr "{OK ayrıntı  # git  0-9 bul|OK ayrıntı  # git}"
+
+#: core/ui/ui_menus.c
+msgid "No channels"
+msgstr "Kanal yok"
+
+#: core/ui/ui_menus.c
+msgid "VFO settings"
+msgstr "VFO ayarları"
+
+#: core/ui/ui_menus.c
+msgid "VFO: changes apply at once"
+msgstr "VFO: değişiklik hemen geçerli"
+
+#: core/ui/ui_menus.c
+msgid "AM is the VFO's only: the channel is FM"
+msgstr "AM yalnız VFO'da: kanal FM olur"
+
+#: core/ui/ui_menus.c
+msgid "New Channel"
+msgstr "Yeni Kanal"
+
+#: core/ui/ui_menus.c
+msgid " zone"
+msgstr " bölge"
+
+#: core/ui/ui_menus.c
+msgid " zones"
+msgstr " bölge"
+
+#: core/ui/ui_menus.c
+msgid "Radio's"
+msgstr "Telsizin"
+
+#: core/ui/ui_menus.c
+msgid "Name"
+msgstr "Ad"
+
+#: core/ui/ui_menus.c
+msgid "Number"
+msgstr "Numara"
+
+#: core/ui/ui_menus.c
+msgid "Bandwidth"
+msgstr "Bant genişliği"
+
+#: core/ui/ui_menus.c
+msgid "RX CTCSS/DCS"
+msgstr "RX CTCSS/DCS"
+
+#: core/ui/ui_menus.c
+msgid "TX CTCSS/DCS"
+msgstr "TX CTCSS/DCS"
+
+#: core/ui/ui_menus.c
+msgid "Color code"
+msgstr "Color code"
+
+#: core/ui/ui_menus.c
+msgid "Timeslot"
+msgstr "Timeslot"
+
+#: core/ui/ui_menus.c
+msgid "TX contact"
+msgstr "TX kişisi"
+
+#: core/ui/ui_menus.c
+msgid "RX group list"
+msgstr "RX grup listesi"
+
+#: core/ui/ui_menus.c
+msgid "Own ID"
+msgstr "Kendi ID"
+
+#: core/ui/ui_menus.c
+msgid "Direct mode"
+msgstr "Direkt mod"
+
+#: core/ui/ui_menus.c
+msgid "Talk permit beeps"
+msgstr "Konuşma izni bipi"
+
+#: core/ui/ui_menus.c
+msgid "Talker alias TS1"
+msgstr "Talker alias TS1"
+
+#: core/ui/ui_menus.c
+msgid "Talker alias TS2"
+msgstr "Talker alias TS2"
+
+#: core/ui/ui_menus.c
+msgid "TX time-out"
+msgstr "TX zaman aşımı"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Scan"
+msgstr "Tarama"
+
+#: core/ui/ui_menus.c
+msgid "Battery saver"
+msgstr "Pil tasarrufu"
+
+#: core/ui/ui_menus.c
+msgid "Talkgroup"
+msgstr "Talkgroup"
+
+#: core/ui/ui_menus.c
+msgid "P25 Radio ID"
+msgstr "P25 Telsiz ID"
+
+#: core/ui/ui_menus.c
+msgid "SFR inbound slot"
+msgstr "SFR giriş slotu"
+
+#: core/ui/ui_menus.c
+msgid "SFR outbound CC"
+msgstr "SFR çıkış CC"
+
+#: core/ui/ui_menus.c
+msgid "Tune to this ch"
+msgstr "Bu kanala geç"
+
+#: core/ui/ui_menus.c
+msgid "Save"
+msgstr "Kaydet"
+
+#: core/ui/ui_menus.c
+msgid "Save as new channel"
+msgstr "Yeni kanal olarak kaydet"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Any"
+msgstr "Tümü"
+
+#: core/ui/ui_menus.c
+msgid "Default"
+msgstr "Varsayılan"
+
+#: core/ui/ui_menus.c
+msgid "Same as RX"
+msgstr "RX ile aynı"
+
+#: core/ui/ui_menus.c
+msgid "Any (F7E)"
+msgstr "Tümü (F7E)"
+
+#: core/ui/ui_menus.c
+msgid "Yes"
+msgstr "Evet"
+
+#: core/ui/ui_menus.c
+msgid "No"
+msgstr "Hayır"
+
+#: core/ui/ui_menus.c
+msgid "Any (all groups)"
+msgstr "Tümü (tüm gruplar)"
+
+#: core/ui/ui_menus.c
+msgid "Skipped"
+msgstr "Atlanır"
+
+#: core/ui/ui_menus.c
+msgid "Scanned"
+msgstr "Taranır"
+
+#: core/ui/ui_menus.c
+msgid "User"
+msgstr "Kullanıcı"
+
+#: core/ui/ui_menus.c
+msgid "ERDM user"
+msgstr "ERDM kullanıcı"
+
+#: core/ui/ui_menus.c
+msgid "Repeater"
+msgstr "Röle"
+
+#: core/ui/ui_menus.c
+msgid "Repeater (ERDM style)"
+msgstr "Röle (ERDM tarzı)"
+
+#: core/ui/ui_menus.c
+msgid "{Needs one frequency|Needs 1 freq}"
+msgstr "{Tek frekans gerekir|Tek frekans}"
+
+#: core/ui/ui_menus.c
+msgid "Channel's"
+msgstr "Kanalın"
+
+#: core/ui/ui_menus.c core/ui/ui_svc_storage.c
+msgid "Give it a name first"
+msgstr "Önce bir ad ver"
+
+#: core/ui/ui_menus.c
+msgid "RX is outside the radio's bands"
+msgstr "RX telsizin bantları dışında"
+
+#: core/ui/ui_menus.c
+msgid "TX can't transmit there: set RX only"
+msgstr "Orada TX yapılamaz: Yalnız RX seç"
+
+#: core/ui/ui_menus.c
+msgid "Receive only band: set FM"
+msgstr "Yalnız alım bandı: FM seç"
+
+#: core/ui/ui_menus.c
+msgid "CC goes up to 63"
+msgstr "CC en fazla 63 olabilir"
+
+#: core/ui/ui_menus.c
+msgid "Check P25 NAC, talkgroup and ID"
+msgstr "P25 NAC, talkgroup ve ID'yi kontrol et"
+
+#: core/ui/ui_menus.c
+msgid "Pick a TX contact first"
+msgstr "Önce bir TX kişisi seç"
+
+#: core/ui/ui_menus.c
+msgid "No changes to save"
+msgstr "Kaydedilecek değişiklik yok"
+
+#: core/ui/ui_menus.c
+msgid "Saved as channel "
+msgstr "Kaydedildi, yeni kanal "
+
+#: core/ui/ui_menus.c
+msgid "Value too large"
+msgstr "Değer çok büyük"
+
+#: core/ui/ui_menus.c
+msgid "IDs go up to 16776415"
+msgstr "ID en çok 16776415"
+
+#: core/ui/ui_menus.c
+msgid "DCS codes use digits 0-7"
+msgstr "DCS kodları 0-7 rakamları"
+
+#: core/ui/ui_menus.c
+msgid "Any talkgroup: RX only"
+msgstr "Tüm talkgroup'lar: yalnız RX"
+
+#: core/ui/ui_menus.c
+msgid "Any color code: RX only"
+msgstr "Tüm color code'lar: yalnız RX"
+
+#: core/ui/ui_menus.c
+msgid "Not changed: 0 to 495, steps of 15"
+msgstr "Değişmedi: 0 ile 495, 15'er adım"
+
+#: core/ui/ui_menus.c
+msgid "Not a DCS code"
+msgstr "DCS kodu değil"
+
+#: core/ui/ui_menus.c
+msgid "CTCSS goes 60.0 to 260.0"
+msgstr "CTCSS 60.0 ile 260.0 arası"
+
+#: core/ui/ui_menus.c
+msgid "NAC: type it in decimal"
+msgstr "NAC: onluk (decimal) girin"
+
+#: core/ui/ui_menus.c
+msgid "NAC: type it in hex"
+msgstr "NAC: onaltılık (hex) girin"
+
+#: core/ui/ui_menus.c
+msgid "Save first: hold OK"
+msgstr "Önce kaydet: OK basılı tut"
+
+#: core/ui/ui_menus.c
+msgid "Tones: not in this build"
+msgstr "Tonlar: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Any timeslot: RX only"
+msgstr "Tüm timeslot'lar: yalnız RX"
+
+#: core/ui/ui_menus.c
+msgid "SFR needs one frequency: RX = TX"
+msgstr "SFR tek frekans ister: RX = TX"
+
+#: core/ui/ui_menus.c
+msgid "SFR needs a fixed color code and slot"
+msgstr "SFR sabit color code ve slot ister"
+
+#: core/ui/ui_menus.c
+msgid "Repeater needs TX: RX only is on"
+msgstr "Röle TX ister: yalnız RX açık"
+
+#: core/ui/ui_menus.c
+msgid "Repeater role: transmits by itself"
+msgstr "Röle rolü: kendiliğinden yayın yapar"
+
+#: core/ui/ui_menus.c
+msgid "Save as new channel to use another number"
+msgstr "Başka numara için yeni kanal olarak kaydet"
+
+#: core/ui/ui_menus.c
+msgid "Zones: change them with qdmr for now"
+msgstr "Bölgeler: şimdilik qdmr ile değiştir"
+
+#: core/ui/ui_menus.c
+msgid "Empty channel"
+msgstr "Boş kanal"
+
+#: core/ui/ui_menus.c
+msgid "{OK change  hold OK save  Back|OK change  hold OK save}"
+msgstr "{OK değiştir  OK tut kaydet  Geri|OK değiştir  OK tut kaydet}"
+
+#: core/ui/ui_menus.c
+msgid "OK tunes to it  Back"
+msgstr "OK kanala geçer  Geri"
+
+#: core/ui/ui_menus.c
+msgid "No, keep editing"
+msgstr "Hayır, düzenlemeye devam"
+
+#: core/ui/ui_menus.c
+msgid "Yes, discard"
+msgstr "Evet, at"
+
+#: core/ui/ui_menus.c
+msgid "Discard this new contact?"
+msgstr "Bu yeni kişi atılsın mı?"
+
+#: core/ui/ui_menus.c
+msgid "Discard the changes to this channel?"
+msgstr "Bu kanaldaki değişiklikler atılsın mı?"
+
+#: core/ui/ui_menus.c
+msgid "Unsaved Changes"
+msgstr "Kaydedilmemiş Değişiklik"
+
+#: core/ui/ui_menus.c
+msgid "{OK choose  Back keep editing|OK choose  Back}"
+msgstr "{OK seç  Geri düzenlemeye dön|OK seç  Geri}"
+
+#: core/ui/ui_menus.c
+msgid "That's the most it can hold"
+msgstr "Alabileceği en fazla bu"
+
+#: core/ui/ui_menus.c
+msgid "{Back delete  # ABC/123/abc  OK keep|Back del  # mode  OK}"
+msgstr "{Geri sil  # ABC/123/abc  OK tamam|Geri sil  # mod  OK}"
+
+#: core/ui/ui_menus.c
+msgid "Type"
+msgstr "Tür"
+
+#: core/ui/ui_menus.c
+msgid "Type its ID first"
+msgstr "Önce ID'sini gir"
+
+#: core/ui/ui_menus.c
+msgid "Private IDs go up to 16776415"
+msgstr "Özel ID en çok 16776415"
+
+#: core/ui/ui_menus.c
+msgid "Talkgroups go up to 16777214"
+msgstr "Talkgroup en çok 16777214"
+
+#: core/ui/ui_menus.c
+msgid "Already a contact: "
+msgstr "Zaten kişi: "
+
+#: core/ui/ui_menus.c
+msgid "No room for more contacts"
+msgstr "Başka kişiye yer yok"
+
+#: core/ui/ui_menus.c
+msgid "Saved contact "
+msgstr "Kişi kaydedildi "
+
+#: core/ui/ui_menus.c
+msgid "IDs go up to 16777214"
+msgstr "ID en çok 16777214"
+
+#: core/ui/ui_menus.c
+msgid "New Contact"
+msgstr "Yeni Kişi"
+
+#: core/ui/ui_menus.c
+msgid "Move up"
+msgstr "Yukarı taşı"
+
+#: core/ui/ui_menus.c
+msgid "Move down"
+msgstr "Aşağı taşı"
+
+#: core/ui/ui_menus.c
+msgid "Copy here"
+msgstr "Buraya kopyala"
+
+#: core/ui/ui_menus.c
+msgid "Edit channel"
+msgstr "Kanalı düzenle"
+
+#: core/ui/ui_menus.c
+msgid "Remove from zone"
+msgstr "Bölgeden çıkar"
+
+#: core/ui/ui_menus.c core/ui/ui_scanx.c
+msgid "Set as priority"
+msgstr "Öncelikli yap"
+
+#: core/ui/ui_menus.c core/ui/ui_scanx.c
+msgid "Priority off"
+msgstr "Öncelik kapalı"
+
+#: core/ui/ui_menus.c
+msgid "Already first"
+msgstr "Zaten ilk"
+
+#: core/ui/ui_menus.c
+msgid "Already last"
+msgstr "Zaten son"
+
+#: core/ui/ui_menus.c
+msgid "Position "
+msgstr "Sıra "
+
+#: core/ui/ui_menus.c
+msgid "Zone full"
+msgstr "Bölge dolu"
+
+#: core/ui/ui_menus.c
+msgid "Removed from "
+msgstr "Çıkarıldı: "
+
+#: core/ui/ui_menus.c
+msgid "1-7 pick  Back"
+msgstr "1-7 seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "1-6 pick  Back"
+msgstr "1-6 seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Added to "
+msgstr "Eklendi: "
+
+#: core/ui/ui_menus.c
+msgid "Add Channel"
+msgstr "Kanal Ekle"
+
+#: core/ui/ui_menus.c
+msgid "{OK add  0-9 find  Back|OK add  Back}"
+msgstr "{OK ekle  0-9 bul  Geri|OK ekle  Geri}"
+
+#: core/ui/ui_menus.c
+msgid "Every channel is in it"
+msgstr "Tüm kanallar zaten içinde"
+
+#: core/ui/ui_menus.c
+msgid "In"
+msgstr "Var"
+
+#: core/ui/ui_menus.c
+msgid "Rename"
+msgstr "Yeniden adlandır"
+
+#: core/ui/ui_menus.c
+msgid "Copy as new zone"
+msgstr "Yeni bölge olarak kopyala"
+
+#: core/ui/ui_menus.c
+msgid "Delete zone"
+msgstr "Bölgeyi sil"
+
+#: core/ui/ui_menus.c
+msgid "Renamed"
+msgstr "Ad değişti"
+
+#: core/ui/ui_menus.c
+msgid "Added "
+msgstr "Eklendi "
+
+#: core/ui/ui_menus.c core/ui/ui_svc_storage.c core/ui/ui_svc_zone.c
+msgid "No room for another zone"
+msgstr "Başka bölgeye yer yok"
+
+#: core/ui/ui_menus.c
+msgid "Copied as "
+msgstr "Kopyalandı: "
+
+#: core/ui/ui_menus.c
+msgid "Empty zone: nothing to send"
+msgstr "Boş bölge: gönderilecek şey yok"
+
+#: core/ui/ui_menus.c
+msgid "It holds every channel: it stays"
+msgstr "Tüm kanalları içeriyor: kalır"
+
+#: core/ui/ui_menus.c
+msgid "1-4 pick  Back"
+msgstr "1-4 seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "1-3 pick  Back"
+msgstr "1-3 seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "No, keep it"
+msgstr "Hayır, kalsın"
+
+#: core/ui/ui_menus.c
+msgid "Yes, delete"
+msgstr "Evet, sil"
+
+#: core/ui/ui_menus.c
+msgid "Deleted "
+msgstr "Silindi "
+
+#: core/ui/ui_menus.c
+msgid "Delete "
+msgstr "Sil: "
+
+#: core/ui/ui_menus.c
+msgid "? Channels stay."
+msgstr "? Kanallar kalır."
+
+#: core/ui/ui_menus.c
+msgid "Delete Zone"
+msgstr "Bölgeyi Sil"
+
+#: core/ui/ui_menus.c
+msgid "OK choose  Back cancel"
+msgstr "OK seç  Geri iptal"
+
+#: core/ui/ui_menus.c
+msgid "TX Contact"
+msgstr "TX Kişisi"
+
+#: core/ui/ui_menus.c
+msgid "RX Group List"
+msgstr "RX Grup Listesi"
+
+#: core/ui/ui_menus.c
+msgid "OK pick  0-9 find  Back"
+msgstr "OK seç  0-9 bul  Geri"
+
+#: core/ui/ui_menus.c
+msgid "None stored"
+msgstr "Kayıtlı yok"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Hotspot"
+msgstr "Hotspot"
+
+#: core/ui/ui_menus.c
+msgid "About"
+msgstr "Hakkında"
+
+#: core/ui/ui_menus.c
+msgid "Codeplug"
+msgstr "Codeplug"
+
+#: core/ui/ui_menus.c
+msgid "USB Network"
+msgstr "USB Ağı"
+
+#: core/ui/ui_menus.c
+msgid "Single-Freq Repeater"
+msgstr "Tek Frekans Röle"
+
+#: core/ui/ui_menus.c
+msgid "Supply"
+msgstr "Besleme"
+
+#: core/ui/ui_menus.c
+msgid "No GPS, or it is off (Settings > Location)"
+msgstr "GPS yok veya kapalı (Ayarlar > Konum)"
+
+#: core/ui/ui_menus.c
+msgid "No fix yet. Go outside, away from buildings."
+msgstr "Henüz konum yok. Dışarı çık, binalardan uzaklaş."
+
+#: core/ui/ui_menus.c
+msgid "Fix, "
+msgstr "Konum, "
+
+#: core/ui/ui_menus.c
+msgid " satellites"
+msgstr " uydu"
+
+#: core/ui/ui_menus.c
+msgid "Altitude "
+msgstr "Yükseklik "
+
+#: core/ui/ui_menus.c
+msgid "Start MMDVMHost or Pi-Star on a computer on USB: hotspot mode starts by itself."
+msgstr "USB'deki bir bilgisayarda MMDVMHost veya Pi-Star başlat: hotspot modu kendiliğinden açılır."
+
+#: core/ui/ui_menus.c
+msgid "Start MMDVMHost, Pi-Star or WPSD on a computer on the programming cable (115200 baud): hotspot mode starts by itself."
+msgstr "Programlama kablosuna bağlı bir bilgisayarda MMDVMHost, Pi-Star veya WPSD başlatın (115200 baud): hotspot modu kendiliğinden açılır."
+
+#: core/ui/ui_menus.c
+msgid "Hotspot: not in this build"
+msgstr "Hotspot: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "None: built-in channels"
+msgstr "Yok: dahili kanallar"
+
+#: core/ui/ui_menus.c
+msgid "Built-in channels"
+msgstr "Dahili kanallar"
+
+#: core/ui/ui_menus.c
+msgid "Written by the CPS"
+msgstr "CPS tarafından yazıldı"
+
+#: core/ui/ui_menus.c
+msgid "Other firmware's codeplug: ignored"
+msgstr "Başka firmware'in codeplug'ı: yok sayıldı"
+
+#: core/ui/ui_menus.c
+msgid "Zones: "
+msgstr "Bölgeler: "
+
+#: core/ui/ui_menus.c
+msgid "Channels: up to "
+msgstr "Kanallar: en çok "
+
+#: core/ui/ui_menus.c
+msgid "USB is a network adapter: IP over DMR. qdmr and the hotspot are off until you switch back."
+msgstr "USB bir ağ bağdaştırıcısı: DMR üzerinden IP. Seri porta dönene dek qdmr ve hotspot kapalı."
+
+#: core/ui/ui_menus.c
+msgid "USB is a serial port: qdmr, hotspot. As a network adapter it carries IP over DMR."
+msgstr "USB bir seri port: qdmr, hotspot. Ağ bağdaştırıcısı olarak DMR üzerinden IP taşır."
+
+#: core/ui/ui_menus.c
+msgid "USB network: not in this build"
+msgstr "USB ağı: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "This channel has no SFR role. Set one in the channel editor, row SFR (DMR, one frequency)."
+msgstr "Bu kanalın SFR rolü yok. Kanal editöründe SFR satırından ayarlayın (DMR, tek frekans)."
+
+#: core/ui/ui_menus.c
+msgid "This channel has no SFR role. Set Repeater or User in the Codeplug Editor, on a channel with one frequency."
+msgstr "Bu kanalın SFR rolü yok. Codeplug Editor'de tek frekanslı bir kanalda Röle veya Kullanıcı seç."
+
+#: core/ui/ui_menus.c
+msgid "In TS"
+msgstr "Giriş TS"
+
+#: core/ui/ui_menus.c
+msgid ", out TS"
+msgstr ", çıkış TS"
+
+#: core/ui/ui_menus.c
+msgid "Off: transmit not allowed now"
+msgstr "Kapalı: şu an yayına izin yok"
+
+#: core/ui/ui_menus.c
+msgid "Sending its CW ID"
+msgstr "CW ID gönderiliyor"
+
+#: core/ui/ui_menus.c
+msgid "Repeating a call"
+msgstr "Çağrı aktarılıyor"
+
+#: core/ui/ui_menus.c
+msgid "Hang time"
+msgstr "Bekleme süresi"
+
+#: core/ui/ui_menus.c
+msgid "Listening"
+msgstr "Dinleniyor"
+
+#: core/ui/ui_menus.c
+msgid "User of an ERDM repeater"
+msgstr "ERDM röle kullanıcısı"
+
+#: core/ui/ui_menus.c
+msgid "User of a repeater"
+msgstr "Röle kullanıcısı"
+
+#: core/ui/ui_menus.c
+msgid "Talk on TS"
+msgstr "Konuşma TS"
+
+#: core/ui/ui_menus.c
+msgid ", hear TS"
+msgstr ", dinleme TS"
+
+#: core/ui/ui_menus.c
+msgid " and TS"
+msgstr " ve TS"
+
+#: core/ui/ui_menus.c
+msgid "Single-freq repeater: not in this build"
+msgstr "Tek frekans röle: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Switch USB to serial"
+msgstr "USB'yi seri yap"
+
+#: core/ui/ui_menus.c
+msgid "Switch USB to network"
+msgstr "USB'yi ağ yap"
+
+#: core/ui/ui_menus.c
+msgid "Stop hotspot"
+msgstr "Hotspotu durdur"
+
+#: core/ui/ui_menus.c
+msgid "No USB network on this radio"
+msgstr "Bu telsizde USB ağı yok"
+
+#: core/ui/ui_menus.c
+msgid "USB is a network adapter now"
+msgstr "USB artık ağ bağdaştırıcısı"
+
+#: core/ui/ui_menus.c
+msgid "USB is a serial port again"
+msgstr "USB yine seri port"
+
+#: core/ui/ui_menus.c
+msgid "DMR ID"
+msgstr "DMR ID"
+
+#: core/ui/ui_menus.c
+msgid "Radio name"
+msgstr "Telsiz adı"
+
+#: core/ui/ui_menus.c
+msgid "Boot 1"
+msgstr "Açılış 1"
+
+#: core/ui/ui_menus.c
+msgid "Boot 2"
+msgstr "Açılış 2"
+
+#: core/ui/ui_menus.c
+msgid "Saved in the codeplug"
+msgstr "Codeplug'a kaydedildi"
+
+#: core/ui/ui_menus.c
+msgid "Radio: "
+msgstr "Telsiz: "
+
+#: core/ui/ui_menus.c
+msgid "Saved"
+msgstr "Kaydedildi"
+
+#: core/ui/ui_menus.c
+msgid "IDs start at 1"
+msgstr "ID'ler 1'den başlar"
+
+#: core/ui/ui_menus.c
+msgid "DMR ID saved"
+msgstr "DMR ID kaydedildi"
+
+#: core/ui/ui_menus.c
+msgid "My Radio"
+msgstr "Telsizim"
+
+#: core/ui/ui_menus.c
+msgid "0-9 type  OK edit/save  Back"
+msgstr "0-9 yaz  OK düzenle/kaydet  Geri"
+
+#: core/ui/ui_menus.c
+msgid "OK edit  Back"
+msgstr "OK düzenle  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Freq Trim"
+msgstr "Frekans Ayarı"
+
+#: core/ui/ui_menus.c
+msgid "At "
+msgstr "Bant "
+
+#: core/ui/ui_menus.c
+msgid "+ to increase frequency"
+msgstr "+ frekansı yükseltir"
+
+#: core/ui/ui_menus.c
+msgid "+ to increase freq"
+msgstr "+ frek yükseltir"
+
+#: core/ui/ui_menus.c
+msgid "0-9 type  # +/-  OK set"
+msgstr "0-9 yaz  # +/-  OK ayarla"
+
+#: core/ui/ui_menus.c
+msgid "Up Down  # +/-  OK done"
+msgstr "Yuk Aşa  # +/-  OK tamam"
+
+#: core/ui/ui_menus.c
+msgid "Up to 10.0 ppm"
+msgstr "En çok 10.0 ppm"
+
+#: core/ui/ui_menus.c
+msgid "Firmware: "
+msgstr "Firmware: "
+
+#: core/ui/ui_menus.c
+msgid "Release: "
+msgstr "Sürüm: "
+
+#: core/ui/ui_menus.c
+msgid "Build: "
+msgstr "Derleme: "
+
+#: core/ui/ui_menus.c
+msgid "Date: "
+msgstr "Tarih: "
+
+#: core/ui/ui_menus.c
+msgid "License: "
+msgstr "Lisans: "
+
+#: core/ui/ui_menus.c
+msgid "Authors:"
+msgstr "Yazarlar:"
+
+#: core/ui/ui_menus.c
+msgid "Author:"
+msgstr "Yazar:"
+
+#: core/ui/ui_menus.c
+msgid "Spleen font: BSD-2-Clause"
+msgstr "Spleen yazı tipi: BSD-2-Clause"
+
+#: core/ui/ui_menus.c
+msgid "JetBrains Mono font: OFL-1.1"
+msgstr "JetBrains Mono yazı tipi: OFL-1.1"
+
+#: core/ui/ui_menus.c
+msgid "AMBE+2 codec: DVSI (stock)"
+msgstr "AMBE+2 codec: DVSI (orijinal)"
+
+#: core/ui/ui_menus.c
+msgid "ID database: "
+msgstr "ID veritabanı: "
+
+#: core/ui/ui_menus.c
+msgid "Synced"
+msgstr "Eşzamanlı"
+
+#: core/ui/ui_menus.c
+msgid "Per site"
+msgstr "Site başına"
+
+#: core/ui/ui_menus.c
+msgid "Roaming works on channels, not the VFO."
+msgstr "Roaming kanallarda çalışır, VFO'da değil."
+
+#: core/ui/ui_menus.c
+msgid "Off in this zone. On, the radio moves between the zone's repeaters."
+msgstr "Bu bölgede kapalı. Açıkken telsiz bölgedeki röleler arasında geçiş yapar."
+
+#: core/ui/ui_menus.c
+msgid "This channel is not a repeater site."
+msgstr "Bu kanal bir röle sitesi değil."
+
+#: core/ui/ui_menus.c
+msgid "Needs two sites in the zone with the same talkgroup."
+msgstr "Bölgede aynı talkgroupyla iki site gerekli."
+
+#: core/ui/ui_menus.c
+msgid "Searching sites..."
+msgstr "Siteler aranıyor..."
+
+#: core/ui/ui_menus.c
+msgid "Signal "
+msgstr "Sinyal "
+
+#: core/ui/ui_menus.c
+msgid " dBm, weak"
+msgstr " dBm, zayıf"
+
+#: core/ui/ui_menus.c
+msgid "Locked to this site"
+msgstr "Bu siteye kilitli"
+
+#: core/ui/ui_menus.c
+msgid "Beacons: surveying"
+msgstr "Beacon: inceleniyor"
+
+#: core/ui/ui_menus.c
+msgid "Beacons: learning"
+msgstr "Beacon: öğreniliyor"
+
+#: core/ui/ui_menus.c
+msgid "Roaming: not in this build"
+msgstr "Roaming: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Roam in this zone"
+msgstr "Bu bölgede roaming"
+
+#: core/ui/ui_menus.c
+msgid "Roam now"
+msgstr "Şimdi roaming"
+
+#: core/ui/ui_menus.c
+msgid "Lock to this site"
+msgstr "Bu siteye kilitle"
+
+#: core/ui/ui_menus.c
+msgid "Site survey"
+msgstr "Site taraması"
+
+#: core/ui/ui_menus.c
+msgid "Beacon interval"
+msgstr "Beacon aralığı"
+
+#: core/ui/ui_menus.c
+msgid "Beacon length"
+msgstr "Beacon süresi"
+
+#: core/ui/ui_menus.c
+msgid "Wake probe"
+msgstr "Uyandırma"
+
+#: core/ui/ui_menus.c
+msgid "Must match the repeaters"
+msgstr "Rölelerle aynı olmalı"
+
+#: core/ui/ui_menus.c
+msgid "Wake probe on: transmits on silent sites"
+msgstr "Uyandırma açık: sessiz sitelerde yayın yapar"
+
+#: core/ui/ui_menus.c
+msgid "Wake probe off: listening only"
+msgstr "Uyandırma kapalı: yalnız dinler"
+
+#: core/ui/ui_menus.c
+msgid "Roaming works on channels"
+msgstr "Roaming kanallarda çalışır"
+
+#: core/ui/ui_menus.c
+msgid "Roaming on for "
+msgstr "Roaming açık: "
+
+#: core/ui/ui_menus.c
+msgid "Roaming off"
+msgstr "Roaming kapalı"
+
+#: core/ui/ui_menus.c
+msgid "Turn roaming on first"
+msgstr "Önce roamingi aç"
+
+#: core/ui/ui_menus.c
+msgid "Can't roam on this channel"
+msgstr "Bu kanalda roaming olmaz"
+
+#: core/ui/ui_menus.c
+msgid "Already searching"
+msgstr "Zaten aranıyor"
+
+#: core/ui/ui_menus.c
+msgid "Searching sites"
+msgstr "Siteler aranıyor"
+
+#: core/ui/ui_menus.c
+msgid "Locked to "
+msgstr "Kilitli: "
+
+#: core/ui/ui_menus.c
+msgid "Roaming again"
+msgstr "Yeniden roaming"
+
+#: core/ui/ui_menus.c
+msgid "Ask"
+msgstr "Sor"
+
+#: core/ui/ui_menus.c
+msgid "No crash recorded."
+msgstr "Kayıtlı çökme yok."
+
+#: core/ui/ui_menus.c
+msgid "Restarted after a crash. Send the report to "
+msgstr "Çökme sonrası yeniden başladı. Rapor gönderilsin mi: "
+
+#: core/ui/ui_menus.c
+msgid "Report sent"
+msgstr "Rapor gönderildi"
+
+#: core/ui/ui_menus.c
+msgid " crashes in a row"
+msgstr " kez üst üste çöktü"
+
+#: core/ui/ui_menus.c
+msgid "Ran for "
+msgstr "Çalışma süresi "
+
+#: core/ui/ui_menus.c
+msgid ", build "
+msgstr ", derleme "
+
+#: core/ui/ui_menus.c
+msgid "Send report"
+msgstr "Rapor gönder"
+
+#: core/ui/ui_menus.c
+msgid "Send to"
+msgstr "Alıcı"
+
+#: core/ui/ui_menus.c
+msgid "After a crash"
+msgstr "Çökme sonrası"
+
+#: core/ui/ui_menus.c
+msgid "Clear"
+msgstr "Temizle"
+
+#: core/ui/ui_menus.c
+msgid "Not now"
+msgstr "Şimdi değil"
+
+#: core/ui/ui_menus.c
+msgid "No crash recorded"
+msgstr "Kayıtlı çökme yok"
+
+#: core/ui/ui_menus.c
+msgid "Pick Send to first"
+msgstr "Önce Alıcı seç"
+
+#: core/ui/ui_menus.c
+msgid "Sending crash report"
+msgstr "Çökme raporu gönderiliyor"
+
+#: core/ui/ui_menus.c
+msgid "Pick Send to as well"
+msgstr "Alıcı da seç"
+
+#: core/ui/ui_menus.c
+msgid "Crash record cleared"
+msgstr "Çökme kaydı temizlendi"
+
+#: core/ui/ui_menus.c
+msgid "Crash Log"
+msgstr "Çökme Kaydı"
+
+#: core/ui/ui_menus.c
+msgid "Crash reports to "
+msgstr "Çökme raporu alıcısı: "
+
+#: core/ui/ui_menus.c
+msgid "this contact"
+msgstr "bu kişi"
+
+#: core/ui/ui_menus.c
+msgid "Send To"
+msgstr "Alıcı"
+
+#: core/ui/ui_menus.c
+msgid "0-9 find  OK pick  Back"
+msgstr "0-9 bul  OK seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Crash report sent"
+msgstr "Çökme raporu gönderildi"
+
+#: core/ui/ui_menus.c
+msgid "Crash report not sent"
+msgstr "Çökme raporu gönderilemedi"
+
+#: core/ui/ui_menus.c
+msgid " open  Back"
+msgstr " aç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "USB network"
+msgstr "USB ağı"
+
+#: core/ui/ui_menus.c
+msgid "Single-freq repeater"
+msgstr "Tek frekans röle"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Diagnostics"
+msgstr "Tanılama"
+
+#: core/ui/ui_menus.c core/ui/ui_spectrum.c
+msgid "Spectrum"
+msgstr "Spektrum"
+
+#: core/ui/ui_menus.c core/ui/ui_sat.c
+msgid "Satellites"
+msgstr "Uydular"
+
+#: core/ui/ui_menus.c core/ui/ui_p25search.c
+msgid "P25 search"
+msgstr "P25 arama"
+
+#: core/ui/ui_menus.c
+msgid "Air band"
+msgstr "Airband"
+
+#: core/ui/ui_menus.c
+msgid "Last call"
+msgstr "Son çağrı"
+
+#: core/ui/ui_menus.c core/ui/ui_msg.c
+msgid "Pager"
+msgstr "Pager"
+
+#: core/ui/ui_menus.c core/ui/ui_p25trunk.c
+msgid "P25 trunk"
+msgstr "P25 trunk"
+
+#: core/ui/ui_menus.c core/ui/ui_rpt.c
+msgid "Repeaters"
+msgstr "Röleler"
+
+#: core/ui/ui_menus.c
+msgid "Auto repeater"
+msgstr "Otomatik röle"
+
+#: core/ui/ui_menus.c
+msgid "Zones/Chs Received"
+msgstr "Alınan Bölge/Kanal"
+
+#: core/ui/ui_menus.c
+msgid "Dual watch"
+msgstr "Dual watch"
+
+#: core/ui/ui_menus.c
+msgid "Network"
+msgstr "Ağ"
+
+#: core/ui/ui_menus.c
+msgid "Serial"
+msgstr "Seri"
+
+#: core/ui/ui_menus.c
+msgid "Air band AM: digits or Up/Down"
+msgstr "Airband AM: rakam veya Yuk/Aşa"
+
+#: core/ui/ui_menus.c
+msgid "Replay stopped"
+msgstr "Tekrar durdu"
+
+#: core/ui/ui_menus.c
+msgid "Last call: go to a P25 channel"
+msgstr "Son çağrı: P25 kanalına geç"
+
+#: core/ui/ui_menus.c
+msgid "No call recorded yet"
+msgstr "Kayıtlı çağrı yok"
+
+#: core/ui/ui_menus.c
+msgid "Playing the last call"
+msgstr "Son çağrı çalıyor"
+
+#: core/ui/ui_menus.c
+msgid "Never"
+msgstr "Asla"
+
+#: core/ui/ui_menus.c
+msgid "Dark"
+msgstr "Koyu"
+
+#: core/ui/ui_menus.c
+msgid "Light"
+msgstr "Açık"
+
+#: core/ui/ui_menus.c
+msgid "High contrast"
+msgstr "Yüksek kontrast"
+
+#: core/ui/ui_menus.c
+msgid "Red"
+msgstr "Kırmızı"
+
+#: core/ui/ui_menus.c
+msgid "Orange"
+msgstr "Turuncu"
+
+#: core/ui/ui_menus.c
+msgid "Yellow"
+msgstr "Sarı"
+
+#: core/ui/ui_menus.c
+msgid "Teal"
+msgstr "Camgöbeği"
+
+#: core/ui/ui_menus.c
+msgid "Light blue"
+msgstr "Açık mavi"
+
+#: core/ui/ui_menus.c
+msgid "Purple"
+msgstr "Mor"
+
+#: core/ui/ui_menus.c
+msgid "Pink"
+msgstr "Pembe"
+
+#: core/ui/ui_menus.c
+msgid "3 min"
+msgstr "3 dk"
+
+#: core/ui/ui_menus.c
+msgid "Degrees"
+msgstr "Derece"
+
+#: core/ui/ui_menus.c
+msgid "Deg min sec"
+msgstr "Der dk sn"
+
+#: core/ui/ui_menus.c
+msgid "15 min"
+msgstr "15 dk"
+
+#: core/ui/ui_menus.c
+msgid "Nothing"
+msgstr "Hiçbiri"
+
+#: core/ui/ui_menus.c
+msgid "Monitor"
+msgstr "Monitor"
+
+#: core/ui/ui_menus.c
+msgid "Talk target"
+msgstr "Konuşma hedefi"
+
+#: core/ui/ui_menus.c
+msgid "Power level"
+msgstr "Güç seviyesi"
+
+#: core/ui/ui_menus.c
+msgid "Next zone"
+msgstr "Sonraki bölge"
+
+#: core/ui/ui_menus.c
+msgid "Previous zone"
+msgstr "Önceki bölge"
+
+#: core/ui/ui_menus.c
+msgid "Key lock"
+msgstr "Tuş kilidi"
+
+#: core/ui/ui_menus.c
+msgid "Home zone"
+msgstr "Ana bölge"
+
+#: core/ui/ui_menus.c
+msgid "Copy to VFO"
+msgstr "VFO'ya kopyala"
+
+#: core/ui/ui_menus.c
+msgid "Call back"
+msgstr "Arayanı ara"
+
+#: core/ui/ui_menus.c
+msgid "Dual/multi-watch"
+msgstr "Dual/multi-watch"
+
+#: core/ui/ui_menus.c
+msgid "Channel"
+msgstr "Kanal"
+
+#: core/ui/ui_menus.c
+msgid "ETSI short"
+msgstr "ETSI kısa"
+
+#: core/ui/ui_menus.c
+msgid "By DMR ID"
+msgstr "DMR ID ile"
+
+#: core/ui/ui_menus.c
+msgid "First copy"
+msgstr "İlk kopya"
+
+#: core/ui/ui_menus.c
+msgid "Dual-path RX"
+msgstr "Çift yollu RX"
+
+#: core/ui/ui_menus.c core/ui/ui_screens.c
+msgid "Volume"
+msgstr "Ses"
+
+#: core/ui/ui_menus.c
+msgid "Key tones"
+msgstr "Tuş sesleri"
+
+#: core/ui/ui_menus.c
+msgid "Tone volume"
+msgstr "Ton seviyesi"
+
+#: core/ui/ui_menus.c
+msgid "Talk permit tone"
+msgstr "Konuşma izni tonu"
+
+#: core/ui/ui_menus.c
+msgid "Voice prompts"
+msgstr "Sesli bildirim"
+
+#: core/ui/ui_menus.c
+msgid "Message tone"
+msgstr "Mesaj tonu"
+
+#: core/ui/ui_menus.c
+msgid "Vibrate"
+msgstr "Titreşim"
+
+#: core/ui/ui_menus.c
+msgid "Brightness"
+msgstr "Parlaklık"
+
+#: core/ui/ui_menus.c
+msgid "Backlight Dim/Off"
+msgstr "Arka ışık Kıs/Kapat"
+
+#: core/ui/ui_menus.c
+msgid "Theme"
+msgstr "Tema"
+
+#: core/ui/ui_menus.c
+msgid "Highlight color"
+msgstr "Vurgu rengi"
+
+#: core/ui/ui_menus.c
+msgid "Filled status bar"
+msgstr "Dolu durum çubuğu"
+
+#: core/ui/ui_menus.c
+msgid "Large text"
+msgstr "Büyük yazı"
+
+#: core/ui/ui_menus.c
+msgid "Hint row"
+msgstr "İpucu satırı"
+
+#: core/ui/ui_menus.c
+msgid "Language"
+msgstr "Dil/Language"
+
+#: core/ui/ui_menus.c
+msgid "Reply window"
+msgstr "Yanıt süresi"
+
+#: core/ui/ui_menus.c
+msgid "TX timeout"
+msgstr "TX zaman aşımı"
+
+#: core/ui/ui_menus.c
+msgid "Default squelch"
+msgstr "Varsayılan squelch"
+
+#: core/ui/ui_menus.c
+msgid "VFO step"
+msgstr "VFO adımı"
+
+#: core/ui/ui_menus.c
+msgid "FM broadcast step"
+msgstr "FM yayın adımı"
+
+#: core/ui/ui_menus.c
+msgid "Mic gain"
+msgstr "Mikrofon kazancı"
+
+#: core/ui/ui_menus.c
+msgid "Mic AGC"
+msgstr "Mikrofon AGC"
+
+#: core/ui/ui_menus.c
+msgid "Mic noise reduction"
+msgstr "Mikrofon gürültü azaltma"
+
+#: core/ui/ui_menus.c
+msgid "Monitor by default"
+msgstr "Varsayılan Monitor"
+
+#: core/ui/ui_menus.c
+msgid "Show talker alias"
+msgstr "Talker aliasnı göster"
+
+#: core/ui/ui_menus.c
+msgid "FM caller ID"
+msgstr "FM arayan kimliği"
+
+#: core/ui/ui_menus.c
+msgid "Dual watch talk back"
+msgstr "Dual watch yanıtı"
+
+#: core/ui/ui_menus.c
+msgid "Dual watch delay"
+msgstr "Dual watch gecikmesi"
+
+#: core/ui/ui_menus.c
+msgid "Watch channels"
+msgstr "İzlenen kanallar"
+
+#: core/ui/ui_menus.c
+msgid "SFR receive"
+msgstr "SFR alımı"
+
+#: core/ui/ui_menus.c
+msgid "SFR CW ID"
+msgstr "SFR CW ID"
+
+#: core/ui/ui_menus.c
+msgid "Priority channel"
+msgstr "Öncelikli kanal"
+
+#: core/ui/ui_menus.c
+msgid "Key type"
+msgstr "Anahtar türü"
+
+#: core/ui/ui_menus.c
+msgid "Key"
+msgstr "Anahtar"
+
+#: core/ui/ui_menus.c
+msgid "Auto lock"
+msgstr "Otomatik kilit"
+
+#: core/ui/ui_menus.c
+msgid "PTT when locked"
+msgstr "Kilitliyken PTT"
+
+#: core/ui/ui_menus.c
+msgid "Position format"
+msgstr "Konum biçimi"
+
+#: core/ui/ui_menus.c
+msgid "Send position"
+msgstr "Konum gönder"
+
+#: core/ui/ui_menus.c
+msgid "Answer GPS requests"
+msgstr "GPS isteklerini yanıtla"
+
+#: core/ui/ui_menus.c
+msgid "Hotspot allowed"
+msgstr "Hotspot izni"
+
+#: core/ui/ui_menus.c
+msgid "Answer radio checks"
+msgstr "Telsiz kontrolünü yanıtla"
+
+#: core/ui/ui_menus.c
+msgid "Answer call alerts"
+msgstr "Çağrı uyarısını yanıtla"
+
+#: core/ui/ui_menus.c
+msgid "TFTP codeplug write"
+msgstr "TFTP codeplug yazma"
+
+#: core/ui/ui_menus.c
+msgid "Message format"
+msgstr "Mesaj biçimi"
+
+#: core/ui/ui_menus.c
+msgid "Accept zone shares"
+msgstr "Bölge paylaşımı kabul"
+
+#: core/ui/ui_menus.c
+msgid "USB network at start"
+msgstr "Açılışta USB ağı"
+
+#: core/ui/ui_menus.c
+msgid "PC answers data"
+msgstr "PC veriyi yanıtlar"
+
+#: core/ui/ui_menus.c
+msgid "USB address"
+msgstr "USB adresi"
+
+#: core/ui/ui_menus.c
+msgid "Auto power off"
+msgstr "Otomatik kapanma"
+
+#: core/ui/ui_menus.c
+msgid "Low battery warning"
+msgstr "Düşük pil uyarısı"
+
+#: core/ui/ui_menus.c
+msgid "Key "
+msgstr "Tuş "
+
+#: core/ui/ui_menus.c
+msgid " hold"
+msgstr " uzun"
+
+#: core/ui/ui_menus.c
+msgid "Long press time"
+msgstr "Uzun basma süresi"
+
+#: core/ui/ui_menus.c
+msgid "Key repeat"
+msgstr "Tuş tekrarı"
+
+#: core/ui/ui_menus.c
+msgid "Up/Down on Home"
+msgstr "Ana ekranda Yuk/Aşa"
+
+#: core/ui/ui_menus.c
+msgid "DMR ID and name"
+msgstr "DMR ID ve ad"
+
+#: core/ui/ui_menus.c
+msgid "Factory reset"
+msgstr "Fabrika ayarları"
+
+#: core/ui/ui_menus.c
+msgid "Crash log"
+msgstr "Çökme kaydı"
+
+#: core/ui/ui_menus.c
+msgid "Freq trim"
+msgstr "Frekans ayarı"
+
+#: core/ui/ui_menus.c
+msgid "Sound"
+msgstr "Ses"
+
+#: core/ui/ui_menus.c
+msgid "Display"
+msgstr "Ekran"
+
+#: core/ui/ui_menus.c
+msgid "Talk & listen"
+msgstr "Konuşma ve dinleme"
+
+#: core/ui/ui_menus.c
+msgid "Talk & Listen"
+msgstr "Konuşma ve Dinleme"
+
+#: core/ui/ui_menus.c
+msgid "Privacy"
+msgstr "Gizlilik"
+
+#: core/ui/ui_menus.c
+msgid "Location"
+msgstr "Konum"
+
+#: core/ui/ui_menus.c
+msgid "Connections"
+msgstr "Bağlantılar"
+
+#: core/ui/ui_menus.c
+msgid "Keys"
+msgstr "Tuşlar"
+
+#: core/ui/ui_menus.c
+msgid "My radio"
+msgstr "Telsizim"
+
+#: core/ui/ui_menus.c
+msgid "Advanced"
+msgstr "Gelişmiş"
+
+#: core/ui/ui_menus.c
+msgid "0-9 open  Back"
+msgstr "0-9 aç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Talk permit tone: not in this build"
+msgstr "Konuşma izni tonu: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "This radio has no vibration motor"
+msgstr "Bu telsizde titreşim motoru yok"
+
+#: core/ui/ui_menus.c
+msgid "Colors are for color screens"
+msgstr "Renkler renkli ekranlar için"
+
+#: core/ui/ui_menus.c
+msgid "Mic gain: not in this build"
+msgstr "Mikrofon kazancı: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Mic AGC sets the level"
+msgstr "Seviyeyi mikrofon AGC ayarlar"
+
+#: core/ui/ui_menus.c
+msgid "Noise reduction: not in this build"
+msgstr "Gürültü azaltma: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Not on this radio"
+msgstr "Bu telsizde yok"
+
+#: core/ui/ui_menus.c
+msgid "Mic AGC: not in this build"
+msgstr "Mikrofon AGC: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Digital monitor: not in this build"
+msgstr "Dijital dinleme: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Talker alias: not in this build"
+msgstr "Talker alias: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Pick a key type first"
+msgstr "Önce anahtar türü seç"
+
+#: core/ui/ui_menus.c
+msgid "No GPS on this radio"
+msgstr "Bu telsizde GPS yok"
+
+#: core/ui/ui_menus.c
+msgid "Diagnostics: not in this build"
+msgstr "Tanılama: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Settings are saved as you change them"
+msgstr "Ayarlar değiştikçe kaydedilir"
+
+#: core/ui/ui_menus.c
+msgid "Not changed: "
+msgstr "Değişmedi: "
+
+#: core/ui/ui_menus.c
+msgid " to "
+msgstr " ile "
+
+#: core/ui/ui_menus.c
+msgid ", steps of "
+msgstr ", adım "
+
+#: core/ui/ui_menus.c
+msgid "Keep RX-only"
+msgstr "Sadece RX kalsın"
+
+#: core/ui/ui_menus.c
+msgid "Enable TX"
+msgstr "TX'i aç"
+
+#: core/ui/ui_menus.c
+msgid "No, keep settings"
+msgstr "Hayır, ayarlar kalsın"
+
+#: core/ui/ui_menus.c
+msgid "Yes, reset"
+msgstr "Evet, sıfırla"
+
+#: core/ui/ui_menus.c
+msgid "Factory settings restored"
+msgstr "Fabrika ayarları yüklendi"
+
+#: core/ui/ui_menus.c
+msgid "Reset: not in this build"
+msgstr "Sıfırlama: bu sürümde yok"
+
+#: core/ui/ui_menus.c
+msgid "Outside ham bands"
+msgstr "Amatör bantları dışında"
+
+#: core/ui/ui_menus.c
+msgid "PTT may transmit."
+msgstr "PTT yayın yapabilir."
+
+#: core/ui/ui_menus.c
+msgid "Reset all settings to factory defaults? Channels stay. This can't be undone."
+msgstr "Tüm ayarlar fabrika değerlerine dönsün mü? Kanallar kalır. İşlem geri alınamaz."
+
+#: core/ui/ui_menus.c
+msgid "Enable TX?"
+msgstr "TX açılsın mı?"
+
+#: core/ui/ui_menus.c
+msgid "Factory Reset"
+msgstr "Fabrika Ayarları"
+
+#: core/ui/ui_menus.c
+msgid "Set them with qdmr"
+msgstr "qdmr ile ayarla"
+
+#: core/ui/ui_menus.c
+msgid "Current"
+msgstr "Mevcut"
+
+#: core/ui/ui_menus.c
+msgid "Listen"
+msgstr "Dinle"
+
+#: core/ui/ui_menus.c
+msgid "Type a number..."
+msgstr "Numara gir..."
+
+#: core/ui/ui_menus.c
+msgid "Select contact..."
+msgstr "Kişi seç..."
+
+#: core/ui/ui_menus.c
+msgid "Talk to"
+msgstr "Konuşma hedefi"
+
+#: core/ui/ui_menus.c
+msgid "{PTT once  OK use  Hold OK set|OK use  Hold OK set}"
+msgstr "{PTT bir kez  OK kullan  OK tut ayarla|OK kullan  OK tut ayarla}"
+
+#: core/ui/ui_menus.c
+msgid "Skip channel for now"
+msgstr "Kanalı şimdilik atla"
+
+#: core/ui/ui_menus.c
+msgid "Stay here"
+msgstr "Burada kal"
+
+#: core/ui/ui_menus.c
+msgid "Always skip"
+msgstr "Hep atla"
+
+#: core/ui/ui_menus.c core/ui/ui_scanx.c
+msgid "Skipped until the scan stops"
+msgstr "Tarama bitene dek atlandı"
+
+#: core/ui/ui_menus.c core/ui/ui_scanx.c
+msgid "Nothing to skip yet"
+msgstr "Henüz atlanacak şey yok"
+
+#: core/ui/ui_menus.c
+msgid "Scan stopped here"
+msgstr "Tarama burada durdu"
+
+#: core/ui/ui_menus.c
+msgid "Edit scan lists in qdmr"
+msgstr "Tarama listelerini qdmr ile düzenle"
+
+#: core/ui/ui_menus.c
+msgid "In use"
+msgstr "Kullanımda"
+
+#: core/ui/ui_menus.c
+msgid "Cancel"
+msgstr "İptal"
+
+#: core/ui/ui_menus.c
+msgid "Start new"
+msgstr "Yeni başlat"
+
+#: core/ui/ui_menus.c
+msgid "Use anyway"
+msgstr "Yine de kullan"
+
+#: core/ui/ui_menus.c
+msgid "Creating codeplug"
+msgstr "Codeplug oluşturuluyor"
+
+#: core/ui/ui_menus.c
+msgid "Old codeplug kept: edit again"
+msgstr "Eski codeplug kaldı: yeniden düzenle"
+
+#: core/ui/ui_menus.c
+msgid "Another firmware's codeplug? Start new erases contacts, callsign and DMR ID. Back up first."
+msgstr "Başka firmware'in codeplug'ı mı? Yeni başlatmak kişileri, çağrı işaretini ve DMR ID'yi siler. Önce yedek al."
+
+#: core/ui/ui_menus.c
+msgid "Old codeplug"
+msgstr "Eski codeplug"
+
+#: core/ui/ui_msg.c
+msgid "Pager: tune an FM channel"
+msgstr "Pager: bir FM kanalına geçin"
+
+#: core/ui/ui_msg.c
+msgid "ACARS: tune the air band in AM (131.725, 131.550 MHz)"
+msgstr "ACARS: hava bandını AM ile açın (131.725, 131.550 MHz)"
+
+#: core/ui/ui_msg.c
+msgid "Tone only"
+msgstr "Yalnız ton"
+
+#: core/ui/ui_msg.c
+msgid "OK open  Back"
+msgstr "OK aç  Geri"
+
+#: core/ui/ui_msg.c
+msgid "repeated"
+msgstr "tekrar"
+
+#: core/ui/ui_msg.c
+msgid "Received with errors"
+msgstr "Hatalı alındı"
+
+#: core/ui/ui_msg.c
+msgid "Function"
+msgstr "Fonksiyon"
+
+#: core/ui/ui_msg.c
+msgid "Aircraft"
+msgstr "Uçak"
+
+#: core/ui/ui_msg.c
+msgid "Flight"
+msgstr "Uçuş"
+
+#: core/ui/ui_msg.c
+msgid "Label"
+msgstr "Label"
+
+#: core/ui/ui_msg.c
+msgid "Block"
+msgstr "Blok"
+
+#: core/ui/ui_p25search.c
+msgid "P25 "
+msgstr "P25 "
+
+#: core/ui/ui_p25search.c
+msgid "No P25 found yet"
+msgstr "Henüz P25 bulunmadı"
+
+#: core/ui/ui_p25trunk.c
+msgid "Select a P25 channel first"
+msgstr "Önce bir P25 kanalı seçin"
+
+#: core/ui/ui_qso.c
+msgid "Marked as QSO"
+msgstr "QSO olarak işaretlendi"
+
+#: core/ui/ui_qso.c
+msgid "QSO mark removed"
+msgstr "QSO işareti kaldırıldı"
+
+#: core/ui/ui_rpt.c
+msgid "Sample list: not real repeaters"
+msgstr "Örnek liste: gerçek röleler değil"
+
+#: core/ui/ui_rpt.c
+msgid "No position: sorted by frequency"
+msgstr "Konum yok: frekansa göre sıralı"
+
+#: core/ui/ui_rpt.c
+msgid "All repeaters"
+msgstr "Hepsi"
+
+#: core/ui/ui_rpt.c
+msgid "Unknown"
+msgstr "Bilinmeyen"
+
+#: core/ui/ui_rpt.c
+msgid "^v pick  OK list  # nearest"
+msgstr "^v seç  OK liste  # en yakın"
+
+#: core/ui/ui_rpt.c
+msgid "Simplex"
+msgstr "Simplex"
+
+#: core/ui/ui_rpt.c
+msgid "Offset "
+msgstr "Ofset "
+
+#: core/ui/ui_rpt.c
+msgid "slot not known"
+msgstr "slot bilinmiyor"
+
+#: core/ui/ui_rpt.c
+msgid "Tone "
+msgstr "Ton "
+
+#: core/ui/ui_rpt.c
+msgid "none"
+msgstr "yok"
+
+#: core/ui/ui_rpt.c
+msgid "Its position is not known"
+msgstr "Konumu bilinmiyor"
+
+#: core/ui/ui_rpt.c
+msgid "OK: tune the VFO"
+msgstr "OK: VFO'yu ayarla"
+
+#: core/ui/ui_rpt.c
+msgid "Info only: not a mode of this radio"
+msgstr "Yalnız bilgi: bu telsizin modu değil"
+
+#: core/ui/ui_rpt.c
+msgid "OK tune VFO  ^v next"
+msgstr "OK VFO ayarla  ^v sonraki"
+
+#: core/ui/ui_rpt.c
+msgid "VFO tuned to the repeater"
+msgstr "VFO röleye ayarlandı"
+
+#: core/ui/ui_rpt.c
+msgid "VFO tuned: its TX is outside the bands"
+msgstr "VFO ayarlandı: TX bant dışında"
+
+#: core/ui/ui_sat.c
+msgid "no pass soon"
+msgstr "yakında geçiş yok"
+
+#: core/ui/ui_sat.c
+msgid "bad elements"
+msgstr "hatalı TLE"
+
+#: core/ui/ui_sat.c
+msgid "Alarm "
+msgstr "Alarm "
+
+#: core/ui/ui_sat.c
+msgid "Alarm: none in 36 h"
+msgstr "Alarm: 36 saatte yok"
+
+#: core/ui/ui_sat.c
+msgid "Alarm: searching"
+msgstr "Alarm: aranıyor"
+
+#: core/ui/ui_sat.c
+msgid "AOS in "
+msgstr "AOS'a "
+
+#: core/ui/ui_sat.c
+msgid "LOS in "
+msgstr "LOS'a "
+
+#: core/ui/ui_sat.c
+msgid "Az "
+msgstr "Az "
+
+#: core/ui/ui_sat.c
+msgid "El "
+msgstr "El "
+
+#: core/ui/ui_sat.c
+msgid "Tracking Doppler"
+msgstr "Doppler takibi"
+
+#: core/ui/ui_sat.c
+msgid "Stopped: VFO changed"
+msgstr "Durdu: VFO değiştirildi"
+
+#: core/ui/ui_sat.c
+msgid "OK: track in the VFO"
+msgstr "OK: VFO'da takip et"
+
+#: core/ui/ui_sat.c
+msgid "Over: VFO on nominal"
+msgstr "Bitti: VFO nominalde"
+
+#: core/ui/ui_sat.c
+msgid "ISS below the horizon: wait for its pass"
+msgstr "ISS ufkun altında: geçişini bekleyin"
+
+#: core/ui/ui_sat.c
+msgid "Sent via ISS (ARISS)"
+msgstr "ISS üzerinden gönderildi (ARISS)"
+
+#: core/ui/ui_sat.c
+msgid "ISS: 30 s between sends"
+msgstr "ISS: gönderimler arası 30 sn"
+
+#: core/ui/ui_sat.c
+msgid "For"
+msgstr "Uydu"
+
+#: core/ui/ui_sat.c
+msgid "Before AOS"
+msgstr "AOS'tan önce"
+
+#: core/ui/ui_sat.c
+msgid "Min. elevation"
+msgstr "Min. yükseklik"
+
+#: core/ui/ui_sat.c
+msgid "Any satellite"
+msgstr "Herhangi uydu"
+
+#: core/ui/ui_sat.c
+msgid "Off: OK arms it"
+msgstr "Kapalı: OK kurar"
+
+#: core/ui/ui_sat.c
+msgid "Armed: waits for GPS"
+msgstr "Kurulu: GPS bekliyor"
+
+#: core/ui/ui_sat.c
+msgid "Tone again at AOS"
+msgstr "AOS'ta yine ton"
+
+#: core/ui/ui_sat.c
+msgid "Tone at "
+msgstr "Ton: "
+
+#: core/ui/ui_sat.c
+msgid "Off after a power cycle"
+msgstr "Kapat-açta kapanır"
+
+#: core/ui/ui_sat.c
+msgid "SGP4 at most "
+msgstr "SGP4 en çok "
+
+#: core/ui/ui_sat.c
+msgid "Pass alarm off"
+msgstr "Geçiş alarmı kapalı"
+
+#: core/ui/ui_sat.c
+msgid "Pass alarm armed"
+msgstr "Geçiş alarmı kuruldu"
+
+#: core/ui/ui_sat.c
+msgid " in "
+msgstr " AOS'a "
+
+#: core/ui/ui_sat.c
+msgid " min, max "
+msgstr " dk, maks "
+
+#: core/ui/ui_sat.c
+msgid " AOS now, max "
+msgstr " şimdi AOS, maks "
+
+#: core/ui/ui_sat.c
+msgid "Pass alarm"
+msgstr "Geçiş alarmı"
+
+#: core/ui/ui_sat.c
+msgid "OK off  <> change"
+msgstr "OK kapat  <> değiştir"
+
+#: core/ui/ui_sat.c
+msgid "OK arm  ^v<> change"
+msgstr "OK kur  ^v<> değiştir"
+
+#: core/ui/ui_sat.c
+msgid "Waiting for the GPS time"
+msgstr "GPS saati bekleniyor"
+
+#: core/ui/ui_sat.c
+msgid "Waiting for a GPS position"
+msgstr "GPS konumu bekleniyor"
+
+#: core/ui/ui_sat.c
+msgid "Needs a GPS fix: Settings > Location"
+msgstr "GPS fix gerekir: Ayarlar > Konum"
+
+#: core/ui/ui_sat.c
+msgid "  TLE "
+msgstr "  TLE "
+
+#: core/ui/ui_sat.c
+msgid " d"
+msgstr " g"
+
+#: core/ui/ui_sat.c
+msgid "OK stop  # arm tone  <> UTC"
+msgstr "OK durdur  # akt. ton  <> UTC"
+
+#: core/ui/ui_sat.c
+msgid "OK stop  # APRS via ISS"
+msgstr "OK durdur  # ISS'ten APRS"
+
+#: core/ui/ui_sat.c
+msgid "OK track  # APRS via ISS"
+msgstr "OK takip  # ISS'ten APRS"
+
+#: core/ui/ui_sat.c
+msgid "OK alarm  # APRS via ISS"
+msgstr "OK alarm  # ISS'ten APRS"
+
+#: core/ui/ui_sat.c
+msgid "OK stop  ^v pick  <> UTC"
+msgstr "OK durdur  ^v seç  <> UTC"
+
+#: core/ui/ui_sat.c
+msgid "^v pick  OK track  <> UTC"
+msgstr "^v seç  OK takip  <> UTC"
+
+#: core/ui/ui_sat.c
+msgid "^v pick  OK alarm  <> UTC"
+msgstr "^v seç  OK alarm  <> UTC"
+
+#: core/ui/ui_sat.c
+msgid "Tracking off: VFO stays"
+msgstr "Takip bitti: VFO kalır"
+
+#: core/ui/ui_sat.c
+msgid "VFO tracks the pass"
+msgstr "VFO geçişi takip ediyor"
+
+#: core/ui/ui_sat.c
+msgid "Uplink tone: the CTCSS"
+msgstr "Uplink tonu: CTCSS"
+
+#: core/ui/ui_sat.c
+msgid "Uplink tone: arming"
+msgstr "Uplink tonu: aktivasyon"
+
+#: core/ui/ui_scanx.c
+msgid "Priority channel off"
+msgstr "Öncelikli kanal kapalı"
+
+#: core/ui/ui_scanx.c
+msgid "Priority: "
+msgstr "Öncelik: "
+
+#: core/ui/ui_scanx.c
+msgid "Pick a channel first"
+msgstr "Önce bir kanal seçin"
+
+#: core/ui/ui_scanx.c
+msgid "Clear skips"
+msgstr "Atlamaları temizle"
+
+#: core/ui/ui_scanx.c
+msgid "Skips cleared"
+msgstr "Atlamalar temizlendi"
+
+#: core/ui/ui_screens.c
+msgid "IDLE"
+msgstr "BOŞ"
+
+#: core/ui/ui_screens.c
+msgid "NO TX"
+msgstr "NO TX"
+
+#: core/ui/ui_screens.c
+msgid "DUAL"
+msgstr "ÇİFT"
+
+#: core/ui/ui_screens.c
+msgid "SCAN"
+msgstr "TARA"
+
+#: core/ui/ui_screens.c
+msgid "ROAM"
+msgstr "ROAM"
+
+#: core/ui/ui_screens.c
+msgid "Step "
+msgstr "Adım "
+
+#: core/ui/ui_screens.c
+msgid "DMR: not in this build"
+msgstr "DMR: bu sürümde yok"
+
+#: core/ui/ui_screens.c
+msgid "No TX frequency"
+msgstr "TX frekansı yok"
+
+#: core/ui/ui_screens.c
+msgid "Air Band AM"
+msgstr "Hava Bandı AM"
+
+#: core/ui/ui_screens.c
+msgid "Broadcast FM"
+msgstr "Yayın FM"
+
+#: core/ui/ui_screens.c
+msgid "This channel is RX only"
+msgstr "Bu kanal yalnız RX"
+
+#: core/ui/ui_screens.c
+msgid "Bands "
+msgstr "Bantlar "
+
+#: core/ui/ui_screens.c
+msgid "TX time-out reached"
+msgstr "TX zaman aşımı doldu"
+
+#: core/ui/ui_screens.c
+msgid "No TX frequency set"
+msgstr "TX frekansı ayarlı değil"
+
+#: core/ui/ui_screens.c
+msgid "Mode: not in this build"
+msgstr "Mod: bu sürümde yok"
+
+#: core/ui/ui_screens.c
+msgid "No codec: voice off"
+msgstr "Codec yok: ses kapalı"
+
+#: core/ui/ui_screens.c
+msgid "DMR modem not running"
+msgstr "DMR modem çalışmıyor"
+
+#: core/ui/ui_screens.c
+msgid "Channel busy"
+msgstr "Kanal meşgul"
+
+#: core/ui/ui_screens.c
+msgid "No repeater answered"
+msgstr "Röle yanıt vermedi"
+
+#: core/ui/ui_screens.c
+msgid "Modem refused to send"
+msgstr "Modem göndermeyi reddetti"
+
+#: core/ui/ui_screens.c
+msgid "Hotspot mode: PTT off"
+msgstr "Hotspot modu: PTT kapalı"
+
+#: core/ui/ui_screens.c
+msgid "No DMR ID in codeplug"
+msgstr "Codeplug'da DMR ID yok"
+
+#: core/ui/ui_screens.c
+msgid "Air band: receive only"
+msgstr "Airband: yalnız alım"
+
+#: core/ui/ui_screens.c
+msgid "Broadcast: receive only"
+msgstr "Yayın bandı: yalnız alım"
+
+#: core/ui/ui_screens.c
+msgid "Repeater channel: PTT off"
+msgstr "Röle kanalı: PTT kapalı"
+
+#: core/ui/ui_screens.c
+msgid "Not allowed here"
+msgstr "Burada izin yok"
+
+#: core/ui/ui_screens.c
+msgid "Tune into a band, then PTT"
+msgstr "Bir banda geç, sonra PTT"
+
+#: core/ui/ui_screens.c
+msgid "Pick another channel"
+msgstr "Başka kanal seç"
+
+#: core/ui/ui_screens.c
+msgid "Release PTT to talk again"
+msgstr "Yeniden konuşmak için PTT bırak"
+
+#: core/ui/ui_screens.c
+msgid "Use Open25 Flasher v3"
+msgstr "Open25 Flasher v3 kullanın"
+
+#: core/ui/ui_screens.c
+msgid "Wait for the call to end"
+msgstr "Çağrının bitmesini bekle"
+
+#: core/ui/ui_screens.c
+msgid "Check CC and range"
+msgstr "CC ve menzili kontrol et"
+
+#: core/ui/ui_screens.c
+msgid "Release PTT, try again"
+msgstr "PTT bırak, tekrar dene"
+
+#: core/ui/ui_screens.c
+msgid "OK stop hotspot"
+msgstr "OK hotspotu durdurur"
+
+#: core/ui/ui_screens.c
+msgid "Set your DMR ID in qdmr"
+msgstr "DMR ID'ni qdmr ile ayarla"
+
+#: core/ui/ui_screens.c
+msgid "Tune out of the band"
+msgstr "Bant dışına çık"
+
+#: core/ui/ui_screens.c
+msgid "Pick a user channel to talk"
+msgstr "Konuşmak için kullanıcı kanalı seç"
+
+#: core/ui/ui_screens.c
+msgid "Private to you"
+msgstr "Sana özel"
+
+#: core/ui/ui_screens.c
+msgid "Private to "
+msgstr "Özel: "
+
+#: core/ui/ui_screens.c
+msgid "Reply→ "
+msgstr "Yanıt→ "
+
+#: core/ui/ui_screens.c
+msgid "Sending ID"
+msgstr "ID gönderiliyor"
+
+#: core/ui/ui_screens.c
+msgid "Repeating"
+msgstr "Aktarılıyor"
+
+#: core/ui/ui_screens.c
+msgid "SFR repeater"
+msgstr "SFR röle"
+
+#: core/ui/ui_screens.c
+msgid "DMR modem off"
+msgstr "DMR modem kapalı"
+
+#: core/ui/ui_screens.c
+msgid "Lock"
+msgstr "Lock"
+
+#: core/ui/ui_screens.c
+msgid "Roam?"
+msgstr "Roam?"
+
+#: core/ui/ui_screens.c
+msgid "Roam"
+msgstr "Roam"
+
+#: core/ui/ui_screens.c
+msgid "DMon"
+msgstr "DMon"
+
+#: core/ui/ui_screens.c
+msgid "Priv"
+msgstr "Özel"
+
+#: core/ui/ui_screens.c
+msgid "Private "
+msgstr "Özel "
+
+#: core/ui/ui_screens.c
+msgid "TALKING"
+msgstr "KONUŞUYOR"
+
+#: core/ui/ui_screens.c
+msgid "WAKING RPT"
+msgstr "RÖLE UYANDIR"
+
+#: core/ui/ui_screens.c
+msgid "WAITING"
+msgstr "BEKLİYOR"
+
+#: core/ui/ui_screens.c
+msgid "ADMITTED"
+msgstr "KABUL"
+
+#: core/ui/ui_screens.c
+msgid "ENDING"
+msgstr "BİTİYOR"
+
+#: core/ui/ui_screens.c
+msgid " Private"
+msgstr " Özel"
+
+#: core/ui/ui_screens.c
+msgid " Group"
+msgstr " Grup"
+
+#: core/ui/ui_screens.c
+msgid "Finishing the call"
+msgstr "Çağrı bitiriliyor"
+
+#: core/ui/ui_screens.c
+msgid "Release PTT to stop"
+msgstr "Durdurmak için PTT bırak"
+
+#: core/ui/ui_screens.c
+msgid " late"
+msgstr " geç"
+
+#: core/ui/ui_screens.c
+msgid " EMERGENCY"
+msgstr " ACİL"
+
+#: core/ui/ui_screens.c
+msgid "Other TG: not played"
+msgstr "Başka TG: çalınmadı"
+
+#: core/ui/ui_screens.c
+msgid "MON: digital monitor"
+msgstr "MON: dijital dinleme"
+
+#: core/ui/ui_screens.c
+msgid "Squelch open"
+msgstr "Squelch açık"
+
+#: core/ui/ui_screens.c
+msgid "Receiving"
+msgstr "Alınıyor"
+
+#: core/ui/ui_screens.c
+msgid "SENDING"
+msgstr "GÖNDERİYOR"
+
+#: core/ui/ui_screens.c
+msgid " left of "
+msgstr " kaldı / "
+
+#: core/ui/ui_screens.c
+msgid "No time limit"
+msgstr "Süre sınırı yok"
+
+#: core/ui/ui_screens.c
+msgid "Can't transmit"
+msgstr "Yayın yapılamaz"
+
+#: core/ui/ui_screens.c
+msgid "Last activity "
+msgstr "Son etkinlik "
+
+#: core/ui/ui_screens.c
+msgid "No activity yet"
+msgstr "Henüz etkinlik yok"
+
+#: core/ui/ui_screens.c
+msgid "OK tune  Back delete"
+msgstr "OK ayarla  Geri sil"
+
+#: core/ui/ui_screens.c
+msgid "0 skip  # more  Back stop"
+msgstr "0 atla  # diğer  Geri durdur"
+
+#: core/ui/ui_screens.c
+msgid "# skip  Back stop scan"
+msgstr "# atla  Geri taramayı durdur"
+
+#: core/ui/ui_screens.c
+msgid "# caller  Back end reply"
+msgstr "# arayan  Geri yanıtı bitir"
+
+#: core/ui/ui_screens.c
+msgid "Digital monitor  Back off"
+msgstr "Dijital dinleme  Geri kapat"
+
+#: core/ui/ui_screens.c
+msgid "Back undo  Hold OK save"
+msgstr "Geri vazgeç  OK tut kaydet"
+
+#: core/ui/ui_screens.c
+msgid "{Back: VFO's talk target|Back default target}"
+msgstr "{Geri: VFO'nun konuşma hedefi|Geri varsayılan hedef}"
+
+#: core/ui/ui_screens.c
+msgid "{Back: channel's talkgroup|Back default target}"
+msgstr "{Geri: kanalın talkgroup|Geri varsayılan hedef}"
+
+#: core/ui/ui_screens.c
+msgid "0-9 freq  * Quick  Up/Dn"
+msgstr "0-9 frek  * Hızlı  Yuk/Aşa"
+
+#: core/ui/ui_screens.c
+msgid "Heard "
+msgstr "Duyulan "
+
+#: core/ui/ui_screens.c
+msgid "Busy"
+msgstr "Meşgul"
+
+#: core/ui/ui_screens.c
+msgid "SENDING on "
+msgstr "GÖNDERİYOR: "
+
+#: core/ui/ui_screens.c
+msgid "TALKING on "
+msgstr "KONUŞUYOR: "
+
+#: core/ui/ui_screens.c
+msgid "Receiving on A and B"
+msgstr "A ve B'de alınıyor"
+
+#: core/ui/ui_screens.c
+msgid "Receiving on "
+msgstr "Alınıyor: "
+
+#: core/ui/ui_screens.c
+msgid ", muted"
+msgstr ", sessiz"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 back to B  Back stop|# 1 back to B}"
+msgstr "{# 1 B'ye dön  Geri durdur|# 1 B'ye dön}"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 back to A  Back stop|# 1 back to A}"
+msgstr "{# 1 A'ya dön  Geri durdur|# 1 A'ya dön}"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 talk on B  Back stop|# 1 talk on B}"
+msgstr "{# 1 B'de konuş  Geri durdur|# 1 B'de konuş}"
+
+#: core/ui/ui_screens.c
+msgid "{# 1 talk on A  Back stop|# 1 talk on A}"
+msgstr "{# 1 A'da konuş  Geri durdur|# 1 A'da konuş}"
+
+#: core/ui/ui_screens.c
+msgid "# options  Back stop"
+msgstr "# seçenekler  Geri durdur"
+
+#: core/ui/ui_screens.c
+msgid "# Open"
+msgstr "# Aç"
+
+#: core/ui/ui_screens.c
+msgid "# Actions"
+msgstr "# İşlemler"
+
+#: core/ui/ui_screens.c
+msgid "Back hide"
+msgstr "Geri gizle"
+
+#: core/ui/ui_screens.c
+msgid "Up/Dn more  Back"
+msgstr "Yuk/Aşa diğer  Geri"
+
+#: core/ui/ui_screens.c
+msgid "OK acknowledge  Back hide"
+msgstr "OK onayla  Geri gizle"
+
+#: core/ui/ui_screens.c
+msgid "Muted"
+msgstr "Sessiz"
+
+#: core/ui/ui_screens.c
+msgid "Up Down change  OK done"
+msgstr "Yuk Aşa değiştir  OK tamam"
+
+#: core/ui/ui_screens.c
+msgid "STARTING"
+msgstr "BAŞLIYOR"
+
+#: core/ui/ui_screens.c
+msgid "TX NET"
+msgstr "TX NET"
+
+#: core/ui/ui_screens.c
+msgid "RX RF"
+msgstr "RX RF"
+
+#: core/ui/ui_screens.c
+msgid "READY"
+msgstr "HAZIR"
+
+#: core/ui/ui_screens.c
+msgid "No frequency yet"
+msgstr "Henüz frekans yok"
+
+#: core/ui/ui_screens.c
+msgid "Net "
+msgstr "Ağ "
+
+#: core/ui/ui_screens.c
+msgid "No calls yet"
+msgstr "Henüz çağrı yok"
+
+#: core/ui/ui_screens.c
+msgid "{Squelch|SQL}"
+msgstr "{Squelch|SQL}"
+
+#: core/ui/ui_screens.c
+msgid "{Monitor|MON}"
+msgstr "{Monitor|MON}"
+
+#: core/ui/ui_screens.c
+msgid "{Dual watch|Dual}"
+msgstr "{Dual watch|Dual}"
+
+#: core/ui/ui_screens.c
+msgid "Width"
+msgstr "Genişlik"
+
+#: core/ui/ui_screens.c
+msgid "Bright"
+msgstr "Parlak"
+
+#: core/ui/ui_screens.c
+msgid "{Timeslot|Slot}"
+msgstr "{Timeslot|Slot}"
+
+#: core/ui/ui_screens.c
+msgid "Color"
+msgstr "Renk"
+
+#: core/ui/ui_screens.c
+msgid "{Digital monitor|DMon}"
+msgstr "{Dijital dinleme|DMon}"
+
+#: core/ui/ui_screens.c
+msgid "{Privacy|Priv}"
+msgstr "{Gizlilik|Özel}"
+
+#: core/ui/ui_screens.c
+msgid "{Talk to|Talk}"
+msgstr "{Konuşma hedefi|Hedef}"
+
+#: core/ui/ui_screens.c
+msgid "{Copy to VFO|To VFO}"
+msgstr "{VFO'ya kopyala|VFO'ya}"
+
+#: core/ui/ui_screens.c
+msgid "{TX freq|TXFreq}"
+msgstr "{TX frek|TXFrek}"
+
+#: core/ui/ui_screens.c
+msgid "Tone TX"
+msgstr "TX ton"
+
+#: core/ui/ui_screens.c
+msgid "Tone RX"
+msgstr "RX ton"
+
+#: core/ui/ui_screens.c
+msgid "Copy"
+msgstr "Kopyala"
+
+#: core/ui/ui_screens.c
+msgid "All"
+msgstr "Tümü"
+
+#: core/ui/ui_screens.c
+msgid "{Up/Dn: +/- offset  Type: TX freq|Up/Dn +/- offset  0-9 TX freq|Up/Dn offset  0-9 TX freq|Up/Dn +/-  0-9 TX freq}"
+msgstr "{Yuk/Aşa: +/- kayma  Yaz: TX frek|Yuk/Aşa +/- kayma  0-9 TX frek|Yuk/Aşa kayma  0-9 TX frek|Yuk/Aşa +/-  0-9 TX frek}"
+
+#: core/ui/ui_screens.c
+msgid "  OK sets"
+msgstr "  OK ayarlar"
+
+#: core/ui/ui_screens.c
+msgid "Quick"
+msgstr "Hızlı"
+
+#: core/ui/ui_screens.c
+msgid "1-9 change  Hold OK save"
+msgstr "1-9 değiştir  OK tut kaydet"
+
+#: core/ui/ui_screens.c
+msgid "0 All settings  Hold OK save"
+msgstr "0 Tüm ayarlar  OK tut kaydet"
+
+#: core/ui/ui_screens.c
+msgid "* more  Back"
+msgstr "* diğer  Geri"
+
+#: core/ui/ui_spectrum.c
+msgid "Sweeping..."
+msgstr "Taranıyor..."
+
+#: core/ui/ui_spectrum.c
+msgid "Hit "
+msgstr "Bulgu "
+
+#: core/ui/ui_spectrum.c
+msgid "Floor "
+msgstr "Taban "
+
+#: core/ui/ui_spectrum.c
+msgid "OK tune  <> span  Back"
+msgstr "OK ayarla  <> açıklık  Geri"
+
+#: core/ui/ui_sstv.c
+msgid "Not enough memory for SSTV"
+msgstr "SSTV için yeterli bellek yok"
+
+#: core/ui/ui_sstv.c
+msgid "SSTV: tune an FM channel"
+msgstr "SSTV: bir FM kanalına geçin"
+
+#: core/ui/ui_sstv.c
+msgid "Waiting for VIS / signal"
+msgstr "VIS / sinyal bekleniyor"
+
+#: core/ui/ui_sstv.c
+msgid "Line"
+msgstr "Satır"
+
+#: core/ui/ui_sstv.c
+msgid "Received"
+msgstr "Alındı"
+
+#: core/ui/ui_sstv.c
+msgid "Signal lost"
+msgstr "Sinyal kayboldu"
+
+#: core/ui/ui_sstv.c
+msgid "Mode not decoded: VIS"
+msgstr "Mod çözülmedi: VIS"
+
+#: core/ui/ui_sstv.c
+msgid "Clock"
+msgstr "Saat"
+
+#: core/ui/ui_sstv.c
+msgid "Waiting for the next picture"
+msgstr "Sonraki resim bekleniyor"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't write the codeplug: not saved"
+msgstr "Codeplug yazılamadı: kaydedilmedi"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't read the channel: not saved"
+msgstr "Kanal okunamadı: kaydedilmedi"
+
+#: core/ui/ui_svc_storage.c
+msgid "Zone full: not saved"
+msgstr "Bölge dolu: kaydedilmedi"
+
+#: core/ui/ui_svc_storage.c
+msgid "Already in this zone"
+msgstr "Zaten bu bölgede"
+
+#: core/ui/ui_svc_storage.c
+msgid "Already at the end"
+msgstr "Zaten sonda"
+
+#: core/ui/ui_svc_storage.c
+msgid "That zone is gone"
+msgstr "O bölge artık yok"
+
+#: core/ui/ui_svc_storage.c
+msgid "That channel is gone"
+msgstr "O kanal artık yok"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't read the channel: for now only"
+msgstr "Kanal okunamadı: yalnız şimdilik"
+
+#: core/ui/ui_svc_storage.c
+msgid "Codeplug not written: for now only"
+msgstr "Codeplug yazılmadı: yalnız şimdilik"
+
+#: core/ui/ui_svc_storage.c
+msgid "Not a stored contact: for now only"
+msgstr "Kayıtlı kişi değil: yalnız şimdilik"
+
+#: core/ui/ui_svc_storage.c
+msgid "Reset: the settings couldn't be saved"
+msgstr "Sıfırlama: ayarlar kaydedilemedi"
+
+#: core/ui/ui_svc_storage.c
+msgid "Reset: native area couldn't be erased"
+msgstr "Sıfırlama: yerel alan silinemedi"
+
+#: core/ui/ui_svc_storage.c
+msgid "Couldn't save the keys: for now only"
+msgstr "Anahtarlar kaydedilemedi: yalnız şimdilik"
+
+#: core/ui/ui_svc_zone.c
+msgid "That zone is full"
+msgstr "O bölge dolu"
+
+#: core/ui/ui_svc_zone.c
+msgid "Not enough free channels"
+msgstr "Yeterli boş kanal yok"
+
+#: core/ui/ui_svc_zone.c
+msgid "Not enough free contacts"
+msgstr "Yeterli boş kişi yok"
+
+#: core/ui/ui_svc_zone.c
+msgid "Not a zone this radio reads"
+msgstr "Bu telsizin okuyabildiği bölge değil"
+
+#: core/ui/ui_svc_zone.c
+msgid "The offer is gone"
+msgstr "Teklif artık yok"

@@ -26,19 +26,52 @@ typedef struct {
     uint16_t active_nac;
     uint16_t active_group;
     uint32_t active_source;
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+    /* DM32 Plus P25 extras: the unit a unit-to-unit call is for (0: group voice), and our own unit ID on this
+     * channel (0: none). With a talkgroup filter a unit-to-unit call plays only when it is for own_unit; with
+     * group_filter 0 (any talkgroup) every one plays. Set own_unit after p25_voice_init. */
+    uint32_t active_target, own_unit;
+#endif
     uint16_t voice[9][8];
     p25_voice_packet queue[P25_VOICE_QUEUE];
     uint16_t packet_symbol;
     uint8_t head, tail, count, voice_count, next_duid, flush_remaining;
     uint8_t transmitting, started, stopping, terminator_pending, fault;
     uint8_t crypto_clear, have_group;
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+    uint8_t private_call, emergency; /* the call's LC: unit to unit (LCF 0x03); service options bit 7 */
+#endif
     uint32_t rx_frames, rx_voice, rx_muted, rx_erasures, tx_frames, tx_underruns;
     uint32_t (*micros)(void); /* optional task-level profiling, no clock assumption */
     uint32_t fec_max_us, imbe_max_us;
+#if defined(CONFIG_CALL_REPLAY) && CONFIG_CALL_REPLAY
+    /* Optional: every admitted IMBE frame that decoded (DDM25 Plus call replay keeps the last call) */
+    void (*tap)(void *ctx, const uint16_t u[8]);
+    void *tap_ctx;
+#endif
+#if defined(CONFIG_SIGNAL_QUALITY) && CONFIG_SIGNAL_QUALITY
+    /* DM32 Plus signal quality: IMBE frames of every voice superframe heard (admitted or not), the bits their FEC
+     * corrected, and frames of superframes that failed to decode */
+    uint32_t rx_fec_frames, rx_fec_bits, rx_fec_lost;
+#endif
+#if defined(CONFIG_P25_TRUNK) && CONFIG_P25_TRUNK
+    /* DDM25 Plus trunk following: the received dibits also go through the CAI library's control channel receiver
+     * tsdu_rx (the caller's storage); each TSDU it completes goes to tsdu (its TSBKs counted in rx_frames), and a TSDU
+     * dropped on a failed block goes there as NULL. NULL: no TSDUs framed */
+    p25cai_control_receiver *tsdu_rx;
+    void (*tsdu)(void *ctx, const p25cai_control *unit);
+    void *tsdu_ctx;
+#endif
 } p25_voice;
 
 void p25_voice_init(p25_voice *v, uint16_t nac, uint16_t group,
                     p25_pcm_sink sink, void *ctx);
+#if defined(CONFIG_P25_TRUNK) && CONFIG_P25_TRUNK
+/* After p25_voice_init: frame TSDUs too with rx (initialized by the caller, its NAC filter set) and hand each to hook;
+ * hook or rx NULL: no longer */
+void p25_voice_set_tsdu(p25_voice *v, p25cai_control_receiver *rx,
+                        void (*hook)(void *ctx, const p25cai_control *unit), void *ctx);
+#endif
 /* Clear RX admission/timing after tuning, a discontinuity, or carrier loss.
  * Caller owns the receive hang timer; no time unit is guessed here. */
 void p25_voice_rx_reset(p25_voice *v);

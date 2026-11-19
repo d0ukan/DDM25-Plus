@@ -1,0 +1,12 @@
+# DM32 Plus Tools > Satellites: the FM satellites the radio knows (tools/sat_tle.py, docs/plus.md), at most 8,
+# names up to 7 characters.
+# Their element sets come from tle.txt beside this file (by catalog number). Frequencies as the satellite sends
+# (downlink) and hears (uplink), MHz; the radio adds the Doppler correction. CTCSS: the uplink tone, Hz (0 none). Arm: a tone that
+# switches the transponder on first (SO-50's 74.4 Hz starts its 10-minute timer), 0 none.
+# Check against AMSAT's current status before release: transponders change modes and schedules.
+#
+# catalog  name    downlink  uplink    CTCSS  arm
+25544      ISS     437.800   145.990   67.0   0
+27607      SO-50   436.795   145.850   67.0   74.4
+43017      AO-91   145.960   435.250   67.0   0
+43678      PO-101  145.900   437.500   141.3  0

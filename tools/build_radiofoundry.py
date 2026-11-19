@@ -18,7 +18,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from tools import codec_cache, classic_channels, classic_standard, sources
+from tools import codec_cache, classic_channels, classic_standard, sources, plus_features
 UP = ROOT / "research/upstream/radiofoundry"
 PIN = "dfbaf20c400c73e2ccf6edb80af7d1d255bee418"
 DEST = ROOT / "build/radiofoundry-p25"
@@ -45,17 +45,24 @@ def write_owned(path, content, original=None):
     if not path.exists() or path.read_bytes() != content:
         path.write_bytes(content)
     OWNED[key] = hashlib.sha256(content).hexdigest()
+    # DDM25 Plus: a later transform of the same file builds on what was written (classic_standard writes directly)
+    PATCHED[key] = content.decode(errors='surrogateescape')
+
+
+PATCHED = {}   # files already written in this run: a later transform of the same file builds on them
+PLUS_FILES = True   # DDM25 Plus: install its own files into the build tree (main: --plus only)
 
 
 def transform(relative, replacements):
     original = (UP / relative).read_bytes()
-    content = original.decode()
+    content = PATCHED.get(relative, original.decode())
     for entry in replacements:
         old,new=entry[:2]
         expected=entry[2] if len(entry)==3 else 1
         if content.count(old) != expected:
             raise SystemExit(f"Pinned patch mismatch: {relative}: {old}")
         content = content.replace(old, new)
+    PATCHED[relative] = content
     write_owned(DEST / relative, content.encode(), original)
 
 
@@ -374,7 +381,10 @@ def prepare():
     # Append board glue while preserving ownership checks on generated files.
     board_path=DEST / "boards/dm32/radio_dm32.c"
     board_body=board_path.read_bytes()
-    write_owned(board_path,board_body+b'\n#include "dm32_native.inc"\n',board_body)
+    # dm32_nxdn.inc: DM32 Plus NXDN48 flat-audio glue (empty unless CONFIG_NXDN; installed by plus_features)
+    # dm32_css.inc: DM32 Plus tone finder's FD6818 reads (empty unless CONFIG_TONE_FIND; installed by plus_features)
+    write_owned(board_path,board_body+b'\n#include "dm32_native.inc"\n#include "dm32_nxdn.inc"\n#include "dm32_css.inc"\n',
+                board_body)
     transform("platform/hrc7000/gpio.c", [
         ('#include "platform.h"', '#include "platform.h"\n#include "config.h"'),
         ('\tbank_rmw(hrc_gpio_bank(pin) + GPIO_DR, hrc_gpio_bit(pin), level);', '#if CONFIG_FIRSTBOOT\n\tlevel=board_firstboot_pin_level(pin,level);\n#endif\n\tbank_rmw(hrc_gpio_bank(pin) + GPIO_DR, hrc_gpio_bit(pin), level);')])
@@ -444,6 +454,11 @@ def prepare():
     ])
     classic_channels.prepare(transform)
     classic_standard.prepare(DEST,write_owned)
+    # DDM25 Plus: its transforms always (every change sits under its CONFIG_ switch, off outside --plus), and its
+    # headers; its own .c files only in a --plus tree: the stack check reads every source file in the tree, and Plus
+    # .c files in a Classic tree gave it pointer stores Classic never makes (removed again below when left over)
+    plus_features.prepare(transform, lambda rel, src: (PLUS_FILES or not rel.endswith('.c')) and
+                          write_owned(DEST / rel, (ROOT / src).read_bytes()))
     # A pending shared beep remains owned by beep.c when digital PCM stops.
     # Reuse the existing own-stream startup and failure cleanup at handoff.
     beep_source=(UP/'core/radio/beep.c').read_text()
@@ -521,6 +536,16 @@ def prepare():
         "See COPYING-OPEN25, COPYING-P25-CAI, COPYING-P25-IMBE and the source manifest.\n"
         "Classic supports saved conventional P25 channels; final RF qualification is incomplete.\n"
     ).encode())
+    # DDM25 Plus: a file this run did not write that an earlier run added (not in the pinned tree), unchanged since:
+    # gone, as the retired inputs above (a Plus file left in a Classic tree)
+    for key in sorted(set(OWNED) - set(PATCHED)):
+        path = DEST / key
+        if (UP / key).exists() or not path.is_file() or path.is_symlink():
+            continue
+        if hashlib.sha256(path.read_bytes()).hexdigest() != OWNED[key]:
+            raise SystemExit(f"Preserving unexpected local changes: {path}")
+        path.unlink()
+        OWNED.pop(key)
     OWNED_FILE.write_text(json.dumps(OWNED, indent=2) + "\n")
     changed=subprocess.check_output(["git","-C",str(DEST),"diff","--name-only","-z","HEAD"]).decode().split("\0")
     extra=subprocess.check_output(["git","-C",str(DEST),"ls-files","--others","--exclude-standard","-z"]).decode().split("\0")
@@ -529,6 +554,11 @@ def prepare():
         if key in changed or path.suffix in (".c",".h",".inc",".ld",".mk"):
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=OWNED.get(key):
                 raise SystemExit(f"Preserving unreviewed derivative input: {path}")
+
+
+# RadioFoundry features Classic leaves off that the Plus preset turns back on (measured in docs/plus.md)
+PLUS_FEATURES = ('GPS', 'DMR_GPS', 'DUAL_WATCH', 'DMR_ROAMING', 'SFR', 'DMR_SMS', 'DMR_TMS', 'DMR_EMERGENCY',
+                 'AM_RX', 'BCAST_FM', 'APRS', 'HOTSPOT')
 
 
 def main():
@@ -547,7 +577,14 @@ def main():
     ap.add_argument("--reuse-codec", action="store_true", help="reuse codec only when inputs/compiler/archive/call graphs match checked hashes")
     ap.add_argument("--tx-bench",action="store_true",help="bounded native TX on 145.500 MHz; retains ordinary PTT/storage guards")
     ap.add_argument('--classic', action='store_true', help='Classic FM/DMR/conventional P25 release preset')
+    ap.add_argument('--plus', action='store_true', help='Classic plus the RadioFoundry features that fit (our own build)')
+    ap.add_argument('--feature', action='append', default=[], metavar='NAME=y|n',
+                    help='override one CONFIG_ switch on top of the preset (RAM/flash experiments)')
     args = ap.parse_args()
+    # Plus is Classic plus features: it takes the whole Classic preset, the O3 speed codec above all (with the -Os
+    # codec the live P25 encoder needs ~41 ms per 20 ms frame and PTT stops after ~300 ms on the mic FIFO overflow)
+    if args.plus:
+        args.classic=True
     if args.classic:
         if args.first_boot or args.disable or args.disable_native or args.dev_update or args.tx_bench:
             ap.error('Classic is a separate normal-operation preset')
@@ -558,6 +595,8 @@ def main():
         ap.error("lean/CPU measurement require P25 enabled")
     if args.first_boot and (args.disable or args.disable_native or args.with_local_stock):
         ap.error("--first-boot requires native P25 and separately packaged exact-unit codec")
+    global PLUS_FILES
+    PLUS_FILES = args.plus or (args.prepare_only and not args.classic)	# the host tests' prepare: every file
     prepare()
     if args.prepare_only:
         return
@@ -579,14 +618,21 @@ def main():
     suffix = "firstboot" if args.first_boot else "off" if args.disable else "native" if native else "lab"
     identity=suffix
     suffix += ("-lean" if args.lean else "") + ("-cpu" if args.cpu_profile else "") + ("-dev" if args.dev_update else "") + ("-tx" if args.tx_bench else "")
+    if args.plus:
+        args.classic=True
     if args.classic:
-        suffix='classic'
-        identity='classic-0.1.0-rc1-r13'
+        suffix='plus' if args.plus else 'classic'
+        identity='plus-0.1.0-dev' if args.plus else 'classic-0.1.0-rc1-r13'
+    for item in args.feature:
+        if not re.fullmatch(r'[A-Z0-9_]+=[yn]', item):
+            ap.error('--feature takes NAME=y or NAME=n')
+    if args.feature:
+        suffix += '-' + hashlib.sha256(' '.join(sorted(args.feature)).encode()).hexdigest()[:8]
     b = f"build/dm32-p25-{suffix}"
     command = ["make", "-j8", "BOARD=dm32", f"CROSS={ROOT}/toolchain/bin/csky-elf-", f"BUILD={b}",
         "CONFIG_P25=" + ("n" if args.disable else "y"), "CONFIG_P25_NATIVE="+("y" if native else "n"), "CONFIG_DMR_IP_GATEWAY=n", "CONFIG_NET_PPP=n",
         "CONFIG_APRS=n", "CONFIG_SFR=n", "CONFIG_HOTSPOT=n", "CONFIG_ZONE_SHARE=n",
-        'RFOUNDRY_VERSION='+('open25-'+identity if args.classic else 'dfbaf20c-p25-'+identity), f"RFOUNDRY_GIT_TIME={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}",
+        'RFOUNDRY_VERSION='+(('dm32-'+identity if args.plus else 'open25-'+identity) if args.classic else 'dfbaf20c-p25-'+identity), f"RFOUNDRY_GIT_TIME={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}",
         "RFOUNDRY_GIT_DIRTY=1",
         "CONFIG_FIRSTBOOT="+("y" if args.first_boot else "n"),
         "CONFIG_P25_BENCH="+("n" if args.lean else "y"),
@@ -594,6 +640,58 @@ def main():
         "CONFIG_DEV_UPDATE="+("y" if args.dev_update else "n"),
         "CONFIG_DEV_TX="+("y" if args.tx_bench or args.classic else "n"),
         "CONFIG_P25_CHANNELS="+("y" if args.classic else "n"),
+        "CONFIG_P25_SCAN="+("y" if args.plus else "n"),
+        "CONFIG_SPECTRUM="+("y" if args.plus else "n"),
+        "CONFIG_FOX="+("y" if args.plus else "n"),
+        "CONFIG_CW_BEACON="+("y" if args.plus else "n"),
+        "CONFIG_LONE_WORKER="+("y" if args.plus else "n"),
+        "CONFIG_ALMANAC="+("y" if args.plus else "n"),
+        "CONFIG_NAV="+("y" if args.plus else "n"),
+        "CONFIG_YSF="+("y" if args.plus else "n"),
+        "CONFIG_P25_CALLER="+("y" if args.plus else "n"),
+        "CONFIG_P25_SEARCH="+("y" if args.plus else "n"),
+        "CONFIG_P25_TRUNK="+("y" if args.plus else "n"),
+        "CONFIG_DMR_TRUNK="+("y" if args.plus else "n"),
+        "CONFIG_DMR_SEARCH="+("y" if args.plus else "n"),
+        "CONFIG_SFR_EDIT="+("y" if args.plus else "n"),
+        "CONFIG_P25_ANY="+("y" if args.plus else "n"),
+        "CONFIG_DMR_ANY="+("y" if args.plus else "n"),
+        "CONFIG_CALL_LOG="+("y" if args.plus else "n"),
+        "CONFIG_SIGNAL_QUALITY="+("y" if args.plus else "n"),
+        "CONFIG_SATELLITES="+("y" if args.plus else "n"),
+        "CONFIG_PLUS_UI="+("y" if args.plus else "n"),
+        "CONFIG_CALL_REPLAY="+("y" if args.plus else "n"),
+        "CONFIG_MAP="+("y" if args.plus else "n"),
+        "CONFIG_NXDN="+("y" if args.plus else "n"),
+        "CONFIG_DPMR="+("y" if args.plus else "n"),
+        "CONFIG_FM_ID="+("y" if args.plus else "n"),
+        "CONFIG_MSG_RX="+("y" if args.plus else "n"),
+        "CONFIG_SSTV="+("y" if args.plus else "n"),
+        "CONFIG_APRS_MSG="+("y" if args.plus else "n"),
+        "CONFIG_ID_DB="+("y" if args.plus else "n"),
+        "CONFIG_REPEATERS="+("y" if args.plus else "n"),
+        "CONFIG_NAC_DEC="+("y" if args.plus else "n"),
+        "CONFIG_PLUS_ART="+("y" if args.plus else "n"),
+        "CONFIG_MULTI_WATCH="+("y" if args.plus else "n"),
+        "CONFIG_MAP_TRACK="+("y" if args.plus else "n"),
+        "CONFIG_AUTO_RPT="+("y" if args.plus else "n"),
+        "CONFIG_P25_EXTRAS="+("y" if args.plus else "n"),
+        "CONFIG_P25_MODE2="+("y" if args.plus else "n"),
+        "CONFIG_VFO_MODES="+("y" if args.plus else "n"),
+        "CONFIG_TONE_FIND="+("y" if args.plus else "n"),
+        "CONFIG_SELCALL="+("y" if args.plus else "n"),
+        "CONFIG_SCAN_PRIO="+("y" if args.plus else "n"),
+        # YSF transmit stays off in Plus until the owner approves on-air tests (docs/ysf-nxdn-tx.md); --feature
+        # YSF_TX=y builds it
+        "CONFIG_YSF_TX=n",
+        "CONFIG_AIRFIELDS="+("y" if args.plus else "n"),
+        "CONFIG_MARINE="+("y" if args.plus else "n"),
+        "CONFIG_QSO_LOG="+("y" if args.plus else "n"),
+        "CONFIG_BATT_GRAPH="+("y" if args.plus else "n"),
+        "CONFIG_PC_LIVE="+("y" if args.plus else "n"),
+        "CONFIG_CW_RX="+("y" if args.plus else "n"),
+        "CONFIG_RPT_PROV="+("y" if args.plus else "n"),
+        "CONFIG_P25_TXNAC="+("y" if args.plus else "n"),
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:
@@ -603,6 +701,18 @@ def main():
                       'DMR_LRRP','DMR_SIGNALING','DMR_EMERGENCY','DMR_ROAMING','DMR_UDP_COMPRESS',
                       'DMR_CONFIRMED','CRASH_REPORT','BCAST_FM','AM_RX','DUAL_WATCH','VOX','GPS',
                       'LANG_ES','LANG_IT')]]
+    if args.plus:
+        # Classic switched these off to fit P25; Plus turns back on the ones the RAM budget allows (docs/plus.md)
+        command += ['CONFIG_'+name+'=y' for name in PLUS_FEATURES]
+        # The MMDVM hotspot on the programming cable, without the split duplex pair extension (two radios as one
+        # duplex repeater: 4.2 KB of RAM; its default follows HOTSPOT in config/features.mk)
+        command += ['CONFIG_HOTSPOT_SPLIT=n']
+        # Turkish on the radio and the language it starts in (tools/turkish_ui.py, core/ui/lang/tr.po)
+        command += ['CONFIG_LANG_TR=y', 'CONFIG_LANG_DEFAULT_TR=y']
+        # Cable diagnostics sized for a product: one TX trace block, one replay record (~10.7 KB of RAM back)
+        # HN_GUARD_ON_TIMER5: APRS owns timer 4 (Classic r12+ put the native P25 guard there), the guard takes timer 5
+        command[command.index(next(c for c in command if c.startswith('OPT=')))] += ' -DNT_TRACE_BLOCKS_CFG=1 -DP25_REPLAY_RECORDS=1 -DRADIO_NXDN_HEAP=0 -DHN_GUARD_ON_TIMER5=1' + ''.join(f' -D{k}={v}' for k, v in plus_features.PLUS_RAM_TRIM.items())
+    command += ['CONFIG_'+item for item in args.feature]
     if args.first_boot:
         command += ["CONFIG_STUB_ENTRY="+("y" if args.dev_update else "n"), "CONFIG_CPS_OPENFW=n", "CONFIG_CPS_FAST=n", "CONFIG_AUDIO_PROBE=n"]
     log = ROOT / f"logs/radiofoundry-p25-{suffix}.log"
@@ -663,6 +773,11 @@ def main():
     if unresolved.strip() or re.search(r"\br(?:1[6-9]|2[0-9]|3[01])\b", disassembly):
         raise SystemExit("ELF failed unresolved-symbol/high-register audit")
     firstboot_audits={}
+    if args.plus:
+        # DM32 Plus RAM reclaim: the start-up stack at the heap's top, the placeholder view in flash (plus_features.py)
+        firstboot_audits.update(plus_features.ram_reclaim_audit(
+            subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),"-S",str(prefix.with_suffix(".elf"))],text=True),
+            subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-size"),"-A",str(prefix.with_suffix(".elf"))],text=True)))
     if args.first_boot:
         symbols=subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),str(prefix.with_suffix(".elf"))],text=True)
         names={line.split()[-1] for line in symbols.splitlines() if line.split()}
@@ -695,7 +810,12 @@ def main():
               (ROOT / "src/p25", ROOT / "src/modem", ROOT / "src/codec", ROOT / "integration/radiofoundry",
                ROOT / "third_party/p25cai", ROOT / "third_party/imbe")
               for p in folder.rglob("*") if p.is_file() and "__pycache__" not in p.parts]
-    manifest = {"kind": "Open25-DM32 Classic release candidate; hardware qualification required" if args.classic else "RadioFoundry P25 laboratory image",
+    if args.plus:
+        # DDM25 Plus: its own transforms and sources too
+        inputs += sorted(p for p in (ROOT / "tools").glob("plus_*.py")) + [ROOT / "tools/turkish_ui.py",
+                  ROOT / "LICENSES/GPL-3.0.txt", ROOT / "LICENSING.md"] + [p for folder in
+                  (ROOT / "src/ysf", ROOT / "src/nxdn", ROOT / "src/dpmr") for p in folder.rglob("*") if p.is_file()]
+    manifest = {"kind": ("DM32 Plus development build (Classic r13 base); hardware qualification required" if args.plus else "Open25-DM32 Classic release candidate; hardware qualification required") if args.classic else "RadioFoundry P25 laboratory image",
         "upstream_commit": PIN, "freertos_commit": git(DEST / "third_party/FreeRTOS-Kernel", "rev-parse", "HEAD"),
         "command": [str(x) for x in command], "p25_enabled": not args.disable, "native_interface_enabled":native,
         "firstboot_restrictions_enabled": args.first_boot,
@@ -703,7 +823,7 @@ def main():
         "audits": {"unresolved_symbols": [], "high_register_instructions": 0, "compiler_warnings": 0,**firstboot_audits},
         "forced_rebuild_identical": args.verify_rebuild,
         "codec_speed_build":args.speed_codec, "bench_enabled":not args.lean, "cpu_profile_enabled":args.cpu_profile, "dev_update_enabled":args.dev_update,
-        "native_tx_bench_enabled":args.tx_bench, "classic_enabled":args.classic,
+        "native_tx_bench_enabled":args.tx_bench, "classic_enabled":args.classic, "plus_enabled":args.plus, "plus_features":list(PLUS_FEATURES) if args.plus else [], "feature_overrides":args.feature,
         "firstboot_flags":47 if args.tx_bench else 15 if args.dev_update else 31,
         "codec_slot": "recognized local stock merged separately" if args.with_local_stock else "reserved; no stock AMBE merged",
         "sources": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(inputs)},

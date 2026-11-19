@@ -99,7 +99,11 @@ int nt_arm_voice(nt_test *, uint32_t frequency_hz, uint32_t duration_ms);
 int nt_arm_live(nt_test *, uint32_t frequency_hz);
 int nt_arm_live_rx(nt_test *, uint32_t frequency_hz);
 int nt_live_seal(nt_test *, uint32_t session);
-enum { NT_TRACE_BLOCKS=192, NT_TRACE_WORDS=26, NT_TRACE_BLOCK_BYTES=44 };
+/* Blocks of the last PTT call kept for the cable trace: a product build keeps one (docs/plus.md, RAM) */
+#ifndef NT_TRACE_BLOCKS_CFG
+#define NT_TRACE_BLOCKS_CFG 192
+#endif
+enum { NT_TRACE_BLOCKS=NT_TRACE_BLOCKS_CFG, NT_TRACE_WORDS=26, NT_TRACE_BLOCK_BYTES=44 };
 /* Completed physical PTT call, retained across RX re-arm. Caller excludes IRQs. */
 void nt_trace_summary(uint32_t out[NT_TRACE_WORDS]);
 size_t nt_trace_read(uint32_t session, unsigned first, uint8_t *out, size_t cap);

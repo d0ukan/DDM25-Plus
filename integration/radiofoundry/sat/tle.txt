@@ -1,0 +1,18 @@
+# CelesTrak elements, epoch 17.11.2026 (fetched 18.11.2026): refresh before a release
+# DM32 Plus Tools > Satellites (tools/sat_tle.py, docs/plus.md). Standard three-line element sets; the first
+# comment line above is shown on the radio. Fetched from CelesTrak's GP query (FORMAT=tle) for the catalog numbers
+# in sat_freq.txt. Paste current sets here (CelesTrak's amateur.txt can go in whole: only the satellites in
+# sat_freq.txt beside this file are compiled in) and build again. SGP4 predictions degrade with the elements' age:
+# the ISS drifts by minutes within a couple of weeks, so the radio shows the age and warns after 14 days.
+ISS (ZARYA)
+1 25544U 98067A   26321.33455779  .00009779  00000+0  18259-3 0  9996
+2 25544  51.6318 262.2236 0007381  35.3953 324.7525 15.49430950595496
+SAUDISAT 1C (SO-50)
+1 27607U 02058C   26321.34698087  .00001345  00000+0  17553-3 0  9992
+2 27607  64.5536  15.0136 0067738 234.1419 125.3385 14.83348952287173
+RADFXSAT (FOX-1B)
+1 43017U 17073E   26321.10625488  .00008440  00000+0  35067-3 0  9990
+2 43017  97.4448 185.1960 0145066 158.9397 201.7894 15.14869907488525
+DIWATA-2B
+1 43678U 18084H   26321.52678096  .00002166  00000+0  17493-3 0  9997
+2 43678  98.1150 164.4803 0012261  28.9544 331.2357 15.00941795439218

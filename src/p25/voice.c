@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "voice.h"
 #include "p25_runtime.h"
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+#include "p25_lcx.h"
+#endif
 
 static void admission_reset(p25_voice *v)
 {
@@ -8,6 +11,10 @@ static void admission_reset(p25_voice *v)
     v->active_nac = P25_NAC_ANY;
     v->active_group = 0;
     v->active_source = 0;
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+    v->active_target = 0;
+    v->private_call = v->emergency = 0;
+#endif
     dm32_imbe_init(&v->codec);
 }
 
@@ -16,8 +23,36 @@ void p25_voice_rx_reset(p25_voice *v)
     /* Stale receive records must not reset the shared active TX codec. */
     if (v->transmitting) return;
     p25_rx_init(&v->framer, v->framer.expected_nac, 2);
+#if defined(CONFIG_P25_TRUNK) && CONFIG_P25_TRUNK
+    if (v->tsdu_rx) p25cai_control_receiver_gap(v->tsdu_rx);
+#endif
     admission_reset(v);
 }
+
+#if defined(CONFIG_P25_TRUNK) && CONFIG_P25_TRUNK
+void p25_voice_set_tsdu(p25_voice *v, p25cai_control_receiver *rx,
+                        void (*hook)(void *ctx, const p25cai_control *unit), void *ctx)
+{
+    v->tsdu_rx = hook ? rx : NULL;
+    v->tsdu = rx ? hook : NULL;
+    v->tsdu_ctx = ctx;
+}
+
+/* DDM25 Plus trunk following: the same dibits through the library's control channel receiver. A TSDU (one to three
+ * TSBKs, each CRC-checked) goes to the hook and counts its blocks in rx_frames; a TSDU dropped after its NID on a
+ * block that failed goes to the hook as NULL */
+static void tsdu_dibit(p25_voice *v, uint8_t dibit)
+{
+    p25cai_control unit;
+    uint16_t before = v->tsdu_rx->symbols;
+    int got = p25cai_control_receiver_push(v->tsdu_rx, dibit, &unit);
+    if (got == 1 && unit.duid == P25CAI_TSDU) {
+        v->rx_frames += unit.count;
+        v->tsdu(v->tsdu_ctx, &unit);
+    } else if (got == 0 && before >= 57u && !v->tsdu_rx->symbols && v->tsdu_rx->duid == P25CAI_TSDU)
+        v->tsdu(v->tsdu_ctx, NULL);
+}
+#endif
 
 void p25_voice_init(p25_voice *v, uint16_t nac, uint16_t group,
                     p25_pcm_sink sink, void *ctx)
@@ -32,13 +67,24 @@ void p25_voice_init(p25_voice *v, uint16_t nac, uint16_t group,
 
 void p25_voice_rx_dibit(p25_voice *v, uint8_t dibit)
 {
+#if defined(CONFIG_P25_TRUNK) && CONFIG_P25_TRUNK
+    if (v->tsdu && !v->transmitting) tsdu_dibit(v, dibit);
+#endif
     if (v->transmitting || !p25_rx_push_dibit(&v->framer, dibit)) return;
     p25_decoded d;
     uint32_t at=v->micros?v->micros():0;
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+    p25x_lc x;
+    int decoded=p25x_decode_frame(v->framer.frame, p25_frame_bytes(v->framer.nid.duid), &d, &x);
+#else
     int decoded=p25_decode_frame(v->framer.frame, p25_frame_bytes(v->framer.nid.duid), &d);
+#endif
     uint32_t elapsed=v->micros?v->micros()-at:0;
     if (elapsed>v->fec_max_us)v->fec_max_us=elapsed;
     if (decoded) {
+#if defined(CONFIG_SIGNAL_QUALITY) && CONFIG_SIGNAL_QUALITY
+        if (v->framer.nid.duid == P25_DUID_LDU1 || v->framer.nid.duid == P25_DUID_LDU2) v->rx_fec_lost += 9;
+#endif
         admission_reset(v);
         return;
     }
@@ -51,6 +97,13 @@ void p25_voice_rx_dibit(p25_voice *v, uint8_t dibit)
         admission_reset(v);
         return;
     }
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+    if (d.nid.duid == P25_DUID_LDU1 && !d.metadata_valid && x.lc_other) {
+        /* DM32 Plus: an LDU1 carrying another link control format (a vendor's talker alias, ...) is not damage: it
+         * says nothing of the call, so the identity and permission from the LCs around it hold (they used to be
+         * dropped, muting that superframe). A new call starts with an HDU or a new NAC, which reset them. */
+    } else
+#endif
     if (!d.metadata_valid || (d.nid.duid == P25_DUID_HDU && d.manufacturer_id > 1)) {
         /* Do not reuse permission from a previous good header over damage. */
         v->crypto_clear = v->have_group = 0;
@@ -61,12 +114,28 @@ void p25_voice_rx_dibit(p25_voice *v, uint8_t dibit)
         v->active_group = d.talkgroup;
         v->have_group = d.talkgroup != 0;
     } else if (d.nid.duid == P25_DUID_LDU1) {
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+        /* DM32 Plus: unit-to-unit voice too. Another kind of call, target or talkgroup than the header's (or the
+         * last LDU1's) waits for the next encryption sync, as a talkgroup change always did */
+        uint8_t unit = d.link_control_format == 3;
+        if ((v->have_group && (v->private_call != unit || v->active_group != d.talkgroup ||
+                               v->active_target != x.target_id)) ||
+            (v->active_source && v->active_source != d.source_id))
+            v->crypto_clear = 0;
+        v->private_call = unit;
+        v->emergency = (d.service_options & 0x80) != 0;
+        v->active_target = x.target_id;
+        v->active_group = d.talkgroup;
+        v->active_source = d.source_id;
+        v->have_group = (unit ? x.target_id != 0 : d.talkgroup != 0) && d.source_id && d.source_id <= 0xFFFFFEu;
+#else
         if ((v->have_group && v->active_group != d.talkgroup) ||
             (v->active_source && v->active_source != d.source_id))
             v->crypto_clear = 0;
         v->active_group = d.talkgroup;
         v->active_source = d.source_id;
         v->have_group = d.talkgroup && d.source_id && d.source_id <= 0xFFFFFEu;
+#endif
         if (!d.clear_voice) v->crypto_clear = 0;
         /* LC's unprotected bit alone cannot override an encrypted ALGID.
          * Late entry waits for a valid LDU2 encryption sync. */
@@ -74,8 +143,20 @@ void p25_voice_rx_dibit(p25_voice *v, uint8_t dibit)
         v->crypto_clear = d.clear_voice;
     }
     if (d.nid.duid != P25_DUID_LDU1 && d.nid.duid != P25_DUID_LDU2) return;
+#if defined(CONFIG_SIGNAL_QUALITY) && CONFIG_SIGNAL_QUALITY
+    v->rx_fec_frames += 9;
+    for (unsigned i = 0; i < 9; i++) v->rx_fec_bits += d.voice_corrected_bits[i];
+#endif
+#if defined(CONFIG_P25_EXTRAS) && CONFIG_P25_EXTRAS
+    /* A unit-to-unit call plays with no talkgroup filter (an Any channel, P25 search), or when it is for us */
+    int admitted = v->crypto_clear && v->have_group &&
+        (!v->group_filter ||
+         (v->private_call ? v->own_unit && v->active_target == v->own_unit
+                          : v->active_group == v->group_filter || v->active_group == 0xffff));
+#else
     int admitted = v->crypto_clear && v->have_group &&
         (!v->group_filter || v->active_group == v->group_filter || v->active_group == 0xffff);
+#endif
     for (unsigned i = 0; i < 9; i++) {
         int16_t pcm[160] = {0};
         if (!admitted) v->rx_muted++;
@@ -91,7 +172,12 @@ void p25_voice_rx_dibit(p25_voice *v, uint8_t dibit)
                 memset(pcm, 0, sizeof pcm);
                 v->rx_erasures++;
                 dm32_imbe_init(&v->codec);
-            } else v->rx_voice++;
+            } else {
+                v->rx_voice++;
+#if defined(CONFIG_CALL_REPLAY) && CONFIG_CALL_REPLAY
+                if (v->tap) v->tap(v->tap_ctx, d.imbe[i]);
+#endif
+            }
         }
         if (v->sink) v->sink(v->sink_ctx, pcm);
     }

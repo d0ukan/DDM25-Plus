@@ -6,11 +6,16 @@
 /* Use the disabled APRS timer for the independent 1 ms lease/duration guard.
  * Upstream PCM retains timer 6; the board's native DMR PA delay retains timer 3.
  * Refuse borrowed timers that are still running. */
-#if CONFIG_APRS
+#if CONFIG_APRS && !defined(HN_GUARD_ON_TIMER5)
 #error "Native P25 requires APRS disabled: timer 4 owns the P25 lease guard"
 #endif
 _Static_assert(HN_GUARD_TIMER != TIMER_PCM && HN_GUARD_TIMER != TIMER_PA,
                "Native P25 guard must not share the PCM or PA timer");
+#ifdef HN_GUARD_ON_TIMER5
+/* DDM25 Plus (APRS built): the guard is on the board one-shot timer 5, never APRS's AFSK timer */
+_Static_assert(HN_GUARD_TIMER == TIMER_BOARD && HN_GUARD_TIMER != TIMER_AFSK,
+               "Native P25 guard must be timer 5, not APRS's AFSK timer");
+#endif
 static hn_chip *chip;
 static nt_test *test;
 static uint8_t installed;
