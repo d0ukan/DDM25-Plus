@@ -3,8 +3,8 @@
 """DDM32 Plus DOTA Transfer (docs/dota.md): channels, zones and the DMR contacts / RX group lists they use, sent from
 one radio to another over FM (AFSK 1200 in AX.25 UI frames, CTCSS) or DMR (unconfirmed UDP over the data service).
 Called last from plus_features.prepare(); a module of its own so the shared prepare list gains one line. Our code is
-in integration/radiofoundry/dota/ (installed into core/radio/ and core/ui/); upstream files change only through the
-hunks below. Switch CONFIG_DOTA (needs APRS, APRS_RX, DMR and ZONE_EDIT)."""
+in integration/radiofoundry/dota/ (installed into core/radio/, core/codeplug/ and core/ui/); upstream files change only
+through the hunks below. Switch CONFIG_DOTA (needs APRS, APRS_RX, DMR and ZONE_EDIT)."""
 
 DOTA = 'integration/radiofoundry/dota/'
 
@@ -12,6 +12,8 @@ DOTA = 'integration/radiofoundry/dota/'
 FILES = [
     ('core/radio/dota_proto.h', 'dota_proto.h'),
     ('core/radio/dota_proto.c', 'dota_proto.c'),
+    ('core/radio/dota_rec.h', 'dota_rec.h'),
+    ('core/radio/dota_rec.c', 'dota_rec.c'),
 ]
 
 

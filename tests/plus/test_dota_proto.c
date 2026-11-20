@@ -327,6 +327,7 @@ static void test_codecs(void)
 	m.layout = 1;
 	m.modes = 0x3F;
 	m.kind = 3;
+	m.zones = 68;
 	m.recs[1] = 150;
 	m.recs[2] = 76;
 	m.recs[3] = 1024;
@@ -338,7 +339,7 @@ static void test_codecs(void)
 	m.bytes = 0x01ABCD;
 	strcpy(m.fw, "dm32-plus-0.1.0-dev-2026");
 	n = dota_manifest_put(&m, buf, sizeof buf);
-	CHECK(n == 28 + 24 && n <= DOTA_MANIFEST_MAX);
+	CHECK(n == 29 + 24 && n <= DOTA_MANIFEST_MAX);
 	CHECK(dota_manifest_get(buf, n, &b) && memcmp(&m, &b, sizeof m) == 0 && dota_manifest_total(&b) == 245);
 	CHECK(!dota_manifest_get(buf, n - 1, &b));
 	m.frames[3] = 600;	/* more than DOTA_FRAMES_MAX */

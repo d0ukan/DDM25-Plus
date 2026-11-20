@@ -494,3 +494,6 @@ __pycache__/
 !/integration/radiofoundry/dota/dota_proto.h
 !/integration/radiofoundry/dota/dota_proto.c
 !/tests/plus/test_dota_proto.c
+!/integration/radiofoundry/dota/dota_rec.h
+!/integration/radiofoundry/dota/dota_rec.c
+!/tests/plus/test_dota_rec.c

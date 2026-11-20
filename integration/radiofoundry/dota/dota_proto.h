@@ -63,12 +63,13 @@ uint32_t dota_frame_crc(uint16_t seq, uint16_t first, uint8_t count, const uint8
 typedef struct {
 	char model[5];
 	uint8_t rec_ver, layout, modes, kind;
+	uint8_t zones;				/* zones (DOTA Clone; the zones section counts their parts) */
 	uint16_t recs[DOTA_SEC_COUNT];		/* records per section ([0] unused) */
 	uint16_t frames[DOTA_SEC_COUNT];	/* frames per section ([0] unused) */
 	uint32_t bytes;
 	char fw[DOTA_FW_MAX + 1];
 } dota_manifest_t;
-#define DOTA_MANIFEST_MAX	(28u + DOTA_FW_MAX)
+#define DOTA_MANIFEST_MAX	(29u + DOTA_FW_MAX)
 size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max);
 bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m);
 uint16_t dota_manifest_total(const dota_manifest_t *m);	/* data frames N */

@@ -111,7 +111,7 @@ uint32_t dota_frame_crc(uint16_t seq, uint16_t first, uint8_t count, const uint8
 size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max)
 {
 	size_t fw = strnlen(m->fw, DOTA_FW_MAX);
-	if (max < 28u + fw)
+	if (max < 29u + fw)
 		return 0;
 	memcpy(out, m->model, 4);
 	out[4] = m->rec_ver;
@@ -125,14 +125,15 @@ size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max)
 	out[24] = (uint8_t)(m->bytes >> 16);	/* 3 octets: at most 512 frames of 192 */
 	out[25] = (uint8_t)(m->bytes >> 8);
 	out[26] = (uint8_t)m->bytes;
-	out[27] = (uint8_t)fw;
-	memcpy(out + 28, m->fw, fw);
-	return 28u + fw;
+	out[27] = m->zones;
+	out[28] = (uint8_t)fw;
+	memcpy(out + 29, m->fw, fw);
+	return 29u + fw;
 }
 
 bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m)
 {
-	if (n < 28u || in[27] > DOTA_FW_MAX || n != 28u + in[27])
+	if (n < 29u || in[28] > DOTA_FW_MAX || n != 29u + in[28])
 		return false;
 	memset(m, 0, sizeof *m);
 	memcpy(m->model, in, 4);
@@ -147,7 +148,8 @@ bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m)
 		total += m->frames[s];
 	}
 	m->bytes = ((uint32_t)in[24] << 16) | ((uint32_t)in[25] << 8) | in[26];
-	memcpy(m->fw, in + 28, in[27]);
+	m->zones = in[27];
+	memcpy(m->fw, in + 29, in[28]);
 	return total >= 1u && total <= DOTA_FRAMES_MAX;
 }
 
