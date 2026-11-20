@@ -461,6 +461,18 @@ static void sos_settings(void)
 	check(asks() == 0, "nothing sent from the settings");
 }
 
+/* Round 14 item 48: the actions are in Settings > Keys (its last row), no longer in Tools */
+static void sos_from_keys(void)
+{
+	ok_run("ok 7 8 up");
+	expect("screen=group shows=SOS_key");
+	layout();
+	ok_run("ok");
+	expect("screen=sos-set shows=APRS_SOS");
+	ok_run("back");
+	expect("screen=group");
+}
+
 static void sos_none(void)
 {
 	key(ACT_SOS, GESTURE_PRESS);
@@ -570,6 +582,7 @@ int main(void)
 		{ "I30 locator", loc_flow },
 		{ "I30 locator far and bad", loc_far },
 		{ "I33 settings", sos_settings },
+		{ "R14 SOS key in Settings > Keys", sos_from_keys },
 		{ "I33 nothing chosen", sos_none },
 		{ "I33 cancel, confirm, stop", sos_cancel_confirm },
 		{ "I33 key held, keys locked", sos_long_and_locked },

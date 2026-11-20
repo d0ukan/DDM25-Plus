@@ -10,8 +10,8 @@ ui_p25search.c, ui_dmrsearch.c, ui_goto.c, map/ui_map.c); upstream files change 
   NAV_FOLLOW (item 28) "find my friend": Go-To follows one APRS station (the map's pick, the heard list).
   LOCATOR    (item 30) Go-To's locator calculator page (# there): a Maidenhead locator to lat / lon, distance and
              bearing, saved as a waypoint; needs NAV and the APRS message text entry.
-  SOS_KEY    (item 33) the key function "SOS" (Settings > Keys) and Tools > SOS key: the confirmation page, then the
-             chosen actions (APRS SOS, DMR emergency, CW SOS once); RAM only, all off at power on.
+  SOS_KEY    (item 33) the key function "SOS" (Settings > Keys) and Settings > Keys > SOS key (its actions; Tools >
+             SOS key until round 14): the confirmation page, then the chosen actions (APRS SOS, DMR emergency, CW SOS once); RAM only, all off at power on.
 """
 
 FIELDX = 'integration/radiofoundry/fieldx/'
@@ -85,12 +85,19 @@ def prepare_fieldx(transform, install):
          '#if CONFIG_CW_RX\n\t[SCR_CW] = &ui_cw_screen,\n\t[SCR_CW_TRAIN] = &ui_cwtrain_screen,\n#endif\n'
          '#if CONFIG_SOS_KEY\n\t[SCR_SOS] = &ui_sos_screen,\n\t[SCR_SOS_SET] = &ui_sos_set_screen,\n#endif\n'
          '#if CONFIG_LOCATOR\n\t[SCR_LOCATOR] = &ui_locator_screen,\n#endif\n'),
-        # Tools > SOS key, before the CW decoder (CW decoder and Battery stay the last two)
+        # The tool slot T_SOS stays (later tools' hunks name it) but is never listed: the SOS key's actions moved to
+        # Settings > Keys (round 14 item 48, owner 2026-11-20; below)
         ('T_SELCALL, T_CW, T_BATTERY,', 'T_SELCALL, T_SOS, T_CW, T_BATTERY,'),
-        ('(i != T_CW || CONFIG_CW_RX) &&', '(i != T_SOS || CONFIG_SOS_KEY) && (i != T_CW || CONFIG_CW_RX) &&'),
+        ('(i != T_CW || CONFIG_CW_RX) &&', 'i != T_SOS && (i != T_CW || CONFIG_CW_RX) &&'),
         ('TRN("DTMF / SelCall"), TRN("CW decoder"),', 'TRN("DTMF / SelCall"), TRN("SOS key"), TRN("CW decoder"),'),
-        ('\tcase T_CW: ui_push(SCR_CW, 0); break;\n',
-         '#if CONFIG_SOS_KEY\n\tcase T_SOS: ui_push(SCR_SOS_SET, 0); break;\n#endif\n\tcase T_CW: ui_push(SCR_CW, 0); break;\n'),
+        # Settings > Keys: "SOS key" after the key rows opens the actions page (SCR_SOS_SET)
+        ('SA_LANGUAGE, SA_SCAN_PRIO };', 'SA_LANGUAGE, SA_SCAN_PRIO, SA_SOS_KEY };'),
+        ('\tKEY_ROWS(8),\n#endif\n};\n',
+         '\tKEY_ROWS(8),\n#endif\n#if CONFIG_SOS_KEY\n\tACTION(TRN("SOS key"), "emergency sos actions", SA_SOS_KEY),\t// DDM32 Plus\n'
+         '#endif\n};\n'),
+        ('\t\tcase SA_LANGUAGE: ui_push(SCR_LANGUAGE, 0); break;\n',
+         '\t\tcase SA_LANGUAGE: ui_push(SCR_LANGUAGE, 0); break;\n'
+         '#if CONFIG_SOS_KEY\n\t\tcase SA_SOS_KEY: ui_push(SCR_SOS_SET, 0); break;\t// DDM32 Plus\n#endif\n'),
         ('\t\t[T_CW] = ART_ICON_BEACON + 1,\t// the CW beacon\'s\n',
          '\t\t[T_SOS] = ART_ICON_BEACON + 1,\t// the SOS beacon\'s\n\t\t[T_CW] = ART_ICON_BEACON + 1,\t// the CW beacon\'s\n'),
         # Settings > Keys: "SOS" for a press and a long press (not assigned by default: Default stays)
