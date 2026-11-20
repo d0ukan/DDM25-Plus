@@ -749,6 +749,23 @@ def main():
     run([*argv_cw,'-DCONFIG_CW_RX=1','-I'+str(ROOT/'tests/classic'),str(APP/'core/radio/cw_train.c'),
          str(APP/'core/radio/cwdec.c')],cwd=host)
     run([OUT/'test_radio_cw'],cwd=host)
+    # DDM32 Plus DOTA Transfer in the radio core: the same suites with it built in (the fake board gains a fake AFSK
+    # transmitter), then the session channel, PTT refused, requests dropped and released, the channel / VFO restored,
+    # keyed spans (tests/plus/test_dota_radio.inc)
+    dotarad=OUT/'radioCoreDota.c'
+    dotarad.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n'+
+                       fixture.replace('const board_t board = {\n\t.native_modem=&classic_ops,',
+                                       'extern const hal_afsk_t dota_afsk;\nconst board_t board = {\n'
+                                       '\t.native_modem=&classic_ops,\n\t.afsk=&dota_afsk,')+
+                       '\n#define main classic_radio_main\n#include "'+str(ROOT/'tests/classic/test_radio.inc')+'"\n#undef main\n'
+                       '#include "'+str(ROOT/'tests/plus/test_dota_radio.inc')+'"\n')
+    argv_dota=list(argv_cw)
+    argv_dota[argv_dota.index(str(cwrad))]=str(dotarad)
+    argv_dota[argv_dota.index('-o')+1]=str(OUT/'test_radio_dota')
+    run([*argv_dota,'-DCONFIG_DOTA=1','-I'+str(ROOT/'tests/classic'),'-Wl,--wrap=beep_play',
+         *(str(APP/'core/radio'/f) for f in ('dota.c','dota_proto.c','dota_rec.c','dota_import.c')),
+         str(APP/'core/aprs/ax25.c'),str(APP/'core/aprs/hdlc.c')],cwd=host)
+    run([OUT/'test_radio_dota'],cwd=host)
     command=run(['make','-Bn','uiFlowTest','SANITIZE=1'],cwd=host,capture_output=True,text=True).stdout
     argv=shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))
     argv[argv.index('uiFlowTest.c')]=str(ROOT/'tests/classic/test_ui.c')

@@ -505,6 +505,8 @@ __pycache__/
 !/integration/radiofoundry/dota/dota.c
 !/integration/radiofoundry/dota/radio_dota.inc
 !/tests/plus/test_dota_session.c
+!/tests/plus/test_dota_fm.c
+!/tests/plus/test_dota_radio.inc
 !/integration/radiofoundry/dota/ui_dota.h
 !/integration/radiofoundry/dota/ui_dota.c
 !/tests/plus/test_ui_dota.c

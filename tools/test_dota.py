@@ -45,6 +45,14 @@ def main(ROOT, APP, OUT, flags, host):
          core / 'storage/storage.c', host / 'sim/sim_flash.c', core / 'aprs/ax25.c', core / 'aprs/hdlc.c',
          '-o', OUT / 'test_dota_session'], cwd=ROOT)
     run([OUT / 'test_dota_session'], cwd=ROOT)
+    # FM end to end through audio: the AFSK modulator and demodulator, CTCSS on the air, noise, sample slips
+    run(['clang', *flags, *dota, '-DCONFIG_APRS=1', '-DCONFIG_DMR_DATA_CORE=1', '-I' + str(host),
+         tp / 'test_dota_fm.c', OUT / 'dota_a.o', OUT / 'dota_b.o', core / 'radio/dota_proto.c',
+         core / 'radio/dota_rec.c', core / 'radio/dota_import.c', *codeplug, core / 'codeplug/zone_edit.c',
+         core / 'codeplug/zone_shift.c', core / 'codeplug/zone_settle.c', core / 'settings/settings.c',
+         core / 'storage/storage.c', host / 'sim/sim_flash.c', core / 'aprs/ax25.c', core / 'aprs/hdlc.c',
+         core / 'aprs/afsk.c', '-lm', '-o', OUT / 'test_dota_fm'], cwd=ROOT)
+    run([OUT / 'test_dota_fm'], cwd=ROOT)
     # The screens through upstream's UI simulator (the engine faked), English and Turkish (the tables made from tr.po)
     run(['make', 'out/gen/lang_tables.h'], cwd=host, stdout=subprocess.DEVNULL)
     command = run(['make', '-Bn', 'uiFlowTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout

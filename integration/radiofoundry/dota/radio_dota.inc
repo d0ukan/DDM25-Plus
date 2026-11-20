@@ -4,6 +4,8 @@
  * channel or VFO stays where it is and comes back with reload() at the end), every request but beeps, settings and the
  * volume is dropped, PTT is refused (the UI asks "Stop the transfer?"), and the FM transmitter is keyed only by DOTA. */
 
+#include "hal_time.h"	/* hal_millis (radio_sm.c has it only through the APRS headers) */
+
 static radio_sm_t *dota_sm;
 static bool dota_owned;		/* the radio is on the session's channel */
 
