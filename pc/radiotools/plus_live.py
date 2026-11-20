@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Live read-only view of DM32 Plus over the debug link, for the PC app's "Canlı panel".
+"""Live read-only view of DDM25 Plus over the debug link, for the PC app's "Canlı panel".
 
 Polls every --interval seconds (1..5) until stopped (the app ends the process) or --count polls. Sends only these
 read-only queries, refused locally before transmission otherwise:

@@ -73,8 +73,9 @@ def slot_check(program):
     return word(s, 0x3C)
 
 
-def plus_application(folder):
-    """The release's application after checking its build manifest, map and the signed release manifest"""
+def build_application(folder):
+    """The application of a DDM25 Plus build folder after checking its build manifest and map (no release gate: the
+    release tool uses this before it signs; installs go through plus_application)"""
     folder = Path(folder)
     image = folder / 'rfoundry_dm32.bin'
     app = image.read_bytes()
@@ -92,6 +93,12 @@ def plus_application(folder):
         raise ValueError('Linker layout differs from the reserved codec location')
     if not app or len(app) > SLOT - START:
         raise ValueError('The application must end before the codec slot')
+    return app
+
+
+def plus_application(folder):
+    """The release's application after checking its build manifest, map and the signed release manifest"""
+    app = build_application(folder)
     # The public gate (the lab's PLUS_REVIEWED): listed in a manifest signed with the embedded release key
     signed_manifest.release_gate(app, folder)
     return app
