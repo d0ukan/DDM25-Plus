@@ -28,6 +28,12 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   everything back as it was (your channel or VFO, your own dual / multi-watch); nothing of it is saved.
 - Spectrum: a third view, a 3D waterfall (the last sweeps as ridges in perspective, the newest in front); * cycles
   waterfall, 3D, bars alone. Multi-watch rows in the air band say "AM".
+- User data packs: a RadioID list and an air band frequency list the user builds on their own PC from sources they
+  download themselves (radioid.net; the aerodromes' AIP pages) can live on the radio's data chip, in a region of its
+  own (two slots each, switched only when a new pack is complete and checked). DMR callers get their names from the
+  RadioID pack, the airfield screens their frequencies from the air band pack; Settings > About shows which pack is in
+  force. Loaded through the programming cable with the CPS protocol (tools/datapack.py builds the pack). Without a
+  pack nothing changes.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

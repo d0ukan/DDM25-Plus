@@ -2403,3 +2403,22 @@ publications), kept on the data chip in **0xE70000-0xEFFFFF**, the one region AG
 - Air band pack payload (format 1): a 4-byte header (count), per airfield its code (8 bytes), its frequency count and
   the frequencies as `air_freq_t` (channel 2 bytes, type 1). Airfields the table lacks are not added (format 1:
   frequencies only).
+| 4 | Loading from the PC: the CPS session's close (`C` 5) checks the slots again; the builder `tools/datapack.py` (RadioID pack from the user's radioid.net `user.csv`, air band pack from the aerodromes' AD 2.18 pages the user downloads, `info`) | see the commit | | |
+
+**Loading a pack from the PC (for the Windows programmer).** Through the firmware's own open-firmware CPS protocol
+(`docs/spec/open-firmware-cps.md` 2), never our flash tools: flash area 1 takes physical addresses and the pack
+region lies inside the window the CPS may write (0x720000-0xEFFFFF), so the CPS's journaled sector writes (prepare
+sector, write, commit; power-cut safe) carry it.
+
+1. Start the CPS session as for a codeplug write (`C` 0 ...).
+2. Read both slots' first 64 bytes of the pack's type (area 1: RadioID 0xE70000 / 0xEB0000, air band 0xEF0000 /
+   0xEF4000) and pick the slot **not** in force: `datapack.inactive_slot`; the new sequence is `datapack.next_seq`.
+3. Build the slot image (`datapack.header(type, payload, date, name, seq)` + payload; `datapack.py` writes `.dpk`
+   images with sequence 0: set it from step 2 and recompute the header CRC with `header()`).
+4. Write it sector by sector in `datapack.cps_plan(slot, image)` order: the payload's sectors first, **the header's
+   sector last** (its rewrite is the commit; until then the slot does not count, and the pack in force stays).
+5. Close the session (`C` 5): the radio checks the slots and the new pack is in force (Settings > About shows it).
+
+The data never comes from us: the user downloads RadioID.net's user list and the State's AIP pages (in Turkey the
+DHMI eAIP, AD 2.18) themselves, and the programmer builds the pack on their PC. Nothing derived from them is ever in
+this repository, a release or the firmware.

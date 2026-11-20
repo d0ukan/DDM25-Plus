@@ -64,3 +64,13 @@ def prepare_datapack(transform, install):
          '\t\tsb_chr(&b, \'\\n\');\n\t}\n#endif\n'
          '\tsb_str(&b, TR("AMBE+2 codec: DVSI (stock)"));'),
     ])
+    # From the PC: the CPS's flash area 1 takes physical addresses, and the region is inside the open-firmware window
+    # (0x720000-0xEFFFFF), so a pack is written with the CPS's own sector writes (journaled, power-cut safe): its
+    # payload sectors, then its header's sector (docs/plus.md "User data packs"). At the session's close the slots are
+    # checked again, as the CPS-written ID database is re-read
+    transform('core/cps/cps_openfw.c', [
+        ('#include "cps/cps_openfw.h"\n', '#include "cps/cps_openfw.h"\n' + ON + '#include "storage/datapack.h"\n#endif\n'),
+        ('\tcase 5:\t\t// close: the codeplug is re-read if it was written\n\t\tend_session();\n',
+         '\tcase 5:\t\t// close: the codeplug is re-read if it was written\n\t\tend_session();\n'
+         + ON + '\t\tdpk_scan();\t// DDM32 Plus: a data pack the PC wrote is in force now (docs/r14.md 7)\n#endif\n'),
+    ])

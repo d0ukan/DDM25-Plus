@@ -462,6 +462,15 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | A49-4 | On the page: #, Canned text QSL, Send; Back to the page; the other station acks | "> QSL (sending)", then "(delivered)"; a message it sends us appears as "< text" (newest first) |
 | A48-S | SK1 = SOS, every action Off (Settings > Keys > SOS key); press SK1, then OK | "No SOS actions" and "Pick: Settings > Keys", nothing cut at the right edge (Turkish too); OK: toast "No SOS actions: Settings > Keys", nothing keyed |
 | A49-5 | Up / Down on the page | the previous / next heard station; turn the other radio off and wait until it drops out of the list (12 stations): "Not heard any more" |
+### User data packs (branch `datapack`; the data chip is written only by the firmware, in 0xE70000-0xEFFFFF)
+
+| # | Do | Expect |
+|---|---|---|
+| DP1 | Settings > About on a radio that never had a pack | "RadioID pack: none", "Air band pack: none"; DMR caller names and the airfield list as before |
+| DP2 | Load a RadioID pack built by `tools/datapack.py radioid` from the owner's radioid.net download, through the programmer (CPS protocol, docs/plus.md "User data packs"); close the session | About: "RadioID pack: <name>, <date>, <size> KB"; a DMR call from a station not in the codeplug shows "CALLSIGN Name" |
+| DP3 | Load a second RadioID pack; power off in the middle of the transfer, power on, look at About; load it again completely | after the cut the first pack is still in force; after the full load the second |
+| DP4 | Load an air band pack built from the AD 2.18 pages the owner downloaded | Tools > Airfields: the listed airfields show the pack's frequencies, the others the built-in ones; About shows the pack |
+| DP5 | A read-only backup of the data chip before and after DP2-DP4 (the existing backup tool), compared outside the region | identical outside 0xE70000-0xEFFFFF |
 
 ### Round 14 air band and spectrum (docs/plus.md "Round 14: air band and spectrum", branch `r14-air`)
 

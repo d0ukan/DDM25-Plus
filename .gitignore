@@ -510,6 +510,7 @@ __pycache__/
 # DDM32 Plus user data packs (tools/plus_datapack.py, docs/r14.md 7)
 !/tools/plus_datapack.py
 !/tools/test_datapack.py
+!/tools/datapack.py
 !/integration/radiofoundry/datapack/datapack.h
 !/integration/radiofoundry/datapack/datapack.c
 !/integration/radiofoundry/datapack/air_pack.h

@@ -296,7 +296,42 @@ static void test_air(void)
 	CHECK(dpk_state(DPK_AIR) == DPK_BAD && air_count(ltac) == air_fields[ltac].count);
 }
 
-int main(void)
+/* --- Images tools/datapack.py built (argv): written as the radio writes them, then read --- */
+static uint8_t img[0x40000];
+
+static uint32_t load(const char *path)
+{
+	FILE *f = fopen(path, "rb");
+	if (f == NULL)
+		return 0;
+	uint32_t n = (uint32_t)fread(img, 1, sizeof img, f);
+	fclose(f);
+	return n;
+}
+
+static void test_builder(const char *radioid, const char *air)
+{
+	dpk_hdr_t h;
+	uint32_t n = load(radioid);
+	CHECK(n > DPK_HDR);
+	memcpy(&h, img, sizeof h);
+	CHECK(dpk_hdr_ok(&h, DPK_RADIOID) && h.len == n - DPK_HDR && h.crc == storage_crc32(0, img + DPK_HDR, h.len));
+	CHECK(write_pack(DPK_RADIOID, img + DPK_HDR, h.len, "RadioID TR", 192));
+	char t[40];
+	CHECK(dpk_id_text(2860001, t, sizeof t) && strcmp(t, "TA1ABC Ahmet") == 0);
+	CHECK(dpk_id_text(2860105, t, sizeof t) && strcmp(t, "TA2XYZ Ayse") == 0);	/* folded */
+	CHECK(dpk_id_text(3101234, t, sizeof t) && strncmp(t, "TA3AA Mehmet", 12) == 0);	/* iddb.py's short name */
+	CHECK(!dpk_id_text(2860002, t, sizeof t));
+	n = load(air);
+	memcpy(&h, img, sizeof h);
+	CHECK(n > DPK_HDR && dpk_hdr_ok(&h, DPK_AIR) && write_pack(DPK_AIR, img + DPK_HDR, h.len, "TR aerodromes", 64));
+	uint16_t ltac = field("LTAC");
+	CHECK(air_count(ltac) == 3 && air_freq(ltac, 0)->type == AIR_ATIS && air_freq_khz(air_freq(ltac, 0)) == 123600u);
+	CHECK(air_freq(ltac, 1)->type == AIR_TWR && air_freq_khz(air_freq(ltac, 1)) == 118100u);
+	CHECK(air_freq(ltac, 2)->type == AIR_APP && air_freq_khz(air_freq(ltac, 2)) == 119100u);
+}
+
+int main(int argc, char **argv)
 {
 	sim_flash_create(FLASH_SIZE, &map);
 	for (uint32_t i = 0; i < FLASH_SIZE; i++)
@@ -308,6 +343,8 @@ int main(void)
 	test_cuts();
 	test_radioid();
 	test_air();
+	if (argc == 3)
+		test_builder(argv[1], argv[2]);
 	CHECK(outside() == h0);		/* not one byte outside the region changed */
 	CHECK(sim_flash_violations() == 0);
 	printf("datapack store: %d checks, %d failures\n", checks, failures);
