@@ -184,6 +184,7 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_fieldx", fromlist=["x"]).prepare_fieldx(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_toolbox", fromlist=["x"]).prepare_toolbox(transform, install)
     prepare_large_scale(transform)
+    prepare_home_freq(transform)
 
 
 def prepare_large_scale(transform):
@@ -298,6 +299,79 @@ def prepare_large_scale(transform):
          '\tf = large_font(buf, room, form, sizeof form);\n'
          '\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
          '\tgfx_text(f, 0, y, fit, c2);\n'),
+    ])
+
+
+def prepare_home_freq(transform):
+    """The channel's frequency on Home (CONFIG_HOME_FREQ, owner 2026-11-20): a channel's receive frequency was shown
+    nowhere on Home (FM's talk row has the TX one, DMR's the talk target). On panels with room (240x320) a row under
+    the chips reads "RX 438.5000  TX 430.9000", or "438.5000 MHz" when both are the same; the VFO shows its frequency
+    large already. Large text gets a third line, the frequency (TX while transmitting), between the channel and the
+    talk target. Runs after prepare_large_scale: it anchors on that patch."""
+    transform('config/features.mk', [
+        ('CONFIG_LARGE_SCALE ?= n\nFEATURES += LARGE_SCALE\n',
+         'CONFIG_LARGE_SCALE ?= n\nFEATURES += LARGE_SCALE\nCONFIG_HOME_FREQ ?= n\nFEATURES += HOME_FREQ\n'),
+    ])
+    transform('core/config.h', [
+        ('#ifndef CONFIG_LARGE_SCALE\n',
+         '#ifndef CONFIG_HOME_FREQ\n#define CONFIG_HOME_FREQ 0\n#endif\n#ifndef CONFIG_LARGE_SCALE\n'),
+    ])
+    transform('core/ui/ui_screens.h', [
+        ('\tint channel_y, talk_y, chips_y;\n',
+         '\tint channel_y, talk_y, chips_y;\n'
+         '#if CONFIG_HOME_FREQ\n\tint freq_y;\t\t// DDM32 Plus: the channel\'s frequencies under the chips; < 0: no room\n#endif\n'),
+    ])
+    transform('core/ui/ui_screens.c', [
+        # The row only where Home keeps room for activity under it (five small rows), so smaller panels keep theirs
+        ('\tL->chips_y = y;\n\ty += L->small->h;\n',
+         '\tL->chips_y = y;\n\ty += L->small->h;\n'
+         '#if CONFIG_HOME_FREQ\n'
+         '\tL->freq_y = L->hint_y - y >= 7 * L->small->h ? y : -1;\n'
+         '\tif (L->freq_y >= 0)\n\t\ty += L->small->h;\n'
+         '#endif\n'),
+        ('static void draw_chips(const radio_view_t *v, const ui_state_t *s)\n{\n',
+         '#if CONFIG_HOME_FREQ\n'
+         '// DDM32 Plus: "RX 438.5000  TX 430.9000" under the chips, one number when both are the same (TX off or RX only:\n'
+         '// the receive one). Not in the VFO: its frequency is the large line\n'
+         'static void __attribute__((noinline)) draw_home_freq(const radio_view_t *v)\n{\n'
+         '\tconst ui_layout_t *L = &ui_layout;\n'
+         '\tif (L->freq_y < 0 || v->vfo || v->ch.rx_hz == 0)\n\t\treturn;\n'
+         '\tchar buf[40], fit[40];\n\tsbuf_t b;\n\tsb_init(&b, buf, sizeof buf);\n'
+         '\tbool split = !v->ch.rx_only && v->ch.tx_hz != 0 && v->ch.tx_hz != v->ch.rx_hz;\n'
+         '\tif (split)\n\t\tsb_str(&b, "RX ");\n'
+         '\tsb_freq(&b, v->ch.rx_hz);\n'
+         '\tif (split) {\n\t\tsb_str(&b, "  TX ");\n\t\tsb_freq(&b, v->ch.tx_hz);\n\t} else {\n\t\tsb_str(&b, " MHz");\n\t}\n'
+         '\tgfx_text_fit(L->small, buf, gfx_width(), fit, sizeof fit);\n'
+         '\tgfx_text(L->small, 0, L->freq_y, fit, ui_col.dim);\n}\n#endif\n\n'
+         'static void draw_chips(const radio_view_t *v, const ui_state_t *s)\n{\n'),
+        ('\t\tdraw_chips(v, s);\n\t\tif (ui_layout.sep_y >= 0)\n',
+         '\t\tdraw_chips(v, s);\n#if CONFIG_HOME_FREQ\n\t\tdraw_home_freq(v);\n#endif\n\t\tif (ui_layout.sep_y >= 0)\n'),
+        # Large text: three lines for a channel (name, frequency, talk target), two in the VFO (its line is the
+        # frequency)
+        ('\tint room = (L->hint_y - y) / 2;\n\tchar form[48];\n',
+         '#if CONFIG_HOME_FREQ\n'
+         '\tint room = (L->hint_y - y) / (v->vfo ? 2 : 3);\n'
+         '#else\n'
+         '\tint room = (L->hint_y - y) / 2;\n'
+         '#endif\n'
+         '\tchar form[48];\n'),
+        ('\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.fg);\n\t}\n\ty += room;\n',
+         '\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.fg);\n\t}\n\ty += room;\n'
+         '#if CONFIG_HOME_FREQ\n'
+         '\tif (!v->vfo) {\n'
+         '\t\tsb_init(&b, buf, sizeof buf);\n'
+         '\t\tsb_freq(&b, tx ? v->ch.tx_hz : v->ch.rx_hz);\n'
+         '#if CONFIG_LARGE_SCALE\n'
+         '\t\tif (!large_scaled(buf, y, room, tx ? ui_col.tx : ui_col.dim, form, sizeof form))\n'
+         '#endif\n'
+         '\t\t{\n'
+         '\t\t\tf = large_font(buf, room, form, sizeof form);\n'
+         '\t\t\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
+         '\t\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.dim);\n'
+         '\t\t}\n'
+         '\t\ty += room;\n'
+         '\t}\n'
+         '#endif\n'),
     ])
 
 
