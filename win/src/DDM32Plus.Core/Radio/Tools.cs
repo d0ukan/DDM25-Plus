@@ -227,7 +227,7 @@ public static partial class InstallPlan
     public static PyDict MakePlan(string mode, byte[] original, byte[] target, long? tag, Codec.Profile? prof = null)
     {
         var todo = Todo(original, target);
-        if (mode == "install_plus" && todo.Any(a => a >= Slot))
+        if (mode is "install_plus" or "install_plus_quick" or "install_plus_no_backup" && todo.Any(a => a >= Slot))
             throw new ToolExit("Refusing: the plan would touch the codec slot");
         if (todo.Any(a => a < Start) || !original.AsSpan(0, Start).SequenceEqual(target.AsSpan(0, Start)))
             throw new ToolExit("Refusing: the plan would touch the boot area");

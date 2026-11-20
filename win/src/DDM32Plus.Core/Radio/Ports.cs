@@ -85,7 +85,8 @@ public sealed class VirtualClock(string stamp = "2026-11-20T00:00:00Z") : IClock
 /// The switch in front of every serial port: a tool gets a port only through <see cref="Factory"/>, and that
 /// refuses while radio access is off. It is off in every build unless the program is compiled with the developer
 /// flag (dotnet build -p:RadioAccess=true, which defines DDM32_RADIO_ACCESS); nothing at run time can turn it on.
-/// The first real run needs the owner's approval for that step (AGENTS.md, hard safety rules).
+/// The first real run needs the owner's approval for that step (AGENTS.md, hard safety rules). Even with radio access
+/// the tools that write (install, restore) get no port: <see cref="WriteFactory"/> stays off.
 /// </summary>
 public static class RadioAccess
 {
@@ -97,6 +98,19 @@ public static class RadioAccess
 
     public sealed class DisabledException() : InvalidOperationException(
         "Radio access is switched off in this build: no serial port is opened (RadioAccess.Enabled = false)");
+
+#if DDM32_RADIO_WRITES
+    public const bool WritesEnabled = Enabled;
+#else
+    public const bool WritesEnabled = false;
+#endif
+
+    /// <summary>The port factory for the tools that write (install, restore): off even in the developer build with
+    /// radio access, which runs only the read-only backup. A later, separately approved flag turns writes on.</summary>
+    public static SerialFactory WriteFactory =>
+#pragma warning disable CS0162
+        WritesEnabled ? name => new SerialRadioPort(name) : _ => throw new DisabledException();
+#pragma warning restore CS0162
 
     /// <summary>The serial port factory for the tools: a real port only when radio access is compiled in.</summary>
     public static SerialFactory Factory =>

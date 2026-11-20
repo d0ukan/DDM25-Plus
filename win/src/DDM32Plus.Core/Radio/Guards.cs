@@ -215,8 +215,14 @@ public class ReadOnlyPort : IRadioPort
 /// </summary>
 public sealed class InstallPort : ReadOnlyPort
 {
-    public const int Start = 0xC000, Size = 0x100000, Sector = 4096;
-    private readonly byte[] original, target;
+    public const int Start = 0xC000, Size = 0x100000, Sector = 4096, Slot = 0xE8000;
+
+    /// <summary>How writes get enabled: Full (the live program and data chip equal the backup: install_firstboot's
+    /// own rule) or Identity (the quick update over DDM32 Plus: chip IDs, boot area and codec slot equal the reused
+    /// backup's; every application sector is rewritten, the slot never).</summary>
+    public enum Authorization { Full, Identity }
+
+    private byte[] original = [], target = [];
     public List<int> Todo { get; } = [];
     public List<byte[]> Plan { get; } = [];
     public int Index { get; private set; }
@@ -225,19 +231,39 @@ public sealed class InstallPort : ReadOnlyPort
     public List<byte[]> ResetPlan { get; } = [];
     private int resetIndex;
     public bool SkipOriginal { get; }
+    public Authorization Kind { get; }
+    public bool HasImages { get; private set; }
     private readonly Dictionary<int, int> sectorEnds = [];
     public byte[] Target => target;
 
-    public InstallPort(IRadioPort raw, byte[] original, byte[] target, bool skipOriginal = false) : base(raw)
+    public InstallPort(IRadioPort raw, byte[] original, byte[] target, bool skipOriginal = false,
+        Authorization kind = Authorization.Full) : base(raw)
     {
+        SkipOriginal = skipOriginal;
+        Kind = kind;
+        SetImages(original, target);
+    }
+
+    /// <summary>An install without a stored backup: the images are set once, after the single live read of the
+    /// program flash; until then the port is read only.</summary>
+    public InstallPort(IRadioPort raw) : base(raw) => Kind = Authorization.Full;
+
+    /// <summary>Fixes the write plan, once, before any write is enabled.</summary>
+    public void SetImages(byte[] original, byte[] target)
+    {
+        if (HasImages || Enabled || ClosedWrites)
+            throw new ValueError("The write plan is fixed once, before any write");
         if (original.Length != Size || target.Length != Size || !original.AsSpan(0, Start).SequenceEqual(target.AsSpan(0, Start)))
             throw new ValueError("Exact 1 MiB images with identical protected boot area required");
-        this.original = [.. original];
-        this.target = [.. target];
-        SkipOriginal = skipOriginal;
+        var todo = new List<int>();
         for (var a = Start; a < Size; a += Sector)
             if (!original.AsSpan(a, Sector).SequenceEqual(target.AsSpan(a, Sector)))
-                Todo.Add(a);
+                todo.Add(a);
+        if (Kind == Authorization.Identity && todo.Any(a => a >= Slot))
+            throw new ValueError("A quick update never writes the codec slot");
+        this.original = [.. original];
+        this.target = [.. target];
+        Todo.AddRange(todo);
         foreach (var a in Todo)
         {
             Plan.Add(RamMonitor.SpiPacket([0x06]));
@@ -252,13 +278,24 @@ public sealed class InstallPort : ReadOnlyPort
             }
             sectorEnds[a] = Plan.Count;
         }
+        HasImages = true;
+    }
+
+    /// <summary>The quick update's live check: the boot area and the codec slot read from the radio now equal the
+    /// reused backup's (the chip IDs were checked before). Only then are writes enabled.</summary>
+    public void AuthorizeIdentity(byte[] liveBoot, byte[] liveSlot)
+    {
+        if (Kind != Authorization.Identity || !HasImages || Enabled || ClosedWrites ||
+            !liveBoot.AsSpan().SequenceEqual(target.AsSpan(0, Start)) || !liveSlot.AsSpan().SequenceEqual(target.AsSpan(Slot)))
+            throw new ValueError("Live identity check failed (boot area or codec slot differ from the backup); writes remain disabled");
+        Enabled = true;
     }
 
     private static bool Same(IList<uint> a, IList<uint> b) => a.Count == b.Count && a.SequenceEqual(b);
 
     public void Authorize(byte[] program, IList<uint> data, IList<uint> expectedData)
     {
-        if (Enabled || ClosedWrites || !program.AsSpan().SequenceEqual(original) || !Same(data, expectedData))
+        if (Kind != Authorization.Full || !HasImages || Enabled || ClosedWrites || !program.AsSpan().SequenceEqual(original) || !Same(data, expectedData))
             throw new ValueError("Live pre-write comparison failed; writes remain disabled");
         Enabled = true;
     }
