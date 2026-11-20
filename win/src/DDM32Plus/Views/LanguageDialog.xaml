@@ -1,0 +1,21 @@
+<Window x:Class="DDM32Plus.Views.LanguageDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:DDM32Plus.Localization"
+        Title="{l:Tr App_Title}" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource Window}"
+        FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True">
+    <!-- First start only: asked in both languages, before the main window -->
+    <StackPanel Margin="28,22" MinWidth="380">
+        <TextBlock Text="{l:Tr App_Title}" FontSize="{StaticResource Size14}" FontWeight="Bold" />
+        <TextBlock Text="{l:Tr Lang_Prompt}" FontSize="{StaticResource Size3}" Margin="0,10,0,14" />
+        <UniformGrid Columns="2">
+            <Button x:Name="TrButton" Style="{StaticResource BigButton}" Tag="&#xE774;" Margin="0,0,6,0"
+                    Content="{l:Tr Lang_Tr}" Click="OnTurkish" IsDefault="True" />
+            <Button x:Name="EnButton" Style="{StaticResource BigButton}" Tag="&#xE774;" Margin="6,0,0,0"
+                    Content="{l:Tr Lang_En}" Click="OnEnglish" />
+        </UniformGrid>
+        <TextBlock Margin="0,14,0,0" Foreground="{StaticResource Grey}" TextWrapping="Wrap"
+                   l:Rich.Text="{l:Tr Lang_Hint}" />
+    </StackPanel>
+</Window>

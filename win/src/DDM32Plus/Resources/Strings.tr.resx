@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DDM32 Plus UI strings (Turkish). Same keys in Strings.resx (English, neutral) and Strings.tr.resx (Turkish);
+     the tests check that. **text** is shown bold, a line break starts a new line. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Title" xml:space="preserve">
+    <value>DDM32 Plus</value>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>Yardım</value>
+  </data>
+  <data name="Menu_HelpTip" xml:space="preserve">
+    <value>Sık karşılaşılan durumlar</value>
+  </data>
+  <data name="Menu_Disclaimer" xml:space="preserve">
+    <value>Sorumluluk reddi</value>
+  </data>
+  <data name="Menu_DisclaimerTip" xml:space="preserve">
+    <value>Sorumluluk reddini göster</value>
+  </data>
+  <data name="Menu_About" xml:space="preserve">
+    <value>Hakkında</value>
+  </data>
+  <data name="Menu_AboutTip" xml:space="preserve">
+    <value>DDM32 Plus · d0ukan · TA2DOU</value>
+  </data>
+  <data name="Menu_Language" xml:space="preserve">
+    <value>Dil</value>
+  </data>
+  <data name="Menu_LanguageTip" xml:space="preserve">
+    <value>Programın dilini değiştir</value>
+  </data>
+  <data name="Tab_Home" xml:space="preserve">
+    <value>Ana sayfa</value>
+  </data>
+  <data name="Tab_Update" xml:space="preserve">
+    <value>Telsizi güncelle</value>
+  </data>
+  <data name="Tab_Versions" xml:space="preserve">
+    <value>Sürümler</value>
+  </data>
+  <data name="Tab_Restore" xml:space="preserve">
+    <value>Geri dön</value>
+  </data>
+  <data name="Tab_Health" xml:space="preserve">
+    <value>Telsizin durumu</value>
+  </data>
+  <data name="Tab_Live" xml:space="preserve">
+    <value>Canlı panel</value>
+  </data>
+  <data name="Tab_Channels" xml:space="preserve">
+    <value>Kanallarım</value>
+  </data>
+  <data name="Status_Cable" xml:space="preserve">
+    <value>Kablo: {0}</value>
+  </data>
+  <data name="Status_CableNextStage" xml:space="preserve">
+    <value>sonraki aşamada</value>
+  </data>
+  <data name="Status_Installed" xml:space="preserve">
+    <value>Telsizdeki sürüm: {0}</value>
+  </data>
+  <data name="Status_Data" xml:space="preserve">
+    <value>Veriler: {0}</value>
+  </data>
+  <data name="Status_DataTip" xml:space="preserve">
+    <value>Yedekler (yedekler klasörü), indirilen sürümler ve ayarlar program klasöründe. Program güncellemeleri ve kaldırma yedeklere dokunmaz.</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>bilinmiyor</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Kapat</value>
+  </data>
+  <data name="Common_Details" xml:space="preserve">
+    <value>Ayrıntılar</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Geri</value>
+  </data>
+  <data name="Common_BackTip" xml:space="preserve">
+    <value>Bir önceki adıma dön (telsize bir şey yapmaz).</value>
+  </data>
+  <data name="Common_Continue" xml:space="preserve">
+    <value>Devam</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Vazgeç</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Yenile</value>
+  </data>
+  <data name="Common_NextStageTitle" xml:space="preserve">
+    <value>Bir sonraki aşamada</value>
+  </data>
+  <data name="Common_NextStage" xml:space="preserve">
+    <value>Bu sayfanın telsizle çalışan kısmı bir sonraki aşamada gelecek. Her telsiz aracı önce Python aracıyla kayıtlı örnekler üzerinde bayt bayt karşılaştırılarak doğrulanacak. Bu sürüm telsize hiç bağlanmaz ve seri port açmaz.</value>
+  </data>
+  <data name="Lang_Prompt" xml:space="preserve">
+    <value>Dil seçin / Choose your language</value>
+  </data>
+  <data name="Lang_Hint" xml:space="preserve">
+    <value>Daha sonra "Dil" menüsünden değiştirebilirsiniz.
+You can change it later in the "Language" menu.</value>
+  </data>
+  <data name="Lang_Tr" xml:space="preserve">
+    <value>Türkçe</value>
+  </data>
+  <data name="Lang_En" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Disc_WindowTitle" xml:space="preserve">
+    <value>DDM32 Plus - Sorumluluk reddi</value>
+  </data>
+  <data name="Disc_Title" xml:space="preserve">
+    <value>⚠ SORUMLULUK REDDİ — OKUMADAN KULLANMAYIN</value>
+  </data>
+  <data name="Disc_Intro" xml:space="preserve">
+    <value>**DDM32 Plus** **resmî olmayan, deneysel** bir firmware ve programlama aracıdır. Baofeng, RadioFoundry veya Open25-DM32 ile bağlantılı değildir ve onlar tarafından onaylanmamıştır.</value>
+  </data>
+  <data name="Disc_B1" xml:space="preserve">
+    <value>Telsizinize firmware yüklemek (flashlamak) **telsizinizi kalıcı olarak kullanılamaz hâle getirebilir**, kalibrasyon verilerini, kanal kayıtlarını ve garantinizi kaybettirebilir.</value>
+  </data>
+  <data name="Disc_B2" xml:space="preserve">
+    <value>Bu yazılım **"OLDUĞU GİBİ"**, hiçbir açık veya örtülü garanti olmaksızın sunulur. Çalışacağı, hatasız olduğu veya belirli bir amaca uygun olduğu garanti **edilmez**.</value>
+  </data>
+  <data name="Disc_B3" xml:space="preserve">
+    <value>Yükleme, kurulum ve kullanımın **tüm riski ve sorumluluğu size aittir.** Geliştiriciler (d0ukan / TA2DOU) ve katkıda bulunanlar; telsizde, bilgisayarda veya başka ekipmanda oluşabilecek **hiçbir arıza, hasar, veri kaybı, doğrudan veya dolaylı zarardan sorumlu tutulamaz.**</value>
+  </data>
+  <data name="Disc_B4" xml:space="preserve">
+    <value>Yayın yapmak (TX) yalnızca **geçerli bir lisansla ve izinli frekanslarda** yasaldır. Telsiz mevzuatına uymak tamamen kullanıcının sorumluluğundadır. Acil durum ve can güvenliği haberleşmesi için bu firmware'e **güvenmeyin.**</value>
+  </data>
+  <data name="Disc_B5" xml:space="preserve">
+    <value>Yüklemeden önce mutlaka **tam yedek** alın ve yedeği güvenli bir yerde saklayın.</value>
+  </data>
+  <data name="Disc_Outro" xml:space="preserve">
+    <value>**Bu yazılımı indirerek, yükleyerek veya kullanarak bu koşulları okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan etmiş olursunuz. Kabul etmiyorsanız kullanmayın.**</value>
+  </data>
+  <data name="Disc_LangTip" xml:space="preserve">
+    <value>Show the disclaimer in English / Türkçe göster</value>
+  </data>
+  <data name="Disc_Check" xml:space="preserve">
+    <value>Okudum, anladım ve kabul ediyorum</value>
+  </data>
+  <data name="Disc_Accept" xml:space="preserve">
+    <value>Kabul ediyorum</value>
+  </data>
+  <data name="Disc_Reject" xml:space="preserve">
+    <value>Kabul etmiyorum</value>
+  </data>
+  <data name="Disc_Short" xml:space="preserve">
+    <value>Sorumluluk size aittir. Yedeğiniz hazır mı?</value>
+  </data>
+  <data name="Disc_NotAccepted" xml:space="preserve">
+    <value>Sorumluluk reddi kabul edilmedi: telsiz işlemleri kapalı.</value>
+  </data>
+  <data name="Disc_ReadButton" xml:space="preserve">
+    <value>Sorumluluk reddini oku ve kabul et</value>
+  </data>
+  <data name="Home_Subtitle" xml:space="preserve">
+    <value>Baofeng DM-32UV için DDM32 Plus programlayıcı {0} · {1}</value>
+  </data>
+  <data name="Home_StateNone" xml:space="preserve">
+    <value>Henüz imzalı sürüm listesi yok: "Sürümler" sayfasından denetleyin.</value>
+  </data>
+  <data name="Home_StateUnknown" xml:space="preserve">
+    <value>Telsizdeki sürüm bilinmiyor. En yeni sürüm: DDM32 Plus {0}.</value>
+  </data>
+  <data name="Home_StateCurrent" xml:space="preserve">
+    <value>Telsiz güncel ✓</value>
+  </data>
+  <data name="Home_StateUpdate" xml:space="preserve">
+    <value>Yeni sürüm var: DDM32 Plus {0}</value>
+  </data>
+  <data name="Home_Installed" xml:space="preserve">
+    <value>Telsizdeki sürüm: {0}</value>
+  </data>
+  <data name="Home_CableNextStage" xml:space="preserve">
+    <value>Kablo ve CH340 sürücü denetimi bir sonraki aşamada gelecek (bu sürüm seri port açmaz).</value>
+  </data>
+  <data name="Home_AppUpdate" xml:space="preserve">
+    <value>Yeni program sürümü var: {0} ("Sürümler" sayfası).</value>
+  </data>
+  <data name="Home_Backups" xml:space="preserve">
+    <value>Yedekleriniz: {0}</value>
+  </data>
+  <data name="Home_PythonData" xml:space="preserve">
+    <value>Önceki programın verileri bulundu: {0} ({1} yedek klasörü, {2} doğrulanmış). Olduğu gibi bırakıldı: hiçbir şey taşınmadı veya silinmedi.</value>
+  </data>
+  <data name="Home_UpdateTip" xml:space="preserve">
+    <value>Yedek alıp seçilen DDM32 Plus sürümünü yükler (stoktan ilk kurulum dahil).</value>
+  </data>
+  <data name="Home_VersionsTip" xml:space="preserve">
+    <value>İmzalı sürümler, güncelleme, eski sürüme geçiş.</value>
+  </data>
+  <data name="Home_RestoreTip" xml:space="preserve">
+    <value>Önceki sürüme ya da kendi yedeğinizle stok yazılıma dön.</value>
+  </data>
+  <data name="Home_HealthTip" xml:space="preserve">
+    <value>Bellek, hata kaydı ve açılış bilgisi.</value>
+  </data>
+  <data name="Home_LiveTip" xml:space="preserve">
+    <value>Sinyal, durum ve P25 tarama sayaçları (sadece okuma).</value>
+  </data>
+  <data name="Home_ChannelsTip" xml:space="preserve">
+    <value>Son yedekteki kanallar (sadece okuma).</value>
+  </data>
+  <data name="Home_UpdateResultOk" xml:space="preserve">
+    <value>Program güncellendi ✓</value>
+  </data>
+  <data name="Home_UpdateResultRolledBack" xml:space="preserve">
+    <value>Yeni program açılamadı; eski sürüme dönüldü.</value>
+  </data>
+  <data name="Home_UpdateResultAborted" xml:space="preserve">
+    <value>Program güncellemesi yapılamadı; hiçbir şey değişmedi.</value>
+  </data>
+  <data name="Step_Prep" xml:space="preserve">
+    <value>Hazırlık</value>
+  </data>
+  <data name="Step_Backup" xml:space="preserve">
+    <value>Yedek</value>
+  </data>
+  <data name="Step_Check" xml:space="preserve">
+    <value>Kontrol</value>
+  </data>
+  <data name="Step_Install" xml:space="preserve">
+    <value>Yükle</value>
+  </data>
+  <data name="Step_Done" xml:space="preserve">
+    <value>Bitti</value>
+  </data>
+  <data name="Upd_PrepText" xml:space="preserve">
+    <value>1. Programlama kablosunu telsize ve bilgisayara takın.
+2. Telsizi **kapatın**.</value>
+  </data>
+  <data name="Upd_Version" xml:space="preserve">
+    <value>Sürüm:</value>
+  </data>
+  <data name="Upd_VersionTip" xml:space="preserve">
+    <value>İmzalı DDM32 Plus sürümleri (beta ve kararlı).</value>
+  </data>
+  <data name="Upd_Download" xml:space="preserve">
+    <value>İndir ve doğrula</value>
+  </data>
+  <data name="Upd_DownloadTip" xml:space="preserve">
+    <value>Sürümü GitHub'dan indirir; imza ve SHA-256 denetlenir (telsize bir şey yapılmaz).</value>
+  </data>
+  <data name="Upd_Downloaded" xml:space="preserve">
+    <value>İndirildi ve doğrulandı ✓ ({0})</value>
+  </data>
+  <data name="Upd_DownloadFailed" xml:space="preserve">
+    <value>İndirilemedi: {0}</value>
+  </data>
+  <data name="Upd_NoVersions" xml:space="preserve">
+    <value>Liste boş: önce "Sürümler" sayfasından denetleyin.</value>
+  </data>
+  <data name="Upd_PrepContinueTip" xml:space="preserve">
+    <value>Yedek adımına geç (henüz telsize bir şey yapılmaz).</value>
+  </data>
+  <data name="Upd_AppSha" xml:space="preserve">
+    <value>Uygulama SHA-256:</value>
+  </data>
+  <data name="Upd_Signature" xml:space="preserve">
+    <value>İmza:</value>
+  </data>
+  <data name="Upd_SignedList" xml:space="preserve">
+    <value>İmzalı sürüm listesinde ✓ (anahtar {0})</value>
+  </data>
+  <data name="Upd_BackupText" xml:space="preserve">
+    <value>Telsizin tam yedeği alınır (sadece okuma, telsize hiçbir şey yazılmaz).
+Telsiz **kapalıyken** butona basın. Sarı yazıyı görünce telsizi açın (açıksa önce kapatıp açın).</value>
+  </data>
+  <data name="Upd_BackupButton" xml:space="preserve">
+    <value>Yedek al</value>
+  </data>
+  <data name="Upd_BackupButtonTip" xml:space="preserve">
+    <value>Telsizi okuyup yedeğini bilgisayara kaydeder.</value>
+  </data>
+  <data name="Upd_BackupFolder" xml:space="preserve">
+    <value>Yedek klasörü:</value>
+  </data>
+  <data name="Upd_CheckText" xml:space="preserve">
+    <value>Yedekten telsizdeki yazılım anlaşılır ve yazılacak bölüm hesaplanır (port açılmaz).</value>
+  </data>
+  <data name="Upd_Recheck" xml:space="preserve">
+    <value>Tekrar kontrol et</value>
+  </data>
+  <data name="Upd_InstallText" xml:space="preserve">
+    <value>Yükleme birkaç dakika sürer. Bitene kadar kabloyu çekmeyin, telsizi kapatmayın.
+Butona basınca bir onay sorulur, sonra telsizi kapatıp açmanız istenir.</value>
+  </data>
+  <data name="Upd_InstallButton" xml:space="preserve">
+    <value>Yükle</value>
+  </data>
+  <data name="Upd_InstallButtonTip" xml:space="preserve">
+    <value>DDM32 Plus'ı telsize yükler (onay sorulur).</value>
+  </data>
+  <data name="Upd_DoneTitle" xml:space="preserve">
+    <value>Yüklendi ✓</value>
+  </data>
+  <data name="Upd_DoneText" xml:space="preserve">
+    <value>DDM32 Plus yüklendi ve doğrulandı (VERIFIED, PASS).
+
+Telsizde kontrol edin:
+• Açılış ekranı, ardından ana ekran geliyor mu?
+• Stoktan ilk kurulumda telsiz kanallar için "Yeni başlat" (Start new) sorabilir: önce yedeğinizin durduğundan emin olun.
+• Bir kanal seçip dinleyin. İsterseniz "Telsizin durumu" sayfasından sağlık okuyun.</value>
+  </data>
+  <data name="Banner_Title" xml:space="preserve">
+    <value>Telsizi şimdi kapatıp açın</value>
+  </data>
+  <data name="Banner_Hint" xml:space="preserve">
+    <value>Telsiz açıksa önce kapatın, sonra açın; tuşlara basmayın. Ekran normal açılırsa bir kez daha kapatıp açın.</value>
+  </data>
+  <data name="Banner_Count" xml:space="preserve">
+    <value>Kalan süre: {0}:{1:00}</value>
+  </data>
+  <data name="Ver_Check" xml:space="preserve">
+    <value>Güncellemeleri denetle</value>
+  </data>
+  <data name="Ver_CheckTip" xml:space="preserve">
+    <value>GitHub'daki imzalı DDM32 Plus sürümlerini listeler (internet, telsize bir şey yapılmaz).</value>
+  </data>
+  <data name="Ver_Checking" xml:space="preserve">
+    <value>Denetleniyor...</value>
+  </data>
+  <data name="Ver_AutoCheck" xml:space="preserve">
+    <value>Açılışta denetle</value>
+  </data>
+  <data name="Ver_IncludeBeta" xml:space="preserve">
+    <value>Beta sürümleri de öner</value>
+  </data>
+  <data name="Ver_ColVersion" xml:space="preserve">
+    <value>Sürüm</value>
+  </data>
+  <data name="Ver_ColLabel" xml:space="preserve">
+    <value>Kanal</value>
+  </data>
+  <data name="Ver_ColState" xml:space="preserve">
+    <value>Durum</value>
+  </data>
+  <data name="Ver_ColNotes" xml:space="preserve">
+    <value>Notlar</value>
+  </data>
+  <data name="Label_Latest" xml:space="preserve">
+    <value>En yeni (Latest)</value>
+  </data>
+  <data name="Label_Stable" xml:space="preserve">
+    <value>Kararlı</value>
+  </data>
+  <data name="Label_Beta" xml:space="preserve">
+    <value>Beta</value>
+  </data>
+  <data name="Label_TestAlpha" xml:space="preserve">
+    <value>Test / Alfa</value>
+  </data>
+  <data name="Label_Legacy" xml:space="preserve">
+    <value>Eski ad (DDM25)</value>
+  </data>
+  <data name="State_OnRadio" xml:space="preserve">
+    <value>telsizde</value>
+  </data>
+  <data name="State_Downloaded" xml:space="preserve">
+    <value>indirildi</value>
+  </data>
+  <data name="State_NotDownloaded" xml:space="preserve">
+    <value>indirilmedi</value>
+  </data>
+  <data name="State_Legacy" xml:space="preserve">
+    <value>bu programla kurulmaz (eski adlar)</value>
+  </data>
+  <data name="Ver_Checked" xml:space="preserve">
+    <value>Denetlendi ✓ ({0} imzalı sürüm)</value>
+  </data>
+  <data name="Ver_CheckFailed" xml:space="preserve">
+    <value>Denetlenemedi: {0}
+Liste son başarılı denetimden (bilgisayardaki imzalı kopyalardan) gösteriliyor.</value>
+  </data>
+  <data name="Ver_Empty" xml:space="preserve">
+    <value>İmzalı sürüm listesi boş. "Güncellemeleri denetle"ye basın.</value>
+  </data>
+  <data name="Ver_Rejected" xml:space="preserve">
+    <value>Listelenmeyen (imzası geçmeyen) sürümler:</value>
+  </data>
+  <data name="Ver_NoneRejected" xml:space="preserve">
+    <value>İmzası geçmeyen sürüm yok.</value>
+  </data>
+  <data name="Ver_Key" xml:space="preserve">
+    <value>Sürüm imza anahtarı: {0}</value>
+  </data>
+  <data name="Ver_Switch" xml:space="preserve">
+    <value>Bu sürüme geç</value>
+  </data>
+  <data name="Ver_SwitchTip" xml:space="preserve">
+    <value>Seçilen sürümü yedek, kontrol ve onayla yükler (eski sürümler dahil; uyumluluk uyarıları gösterilir).</value>
+  </data>
+  <data name="Ver_TestConfirmTitle" xml:space="preserve">
+    <value>Test / Alfa sürümü</value>
+  </data>
+  <data name="Ver_TestConfirm" xml:space="preserve">
+    <value>{0} bir test / alfa sürümü: telsizde denenmemiş olabilir ve sorun çıkarabilir.
+
+Emin misiniz?</value>
+  </data>
+  <data name="Ver_TestConfirmYes" xml:space="preserve">
+    <value>Evet, eminim</value>
+  </data>
+  <data name="Ver_LegacyNote" xml:space="preserve">
+    <value>{0} eski DDM25 adlarıyla yayımlandı: imzası doğrulandı ama bu program onu kurmaz.</value>
+  </data>
+  <data name="Ver_Program" xml:space="preserve">
+    <value>Program</value>
+  </data>
+  <data name="Ver_ThisProgram" xml:space="preserve">
+    <value>Bu program: DDM32 Plus {0}</value>
+  </data>
+  <data name="Ver_NewProgram" xml:space="preserve">
+    <value>Yeni program sürümü var: {0}</value>
+  </data>
+  <data name="Ver_UpdateProgram" xml:space="preserve">
+    <value>Programı güncelle</value>
+  </data>
+  <data name="Ver_UpdateProgramTip" xml:space="preserve">
+    <value>Yeni programı indirir, imzasını ve özetini denetler, programı kapatıp yenisiyle değiştirir. Açılmazsa eskisine döner. Yedekleriniz (yedekler) ve ayarlarınız etkilenmez.</value>
+  </data>
+  <data name="Ver_UpdateConfirmTitle" xml:space="preserve">
+    <value>Programı güncelle</value>
+  </data>
+  <data name="Ver_UpdateConfirm" xml:space="preserve">
+    <value>DDM32 Plus programı {0} → {1} güncellensin mi?
+
+Yeni program indirilir, imzası ve SHA-256 özeti denetlenir. Bu pencere kapanır; yeni program açılmazsa eskisi geri gelir. Yedekleriniz (yedekler klasörü) ve ayarlarınız olduğu yerde kalır.
+
+⚠ {2}</value>
+  </data>
+  <data name="Ver_UpdateYes" xml:space="preserve">
+    <value>Evet, güncelle</value>
+  </data>
+  <data name="Ver_UpdateFailed" xml:space="preserve">
+    <value>Program güncellenemedi; hiçbir şey değişmedi. {0}</value>
+  </data>
+  <data name="Ver_HelperFailed" xml:space="preserve">
+    <value>Güncelleme yardımcısı başlatılamadı; hiçbir şey değişmedi.</value>
+  </data>
+  <data name="Ver_DevCopy" xml:space="preserve">
+    <value>(Geliştirme kopyası: program güncellemesi yalnızca kurulu, tek dosya programda çalışır.)</value>
+  </data>
+  <data name="Res_Text" xml:space="preserve">
+    <value>Telsizi **kendi yedeğinizden** geri yükler. Stok yazılım bu programla gelmez ve indirilmez: geri dönüş yalnızca bu telsizin yedeğiyle yapılır.
+Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz.</value>
+  </data>
+  <data name="Res_Previous" xml:space="preserve">
+    <value>Önceki sürüme dön</value>
+  </data>
+  <data name="Res_PreviousTip" xml:space="preserve">
+    <value>Son yüklemeden hemen önce alınan yedeği geri yükler.</value>
+  </data>
+  <data name="Res_Stock" xml:space="preserve">
+    <value>Stok yazılıma dön</value>
+  </data>
+  <data name="Res_StockTip" xml:space="preserve">
+    <value>Telsiz stok yazılımdayken alınan kendi yedeğinizi geri yükler.</value>
+  </data>
+  <data name="Res_Other" xml:space="preserve">
+    <value>Başka bir yedek klasörü seç...</value>
+  </data>
+  <data name="Res_Restore" xml:space="preserve">
+    <value>Geri yükle</value>
+  </data>
+  <data name="Res_RestoreTip" xml:space="preserve">
+    <value>Seçilen yedeği telsize yazar (onay sorulur).</value>
+  </data>
+  <data name="Res_OwnBackups" xml:space="preserve">
+    <value>Bu programın yedekleri: {0} ({1} doğrulanmış)</value>
+  </data>
+  <data name="Health_Text" xml:space="preserve">
+    <value>Telsiz açık ve kablo takılıyken okuyun. Sadece okur, telsize bir şey yazmaz.</value>
+  </data>
+  <data name="Health_Read" xml:space="preserve">
+    <value>Durumu oku</value>
+  </data>
+  <data name="Health_ReadTip" xml:space="preserve">
+    <value>Telsizin bellek, hata kaydı ve açılış bilgisini bir kez okur.</value>
+  </data>
+  <data name="Health_Auto" xml:space="preserve">
+    <value>her 30 sn oku</value>
+  </data>
+  <data name="Health_NotRead" xml:space="preserve">
+    <value>Henüz okunmadı</value>
+  </data>
+  <data name="Health_Driver" xml:space="preserve">
+    <value>Kablo sürücüsü: Windows CH340 kablosunu sürücüsü olmadan tanımaz. Durum sayfası bunu bir sonraki aşamada kendisi bulup ne yapılacağını anlatacak.</value>
+  </data>
+  <data name="Live_Text" xml:space="preserve">
+    <value>Telsiz açık ve kablo takılıyken **Bağlan**'a basın: port açılır ve telsiz yalnızca okunur.</value>
+  </data>
+  <data name="Live_Connect" xml:space="preserve">
+    <value>Bağlan</value>
+  </data>
+  <data name="Live_Stop" xml:space="preserve">
+    <value>Durdur</value>
+  </data>
+  <data name="Live_NotConnected" xml:space="preserve">
+    <value>Bağlı değil.</value>
+  </data>
+  <data name="Live_Signal" xml:space="preserve">
+    <value>Sinyal</value>
+  </data>
+  <data name="Live_State" xml:space="preserve">
+    <value>Durum</value>
+  </data>
+  <data name="Live_Scan" xml:space="preserve">
+    <value>P25 bölge tarama sayaçları</value>
+  </data>
+  <data name="Ch_Warn" xml:space="preserve">
+    <value>Sadece görüntüleme: telsize yazmaz. Kanalları değiştirmek için upstream CPS kullanın.</value>
+  </data>
+  <data name="Ch_NoBackup" xml:space="preserve">
+    <value>Yedek bulunamadı. Önce "Telsizi güncelle" sayfasından bir yedek alın.</value>
+  </data>
+  <data name="Ch_Search" xml:space="preserve">
+    <value>Ara:</value>
+  </data>
+  <data name="Ch_SearchHint" xml:space="preserve">
+    <value>ad, frekans, mod, NAC, TG ...</value>
+  </data>
+  <data name="Ch_Channels" xml:space="preserve">
+    <value>Kanallar</value>
+  </data>
+  <data name="Ch_Zones" xml:space="preserve">
+    <value>Bölgeler</value>
+  </data>
+  <data name="Ch_Contacts" xml:space="preserve">
+    <value>Kişiler</value>
+  </data>
+  <data name="Ch_Lists" xml:space="preserve">
+    <value>RX grup listeleri</value>
+  </data>
+  <data name="Help_WindowTitle" xml:space="preserve">
+    <value>DDM32 Plus - Yardım</value>
+  </data>
+  <data name="Help_Title" xml:space="preserve">
+    <value>Yardım</value>
+  </data>
+  <data name="Help_1_T" xml:space="preserve">
+    <value>1. Telsiz yakalanamadı (zaman aşımı)</value>
+  </data>
+  <data name="Help_1_B" xml:space="preserve">
+    <value>Araç telsizin açılmasını bekler. Telsizi kapatın, kabloyu takılı bırakın, **Tekrar dene**'ye basın ve sarı **"Telsizi şimdi kapatıp açın"** yazısını görünce telsiz açıksa kapatın, sonra açın. Telsiz normal ekranla açılırsa kapatıp bir daha açın. Tuşlara basmayın.</value>
+  </data>
+  <data name="Help_2_T" xml:space="preserve">
+    <value>2. Kablo bulunamadı</value>
+  </data>
+  <data name="Help_2_B" xml:space="preserve">
+    <value>Programlama kablosunu bilgisayara ve telsize sıkıca takın, **Yenile**'ye basın. DM-32UV kablosu genelde "USB-SERIAL CH340" olarak görünür (program bunu kendisi seçer). Görünmüyorsa CH340 sürücüsünü kurun. Sanal portlar (com0com, Bluetooth) telsiz değildir ve seçilmez.</value>
+  </data>
+  <data name="Help_3_T" xml:space="preserve">
+    <value>3. Yedek eski</value>
+  </data>
+  <data name="Help_3_B" xml:space="preserve">
+    <value>Yükleme, telsizin **şu anki** yedeğiyle yapılmalı. Telsiz o yedekten sonra değiştiyse (başka bir yükleme, CPS ile yazma) yükleme aracı bunu fark eder ve hiçbir şey yazmadan durur. Yeni bir yedek alın.</value>
+  </data>
+  <data name="Help_4_T" xml:space="preserve">
+    <value>4. Sürüm kurulamıyor</value>
+  </data>
+  <data name="Help_4_B" xml:space="preserve">
+    <value>Program yalnızca **imzalı** DDM32 Plus sürümlerini kurar: sürüm listesinin imzası programdaki anahtarla doğrulanmalı ve indirilen dosyanın SHA-256 özeti listedekiyle aynı olmalı. İmzası geçmeyen sürümler listede görünmez ("Sürümler" sayfasında Ayrıntılar).</value>
+  </data>
+  <data name="Help_5_T" xml:space="preserve">
+    <value>5. Stok yazılımdan ilk kurulum</value>
+  </data>
+  <data name="Help_5_B" xml:space="preserve">
+    <value>Telsizde stok yazılım varsa program bunu yedekten anlar ve telsizin kendi DMR codec'ini yedeğinizden alıp ayrılmış codec bölümüne hazırlar. DDM32 Plus yalnızca stok .047 üzerinde denendi; diğer desteklenen stok sürümlerde (.032 - .049) uyarı gösterilir. Tanınmayan sürümlerde (örneğin .050) önce Open25-DM32 Classic'i kendi Flasher'ıyla kurun, sonra DDM32 Plus'ı onun üzerine kurun.</value>
+  </data>
+  <data name="Help_6_T" xml:space="preserve">
+    <value>6. Kurulum yarıda kaldı</value>
+  </data>
+  <data name="Help_6_B" xml:space="preserve">
+    <value>Program asla kendiliğinden tekrar denemez. "Hiçbir şey yazılmadı" yazıyorsa telsiz zamanında açılmamıştır: Kontrol ve Yükle adımlarını yeniden yapabilirsiniz. "Yazma başladıktan sonra durdu" yazıyorsa telsizi kapatmayın, kabloyu çekmeyin ve **Geri dön** sayfasından yüklemeden önce alınan yedekle geri yükleyin. Bootloader hiç yazılmadığı için telsiz yeniden yüklenebilir durumda kalır.</value>
+  </data>
+  <data name="Help_7_T" xml:space="preserve">
+    <value>7. Yedekler nerede?</value>
+  </data>
+  <data name="Help_7_B" xml:space="preserve">
+    <value>Program klasöründeki **yedekler** klasöründe: {0}
+Bu klasörü **silmeyin ve kimseyle paylaşmayın**: telsizinizin kalibrasyonu ve kanalları içindedir. Program güncellemeleri ve programı kaldırmak bu klasöre dokunmaz. Önceki programın yedekleri kendi klasöründe kalır (%LOCALAPPDATA%\DDM32Plus veya DDM25Plus).</value>
+  </data>
+  <data name="Help_8_T" xml:space="preserve">
+    <value>8. CH340 sürücüsü yok</value>
+  </data>
+  <data name="Help_8_B" xml:space="preserve">
+    <value>Kablo takılıyken Aygıt Yöneticisi'nde "Bağlantı noktaları (COM ve LPT)" altında "USB-SERIAL CH340" görünmüyorsa sürücü eksiktir. Sürücüyü kablonun üreticisinden ya da WCH'nin sitesinden (CH341SER) indirip kurun, kabloyu çıkarıp yeniden takın.</value>
+  </data>
+  <data name="About_WindowTitle" xml:space="preserve">
+    <value>DDM32 Plus - Hakkında</value>
+  </data>
+  <data name="About_Line" xml:space="preserve">
+    <value>**DDM32 Plus · {0}**
+Program sürümü {1}</value>
+  </data>
+  <data name="About_Desc" xml:space="preserve">
+    <value>Baofeng DM-32UV için resmî olmayan, deneysel firmware ve programlayıcı. Lisans: GPL-3.0-or-later.</value>
+  </data>
+  <data name="About_Credits" xml:space="preserve">
+    <value>Teşekkürler / Credits</value>
+  </data>
+  <data name="About_C1" xml:space="preserve">
+    <value>**RadioFoundry** (MIT): açık firmware tabanı, RAM izleyici, codec bölümü araçları - github.com/RadioFoundry/RadioFoundry</value>
+  </data>
+  <data name="About_C2" xml:space="preserve">
+    <value>**Open25-DM32 Classic** (MIT, tylerwatt12): P25, IMBE, native modem, Classic düzeni - github.com/tylerwatt12/Open25-DM32</value>
+  </data>
+  <data name="About_C3" xml:space="preserve">
+    <value>mbelib (ISC), OP25 ve diğer kaynaklar: depodaki THIRD_PARTY.md</value>
+  </data>
+  <data name="About_C4" xml:space="preserve">
+    <value>Ed25519 imza denetimi: RFC 8032 başvuru kodu</value>
+  </data>
+  <data name="About_Footer" xml:space="preserve">
+    <value>Baofeng, RadioFoundry veya Open25-DM32 ile bağlantılı değildir. Telsizin kendi DMR codec'i ve stok yazılım bu programla dağıtılmaz.</value>
+  </data>
+</root>

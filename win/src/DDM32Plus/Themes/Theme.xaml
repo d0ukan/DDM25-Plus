@@ -1,0 +1,212 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The look of the PyQt5 program (Qt "Fusion" style, Segoe UI 9 pt, the same colours and size steps).
+         Sizes: Qt point sizes x 96/72. Base 9 pt = 12 px. -->
+
+    <!-- Colours of the Python program (home_tab.py, update_tab.py, health_tab.py, widgets.py) -->
+    <SolidColorBrush x:Key="Green" Color="#2e7d32" />
+    <SolidColorBrush x:Key="Amber" Color="#b26a00" />
+    <SolidColorBrush x:Key="AmberDark" Color="#8a6d00" />
+    <SolidColorBrush x:Key="Grey" Color="#666666" />
+    <SolidColorBrush x:Key="Red" Color="#c62828" />
+    <SolidColorBrush x:Key="Info" Color="#1f4e79" />
+    <SolidColorBrush x:Key="BannerBack" Color="#f6c343" />
+    <SolidColorBrush x:Key="BannerText" Color="#1d1d1d" />
+    <SolidColorBrush x:Key="Window" Color="#efefef" />
+    <SolidColorBrush x:Key="Base" Color="#ffffff" />
+    <SolidColorBrush x:Key="Frame" Color="#b9b9b9" />
+    <SolidColorBrush x:Key="Highlight" Color="#308cc6" />
+    <SolidColorBrush x:Key="NoteBack" Color="#e8f0f8" />
+
+    <LinearGradientBrush x:Key="ButtonFace" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#fbfbfb" Offset="0" />
+        <GradientStop Color="#e9e9e9" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="ButtonPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#dcdcdc" Offset="0" />
+        <GradientStop Color="#e4e4e4" Offset="1" />
+    </LinearGradientBrush>
+
+    <FontFamily x:Key="IconFont">Segoe MDL2 Assets</FontFamily>
+
+    <!-- Sizes: base 9 pt; +1 +2 +3 +4 +6 +8 +9 +12 +14 pt -->
+    <system:Double x:Key="Size1" xmlns:system="clr-namespace:System;assembly=System.Runtime">13.33</system:Double>
+    <system:Double x:Key="Size2" xmlns:system="clr-namespace:System;assembly=System.Runtime">14.67</system:Double>
+    <system:Double x:Key="Size3" xmlns:system="clr-namespace:System;assembly=System.Runtime">16</system:Double>
+    <system:Double x:Key="Size4" xmlns:system="clr-namespace:System;assembly=System.Runtime">17.33</system:Double>
+    <system:Double x:Key="Size6" xmlns:system="clr-namespace:System;assembly=System.Runtime">20</system:Double>
+    <system:Double x:Key="Size8" xmlns:system="clr-namespace:System;assembly=System.Runtime">22.67</system:Double>
+    <system:Double x:Key="Size9" xmlns:system="clr-namespace:System;assembly=System.Runtime">24</system:Double>
+    <system:Double x:Key="Size12" xmlns:system="clr-namespace:System;assembly=System.Runtime">28</system:Double>
+    <system:Double x:Key="Size14" xmlns:system="clr-namespace:System;assembly=System.Runtime">30.67</system:Double>
+
+    <!-- Fusion-like push button -->
+    <Style TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource ButtonFace}" />
+        <Setter Property="BorderBrush" Value="#a9a9a9" />
+        <Setter Property="Foreground" Value="#202020" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" CornerRadius="3" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center" RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Highlight}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Highlight}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource ButtonPressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- big_button(): +4 pt bold, at least 52 px high, an icon left of the text (the icon glyph is the Tag) -->
+    <Style x:Key="BigButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="FontSize" Value="{StaticResource Size4}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="Margin" Value="0,4" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" FontWeight="Normal" FontSize="24"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"
+                                   Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The home page's tiles: +6 pt bold, 80 px high -->
+    <Style x:Key="TileButton" TargetType="Button" BasedOn="{StaticResource BigButton}">
+        <Setter Property="FontSize" Value="{StaticResource Size6}" />
+        <Setter Property="MinHeight" Value="80" />
+        <Setter Property="Margin" Value="4" />
+    </Style>
+
+    <!-- A small button with an icon -->
+    <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center"
+                                   Margin="0,0,6,0"
+                                   Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource Size8}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <!-- plain_label(): +2 pt, wrapping -->
+    <Style x:Key="Plain" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource Size2}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,3" />
+    </Style>
+
+    <!-- QFrame StyledPanel -->
+    <Style x:Key="Card" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{StaticResource Frame}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="0,6" />
+        <Setter Property="Background" Value="#f7f7f7" />
+    </Style>
+
+    <!-- The "coming in the next stage" note -->
+    <Style x:Key="NextStage" TargetType="Border">
+        <Setter Property="BorderBrush" Value="#9fb7d0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="0,8" />
+        <Setter Property="Background" Value="{StaticResource NoteBack}" />
+    </Style>
+
+    <!-- RadioOnBanner: the yellow "Telsizi şimdi kapatıp açın" -->
+    <Style x:Key="Banner" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BannerBack}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="Margin" Value="0,6" />
+        <Setter Property="TextElement.Foreground" Value="{StaticResource BannerText}" />
+    </Style>
+
+    <!-- Fusion-like tabs; the tab text is +2 pt -->
+    <Style TargetType="TabItem">
+        <Setter Property="FontSize" Value="{StaticResource Size2}" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Bd" Background="#e3e3e3" BorderBrush="{StaticResource Frame}"
+                            BorderThickness="1,1,1,0" CornerRadius="3,3,0,0" Margin="0,2,-1,0"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Window}" />
+                            <Setter TargetName="Bd" Property="Margin" Value="-2,0,-3,-1" />
+                            <Setter Property="Panel.ZIndex" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Highlight}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TabControl">
+        <Setter Property="Background" Value="{StaticResource Window}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Frame}" />
+        <Setter Property="Padding" Value="12,10" />
+    </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="MaxWidth" Value="420" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Expander">
+        <Setter Property="Margin" Value="0,8,0,0" />
+    </Style>
+</ResourceDictionary>

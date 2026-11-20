@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DDM32 Plus UI strings (English). Same keys in Strings.resx (English, neutral) and Strings.tr.resx (Turkish);
+     the tests check that. **text** is shown bold, a line break starts a new line. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Title" xml:space="preserve">
+    <value>DDM32 Plus</value>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="Menu_HelpTip" xml:space="preserve">
+    <value>Common situations</value>
+  </data>
+  <data name="Menu_Disclaimer" xml:space="preserve">
+    <value>Disclaimer</value>
+  </data>
+  <data name="Menu_DisclaimerTip" xml:space="preserve">
+    <value>Show the disclaimer</value>
+  </data>
+  <data name="Menu_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Menu_AboutTip" xml:space="preserve">
+    <value>DDM32 Plus · d0ukan · TA2DOU</value>
+  </data>
+  <data name="Menu_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Menu_LanguageTip" xml:space="preserve">
+    <value>Change the program language</value>
+  </data>
+  <data name="Tab_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Tab_Update" xml:space="preserve">
+    <value>Update the radio</value>
+  </data>
+  <data name="Tab_Versions" xml:space="preserve">
+    <value>Versions</value>
+  </data>
+  <data name="Tab_Restore" xml:space="preserve">
+    <value>Go back</value>
+  </data>
+  <data name="Tab_Health" xml:space="preserve">
+    <value>Radio health</value>
+  </data>
+  <data name="Tab_Live" xml:space="preserve">
+    <value>Live panel</value>
+  </data>
+  <data name="Tab_Channels" xml:space="preserve">
+    <value>My channels</value>
+  </data>
+  <data name="Status_Cable" xml:space="preserve">
+    <value>Cable: {0}</value>
+  </data>
+  <data name="Status_CableNextStage" xml:space="preserve">
+    <value>next stage</value>
+  </data>
+  <data name="Status_Installed" xml:space="preserve">
+    <value>Version on the radio: {0}</value>
+  </data>
+  <data name="Status_Data" xml:space="preserve">
+    <value>Data: {0}</value>
+  </data>
+  <data name="Status_DataTip" xml:space="preserve">
+    <value>Backups (the yedekler folder), downloaded versions and settings are in the program folder. Program updates and uninstalling never touch the backups.</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common_Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Common_BackTip" xml:space="preserve">
+    <value>Back to the previous step (does nothing to the radio).</value>
+  </data>
+  <data name="Common_Continue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Common_NextStageTitle" xml:space="preserve">
+    <value>Coming in the next stage</value>
+  </data>
+  <data name="Common_NextStage" xml:space="preserve">
+    <value>The part of this page that works with the radio comes in the next stage. Each radio tool is first checked byte for byte against the Python tool on recorded samples. This version never connects to the radio and never opens a serial port.</value>
+  </data>
+  <data name="Lang_Prompt" xml:space="preserve">
+    <value>Dil seçin / Choose your language</value>
+  </data>
+  <data name="Lang_Hint" xml:space="preserve">
+    <value>Daha sonra "Dil" menüsünden değiştirebilirsiniz.
+You can change it later in the "Language" menu.</value>
+  </data>
+  <data name="Lang_Tr" xml:space="preserve">
+    <value>Türkçe</value>
+  </data>
+  <data name="Lang_En" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Disc_WindowTitle" xml:space="preserve">
+    <value>DDM32 Plus - Disclaimer</value>
+  </data>
+  <data name="Disc_Title" xml:space="preserve">
+    <value>⚠ DISCLAIMER — READ BEFORE USING</value>
+  </data>
+  <data name="Disc_Intro" xml:space="preserve">
+    <value>**DDM32 Plus** is **unofficial, experimental** firmware and programming software. It is not affiliated with or endorsed by Baofeng, RadioFoundry or Open25-DM32.</value>
+  </data>
+  <data name="Disc_B1" xml:space="preserve">
+    <value>Flashing firmware **can permanently brick your radio**, erase calibration and channel data, and void your warranty.</value>
+  </data>
+  <data name="Disc_B2" xml:space="preserve">
+    <value>This software is provided **"AS IS", without warranty of any kind**, express or implied, including merchantability or fitness for a particular purpose.</value>
+  </data>
+  <data name="Disc_B3" xml:space="preserve">
+    <value>**You flash, install and use it entirely at your own risk and responsibility.** The authors (d0ukan / TA2DOU) and contributors accept **no liability for any malfunction, damage, data loss, or direct or indirect loss** to radios, computers or any other equipment.</value>
+  </data>
+  <data name="Disc_B4" xml:space="preserve">
+    <value>Transmitting is legal **only with a valid licence on authorised frequencies**; complying with radio regulations is solely your responsibility. **Do not rely** on this firmware for emergency or safety-of-life communication.</value>
+  </data>
+  <data name="Disc_B5" xml:space="preserve">
+    <value>Always make and keep a **full backup** before flashing.</value>
+  </data>
+  <data name="Disc_Outro" xml:space="preserve">
+    <value>**By downloading, installing or using this software you confirm that you have read, understood and accepted these terms. If you do not accept them, do not use it.**</value>
+  </data>
+  <data name="Disc_LangTip" xml:space="preserve">
+    <value>Show the disclaimer in English / Türkçe göster</value>
+  </data>
+  <data name="Disc_Check" xml:space="preserve">
+    <value>I have read, understood and accept this</value>
+  </data>
+  <data name="Disc_Accept" xml:space="preserve">
+    <value>I accept</value>
+  </data>
+  <data name="Disc_Reject" xml:space="preserve">
+    <value>I do not accept</value>
+  </data>
+  <data name="Disc_Short" xml:space="preserve">
+    <value>You are responsible. Is your backup ready?</value>
+  </data>
+  <data name="Disc_NotAccepted" xml:space="preserve">
+    <value>The disclaimer was not accepted: radio steps are switched off.</value>
+  </data>
+  <data name="Disc_ReadButton" xml:space="preserve">
+    <value>Read and accept the disclaimer</value>
+  </data>
+  <data name="Home_Subtitle" xml:space="preserve">
+    <value>DDM32 Plus programmer for the Baofeng DM-32UV {0} · {1}</value>
+  </data>
+  <data name="Home_StateNone" xml:space="preserve">
+    <value>No signed version list yet: check on the "Versions" page.</value>
+  </data>
+  <data name="Home_StateUnknown" xml:space="preserve">
+    <value>The version on the radio is unknown. Newest version: DDM32 Plus {0}.</value>
+  </data>
+  <data name="Home_StateCurrent" xml:space="preserve">
+    <value>The radio is up to date ✓</value>
+  </data>
+  <data name="Home_StateUpdate" xml:space="preserve">
+    <value>New version available: DDM32 Plus {0}</value>
+  </data>
+  <data name="Home_Installed" xml:space="preserve">
+    <value>Version on the radio: {0}</value>
+  </data>
+  <data name="Home_CableNextStage" xml:space="preserve">
+    <value>The cable and CH340 driver check comes in the next stage (this version opens no serial port).</value>
+  </data>
+  <data name="Home_AppUpdate" xml:space="preserve">
+    <value>A new program version is available: {0} ("Versions" page).</value>
+  </data>
+  <data name="Home_Backups" xml:space="preserve">
+    <value>Your backups: {0}</value>
+  </data>
+  <data name="Home_PythonData" xml:space="preserve">
+    <value>Data of the previous program found: {0} ({1} backup folders, {2} verified). Left as it is: nothing was moved or deleted.</value>
+  </data>
+  <data name="Home_UpdateTip" xml:space="preserve">
+    <value>Backs up the radio and installs the chosen DDM32 Plus version (first install from stock included).</value>
+  </data>
+  <data name="Home_VersionsTip" xml:space="preserve">
+    <value>Signed versions, updates, switching to an older version.</value>
+  </data>
+  <data name="Home_RestoreTip" xml:space="preserve">
+    <value>Go back to the previous version, or to stock firmware with your own backup.</value>
+  </data>
+  <data name="Home_HealthTip" xml:space="preserve">
+    <value>Memory, crash record and start-up information.</value>
+  </data>
+  <data name="Home_LiveTip" xml:space="preserve">
+    <value>Signal, status and P25 scan counters (read only).</value>
+  </data>
+  <data name="Home_ChannelsTip" xml:space="preserve">
+    <value>The channels in the latest backup (read only).</value>
+  </data>
+  <data name="Home_UpdateResultOk" xml:space="preserve">
+    <value>The program was updated ✓</value>
+  </data>
+  <data name="Home_UpdateResultRolledBack" xml:space="preserve">
+    <value>The new program did not start; the old version is back.</value>
+  </data>
+  <data name="Home_UpdateResultAborted" xml:space="preserve">
+    <value>The program update could not be done; nothing changed.</value>
+  </data>
+  <data name="Step_Prep" xml:space="preserve">
+    <value>Preparation</value>
+  </data>
+  <data name="Step_Backup" xml:space="preserve">
+    <value>Backup</value>
+  </data>
+  <data name="Step_Check" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="Step_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Step_Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Upd_PrepText" xml:space="preserve">
+    <value>1. Connect the programming cable to the radio and the computer.
+2. Switch the radio **off**.</value>
+  </data>
+  <data name="Upd_Version" xml:space="preserve">
+    <value>Version:</value>
+  </data>
+  <data name="Upd_VersionTip" xml:space="preserve">
+    <value>Signed DDM32 Plus versions (beta and stable).</value>
+  </data>
+  <data name="Upd_Download" xml:space="preserve">
+    <value>Download and verify</value>
+  </data>
+  <data name="Upd_DownloadTip" xml:space="preserve">
+    <value>Downloads the version from GitHub; signature and SHA-256 are checked (nothing is done to the radio).</value>
+  </data>
+  <data name="Upd_Downloaded" xml:space="preserve">
+    <value>Downloaded and verified ✓ ({0})</value>
+  </data>
+  <data name="Upd_DownloadFailed" xml:space="preserve">
+    <value>Download failed: {0}</value>
+  </data>
+  <data name="Upd_NoVersions" xml:space="preserve">
+    <value>The list is empty: check on the "Versions" page first.</value>
+  </data>
+  <data name="Upd_PrepContinueTip" xml:space="preserve">
+    <value>Go to the backup step (nothing is done to the radio yet).</value>
+  </data>
+  <data name="Upd_AppSha" xml:space="preserve">
+    <value>Application SHA-256:</value>
+  </data>
+  <data name="Upd_Signature" xml:space="preserve">
+    <value>Signature:</value>
+  </data>
+  <data name="Upd_SignedList" xml:space="preserve">
+    <value>In the signed version list ✓ (key {0})</value>
+  </data>
+  <data name="Upd_BackupText" xml:space="preserve">
+    <value>A full backup of the radio is made (read only, nothing is written to the radio).
+Press the button while the radio is **off**. When the yellow sign shows, switch the radio on (if it is on, switch it off and on).</value>
+  </data>
+  <data name="Upd_BackupButton" xml:space="preserve">
+    <value>Back up</value>
+  </data>
+  <data name="Upd_BackupButtonTip" xml:space="preserve">
+    <value>Reads the radio and saves its backup on this computer.</value>
+  </data>
+  <data name="Upd_BackupFolder" xml:space="preserve">
+    <value>Backup folder:</value>
+  </data>
+  <data name="Upd_CheckText" xml:space="preserve">
+    <value>The backup shows what the radio runs, and the part to write is planned (no port is opened).</value>
+  </data>
+  <data name="Upd_Recheck" xml:space="preserve">
+    <value>Check again</value>
+  </data>
+  <data name="Upd_InstallText" xml:space="preserve">
+    <value>Installing takes a few minutes. Until it ends, do not unplug the cable or switch the radio off.
+After the button you are asked to confirm, then to switch the radio off and on.</value>
+  </data>
+  <data name="Upd_InstallButton" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Upd_InstallButtonTip" xml:space="preserve">
+    <value>Installs DDM32 Plus on the radio (asks first).</value>
+  </data>
+  <data name="Upd_DoneTitle" xml:space="preserve">
+    <value>Installed ✓</value>
+  </data>
+  <data name="Upd_DoneText" xml:space="preserve">
+    <value>DDM32 Plus was installed and verified (VERIFIED, PASS).
+
+Check on the radio:
+• Does the boot screen come, then the main screen?
+• After a first install from stock the radio may ask "Start new" for the channels: first make sure your backup is safe.
+• Pick a channel and listen. If you like, read the health on the "Radio health" page.</value>
+  </data>
+  <data name="Banner_Title" xml:space="preserve">
+    <value>Switch the radio off and on now</value>
+  </data>
+  <data name="Banner_Hint" xml:space="preserve">
+    <value>If the radio is on, switch it off first, then on; do not press any keys. If the normal screen comes up, switch it off and on once more.</value>
+  </data>
+  <data name="Banner_Count" xml:space="preserve">
+    <value>Time left: {0}:{1:00}</value>
+  </data>
+  <data name="Ver_Check" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="Ver_CheckTip" xml:space="preserve">
+    <value>Lists the signed DDM32 Plus versions on GitHub (internet; nothing is done to the radio).</value>
+  </data>
+  <data name="Ver_Checking" xml:space="preserve">
+    <value>Checking...</value>
+  </data>
+  <data name="Ver_AutoCheck" xml:space="preserve">
+    <value>Check at start-up</value>
+  </data>
+  <data name="Ver_IncludeBeta" xml:space="preserve">
+    <value>Also suggest beta versions</value>
+  </data>
+  <data name="Ver_ColVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="Ver_ColLabel" xml:space="preserve">
+    <value>Channel</value>
+  </data>
+  <data name="Ver_ColState" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Ver_ColNotes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Label_Latest" xml:space="preserve">
+    <value>Latest</value>
+  </data>
+  <data name="Label_Stable" xml:space="preserve">
+    <value>Stable</value>
+  </data>
+  <data name="Label_Beta" xml:space="preserve">
+    <value>Beta</value>
+  </data>
+  <data name="Label_TestAlpha" xml:space="preserve">
+    <value>Test / Alpha</value>
+  </data>
+  <data name="Label_Legacy" xml:space="preserve">
+    <value>Legacy (DDM25)</value>
+  </data>
+  <data name="State_OnRadio" xml:space="preserve">
+    <value>on the radio</value>
+  </data>
+  <data name="State_Downloaded" xml:space="preserve">
+    <value>downloaded</value>
+  </data>
+  <data name="State_NotDownloaded" xml:space="preserve">
+    <value>not downloaded</value>
+  </data>
+  <data name="State_Legacy" xml:space="preserve">
+    <value>not installed by this program (old names)</value>
+  </data>
+  <data name="Ver_Checked" xml:space="preserve">
+    <value>Checked ✓ ({0} signed versions)</value>
+  </data>
+  <data name="Ver_CheckFailed" xml:space="preserve">
+    <value>The check failed: {0}
+The list is shown from the last good check (the signed copies on this computer).</value>
+  </data>
+  <data name="Ver_Empty" xml:space="preserve">
+    <value>The signed version list is empty. Press "Check for updates".</value>
+  </data>
+  <data name="Ver_Rejected" xml:space="preserve">
+    <value>Versions not listed (signature failed):</value>
+  </data>
+  <data name="Ver_NoneRejected" xml:space="preserve">
+    <value>No version failed the signature check.</value>
+  </data>
+  <data name="Ver_Key" xml:space="preserve">
+    <value>Release signing key: {0}</value>
+  </data>
+  <data name="Ver_Switch" xml:space="preserve">
+    <value>Switch to this version</value>
+  </data>
+  <data name="Ver_SwitchTip" xml:space="preserve">
+    <value>Installs the chosen version with backup, check and confirmation (older versions too; compatibility warnings are shown).</value>
+  </data>
+  <data name="Ver_TestConfirmTitle" xml:space="preserve">
+    <value>Test / Alpha version</value>
+  </data>
+  <data name="Ver_TestConfirm" xml:space="preserve">
+    <value>{0} is a test / alpha version: it may not have been tried on a radio and may cause problems.
+
+Are you sure?</value>
+  </data>
+  <data name="Ver_TestConfirmYes" xml:space="preserve">
+    <value>Yes, I am sure</value>
+  </data>
+  <data name="Ver_LegacyNote" xml:space="preserve">
+    <value>{0} was published with the old DDM25 names: its signature verifies, but this program does not install it.</value>
+  </data>
+  <data name="Ver_Program" xml:space="preserve">
+    <value>Program</value>
+  </data>
+  <data name="Ver_ThisProgram" xml:space="preserve">
+    <value>This program: DDM32 Plus {0}</value>
+  </data>
+  <data name="Ver_NewProgram" xml:space="preserve">
+    <value>A new program version is available: {0}</value>
+  </data>
+  <data name="Ver_UpdateProgram" xml:space="preserve">
+    <value>Update the program</value>
+  </data>
+  <data name="Ver_UpdateProgramTip" xml:space="preserve">
+    <value>Downloads the new program, checks its signature and hash, closes this program and replaces it. If the new one does not start, the old one comes back. Your backups (yedekler) and settings are not touched.</value>
+  </data>
+  <data name="Ver_UpdateConfirmTitle" xml:space="preserve">
+    <value>Update the program</value>
+  </data>
+  <data name="Ver_UpdateConfirm" xml:space="preserve">
+    <value>Update the DDM32 Plus program {0} → {1}?
+
+The new program is downloaded and its signature and SHA-256 are checked. This window closes; if the new program does not start, the old one comes back. Your backups (the yedekler folder) and settings stay where they are.
+
+⚠ {2}</value>
+  </data>
+  <data name="Ver_UpdateYes" xml:space="preserve">
+    <value>Yes, update</value>
+  </data>
+  <data name="Ver_UpdateFailed" xml:space="preserve">
+    <value>The program could not be updated; nothing changed. {0}</value>
+  </data>
+  <data name="Ver_HelperFailed" xml:space="preserve">
+    <value>The update helper could not be started; nothing changed.</value>
+  </data>
+  <data name="Ver_DevCopy" xml:space="preserve">
+    <value>(Development copy: the program update works only in the installed single-file program.)</value>
+  </data>
+  <data name="Res_Text" xml:space="preserve">
+    <value>Puts the radio back from **your own backup**. Stock firmware does not come with this program and is never downloaded: going back works only with this radio's own backup.
+The bootloader and the data chip (calibration, channels, settings) are never written.</value>
+  </data>
+  <data name="Res_Previous" xml:space="preserve">
+    <value>Back to the previous version</value>
+  </data>
+  <data name="Res_PreviousTip" xml:space="preserve">
+    <value>Restores the backup taken right before the last install.</value>
+  </data>
+  <data name="Res_Stock" xml:space="preserve">
+    <value>Back to stock firmware</value>
+  </data>
+  <data name="Res_StockTip" xml:space="preserve">
+    <value>Restores your own backup taken while the radio ran stock firmware.</value>
+  </data>
+  <data name="Res_Other" xml:space="preserve">
+    <value>Choose another backup folder...</value>
+  </data>
+  <data name="Res_Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="Res_RestoreTip" xml:space="preserve">
+    <value>Writes the chosen backup to the radio (asks first).</value>
+  </data>
+  <data name="Res_OwnBackups" xml:space="preserve">
+    <value>This program's backups: {0} ({1} verified)</value>
+  </data>
+  <data name="Health_Text" xml:space="preserve">
+    <value>Read it while the radio is on and the cable is connected. It only reads; nothing is written to the radio.</value>
+  </data>
+  <data name="Health_Read" xml:space="preserve">
+    <value>Read the status</value>
+  </data>
+  <data name="Health_ReadTip" xml:space="preserve">
+    <value>Reads the radio's memory, crash record and start-up information once.</value>
+  </data>
+  <data name="Health_Auto" xml:space="preserve">
+    <value>read every 30 s</value>
+  </data>
+  <data name="Health_NotRead" xml:space="preserve">
+    <value>Not read yet</value>
+  </data>
+  <data name="Health_Driver" xml:space="preserve">
+    <value>Cable driver: Windows does not know the CH340 cable without its driver. In the next stage this page finds that by itself and explains what to do.</value>
+  </data>
+  <data name="Live_Text" xml:space="preserve">
+    <value>With the radio on and the cable connected press **Connect**: the port is opened and the radio is only read.</value>
+  </data>
+  <data name="Live_Connect" xml:space="preserve">
+    <value>Connect</value>
+  </data>
+  <data name="Live_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Live_NotConnected" xml:space="preserve">
+    <value>Not connected.</value>
+  </data>
+  <data name="Live_Signal" xml:space="preserve">
+    <value>Signal</value>
+  </data>
+  <data name="Live_State" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Live_Scan" xml:space="preserve">
+    <value>P25 zone scan counters</value>
+  </data>
+  <data name="Ch_Warn" xml:space="preserve">
+    <value>View only: nothing is written to the radio. Use the upstream CPS to change channels.</value>
+  </data>
+  <data name="Ch_NoBackup" xml:space="preserve">
+    <value>No backup found. Make a backup on the "Update the radio" page first.</value>
+  </data>
+  <data name="Ch_Search" xml:space="preserve">
+    <value>Search:</value>
+  </data>
+  <data name="Ch_SearchHint" xml:space="preserve">
+    <value>name, frequency, mode, NAC, TG ...</value>
+  </data>
+  <data name="Ch_Channels" xml:space="preserve">
+    <value>Channels</value>
+  </data>
+  <data name="Ch_Zones" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="Ch_Contacts" xml:space="preserve">
+    <value>Contacts</value>
+  </data>
+  <data name="Ch_Lists" xml:space="preserve">
+    <value>RX group lists</value>
+  </data>
+  <data name="Help_WindowTitle" xml:space="preserve">
+    <value>DDM32 Plus - Help</value>
+  </data>
+  <data name="Help_Title" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="Help_1_T" xml:space="preserve">
+    <value>1. The radio was not caught (timeout)</value>
+  </data>
+  <data name="Help_1_B" xml:space="preserve">
+    <value>The tool waits for the radio to start. Switch the radio off, leave the cable in, press **Try again**, and when the yellow **"Switch the radio off and on now"** shows, switch the radio off if it is on, then on. If it comes up with the normal screen, switch it off and on once more. Do not press any keys.</value>
+  </data>
+  <data name="Help_2_T" xml:space="preserve">
+    <value>2. No cable found</value>
+  </data>
+  <data name="Help_2_B" xml:space="preserve">
+    <value>Plug the programming cable firmly into the computer and the radio, press **Refresh**. The DM-32UV cable usually shows as "USB-SERIAL CH340" (the program picks it by itself). If it does not show, install the CH340 driver. Virtual ports (com0com, Bluetooth) are not the radio and are never picked.</value>
+  </data>
+  <data name="Help_3_T" xml:space="preserve">
+    <value>3. The backup is old</value>
+  </data>
+  <data name="Help_3_B" xml:space="preserve">
+    <value>An install needs the radio's **current** backup. If the radio changed after that backup (another install, writing with the CPS) the installer notices and stops without writing anything. Make a new backup.</value>
+  </data>
+  <data name="Help_4_T" xml:space="preserve">
+    <value>4. A version cannot be installed</value>
+  </data>
+  <data name="Help_4_B" xml:space="preserve">
+    <value>The program installs only **signed** DDM32 Plus versions: the version list's signature must verify with the key in the program and the downloaded file's SHA-256 must equal the listed one. Versions whose signature fails are not listed (Details on the "Versions" page).</value>
+  </data>
+  <data name="Help_5_T" xml:space="preserve">
+    <value>5. First install from stock firmware</value>
+  </data>
+  <data name="Help_5_B" xml:space="preserve">
+    <value>If the radio runs stock firmware the program sees it in the backup and prepares the radio's own DMR codec from your backup in the reserved codec area. DDM32 Plus was tried only on stock .047; other supported stock versions (.032 - .049) show a warning. For unknown versions (for example .050) first install Open25-DM32 Classic with its own Flasher, then DDM32 Plus over it.</value>
+  </data>
+  <data name="Help_6_T" xml:space="preserve">
+    <value>6. The install stopped half way</value>
+  </data>
+  <data name="Help_6_B" xml:space="preserve">
+    <value>The program never tries again by itself. If it says "Nothing was written" the radio was not switched on in time: you may do the Check and Install steps again. If it says "Stopped after writing started" do not switch the radio off, do not unplug the cable, and restore the backup taken before the install on the **Go back** page. The bootloader is never written, so the radio stays installable.</value>
+  </data>
+  <data name="Help_7_T" xml:space="preserve">
+    <value>7. Where are the backups?</value>
+  </data>
+  <data name="Help_7_B" xml:space="preserve">
+    <value>In the **yedekler** folder inside the program folder: {0}
+**Do not delete it and do not share it**: it holds your radio's calibration and channels. Program updates and uninstalling never touch it. The previous program's backups stay in its own folder (%LOCALAPPDATA%\DDM32Plus or DDM25Plus).</value>
+  </data>
+  <data name="Help_8_T" xml:space="preserve">
+    <value>8. No CH340 driver</value>
+  </data>
+  <data name="Help_8_B" xml:space="preserve">
+    <value>If, with the cable plugged in, Device Manager does not show "USB-SERIAL CH340" under "Ports (COM &amp; LPT)", the driver is missing. Download the driver from the cable maker or from WCH's site (CH341SER), install it, then unplug and replug the cable.</value>
+  </data>
+  <data name="About_WindowTitle" xml:space="preserve">
+    <value>DDM32 Plus - About</value>
+  </data>
+  <data name="About_Line" xml:space="preserve">
+    <value>**DDM32 Plus · {0}**
+Program version {1}</value>
+  </data>
+  <data name="About_Desc" xml:space="preserve">
+    <value>Unofficial, experimental firmware and programmer for the Baofeng DM-32UV. Licence: GPL-3.0-or-later.</value>
+  </data>
+  <data name="About_Credits" xml:space="preserve">
+    <value>Credits / Teşekkürler</value>
+  </data>
+  <data name="About_C1" xml:space="preserve">
+    <value>**RadioFoundry** (MIT): open firmware base, RAM monitor, codec slot tools - github.com/RadioFoundry/RadioFoundry</value>
+  </data>
+  <data name="About_C2" xml:space="preserve">
+    <value>**Open25-DM32 Classic** (MIT, tylerwatt12): P25, IMBE, native modem, the Classic layout - github.com/tylerwatt12/Open25-DM32</value>
+  </data>
+  <data name="About_C3" xml:space="preserve">
+    <value>mbelib (ISC), OP25 and other sources: THIRD_PARTY.md in the repository</value>
+  </data>
+  <data name="About_C4" xml:space="preserve">
+    <value>Ed25519 signature check: the RFC 8032 reference code</value>
+  </data>
+  <data name="About_Footer" xml:space="preserve">
+    <value>Not affiliated with Baofeng, RadioFoundry or Open25-DM32. The radio's own DMR codec and the stock firmware are not distributed with this program.</value>
+  </data>
+</root>

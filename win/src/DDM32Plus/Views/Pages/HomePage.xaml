@@ -1,0 +1,38 @@
+<UserControl x:Class="DDM32Plus.Views.Pages.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:DDM32Plus.Localization">
+    <!-- home_tab.py: the radio's status in plain words, the disclaimer state and the big buttons -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Text="{l:Tr App_Title}" FontSize="{StaticResource Size14}" FontWeight="Bold" />
+            <TextBlock x:Name="Subtitle" FontSize="{StaticResource Size1}" Margin="0,2,0,6" />
+            <TextBlock x:Name="GateLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}"
+                       FontWeight="Bold" Foreground="{StaticResource Red}" Text="{l:Tr Disc_NotAccepted}" />
+            <Button x:Name="GateButton" HorizontalAlignment="Left" Content="{l:Tr Disc_ReadButton}" Click="OnDisclaimer" />
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock x:Name="StateLabel" FontSize="{StaticResource Size9}" FontWeight="Bold" TextWrapping="Wrap" />
+                    <TextBlock x:Name="NotesLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}" FontStyle="Italic" />
+                    <TextBlock x:Name="VersionLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}" />
+                    <TextBlock x:Name="CableLabel" Style="{StaticResource Plain}" Text="{l:Tr Home_CableNextStage}" />
+                    <TextBlock x:Name="BackupsLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}" />
+                    <TextBlock x:Name="PythonDataLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}"
+                               Foreground="{StaticResource Info}" />
+                </StackPanel>
+            </Border>
+
+            <UniformGrid Columns="2" Margin="-4,4">
+                <Button Style="{StaticResource TileButton}" Tag="&#xE74A;" Content="{l:Tr Tab_Update}" ToolTip="{l:Tr Home_UpdateTip}" Click="OnOpen" CommandParameter="update" />
+                <Button Style="{StaticResource TileButton}" Tag="&#xE8FD;" Content="{l:Tr Tab_Versions}" ToolTip="{l:Tr Home_VersionsTip}" Click="OnOpen" CommandParameter="versions" />
+                <Button Style="{StaticResource TileButton}" Tag="&#xE72B;" Content="{l:Tr Tab_Restore}" ToolTip="{l:Tr Home_RestoreTip}" Click="OnOpen" CommandParameter="restore" />
+                <Button Style="{StaticResource TileButton}" Tag="&#xE946;" Content="{l:Tr Tab_Health}" ToolTip="{l:Tr Home_HealthTip}" Click="OnOpen" CommandParameter="health" />
+                <Button Style="{StaticResource TileButton}" Tag="&#xE768;" Content="{l:Tr Tab_Live}" ToolTip="{l:Tr Home_LiveTip}" Click="OnOpen" CommandParameter="live" />
+                <Button Style="{StaticResource TileButton}" Tag="&#xE8A4;" Content="{l:Tr Tab_Channels}" ToolTip="{l:Tr Home_ChannelsTip}" Click="OnOpen" CommandParameter="channels" />
+            </UniformGrid>
+            <Button Style="{StaticResource BigButton}" Tag="&#xE897;" HorizontalAlignment="Left" MinWidth="200"
+                    Content="{l:Tr Menu_Help}" ToolTip="{l:Tr Menu_HelpTip}" Click="OnHelp" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

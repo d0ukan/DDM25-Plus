@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The DDM32 Plus Windows program (WPF). Published self-contained as one DDM32Plus.exe (see
+       Properties/PublishProfiles/win-x64.pubxml and win/README.md). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>DDM32Plus</RootNamespace>
+    <AssemblyName>DDM32Plus</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DDM32Plus.Core\DDM32Plus.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WPF leaves System.IO out of the implicit usings (Path vs System.Windows.Shapes.Path, not used here) -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+</Project>

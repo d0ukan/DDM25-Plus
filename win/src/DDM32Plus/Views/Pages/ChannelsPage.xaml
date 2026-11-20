@@ -1,0 +1,29 @@
+<UserControl x:Class="DDM32Plus.Views.Pages.ChannelsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:DDM32Plus.Localization">
+    <!-- codeplug_tab.py: the codeplug decoded from a backup image, read only (next stage) -->
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Channels}" />
+            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Ch_Warn}" Foreground="{StaticResource AmberDark}" />
+            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Ch_NoBackup}" />
+            <DockPanel Margin="0,6">
+                <TextBlock DockPanel.Dock="Left" Text="{l:Tr Ch_Search}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox IsEnabled="False" ToolTip="{l:Tr Ch_SearchHint}" />
+            </DockPanel>
+            <Border Style="{StaticResource NextStage}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        <TabControl Padding="4" Margin="0,4,0,0">
+            <TabItem Header="{l:Tr Ch_Channels}" />
+            <TabItem Header="{l:Tr Ch_Zones}" />
+            <TabItem Header="{l:Tr Ch_Contacts}" />
+            <TabItem Header="{l:Tr Ch_Lists}" />
+        </TabControl>
+    </DockPanel>
+</UserControl>

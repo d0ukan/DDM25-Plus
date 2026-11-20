@@ -1,0 +1,28 @@
+<UserControl x:Class="DDM32Plus.Views.Pages.LivePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:DDM32Plus.Localization">
+    <!-- live_tab.py: signal, status and the P25 zone scan counters, read only (next stage) -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Live}" />
+            <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Live_Text}" />
+            <UniformGrid Columns="2" Margin="-4,4">
+                <Button Style="{StaticResource BigButton}" Tag="&#xE768;" Margin="4" Content="{l:Tr Live_Connect}" IsEnabled="False" />
+                <Button Style="{StaticResource BigButton}" Tag="&#xE71A;" Margin="4" Content="{l:Tr Live_Stop}" IsEnabled="False" />
+            </UniformGrid>
+            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Live_NotConnected}" />
+            <UniformGrid Columns="3" Margin="-4,4">
+                <GroupBox Header="{l:Tr Live_Signal}" Margin="4" MinHeight="90" />
+                <GroupBox Header="{l:Tr Live_State}" Margin="4" MinHeight="90" />
+                <GroupBox Header="{l:Tr Live_Scan}" Margin="4" MinHeight="90" />
+            </UniformGrid>
+            <Border Style="{StaticResource NextStage}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

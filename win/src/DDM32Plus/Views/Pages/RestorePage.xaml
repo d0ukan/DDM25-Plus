@@ -1,0 +1,29 @@
+<UserControl x:Class="DDM32Plus.Views.Pages.RestorePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:DDM32Plus.Localization">
+    <!-- restore_tab.py: put the radio back from the user's OWN backup (next stage) -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Restore}" />
+            <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Res_Text}" />
+            <UniformGrid Columns="2" Margin="-4,4">
+                <Button Style="{StaticResource BigButton}" Tag="&#xE72B;" Margin="4" Content="{l:Tr Res_Previous}"
+                        ToolTip="{l:Tr Res_PreviousTip}" IsEnabled="False" />
+                <Button Style="{StaticResource BigButton}" Tag="&#xE777;" Margin="4" Content="{l:Tr Res_Stock}"
+                        ToolTip="{l:Tr Res_StockTip}" IsEnabled="False" />
+            </UniformGrid>
+            <Button Content="{l:Tr Res_Other}" HorizontalAlignment="Left" IsEnabled="False" />
+            <Button Style="{StaticResource BigButton}" Tag="&#xE73E;" Content="{l:Tr Res_Restore}"
+                    ToolTip="{l:Tr Res_RestoreTip}" IsEnabled="False" Margin="0,8,0,4" />
+            <Border Style="{StaticResource NextStage}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
+                </StackPanel>
+            </Border>
+            <TextBlock x:Name="OwnBackups" Style="{StaticResource Plain}" />
+            <TextBlock x:Name="PythonBackups" Style="{StaticResource Plain}" Foreground="{StaticResource Info}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
