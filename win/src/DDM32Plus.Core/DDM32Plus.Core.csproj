@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Everything that is not UI and not radio: signed manifests (Ed25519), the release list, downloads with hash
+       checks, version order, channel labels, the self-update swap, paths and settings. Tested in
+       tests/DDM32Plus.Core.Tests against results of the Python code in pc/. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>DDM32Plus.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DDM32Plus.Core.Tests" />
+  </ItemGroup>
+
+</Project>

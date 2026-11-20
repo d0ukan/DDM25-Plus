@@ -484,3 +484,24 @@ __pycache__/
 !/tests/plus/ui_sim_toolbox.c
 !/tests/plus/ui_sim_toolbox.h
 !/CHANGELOG.md
+# DDM32 Plus Windows program (win/README.md): sources, tests, docs and screenshots; never bin/, obj/ or publish output
+!/win/*.sln
+!/win/*.props
+!/win/README.md
+!/win/src/**/*.csproj
+!/win/src/**/*.cs
+!/win/src/**/*.xaml
+!/win/src/**/*.resx
+!/win/src/**/*.pubxml
+!/win/src/**/app.manifest
+!/win/tests/**/*.csproj
+!/win/tests/**/*.cs
+!/win/tests/DDM32Plus.Core.Tests/Fixtures/*.py
+!/win/tests/DDM32Plus.Core.Tests/Fixtures/*.json
+!/win/tests/DDM32Plus.Core.Tests/Fixtures/legacy/*
+!/win/installer/*.iss
+!/win/docs/*.md
+!/win/docs/screenshots/*.png
+/win/**/bin/
+/win/**/obj/
+/win/publish/

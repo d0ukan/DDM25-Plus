@@ -1,0 +1,20 @@
+<Project>
+  <!-- Shared settings for every project in win/: one version, zero warnings (warnings are errors). -->
+  <PropertyGroup>
+    <Version>2.0.0-alpha.1</Version>
+    <Authors>d0ukan</Authors>
+    <Company>d0ukan · TA2DOU</Company>
+    <Product>DDM32 Plus</Product>
+    <Copyright>DDM32 Plus · d0ukan · TA2DOU · GPL-3.0-or-later</Copyright>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SatelliteResourceLanguages>en;tr</SatelliteResourceLanguages>
+    <NeutralLanguage>en</NeutralLanguage>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+</Project>
