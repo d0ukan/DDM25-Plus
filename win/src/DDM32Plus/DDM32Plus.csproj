@@ -9,10 +9,16 @@
     <RootNamespace>DDM32Plus</RootNamespace>
     <AssemblyName>DDM32Plus</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\ddm32plus.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DDM32Plus.Core\DDM32Plus.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- the icon (win/tools/make_icon.py), also for the windows -->
+    <Resource Include="Assets\ddm32plus.ico" />
   </ItemGroup>
 
   <ItemGroup>

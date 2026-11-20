@@ -4,7 +4,7 @@
         xmlns:l="clr-namespace:DDM32Plus.Localization"
         Title="{l:Tr Disc_WindowTitle}" Width="720" Height="640" MinWidth="480" MinHeight="420"
         WindowStartupLocation="CenterOwner" Background="{StaticResource Window}"
-        FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True">
+        FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True" Icon="/DDM32Plus;component/Assets/ddm32plus.ico">
     <!-- pc/ddm32_app/disclaimer.py: must be ticked and accepted before any radio step -->
     <DockPanel Margin="12">
         <DockPanel DockPanel.Dock="Top">

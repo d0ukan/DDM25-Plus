@@ -494,6 +494,8 @@ __pycache__/
 !/win/src/**/*.resx
 !/win/src/**/*.pubxml
 !/win/src/**/app.manifest
+!/win/src/**/*.ico
+!/win/tools/*.py
 !/win/tests/**/*.csproj
 !/win/tests/**/*.cs
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/*.py

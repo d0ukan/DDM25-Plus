@@ -4,7 +4,7 @@
         xmlns:l="clr-namespace:DDM32Plus.Localization"
         Title="{l:Tr App_Title}" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen" Background="{StaticResource Window}"
-        FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True">
+        FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True" Icon="/DDM32Plus;component/Assets/ddm32plus.ico">
     <!-- First start only: asked in both languages, before the main window -->
     <StackPanel Margin="28,22" MinWidth="380">
         <TextBlock Text="{l:Tr App_Title}" FontSize="{StaticResource Size14}" FontWeight="Bold" />

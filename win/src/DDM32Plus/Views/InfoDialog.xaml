@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:DDM32Plus.Localization"
         Width="680" Height="600" MinWidth="420" MinHeight="300" WindowStartupLocation="CenterOwner"
-        Background="{StaticResource Window}" FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True">
+        Background="{StaticResource Window}" FontFamily="Segoe UI" FontSize="12" UseLayoutRounding="True" Icon="/DDM32Plus;component/Assets/ddm32plus.ico">
     <!-- Help and About (widgets.py show_help / show_about) -->
     <DockPanel Margin="12">
         <Button DockPanel.Dock="Bottom" HorizontalAlignment="Right" MinWidth="100" Margin="0,10,0,0"

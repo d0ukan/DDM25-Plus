@@ -39,6 +39,7 @@ DisableProgramGroupPage=yes
 DefaultGroupName={#AppName}
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
+SetupIconFile=..\src\DDM32Plus\Assets\ddm32plus.ico
 OutputDir=..\publish\installer
 OutputBaseFilename=DDM32Plus-Setup
 Compression=lzma2/max
