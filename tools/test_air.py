@@ -7,7 +7,9 @@ tools/test_classic.py after its own (the build tree prepared, ASan / UBSan flags
   one that matches nothing reported), and none of them in the committed table;
 - item 44b, the air watch in the radio core (tests/plus/test_airwatch_radio.inc), after upstream's radio suite, the
   Classic / Plus P25 suites, the multi-watch ring and every mode in the VFO run again with it built in;
-- the screens' UI flows in upstream's simulator, English and Turkish (tests/plus/test_ui_air.c)."""
+- item 45, the 3D waterfall's drawing into a test frame buffer (tests/plus/test_wf3d.c);
+- the screens' UI flows in upstream's simulator, English and Turkish (tests/plus/test_ui_air.c; the spectrum's views
+  with the toolbox job's simulator, tests/plus/test_ui_wf3d.c)."""
 import re
 import shlex
 import subprocess
@@ -124,3 +126,27 @@ def main(ROOT, APP, OUT, flags, host):
          *(str(APP / 'core/ui' / f) for f in ('airfield.c', 'airfield_data.c', 'ui_airfield.c')),
          str(APP / 'core/aprs/aprs_fmt.c'), str(APP / 'core/radio/vfox.c'), '-lm'], cwd=host)
     run([OUT / 'test_ui_air'], cwd=host)
+    # Item 45: the 3D waterfall into a test frame buffer, then Tools > Spectrum's views (the toolbox job's simulator:
+    # the real sweep engine, the heap counted), English and Turkish
+    wf = ['-DCONFIG_SPECTRUM=1', '-DCONFIG_SPECTRUM_WF=1', '-DCONFIG_SPECTRUM_WF3D=1']
+    run(['clang', *flags, *wf, tp / 'test_wf3d.c', APP / 'core/ui/wf3d.c', APP / 'core/ui/wfall.c',
+         '-o', OUT / 'test_wf3d'], cwd=ROOT)
+    run([OUT / 'test_wf3d'], cwd=ROOT)
+    ui = APP / 'core/ui'
+    argv[argv.index(str(tp / 'test_ui_air.c'))] = str(tp / 'test_ui_wf3d.c')
+    argv[argv.index(str(tp / 'ui_sim_air.c'))] = str(tp / 'ui_sim_toolbox.c')
+    argv[argv.index('-o') + 1] = str(OUT / 'test_ui_wf3d')
+    # (as tools/test_toolbox.py builds its screens, with the switch and Turkish)
+    run([*argv, '-I' + str(host), '-I' + str(tp), '-Wno-unused-function', '-DUI_HOST_HEAP', '-DCONFIG_P25_CHANNELS=1',
+         '-DCONFIG_MAP=1', '-DCONFIG_NAV=1', '-DCONFIG_REPEATERS=1', '-DCONFIG_MAP_TRACK=1', '-DCONFIG_MAP_COVERAGE=1',
+         *wf, '-DCONFIG_P25_SEARCH=1', '-DCONFIG_DMR_SEARCH=1', '-DCONFIG_DMR_ANY=1', '-DCONFIG_FIND_SAVE=1',
+         '-DCONFIG_P25_TRUNK=1', '-DCONFIG_DMR_TRUNK=1', '-DCONFIG_MSG_RX=1', '-DCONFIG_CALL_LOG=1', '-DCONFIG_HEARD=1',
+         '-DCONFIG_VFO_MODES=1', '-DCONFIG_GPS_DASH=1', '-DCONFIG_CLOCK_TOOLS=1', '-DCONFIG_LANG_TR=1',
+         *(str(ui / f) for f in ('ui_map.c', 'map.c', 'turkey_map_data.c', 'turkey_district_data.c', 'mapnav.c',
+                                 'ui_mapnav.c', 'nav.c', 'ui_goto.c', 'rpt.c', 'ui_rpt.c', 'ui_spectrum.c',
+                                 'ui_p25search.c', 'ui_dmrsearch.c', 'ui_p25trunk.c', 'ui_dmrtrunk.c', 'ui_msg.c',
+                                 'ui_scratch.c', 'findsave.c', 'ui_findsave.c', 'heard.c', 'ui_heard.c', 'wfall.c',
+                                 'wf3d.c', 'tripm.c', 'ui_gpsdash.c', 'clockx.c', 'ui_clock.c')),
+         str(APP / 'core/radio/spectrum.c'), str(APP / 'core/radio/vfox.c'), str(APP / 'core/aprs/aprs_fmt.c'), '-lm'],
+        cwd=host)
+    run([OUT / 'test_ui_wf3d'], cwd=host)

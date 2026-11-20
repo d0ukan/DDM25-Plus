@@ -184,7 +184,7 @@ static void aw_watch(void)
 	check(air_sim.vfo_calls == 6, "six VFOs asked for");
 	for (uint8_t k = 0; k < 6; k++)
 		check(air_sim.hz[k] == lti_hz[k] && air_sim_vfo_hz(k) == lti_hz[k], "each letter's VFO on its frequency");
-	expect("vfo=1 vfoidx=0 freq=121900000 shows=121.90 shows=124.42 hides=118.27");
+	expect("vfo=1 vfoidx=0 freq=121900000 shows=121.90 shows=AM_124.425 hides=FM_124 hides=118.27");
 	run("tune:e");
 	expect("vfo=1 vfoidx=4 freq=124350000");
 	run("shot:home-air");

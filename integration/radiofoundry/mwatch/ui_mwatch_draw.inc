@@ -11,6 +11,10 @@
 // Large text: one line per letter, as large as fits. Everything is drawn from static buffers: Home is on the UI
 // task's deepest path (stack-check.md)
 
+#if CONFIG_AM_RX
+#include "radio/radio_am.h"	// DDM32 Plus: a row in the air band says AM
+#endif
+
 static char mw_buf[48], mw_fit[48];	// the rows' and the state line's text
 static uint32_t mw_newest;		// the newest call's end (its row's age in amber), 0: none
 static bool mw_any_rx;			// a call comes in on some row: the others step back (dim)
@@ -132,6 +136,12 @@ static void __attribute__((noinline)) mw_draw_row(const radio_view_t *v, const u
 		gfx_text(sm, x0, y2, fit, ui_col.rx);
 		return;
 	}
+#if CONFIG_AM_RX
+	// DDM32 Plus: an FM channel or VFO in the air band is received in AM (radio_am_channel): say so (the air watch)
+	if (r->mode == RADIO_MODE_FM && radio_am_band(r->rx_hz) && radio_am_capable())
+		sb_str(&b, "AM");
+	else
+#endif
 	sb_str(&b, mw_mode_word(r->mode));
 	sb_chr(&b, ' ');
 	sb_freq(&b, r->rx_hz);

@@ -528,3 +528,7 @@ __pycache__/
 !/integration/radiofoundry/air/radio_airwatch.inc
 !/integration/radiofoundry/air/ui_airwatch.inc
 !/tests/plus/test_airwatch_radio.inc
+!/integration/radiofoundry/toolbox/wf3d.c
+!/integration/radiofoundry/toolbox/wf3d.h
+!/tests/plus/test_wf3d.c
+!/tests/plus/test_ui_wf3d.c

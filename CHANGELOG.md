@@ -26,6 +26,8 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 - Air watch: on an airfield's page, # puts up to six of its frequencies (not the ATIS) on the multi-watch ring, each
   letter its own VFO, received in AM; the radio hops between them and stops on activity. Stopping the watch brings
   everything back as it was (your channel or VFO, your own dual / multi-watch); nothing of it is saved.
+- Spectrum: a third view, a 3D waterfall (the last sweeps as ridges in perspective, the newest in front); * cycles
+  waterfall, 3D, bars alone. Multi-watch rows in the air band say "AM".
 
 ## v1.0.0-beta.3 (2026-11-20)
 

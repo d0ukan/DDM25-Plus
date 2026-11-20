@@ -8,14 +8,19 @@ change only through the hunks below.
   AIR_WATCH  (item 44b) Tools > Airfields, # on an airfield's page: up to 6 of its frequencies on the multi-watch ring,
              A..F each its own VFO (AM: the air band), hopping as multi-watch does; stopping it brings the user's watch
              back as it was. Needs MULTI_WATCH, VFO_MODES and AIRFIELDS.
+  SPECTRUM_WF3D (item 45) Tools > Spectrum's third view: the waterfall's rows as a ridge plot in perspective (* cycles
+             waterfall, 3D, bars alone); the waterfall's own heap rows, no new RAM. Needs SPECTRUM_WF.
 """
 
 AIR = 'integration/radiofoundry/air/'
+TOOLBOX = 'integration/radiofoundry/toolbox/'
 
 
 def prepare_air(transform, install):
     install('core/radio/radio_airwatch.inc', AIR + 'radio_airwatch.inc')
     install('core/ui/ui_airwatch.inc', AIR + 'ui_airwatch.inc')
+    install('core/ui/wf3d.c', TOOLBOX + 'wf3d.c')
+    install('core/ui/wf3d.h', TOOLBOX + 'wf3d.h')
 
     # The switch, after DOTA's (the end of the Plus switches); off where a build lacks what it needs
     transform('config/features.mk', [
@@ -23,12 +28,15 @@ def prepare_air(transform, install):
          'CONFIG_DOTA ?= n\nFEATURES += DOTA\n'
          'CONFIG_AIR_WATCH ?= n\nFEATURES += AIR_WATCH\n'
          'ifneq ($(CONFIG_MULTI_WATCH)$(CONFIG_VFO_MODES)$(CONFIG_AIRFIELDS),yyy)\n'
-         'override CONFIG_AIR_WATCH := n\nendif\n'),
+         'override CONFIG_AIR_WATCH := n\nendif\n'
+         'CONFIG_SPECTRUM_WF3D ?= n\nFEATURES += SPECTRUM_WF3D\n'
+         'ifneq ($(CONFIG_SPECTRUM_WF),y)\noverride CONFIG_SPECTRUM_WF3D := n\nendif\n'),
     ])
     transform('core/config.h', [
         ('#ifndef CONFIG_DOTA\n#define CONFIG_DOTA 0\t/* DDM32 Plus DOTA Transfer (docs/dota.md) */\n#endif\n',
          '#ifndef CONFIG_DOTA\n#define CONFIG_DOTA 0\t/* DDM32 Plus DOTA Transfer (docs/dota.md) */\n#endif\n'
-         '#ifndef CONFIG_AIR_WATCH\n#define CONFIG_AIR_WATCH 0\t/* DDM32 Plus air watch (item 44b) */\n#endif\n'),
+         '#ifndef CONFIG_AIR_WATCH\n#define CONFIG_AIR_WATCH 0\t/* DDM32 Plus air watch (item 44b) */\n#endif\n'
+         '#ifndef CONFIG_SPECTRUM_WF3D\n#define CONFIG_SPECTRUM_WF3D 0\t/* DDM32 Plus 3D waterfall (item 45) */\n#endif\n'),
     ])
 
     # ---- The radio core (radio_airwatch.inc): two requests, the flag, nothing noted while it runs ----

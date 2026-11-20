@@ -474,6 +474,9 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | AW5 | PTT during AW3 | refused ("Air band: receive only"), nothing transmitted |
 | AW6 | Back twice (or # 5) | toast "Air watch off"; the radio back on the channel noted in AW3, VFO A / B as before (check their frequencies); repeat with your own multi-watch of 3-4 channels running first: it comes back with the same letters and selected letter |
 | AW7 | Start the air watch, power off and on | the radio comes up as before the air watch (your channel, your watch on or off); no air ring |
+| WF3-1 | Tools > Spectrum around an active frequency (a repeater, or the other radio keyed on and off); * | toast "3D waterfall" ("3B şelale"); the rows as ridges, the newest in front at the bottom, older ones smaller towards the back; a carrier is a ridge line running back; it flows a row a sweep |
+| WF3-2 | * again; * again; Back and open the spectrum again | "Waterfall off" (bars alone); "Waterfall on" (flat); after * to 3D, Back and back in: the 3D view again |
+| WF3-3 | 3D view open for a minute: `tools/plus_txdiag.py --health` (read only) | `tasks.heap_min_free` as with the flat waterfall (I26-3: the same 1,280 B block, nothing more); the UI task's stack free not lower; no crash record |
 
 ## 7. Not testable here
 

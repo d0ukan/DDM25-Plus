@@ -2265,6 +2265,11 @@ tests in `tools/test_air.py` (run from `tools/test_classic.py`). Budget per comm
 | base | `ddm25` 22b4049 | 810,224 | 209,608 (1,848) | 888,996 | 209,656 (1,800) | 196 / 760 |
 | 44a | the airfield table (67 rows out: -484 B of table), "+N", the short "No frequencies" | 809,912 (-312) | 209,608 (1,848) | 888,684 (-312) | 209,656 (1,800) | 196 / 760 |
 | 44b | air watch: the UI (`ui_airwatch.inc`, `mw_keep` 54 B), the radio core's two requests and flag, # on the airfield page, 3 Turkish entries | 811,712 (+1,800) | 209,664 (1,792) | 890,484 (+1,800) | 209,712 (1,744) | 196 / 760 |
+| 45 | 3D waterfall (`wf3d.c`, the third view on *), 1 Turkish entry; multi-watch rows in the air band say "AM" | 812,500 (+788) | 209,664 (1,792) | 891,272 (+788) | 209,712 (1,744) | 196 / 760 |
+| rebase | onto `ddm25` 42a0ff4 (dota-ux, r14-aprs: base 814,356 / 209,640 B public, 893,132 / 209,688 B owner, UI 200 B free); this branch's share | 816,636 (+2,280) | 209,696 (1,760) | 895,408 (+2,276) | 209,744 (1,712) | 200 / 760 |
+
+The three items together: FLASH +2,276 B, static RAM +56 B, no stack path deeper (UI 196 B, radio 760 B free beyond the margin). Public build: 88,620 B flash free, 1,792 B RAM free (rule >= 1,500 B: kept). **Owner build: 9,848 B flash free, under the owner's >= 11,500 B rule** (the base had 624 B above it; docs/r14.md: every item but 48 needs the reclaim of owner question Q1 there), 1,744 B RAM free.
+After the rebase onto 42a0ff4: public 84,484 B flash and **1,760 B RAM free**; owner 5,712 B flash free (the owner runs the public build; the ID database moves to a data-chip pack), 1,712 B RAM free.
 
 ### 44a. The airfield table (owner: "D", 2026-11-20)
 
@@ -2339,3 +2344,36 @@ tests in `tools/test_air.py` (run from `tools/test_classic.py`). Budget per comm
   radio back on its channel, the watch off, the settings untouched throughout; the user's ring of four with C
   selected kept and back with # 5 Stop; two frequencies the pair; one tuned; a channel name on two services once;
   refusals; a power off during it doesn't bring it back; layout of the airfield page and Home. Radio rows AW3-AW7.
+
+### 45. 3D waterfall (`CONFIG_SPECTRUM_WF3D`; needs SPECTRUM_WF)
+
+- **Use**: Tools > Spectrum, **\*** cycles **waterfall > 3D > bars alone > waterfall** (owner: a third view, the flat
+  waterfall stays; RAM only, the waterfall at power on, the view chosen kept for the next entry). Toasts "3D
+  waterfall" ("3B şelale"), "Waterfall off", "Waterfall on"; without heap room "Waterfall: no room" as before. The 3D
+  view takes 13 / 20 of the area under the header (the flat one 11 / 20) and the bars stay above it.
+- **Picture** (`integration/radiofoundry/toolbox/wf3d.{c,h}`, installed as `core/ui/wf3d.*`): the waterfall's newest
+  24 rows as a ridge plot, the newest in front at the bottom and full width (its points exactly under the bars),
+  each older row further back: scaled by 16 / (16 + depth) towards the centre and raised towards a vanishing line
+  above the box, placed so the last row's highest peak just reaches the top. A point's level (wf_level: 3 dB a step
+  above the sweep's floor) lifts its row by up to 9 / 20 of the box at the front. Back to front (painter's order):
+  each row first clears the area under its ridge down to its own base, which hides the rows behind there, then draws
+  the ridge, each segment in the colour slot of its higher level (the waterfall's eight slots; slot 0, the background,
+  is drawn in slot 1's colour so a quiet row still shows as a line). It "flows" one row a sweep, as the waterfall does.
+- **RAM 0**: it draws from the waterfall's own heap rows (`wf_t.buf`, 1,280 B, only while the screen is open), keeps
+  nothing (every point worked out as it is drawn), and its locals are a few integers; the colour table (16 B) is on the
+  stack of `wf3d_view` only while it draws. CPU: about two 1-pixel `gfx_vline` calls a column a row (24 x ~190
+  columns), once a redraw.
+- Tests: `tests/plus/test_wf3d.c` (into a test frame buffer, ASan / UBSan): nothing without a buffer or rows; nothing
+  outside the box; a quiet front row is the bottom line in slot 1's colour from the first point to the last, at the
+  bars' x; a level-15 peak lifts it by the amplitude in the TX slot's colour, a level-8 one by 8 / 15 in slot 4's; the
+  area under a peak cleared; 24 rows each a line, higher and narrower going back (the last under 3 / 5 of the
+  width); a wall in front hides row 1's line and not the last row's above it; 40 rows kept draw exactly as their
+  newest 24; every row a wall: the last row's peaks on the box's top row (within 2 px), none above; a narrow (1 px
+  bars) and a too-short box. `tests/plus/test_ui_wf3d.c` (English and Turkish, `ui_sim_toolbox.c`): * from the
+  waterfall to 3D keeps the same heap block (no second allocation), draws the strong point's ridge in the TX colour
+  low in the box (the newest in front; the waterfall's newest is on top), new sweeps drawn; * to the bars gives the block back and draws no rows; * to
+  the waterfall takes it again; Back gives it back and 3D comes back on the next entry; without heap: "No room" and
+  the toasts; layout of each view. The existing waterfall flows (`test_ui_toolbox.c`) run as before in their own build
+  without the switch. Radio rows WF3-1 - WF3-3.
+- **Also in this commit (item 44b's Home)**: a multi-watch row of an FM channel or VFO in the air band now says "AM"
+  ("AM 124.425") where it said "FM": it is received in AM (`ui_mwatch_draw.inc`; the air watch's rows are all such).

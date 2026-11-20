@@ -5989,3 +5989,7 @@ msgstr "Hava izleme açık"
 #: core/ui/ui_dual.c
 msgid "Air watch off"
 msgstr "Hava izleme kapalı"
+
+#: core/ui/ui_spectrum.c
+msgid "3D waterfall"
+msgstr "3B şelale"
