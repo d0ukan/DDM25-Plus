@@ -5795,3 +5795,44 @@ msgstr "Son kullanılan"
 #: core/ui/ui_dota.c
 msgid "Manual"
 msgstr "Elle gir"
+
+# DDM32 Plus round 14 APRS job (branch r14-aprs): Mic-E beacons, the APRS station page
+#: core/ui/ui_menus.c
+msgid "Standard"
+msgstr "Standart"
+
+#: core/ui/ui_menus.c
+msgid "Off duty"
+msgstr "Görev dışı"
+
+#: core/ui/ui_menus.c
+msgid "En route"
+msgstr "Yolda"
+
+#: core/ui/ui_menus.c
+msgid "In service"
+msgstr "Hizmette"
+
+#: core/ui/ui_menus.c
+msgid "Returning"
+msgstr "Dönüyor"
+
+#: core/ui/ui_menus.c
+msgid "Committed"
+msgstr "Görevde"
+
+#: core/ui/ui_menus.c
+msgid "Special"
+msgstr "Özel"
+
+#: core/ui/ui_menus.c
+msgid "Priority"
+msgstr "Öncelikli"
+
+#: core/ui/ui_menus.c
+msgid "Beacon format"
+msgstr "Beacon biçimi"
+
+#: core/ui/ui_menus.c
+msgid "Mic-E message"
+msgstr "Mic-E mesajı"

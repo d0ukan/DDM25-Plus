@@ -446,6 +446,17 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | D-R2 | Refusals: A with a wrong code; B nearly full (Import Current zone with 75 of 80 used, A sends 16) | wrong code: B stays silent, A "No answer"; no room: A "Codeplug full"; B never changes |
 | D-R3 | DOTA Clone of the owner's codeplug over DMR, then over FM, into a radio with a CPS-stored codeplug and room | about 3 min 40 s DMR / 4 min 45 s FM; every zone (the sender's names, " 2" when taken) and channel equal (compare with the PC app); battery and case temperature noted |
 
+### Round 14 APRS job (branch `r14-aprs`, items 47 and 49)
+
+| # | Step | Expected |
+|---|---|---|
+| A47-1 | Menu > Settings, Up once (the last group, no digit): APRS | "Beacon format: Standard", no message row |
+| A47-2 | OK on Beacon format | "Mic-E", the row "Mic-E message: En route" appears; OK on it steps In service ... Priority, Off duty, never Emergency |
+| A47-3 | Tools > APRS > Send position now with Mic-E / En route; the SDR or a second radio on 144.800 decoding APRS (or aprs.fi through an iGate) | one packet, destination like `TY0S5P` (not APZRDF), `` ` `` information field; the decoder shows our position, "En route", the comment; aprs.fi shows the Mic-E status |
+| A47-4 | As A47-3 while moving (GPS, SmartBeaconing on) | speed and heading in the decoded packet match the GPS page; packets shorter than with Standard (note the air time if the SDR shows it) |
+| A47-5 | Beacon format back to Standard; Send position now | `APZRDF` and `!` / `=` position as before |
+| A47-6 | Power off and on | Settings > APRS keeps the format and message |
+
 ## 7. Not testable here
 
 YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec2 too heavy for the CPU).

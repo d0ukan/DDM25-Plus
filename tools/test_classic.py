@@ -877,5 +877,8 @@ def main():
     # DDM32 Plus DOTA Transfer (tools/test_dota.py, docs/dota.md 16.1)
     import test_dota
     test_dota.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 14 APRS job: SOS key actions, Mic-E beacons, the station page (tools/test_aprsx.py)
+    import test_aprsx
+    test_aprsx.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

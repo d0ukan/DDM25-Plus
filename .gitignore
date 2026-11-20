@@ -510,3 +510,10 @@ __pycache__/
 !/integration/radiofoundry/dota/ui_dota.h
 !/integration/radiofoundry/dota/ui_dota.c
 !/tests/plus/test_ui_dota.c
+# DDM32 Plus round 14 APRS job (tools/plus_aprs.py, docs/plus.md)
+!/tools/plus_aprs.py
+!/tools/test_aprsx.py
+!/tests/plus/test_ui_aprsx.c
+!/tests/plus/ui_sim_aprsx.c
+!/tests/plus/ui_sim_aprsx.h
+!/tests/plus/test_aprs_mice.c

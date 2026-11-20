@@ -2179,3 +2179,36 @@ stretch that equals our IMBE codec's `cos_table` (open-source `imbe_vocoder` `ma
 carry); every 32-byte window of the backup's data chip (calibration, codeplug): none. On the r13 base (2026-11-20, map
 and size only, the byte search not repeated): `__codec_slot` still 0x030E8000, the image ends at 0x030D9550 (public
 0x030C6198), `__codec_*` symbols as `tools/install_plus.py` expects.
+
+## Round 14 APRS job (branch `r14-aprs`, ROADMAP rows 47 and 49)
+
+Owner items of 2026-11-20 (feasibility and costs in `docs/r14.md` on branch `r14`), one commit each, on top of item
+48 (`r14-48`, cherry-picked). Patches in `tools/plus_aprs.py` (called last from `plus_features.prepare`), host tests
+in `tools/test_aprsx.py` (run by `tools/test_classic.py`), Turkish in `tr.po`'s last block.
+
+**Item 47, Mic-E beacons (`CONFIG_APRS_MICE`, needs `APRS_MSG`).** Settings gets an **APRS** group (the owner chose
+Settings over Tools > APRS; it is the 11th group, after Advanced and without a digit, so upstream's flows that open
+the others by their digits stay as they are): "Beacon format" Standard / Mic-E and, only while Mic-E is chosen,
+"Mic-E message" Off duty / En route / In service / Returning / Committed / Special / Priority (M0-M6; Turkish Görev
+dışı, Yolda, Hizmette, Dönüyor, Görevde, Özel, Öncelikli). Turning Mic-E on starts at En route (the owner's default)
+or the message chosen before. Emergency is not offered: it stays the SOS's (`aprs_sos_set`). The engine
+(`build_beacon` in `aprs.c`) builds the beacon with the existing encoder `aprs_mice_build` (the SOS's) from the same
+position, speed, course, altitude, symbol and codeplug comment, and queues it to the Mic-E destination
+(`queue_frame_to`); every beacon that goes through `build_beacon` follows the setting: "Send position now", the
+interval, SmartBeaconing, after PTT, boot, distance and the ISS digipeater shot. The APRS-IS copy (`own_to_is`) gets
+the same destination ("CALL>TY0S5P,TCPIP*:`..."). Messages, acks, status and DMR positions are unchanged. Stored in
+three spare bits the older firmware masks off (`settings_aprs_mice`: `aprs_flags2` bits 6-7, `aprs_misc` bit 7; 0 =
+standard, 1..7 = M0..M6), taken and saved with the other APRS settings (`aprs_set_cfg`, which turns anything past M6
+into the standard format). The Settings rows read and write through two light engine calls (`aprs_mice`,
+`aprs_set_mice`: no copy of the configuration on the UI task's stack; going through `ui_svc_aprs_set_cfg` first cost
+156 B of the UI stack's 196 B in the stack check). Position ambiguity does not apply to Mic-E beacons. Cost (public
+build, on item 48): +824 B flash, +16 B static RAM (the beacon's destination, the configuration byte); stacks
+unchanged (UI 196 B free).
+
+Tests: `tests/plus/test_aprs_mice.c` runs upstream's `aprsRadioTest` with it built in (all pass: the standard format
+stays the default), then 1,610 encoder round trips through the engine's own parser (every message M0-M6 over latitudes
+and longitudes in all four quadrants and every band of the Mic-E longitude code, the poles and 179 59.99, speeds
+0-799 kn with the shifted codes and >799, courses 1-360 and unknown, altitudes, comments: destination and information
+field decode back), the beacons on the air through the fake radio decoded back (manual for each message, automatic
+every 60 s, SmartBeaconing from moving host NMEA with speed and course, the APRS-IS line), and the setting stored and
+read back with the neighbouring APRS bits intact. UI: Settings > APRS in English and Turkish with the layout check.

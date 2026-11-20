@@ -9,6 +9,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   simplex channel) and tone (88.5 Hz); the frequency can also come from the current channel (when it is a simplex
   amateur one), the last session or be typed; the tone from a short list. DMR uses colour code 1 and slot 1, no longer
   shown or asked.
+- APRS Mic-E beacons: Settings > APRS > Beacon format (Standard / Mic-E) and Mic-E message (Off duty, En route,
+  In service, Returning, Committed, Special, Priority; En route first). Manual, automatic and SmartBeaconing beacons
+  (and the ISS one) go out as Mic-E positions with speed, heading, altitude and the comment: shorter packets. The
+  emergency stays the SOS's own. Standard by default.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

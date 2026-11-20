@@ -710,6 +710,7 @@ def main():
         "CONFIG_GPS_DASH="+("y" if args.plus else "n"),
         "CONFIG_CLOCK_TOOLS="+("y" if args.plus else "n"),
         "CONFIG_DOTA="+("y" if args.plus else "n"),	# DDM32 Plus DOTA Transfer (docs/dota.md)
+        "CONFIG_APRS_MICE="+("y" if args.plus else "n"),	# DDM32 Plus Mic-E beacons (round 14 item 47)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:
