@@ -152,8 +152,12 @@ def check_app_zip(path):
         names = z.namelist()
     if f'{EXE}/{EXE}.exe' not in names or any(not n.startswith(f'{EXE}/') or '..' in n for n in names):
         raise SystemExit(f'The program zip must hold {EXE}/{EXE}.exe and nothing outside {EXE}/')
-    bad = [n for n in names if Path(n).suffix.lower() in ('.bin', '.log') or '/yedekler/' in n.lower()
-           or 'backup' in n.lower()]
+    # Same rules as pc/bundle.py: a backup folder, a backup manifest, raw images or logs anywhere. The backup tool
+    # itself (radiotools/dm32_readonly_backup.py) is public source and belongs in the program.
+    private_dirs = {'backups', 'backup', 'yedekler'}
+    bad = [n for n in names if Path(n).suffix.lower() in ('.bin', '.log')
+           or private_dirs & {p.lower() for p in n.split('/')[:-1]}
+           or Path(n).name.lower() == 'backup-manifest.json']
     if bad:
         raise SystemExit('The program zip holds files that must not be published: ' + ', '.join(bad[:5]))
     return Path(path).read_bytes()

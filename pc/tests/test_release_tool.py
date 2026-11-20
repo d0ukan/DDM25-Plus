@@ -102,6 +102,7 @@ class ReleaseToolTest(unittest.TestCase):
         appzip = self.top / 'DDM25Plus-1.0.0-beta.2.zip'
         with zipfile.ZipFile(appzip, 'w') as z:
             z.writestr('DDM25Plus/DDM25Plus.exe', b'MZ')
+            z.writestr('DDM25Plus/radiotools/dm32_readonly_backup.py', b'# the backup tool is public source')
         code, out, _ = self.run_build('--app-zip', str(appzip), '--app-version', '1.0.0-beta.2')
         m = mr.verify(out, self.public)
         self.assertEqual(m['app']['version'], '1.0.0-beta.2')
@@ -112,6 +113,13 @@ class ReleaseToolTest(unittest.TestCase):
             z.writestr('DDM25Plus/yedekler/progmem-pass1.bin', b'private')
         with self.assertRaisesRegex(SystemExit, 'must not be published'):
             self.run_build('--app-zip', str(bad), '--app-version', '1.0.0-beta.2', out=self.top / 'out2')
+        for i, private in enumerate(('DDM25Plus/Backups/notes.txt', 'DDM25Plus/x/backup-manifest.json')):
+            bad = self.top / f'bad{i}.zip'
+            with zipfile.ZipFile(bad, 'w') as z:
+                z.writestr('DDM25Plus/DDM25Plus.exe', b'MZ')
+                z.writestr(private, b'private')
+            with self.subTest(private=private), self.assertRaisesRegex(SystemExit, 'must not be published'):
+                self.run_build('--app-zip', str(bad), '--app-version', '1.0.0-beta.2', out=self.top / f'o{i}')
 
     def test_refusals(self):
         nonpublic = rt.write_plus(self.top / 'np', fx.release_app('1.0.0'), signed_for=False)
