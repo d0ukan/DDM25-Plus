@@ -31,10 +31,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from radiotools import ed25519  # noqa: E402
 
-# The release signing key's public half (64 hex digits). Empty until the maintainer runs
+# The release signing key's public half (64 hex digits), printed by
 #   python pc/release/make_release.py --keygen
-# and pastes the printed public key here (see pc/README.en.md, "Release signing").
-PUBLIC_KEY_HEX = ''
+# (see pc/README.en.md, "Release signing"). Key created by d0ukan on 2026-11-20.
+PUBLIC_KEY_HEX = '70fce9e822ac07f0787a991795b27ab7650f35dfc83bcd7ef0ad550fa675b411'
 
 FORMAT = 'ddm25-manifest/1'
 REPO = 'd0ukan/DDM25-Plus'

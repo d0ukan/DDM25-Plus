@@ -1,6 +1,7 @@
 """radiotools/ed25519.py against the RFC 8032 section 7.1 test vectors, and the signed manifest checks."""
 import json
 import unittest
+from unittest.mock import patch
 
 import rtfixtures as fx
 from radiotools import ed25519
@@ -80,10 +81,18 @@ class ManifestTest(unittest.TestCase):
             with self.subTest(case=name), self.assertRaises(sm.ManifestError):
                 sm.verify_bytes(d, s, fx.TEST_PUBLIC_HEX)
 
+    def test_embedded_key_is_well_formed(self):
+        self.assertRegex(sm.PUBLIC_KEY_HEX, r'^[0-9a-f]{64}$')
+        self.assertEqual(len(sm.public_key()), 32)
+        self.assertIsNotNone(ed25519.point_decompress(sm.public_key()), 'a valid curve point')
+        data, sig = fx.signed(self.m())
+        with self.assertRaises(sm.ManifestError):
+            sm.verify_bytes(data, sig)  # signed with the test key, not the release key
+
     def test_no_key_embedded_verifies_nothing(self):
         data, sig = fx.signed(self.m())
-        self.assertEqual(sm.PUBLIC_KEY_HEX, '', 'the public key is pasted in by the maintainer after --keygen')
-        with self.assertRaisesRegex(sm.ManifestError, 'No release signing key'):
+        with patch.object(sm, 'PUBLIC_KEY_HEX', ''), \
+                self.assertRaisesRegex(sm.ManifestError, 'No release signing key'):
             sm.verify_bytes(data, sig)
         with self.assertRaisesRegex(sm.ManifestError, 'malformed'):
             sm.verify_bytes(data, sig, 'abc')
