@@ -3,6 +3,19 @@
 DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
 [README.md](README.md) before installing anything.
 
+## Unreleased
+
+- Frequency on Home: a channel's receive frequency on a row of its own ("RX 438.5000  TX 430.9000", or one
+  frequency when both are the same); Large text shows it as a third line (TX in red while transmitting). Not in the
+  VFO, whose large line is the frequency.
+- DOTA Transfer (Tools > DOTA Transfer): send one channel, selected channels, a zone, or every zone ("DOTA Clone") with
+  the DMR contacts and RX group lists they use to another DM-32UV running DDM32 Plus, over FM (AFSK 1200 with a CTCSS
+  tone) or DMR (data to the receiver's ID). The receiver shows a four-digit code the sender types; nothing changes on
+  the receiver unless every frame arrived (a stop, a power cut or a lost link leaves its codeplug as it was).
+  Imported channels are receive only unless allowed; PTT during a transfer asks "Stop the transfer?". Low / Mid /
+  High power, Low by default. **Not tried between two radios yet** (docs/plus-radio-test.md, rows D-*). Design and
+  limits: docs/dota.md.
+
 ## v1.0.0-beta.2 (2026-11-20)
 
 Second pre-release, the first as DDM32 Plus. Installed and checked on the author's radio (the fixes below and

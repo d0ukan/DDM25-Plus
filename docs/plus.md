@@ -2122,7 +2122,8 @@ hooks in `tools/plus_dota.py`, host tests in `tools/test_dota.py` (run from `too
 
 Budget, measured after each phase 2 step (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild
 identical, every task inside its stack). Limits for the job: FLASH headroom >= 12 KB (<= 888,832 B of 901,120),
-static RAM free >= 1,500 B (<= 209,956 B).
+static RAM free >= 1,500 B (<= 209,956 B); from the rebase onto `ddm25` 3032f91 (CONFIG_HOME_FREQ, +344 B) on, the
+owner relaxed the flash rule to >= 11,500 B free (<= 889,620 B).
 
 | Step | What | FLASH B | RAM B | RAM free | Stacks: UI / radio free |
 |---|---|---:|---:|---:|---|
@@ -2135,6 +2136,7 @@ static RAM free >= 1,500 B (<= 209,956 B).
 | 6 | Tools > DOTA Transfer and its picker (`ui_dota.c`: the form, questions, run page and PTT prompt as `ui_draw_list` pages), 43 Turkish entries, the PTT prompt's path. First measured at 892,012 B (over the limit); trimmed to fit: shorter texts and reused catalog strings, table-driven results, the power as a class, list pages instead of hand drawing. Flash headroom left: 12,580 B (292 B above the job's limit) | 888,540 (+10,184) | 209,648 (+16) | 1,808 | 216 / 760 |
 | 7 | Docs: `dota.md` sections 13.1 (sound paths), 17 (the owner's answers), 19 (as built); radio rows D-* in `plus-radio-test.md` | 888,540 (0) | 209,648 (0) | 1,808 | 216 / 760 |
 | 7b | Review: the stack check names the storage job and the session's transport calls (`plus_dota.STACK_EDGES`; the job's chain 1,988 B on the start task, 376 B free beyond the margin); singular / plural result texts with the counts where the language puts them; `radio_dota.inc` includes `hal_time.h`; host tests `test_dota_fm.c` (AFSK through audio, CTCSS, noise) and `test_dota_radio.inc` (the radio core) | 888,652 (+112) | 209,648 (0) | 1,808 | 196 / 760 |
+| rebase | onto `ddm25` 3032f91 (beta.2 prep, README, CONFIG_HOME_FREQ: base now 864,380 B / 209,672 B, UI stack 268 free); DOTA's share unchanged (+24,616 B flash, -16 B RAM). DOTA's screens are lists and use none of Home's layout fields (`freq_y`). Free flash: 12,124 B | 888,996 | 209,656 | 1,800 | 196 / 760 |
 
 ## Name and public build
 

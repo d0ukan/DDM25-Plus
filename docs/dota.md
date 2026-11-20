@@ -769,9 +769,12 @@ count when no zone went), "No answer", "Other version", "Not ready", "Codeplug f
 | Base (`ddm25` 1c391c7) | 864,036 | 209,672 (1,784) | 268 / 760 / 348 |
 | DOTA, steps 0-6 | 888,540 (+24,504) | 209,648 (1,808) | 216 / 760 / 348 |
 | DOTA, after the review (plural texts, stack edges) | 888,652 (+24,616) | 209,648 (1,808) | 196 / 760 / 348 |
+| Base `ddm25` 3032f91 (with CONFIG_HOME_FREQ, +344) | 864,380 | 209,672 (1,784) | 268 / 760 / 348 |
+| DOTA rebased onto 3032f91 | **888,996** (+24,616) | **209,656 (1,800)** | 196 / 760 / 348 |
 
 The limits of the job were FLASH headroom >= 12 KB (<= 888,832 B) and static RAM free >= 1,500 B: both held, with
-180 B of flash to spare. The estimate of section 14.2 was ~19.8 K (16-24 K); the result is at its top end, and step 6
+180 B of flash to spare. On the `ddm25` base with the frequency on Home (+344 B) the owner relaxed the flash rule to
+>= 11,500 B free: 901,120 - 888,996 = **12,124 B free**. The estimate of section 14.2 was ~19.8 K (16-24 K); the result is at its top end, and step 6
 needed trimming (shorter texts, table-driven results, list pages) to stay inside.
 
 **Stacks** (the check's figures include the HR_C7000 port's 68 B and the 128 B margin; "free" is beyond both):
