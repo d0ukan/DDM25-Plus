@@ -349,6 +349,10 @@ public partial class UpdatePage : UserControl, IPage
                 lastBackupDate = Directory.GetLastWriteTime(outDir);
                 lookedForLast = true;
             }
+            // A verified backup goes on to the check, as a backup chosen on disk does (the owner found no way
+            // forward after "Yedek al": the plan was ready but the page stayed on step 2)
+            Show(Check);
+            return;
         }
         Refresh();
     }
