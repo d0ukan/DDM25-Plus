@@ -487,6 +487,8 @@ __pycache__/
 !/CHANGELOG.md
 # DDM32 Plus DOTA Transfer: radio-to-radio channel and zone transfer (design, docs/dota.md)
 !/docs/dota.md
+# DDM32 Plus round 14: feasibility and budget (docs/r14.md)
+!/docs/r14.md
 !/tests/plus/test_audio_mux_noaprs.c
 # DDM32 Plus DOTA Transfer (tools/plus_dota.py, docs/dota.md)
 !/tools/plus_dota.py
