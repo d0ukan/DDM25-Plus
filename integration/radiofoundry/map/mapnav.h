@@ -79,6 +79,24 @@ bool track_start(const track_t *t, int32_t *lat_e7, int32_t *lon_e7);
 /* Every segment between consecutive points through fn, clipped to the view (province argument 0xFF); returns how
  * many. The caller draws them dotted */
 uint16_t track_draw(const map_view_t *v, const track_t *t, map_line_fn fn, void *ctx);
+/* The ring slot of point i (0 = the oldest), for what is kept beside the ring (coverage) */
+static inline uint8_t track_slot(const track_t *t, uint8_t i)
+{
+	return (uint8_t)((t->head + TRACK_POINTS - t->n + i) % TRACK_POINTS);
+}
+
+#if CONFIG_MAP_COVERAGE
+/* --- Coverage (DDM25 Plus, CONFIG_MAP_COVERAGE): a byte beside each track point (the same ring slot: the track's
+ * head and n), the signal strength of the channel or VFO in use when the point was taken; Tools > Map draws the
+ * points coloured by it. The S-meter scale of VHF / UHF: S9 = -93 dBm, 6 dB a unit.
+ * The byte: dBm + 141, 1 .. 140 (-140 .. -1 dBm, clamped); 0 = not known (the receiver gave no reading) */
+#define COV_GOOD_DBM	(-105)	/* S7 and up: good (green) */
+#define COV_FAIR_DBM	(-117)	/* S5 and S6: fair (yellow); weaker: poor (red) */
+enum { COV_NONE, COV_POOR, COV_FAIR, COV_GOOD };
+uint8_t cov_byte(int16_t dbm);
+int16_t cov_dbm(uint8_t b);	/* 0 for COV_NONE's byte */
+uint8_t cov_class(uint8_t b);	/* COV_* */
+#endif
 
 /* --- Auto repeater --- */
 
@@ -116,6 +134,9 @@ uint16_t arpt_check(arpt_t *s, bool fix, int32_t lat_e7, int32_t lon_e7, bool dm
 bool ui_mapnav_tick(uint32_t now_ms);
 #if CONFIG_MAP_TRACK
 extern track_t ui_mapnav_track;		/* drawn and cleared by Tools > Map */
+#endif
+#if CONFIG_MAP_COVERAGE
+extern uint8_t ui_mapnav_cov[TRACK_POINTS];	/* cov_byte beside each point, by ring slot (track_slot) */
 #endif
 #if CONFIG_AUTO_RPT
 bool ui_mapnav_auto_on(void);		/* Tools > Auto repeater's value */

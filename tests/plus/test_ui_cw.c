@@ -13,6 +13,7 @@
 #include "uiFlowTest.c"
 #undef main
 #include "ui/ui_msg.c"
+#include "ui/ui_scratch.c"	/* ui_msg.c's page buffer (DDM25 Plus round 13) */
 #include "ui/ui_cw.c"
 
 /* --- the radio task's side, faked --- */

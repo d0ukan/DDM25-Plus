@@ -15,9 +15,18 @@
 #include "codeplug/codeplug.h"
 #include "radio/radio.h"
 #include "radio/p25trunk.h"
+#include "ui/ui_scratch.h"
 
 static bool every_group;
-static p25tk_view_t tv;
+/* The system as last copied: the tool screens' shared buffer (ui_scratch.h), refilled by snap() in each draw and
+ * key */
+#define tv	(ui_scratch.p25tk)
+
+static bool snap(void)
+{
+	ui_scratch_take(UI_SCRATCH_P25TK);
+	return p25tk_snapshot(&tv);
+}
 
 static void hex(sbuf_t *b, uint32_t value, unsigned digits)
 {
@@ -36,7 +45,7 @@ static void tk_draw(void)
 {
 	char buf[40];
 	sbuf_t b;
-	bool have = p25tk_snapshot(&tv);
+	bool have = snap();
 	bool on = have && tv.state != P25TK_OFF;
 	const radio_view_t *rv = ui_view();
 	gfx_clear(ui_col.bg);
@@ -162,7 +171,7 @@ static void start(void)
 static bool tk_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
-	bool on = p25tk_snapshot(&tv) && tv.state != P25TK_OFF;
+	bool on = snap() && tv.state != P25TK_OFF;
 	if (press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) {
 		every_group = !every_group;
 		if (on)

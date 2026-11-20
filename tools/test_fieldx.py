@@ -49,6 +49,6 @@ def main(ROOT, APP, OUT, flags, host):
          *(str(ui / f) for f in ('ui_map.c', 'map.c', 'turkey_map_data.c', 'turkey_district_data.c', 'mapnav.c',
                                  'nav.c', 'ui_goto.c', 'rpt.c', 'ui_rpt.c', 'ui_aprsmsg.c', 'ui_p25search.c',
                                  'ui_dmrsearch.c', 'findsave.c', 'ui_findsave.c', 'follow.c', 'locator.c',
-                                 'ui_locator.c', 'sos.c', 'ui_sos.c')),
+                                 'ui_locator.c', 'sos.c', 'ui_sos.c', 'ui_scratch.c')),
          *(str(APP / 'core/aprs' / f) for f in ('aprs_plus.c', 'aprs_fmt.c', 'ax25.c')), '-lm'], cwd=host)
     run([OUT / 'test_ui_fieldx'], cwd=host)

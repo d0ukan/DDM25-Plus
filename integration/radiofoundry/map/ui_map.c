@@ -11,6 +11,9 @@
  *      Back again drops the pick. # / 0 switch between repeaters and stations.
  *   9: Back to start: the track's first point saved as a waypoint and Tools > Go-To opened on it. 7 held: the track
  *      cleared (7 alone says so).
+ *   *: Coverage (DDM25 Plus, CONFIG_MAP_COVERAGE) on / off: the track's points coloured by the signal of the channel
+ *      or VFO in use when each was taken (mapnav.h: green S7 and up, yellow S5 / S6, red weaker, grey no reading),
+ *      the legend under the map beside the scale. RAM only, off at power on.
  * The stations are upstream's heard list (no copy): a dot each, the callsign from zoom 3 (no two labels overlap).
  *
  * Zoom 0..6. Province names from zoom 2, district dots from zoom 3 and their names from zoom 4; no two labels overlap
@@ -54,6 +57,9 @@ static int8_t here_province = MAP_NONE;
 static uint16_t spick;		/* the picked APRS station (0), its callsign's hash, 0 none */
 #if CONFIG_REPEATERS
 static uint16_t pick = RPT_NONE;	/* the picked repeater (#), RPT_NONE none */
+#endif
+#if CONFIG_MAP_COVERAGE
+static bool cov_on;		/* * : the track coloured by signal */
 #endif
 
 typedef struct {
@@ -222,6 +228,39 @@ static void track_seg(void *ctx, int x0, int y0, int x1, int y1, uint8_t provinc
 }
 #endif
 
+#if CONFIG_MAP_COVERAGE
+static color_t cov_color(uint8_t cls)
+{
+	return cls == COV_GOOD ? ui_col.rx : cls == COV_FAIR ? ui_col.warn : cls == COV_POOR ? ui_col.tx : ui_col.dim;
+}
+
+/* Coverage: each track point a dot in its signal's colour */
+static void __attribute__((noinline)) draw_coverage(void)
+{
+	for (uint8_t i = 0; i < ui_mapnav_track.n; i++) {
+		int32_t la, lo;
+		int x, y;
+		if (track_get(&ui_mapnav_track, i, &la, &lo) && map_project(&view, la, lo, &x, &y))
+			marker_dot(x, y, 2, cov_color(cov_class(ui_mapnav_cov[track_slot(&ui_mapnav_track, i)])));
+	}
+}
+
+/* The legend right of x_end's left: "S7+ S5 <S5" in their colours; returns where it starts */
+static int cov_legend(int y, int x_end)
+{
+	static const char *const word[3] = { "<S5", "S5", "S7+" };	/* drawn right to left */
+	static const uint8_t cls[3] = { COV_POOR, COV_FAIR, COV_GOOD };
+	const font_t *s = ui_layout.small;
+	int x = x_end;
+	for (uint8_t i = 0; i < 3u; i++) {
+		x -= gfx_text_width(s, word[i]);
+		gfx_text(s, x, y, word[i], cov_color(cls[i]));
+		x -= s->w;
+	}
+	return x;
+}
+#endif
+
 #if CONFIG_REPEATERS
 /* The built-in repeaters with a position: a triangle each, the picked one larger with its callsign */
 static void __attribute__((noinline)) draw_repeaters(void)
@@ -302,6 +341,10 @@ static void __attribute__((noinline)) draw_marks(bool here, const ui_position_t 
 	}
 #if CONFIG_MAP_TRACK
 	track_draw(&view, &ui_mapnav_track, track_seg, NULL);
+#endif
+#if CONFIG_MAP_COVERAGE
+	if (cov_on)
+		draw_coverage();
 #endif
 	if (here && map_project(&view, p->lat_e7, p->lon_e7, &x, &y))
 		marker_cross(x, y, 3, ui_col.tx);
@@ -415,6 +458,10 @@ static void __attribute__((noinline)) draw_info(bool here, const ui_position_t *
 		int sw = gfx_text_width(s, scale);
 		gfx_text(s, w - sw, y, scale, ui_col.dim);
 		w -= sw + s->w;
+#if CONFIG_MAP_COVERAGE
+		if (cov_on)
+			w = cov_legend(y, w);
+#endif
 	}
 	gfx_text_fit(s, buf, w, fit, sizeof fit);
 	gfx_text(s, 0, y, fit, c);
@@ -562,6 +609,16 @@ static bool map_key(const input_event_t *ev)
 	case ACT_DIGIT_9:
 		if (ev->gesture == GESTURE_PRESS)
 			back_to_start();
+		return true;
+#endif
+#if CONFIG_MAP_COVERAGE
+	case ACT_QUICK:	/* (ui_app.c leaves * to the map: no quick settings from here) */
+		if (ev->gesture == GESTURE_PRESS) {
+			cov_on = !cov_on;
+			ui_toast(!cov_on ? TR("Coverage off") : ui_mapnav_track.n != 0 ? TR("Coverage: track by signal")
+				 : TR("Coverage: no track yet"));
+			ui_dirty();
+		}
 		return true;
 #endif
 #if CONFIG_REPEATERS

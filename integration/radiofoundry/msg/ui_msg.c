@@ -13,10 +13,12 @@
 #include "i18n.h"
 #include "radio/radio.h"
 #include "radio/radio_msg.h"
+#include "ui/ui_scratch.h"
 
 #define VIEW_ACARS	0x8000u		/* SCR_MSG_VIEW's arg: an ACARS message (else a page), and its id */
 
-static char page[RADIO_MSG_TEXT + 104];	/* one message's page (static: the UI task's stack is tight) */
+/* One message's page: built again in each draw into the tool screens' shared buffer (ui_scratch.h; not on the UI
+ * task's stack, which is tight) */
 static uint16_t page_first, page_max;
 
 static const char *status_line(uint8_t kind)
@@ -203,7 +205,8 @@ static void view_draw(void)
 	uint16_t arg = ui_frame()->arg;
 	bool ac = (arg & VIEW_ACARS) != 0;
 	sbuf_t b;
-	sb_init(&b, page, sizeof page);
+	char *page = ui_scratch_take(UI_SCRATCH_MSG)->msg_page;
+	sb_init(&b, page, UI_SCRATCH_MSG_PAGE);
 	if (ac)
 		acars_page(&b, (uint16_t)(arg & ~VIEW_ACARS));
 	else

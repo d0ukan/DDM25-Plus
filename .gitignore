@@ -461,3 +461,26 @@ __pycache__/
 !/tests/plus/test_ui_fieldx.c
 !/tests/plus/ui_sim_fieldx.c
 !/tests/plus/ui_sim_fieldx.h
+# DDM25 Plus round 13 ideas 2: RAM reclaim, heard list, waterfall, coverage, GPS dashboard, clock (tools/plus_toolbox.py)
+!/tools/plus_toolbox.py
+!/tools/test_toolbox.py
+!/integration/radiofoundry/common/ui_scratch.c
+!/integration/radiofoundry/common/ui_scratch.h
+!/integration/radiofoundry/toolbox/heard.c
+!/integration/radiofoundry/toolbox/heard.h
+!/integration/radiofoundry/toolbox/ui_heard.c
+!/integration/radiofoundry/toolbox/ui_heard.h
+!/integration/radiofoundry/toolbox/wfall.c
+!/integration/radiofoundry/toolbox/wfall.h
+!/integration/radiofoundry/toolbox/tripm.c
+!/integration/radiofoundry/toolbox/tripm.h
+!/integration/radiofoundry/toolbox/ui_gpsdash.c
+!/integration/radiofoundry/toolbox/ui_gpsdash.h
+!/integration/radiofoundry/toolbox/clockx.c
+!/integration/radiofoundry/toolbox/clockx.h
+!/integration/radiofoundry/toolbox/ui_clock.c
+!/integration/radiofoundry/toolbox/ui_clock.h
+!/tests/plus/test_toolbox.c
+!/tests/plus/test_ui_toolbox.c
+!/tests/plus/ui_sim_toolbox.c
+!/tests/plus/ui_sim_toolbox.h

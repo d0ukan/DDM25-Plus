@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* DM32 Plus map navigation, the UI task's side (mapnav.h, docs/map.md). Installed as core/ui/ui_mapnav.c.
  * Every UI tick (ui_app.c), at most once a second:
- *   - the GPS fix goes into the track (CONFIG_MAP_TRACK; Tools > Map draws it, 7 held clears it);
+ *   - the GPS fix goes into the track (CONFIG_MAP_TRACK; Tools > Map draws it, 7 held clears it), and with a point kept
+ *     the signal of the channel or VFO in use beside it (DDM25 Plus CONFIG_MAP_COVERAGE, ui_mapnav_cov);
  *   - with Tools > Auto repeater on (CONFIG_AUTO_RPT; RAM only, off after power off), the check (every 30 s at most):
  *     a repeater to offer becomes a banner over any screen for 8 s, "Nearer: <call> <MHz> <km> <dir>" and
  *     "# tunes the VFO"; # (the banner key) tunes it through Tools > Repeaters' own tune (ui_rpt_tune: the same
@@ -21,6 +22,9 @@
 
 #if CONFIG_MAP_TRACK
 track_t ui_mapnav_track;
+#endif
+#if CONFIG_MAP_COVERAGE
+uint8_t ui_mapnav_cov[TRACK_POINTS];	/* DDM25 Plus coverage: cov_byte of each track point, by ring slot */
 #endif
 #if CONFIG_AUTO_RPT
 static arpt_t arpt = { .on = false, .cur = RPT_NONE, .next_ms = 0 };
@@ -90,8 +94,13 @@ static bool __attribute__((noinline)) poll(uint32_t now)
 	ui_position_t p;
 	bool fix = ui_svc_position(&p) && p.fix, redraw = false;
 #if CONFIG_MAP_TRACK
-	if (fix && track_add(&ui_mapnav_track, p.lat_e7, p.lon_e7, now))
+	if (fix && track_add(&ui_mapnav_track, p.lat_e7, p.lon_e7, now)) {
+#if CONFIG_MAP_COVERAGE
+		/* the point just kept is the newest: the signal of the channel or VFO in use now beside it */
+		ui_mapnav_cov[track_slot(&ui_mapnav_track, (uint8_t)(ui_mapnav_track.n - 1u))] = cov_byte(ui_view()->rssi_dbm);
+#endif
 		redraw = ui_frame()->scr == SCR_MAP;
+	}
 #endif
 #if CONFIG_AUTO_RPT
 	if (arpt.on)

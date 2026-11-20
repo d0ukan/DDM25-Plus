@@ -199,6 +199,27 @@ uint16_t track_draw(const map_view_t *v, const track_t *t, map_line_fn fn, void 
 	}
 	return n;
 }
+
+#if CONFIG_MAP_COVERAGE
+uint8_t cov_byte(int16_t dbm)
+{
+	if (dbm == 0)
+		return 0;	/* no reading */
+	int v = (int)dbm + 141;
+	return (uint8_t)(v < 1 ? 1 : v > 140 ? 140 : v);
+}
+
+int16_t cov_dbm(uint8_t b)
+{
+	return b == 0 ? 0 : (int16_t)((int)b - 141);
+}
+
+uint8_t cov_class(uint8_t b)
+{
+	int16_t dbm = cov_dbm(b);
+	return b == 0 ? COV_NONE : dbm >= COV_GOOD_DBM ? COV_GOOD : dbm >= COV_FAIR_DBM ? COV_FAIR : COV_POOR;
+}
+#endif
 #endif
 
 /* --- Auto repeater --- */

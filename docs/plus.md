@@ -2016,6 +2016,104 @@ I30-*, I33-* in plus-radio-test.md):
   210,688 B (+104 of the 120 B budget: item 23 54, item 28 28, item 30 7, item 33 17, less alignment), every task's
   deepest stack path unchanged (UI 268 B free, radio 760, p25-lab 328).
 
+Round 13 "ideas 2" (a static RAM reclaim, then owner's items 24, 26, 27, 29 and 34; parallel job, 2026-11-20;
+`tools/plus_toolbox.py`, our code in integration/radiofoundry/common/ and integration/radiofoundry/toolbox/ installed
+into core/ui/). Host-tested, not yet on the radio (rows RR13-*, I24-*, I26-*, I27-*, I29-*, I34-* in
+plus-radio-test.md):
+
+- [built] RAM reclaim, round 13. **One buffer for the six tool screens' copies** (`core/ui/ui_scratch.c`, a union of
+  `spectrum_view_t` 280 B, `dmrs_view_t` 228, `p25s_view_t` 204, `dmrtk_view_t` 212, `p25tk_view_t` 184 and the
+  pager / ACARS message page 184): each of Tools > Spectrum, DMR search, P25 search, DMR trunk, P25 trunk and the
+  message page refills it at the start of its own draw and in its key handler (a fresh snapshot; the spectrum's OK
+  now tunes to the hit of a fresh copy instead of the last draw's), and only the screen on top draws or gets keys.
+  What must outlive a draw stays in each screen's own statics (span, range, the find picked, the page's scroll). The
+  one reader outside its screen is the find save (`ui_findsave.c`, item 23), which reads the P25 / DMR search list
+  frozen as the save began: `ui_scratch_take` / `ui_scratch_mine` name who filled the buffer last, the search screen
+  keeps its frozen list only while it still owns it, and when another screen has taken it the save stops at the next
+  find ("Stopped: n saved"; before the first step: "Stopped", no zone made); every channel already written is whole.
+  **Debug log ring 1,024 -> 512 B** (`PLUS_DLOG_RING_BYTES`; about half a dozen lines between two reads of the debug
+  link, `tools/plus_live.py` polls far more often). Heap and task stacks unchanged. Measured: static RAM 210,688 ->
+  209,168 B (-1,520: the six copies' 1,292 B -> the union's 280 and its owner byte, about -1,010; the ring -512), **2,288 B free**; FLASH
+  +168 B; every task's deepest stack path unchanged.
+- [built] Heard list (`CONFIG_HEARD`, item 24; needs CALL_LOG). Tools > **Heard list** ("Duyulanlar"): every station
+  heard on P25, DMR, YSF, NXDN and dPMR, one row each, newest first: "P25 77285" and "TG101 $659 x12 3m" (the
+  talkgroup or the unit called, the NAC / colour code / RAN, the calls, how long ago; the NAC, then the talkgroup
+  left out where the row is too narrow). Entries merge by (mode, source, destination); a private call and another
+  mode are other entries. Fed where Recent is fed (ui_app.c `recent_add`: every new call; while a DMR or P25 call goes
+  on, `ui_heard_recent(.., false)`: its last-heard time, and another call only after 5 s of quiet), with the
+  frequency and DMR's colour code / slot of the view it was heard on; calls we made and FM caller ID's kinds are not
+  kept. 16 entries of 16 B (`heard.h`): 24-bit source and destination (a YSF callsign packed into those 48 bits as 8
+  characters of 6 bits), an 8-bit saturating count, the frequency, 20-bit last-heard seconds (an entry older than
+  about 6 days is dropped before that clock wraps) and the 12-bit NAC; the brief's 12 B had no room for both the
+  talkgroup and the frequency Tune VFO needs. **OK** opens one: mode, destination and source, NAC / colour code and
+  slot / RAN, frequency, calls, last heard; on a P25 or DMR one **OK tunes the VFO** (`CONFIG_VFO_MODES`: the VFO
+  settings' own path, `radio_req_vfo(true)` then `ui_svc_vfo_apply`: the frequency, the mode, P25 NAC and talkgroup
+  (Selective, the VFO's own rule; TX only as `vfox_fix` allows), DMR colour code and slot; a DMR talkgroup then becomes
+  the talk target as the actions' Talk does, "Talking to TG 2620"). RAM only, empty after power on. RAM: 280 B (the
+  list 260 with its count, the open row 16, the tick's view pointer 4).
+- [built] Spectrum waterfall (`CONFIG_SPECTRUM_WF`, item 26; needs SPECTRUM). Tools > Spectrum shows the last 40
+  finished sweeps under the bars (the bars take the upper 45 %), newest on top, each point's level above the sweep's
+  floor in 3 dB steps (16 levels, 4 bits) drawn in the screen's own colours (background, line, idle, dim, RX, warning,
+  TX; the 16-colour frame buffer has no room for a palette of its own); a new center or span starts the rows over.
+  **\*** turns it off and on (a toast says so; RAM only, on at power on; `*` no longer opens quick settings on this
+  screen, as on Recent). **Its 1,280 B buffer comes from the RTOS heap** while the screen is on top with the
+  waterfall on: taken on entry (or with *), given back on Back, on OK (tune) and at the first UI tick with another
+  screen on top (`ui_spectrum_wf_tick`), taken again when the screen is back on top (the rows start over). When the
+  heap has no room the bars are drawn alone with "No room" (tried again at the next entry or *). Not the frame buffer:
+  the screen is cleared at every redraw and toasts / banners are drawn over it, so the history cannot live there.
+  **Heap**: the radio read `tasks.heap_min_free` 1,640 B with FM caller ID's 2 KB ring running (RR1, 2026-11-18),
+  and the heap was enlarged by 2,048 B after that, so about 3.6 KB should stay free with the ring; the waterfall takes
+  1,288 B with heap_4's header. During a sweep FM caller ID gives its ring back (radio_sm.c: `fmid && !spectrum_on()`,
+  `radio_fmid_poll(false)` -> `ring_stop` -> `hrc_fm_rx_stop` frees it), unless APRS receive owns it (an FM channel
+  on the APRS frequency: `aprs_poll`'s `fm_rx` is not gated by the sweep), so the worst case keeps the ring and
+  still leaves about 2.3 KB. The pager / SSTV / CW decoders' heap blocks belong to their own screens and are not
+  taken while the spectrum is on top. A host model of the whole RTOS heap would only repeat estimates; the radio row
+  I26-3 reads `heap_min_free` with the waterfall open. RAM: 14 B (the ring's state and pointer, the switch, the
+  no-room flag).
+- [built] Coverage map (`CONFIG_MAP_COVERAGE`, item 27; needs MAP_TRACK). While the track records (a point every
+  30 s once 50 m from the last), each point also keeps one byte, the signal of the channel or VFO in use when it was
+  taken (`radio_view_t.rssi_dbm` + 141, clamped to -140 .. -1 dBm; 0 when the receiver gave no reading), in
+  `ui_mapnav_cov[48]` beside the ring (the same slot: the track's head and n, `track_slot`). On Tools > Map **\***
+  turns Coverage on / off (RAM only): every track point a dot in its signal's colour, on the S-meter scale of VHF /
+  UHF (S9 = -93 dBm, 6 dB a unit): **green S7 and up (-105 dBm), yellow S5-S6 (-117 dBm and up), red weaker**, grey
+  no reading; the legend "S7+ S5 <S5" in those colours under the map beside the scale. RAM: 49 B.
+- [built] GPS dashboard (`CONFIG_GPS_DASH`, item 29; needs GPS). Tools > **GPS**: the speed large (km/h), the heading
+  as one of 16 compass points and degrees (only from 3 km/h), the altitude, the trip distance and the top speed since
+  the reset, the fix (2D / 3D) and the satellites used. **OK held** resets the trip and the top speed. The trip counts
+  whatever screen is open (the GPS read once a second, `ui_gpsdash_tick`): a fix 25 m or more from the last counted
+  point adds the straight way there (integer equirectangular distance), so standing still adds nothing; a step
+  faster than 400 km/h is a jump (not counted, counting goes on from there); a GPS speed above 300 km/h is not the
+  top speed. RAM only. RAM: 24 B (the trip meter 20, the poll time 4).
+- [built] Clock tools (`CONFIG_CLOCK_TOOLS`, item 34). Tools > **Clock** ("Saat"), four rows (Up / Down): **Stopwatch**
+  (OK start / stop, # a lap while it runs: the newest three laps with their own times; # while stopped: reset);
+  **Countdown** (Left / Right or the knob set it while stopped, a minute a step, 10 s under a minute, held five steps,
+  up to 99 min; OK start / stop); **Alarm** at a time of day, local (Left / Right a minute, held 10; OK on / off;
+  one shot: off once it has rung); **UTC offset** (half an hour a step, +03:00 at first). The title shows the local
+  time. **Time of day**: the board's RTC has no driver in upstream, so the clock is the GPS's UTC time (taken once a
+  second while there is a fix; the receiver keeps the last fix's time after it is lost, so no time is taken then) run
+  on by the millisecond clock; without a GPS time since power on the screen says "No clock: needs GPS" and the alarm
+  cannot ring. The alarm rings when its minute begins (a clock moved on by up to 10 minutes at once still rings; a
+  bigger jump does not, rather than ringing for a time that never was; the minute it was set in does not ring until
+  the next day). **The countdown's end and the alarm sound and show a banner on any screen**, through the satellite
+  pass alarm's own path in `ui_app_tick` (an info banner, or a toast over a banner that waits for the user; the
+  backlight on): "Countdown done" with the TX time-out warning tone, "Alarm 07:30" with the scan hold tone. RAM only,
+  all off at power on. RAM: 90 B (the state 56, its text 24, focus and times).
+- Tests: tests/plus/test_toolbox.c (the heard list's merge, order, counting, the gap rule, saturation, the oldest
+  dropped, expiry across the 20-bit clock, YSF callsigns; the waterfall's levels, colour slots, row ring and wrap, a
+  new point count, no buffer; coverage's byte and its S-meter thresholds; the trip meter's still / moving / jump /
+  outage / spike cases, the compass; the stopwatch and laps, the countdown's end once, the alarm's minute with the
+  offset, jumps, the next day, no clock), test_ui_toolbox.c (10 flows through the real UI in upstream's simulator,
+  tests/plus/ui_sim_toolbox.c: the six screens one on top of another and back, each from its own copy and none of
+  another's text, the spectrum's OK after them; a find save stopped by another screen before and during it; the heard
+  list from DMR calls and P25 / YSF entries, Tune VFO for DMR and P25, none for YSF; the waterfall's heap block
+  counted through entry, *, another screen, Back and OK, its rows drawn, the allocation refused; coverage from moving
+  GPS fixes with three signal levels, the legend; the GPS dashboard; the clock's stopwatch, the countdown's banner on
+  Home, the alarm's on another screen from a running GPS time), run by tools/test_toolbox.py from
+  tools/test_classic.py.
+- Cost (step 2, all five): FLASH 852,640 -> 862,860 B (+10,220, strings and Turkish included), static RAM 209,168 ->
+  209,672 B (+504 of the 600 B budget), **1,784 B free**; every task's deepest stack path unchanged (UI 268 B free,
+  radio 760, p25-lab 328). The whole job: FLASH 852,472 -> 862,860 B, RAM 210,688 -> 209,672 B (768 -> 1,784 B free).
+
 ## Name and public build
 
 The product's name on the radio is **DDM25 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file

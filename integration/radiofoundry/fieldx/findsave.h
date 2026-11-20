@@ -62,7 +62,8 @@ bool ui_findsave_busy(void);
 bool ui_findsave_tick(void);
 /* "Saving 3 of 8" while busy, for the search screens; false when idle */
 bool ui_findsave_line(char *buf, uint8_t len);
-/* The search screens' lists as the save began (frozen while it runs): find i, false past the end */
+/* The search screens' lists as the save began (frozen while it runs): find i, false past the end or once another
+ * screen has taken the shared buffer the list lives in (ui_scratch.h; the save then stops with the count so far) */
 bool ui_p25search_find(uint8_t i, findsave_item_t *out);
 bool ui_dmrsearch_find(uint8_t i, findsave_item_t *out);
 

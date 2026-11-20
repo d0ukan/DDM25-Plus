@@ -17,12 +17,21 @@
 #include "radio/radio.h"
 #include "radio/dmr_csbk.h"
 #include "radio/dmrtrunk.h"
+#include "ui/ui_scratch.h"
 #if CONFIG_ID_DB
 #include "radio/iddb.h"
 #endif
 
 static bool every_group;
-static dmrtk_view_t tv;
+/* The system as last copied: the tool screens' shared buffer (ui_scratch.h), refilled by snap() in each draw and
+ * key */
+#define tv	(ui_scratch.dmrtk)
+
+static bool snap(void)
+{
+	ui_scratch_take(UI_SCRATCH_DMRTK);
+	return dmrtk_snapshot(&tv);
+}
 
 /* Why a grant was not followed, in a few letters ("" = followed) */
 static const char *why(uint8_t flags)
@@ -94,7 +103,7 @@ static void tk_draw(void)
 {
 	char buf[44];
 	sbuf_t b;
-	bool have = dmrtk_snapshot(&tv);
+	bool have = snap();
 	bool on = have && tv.state != DMRTK_OFF;
 	const radio_view_t *rv = ui_view();
 	gfx_clear(ui_col.bg);
@@ -183,7 +192,7 @@ static void start(void)
 static bool tk_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
-	bool on = dmrtk_snapshot(&tv) && tv.state != DMRTK_OFF;
+	bool on = snap() && tv.state != DMRTK_OFF;
 	if (press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) {
 		every_group = !every_group;
 		if (on)

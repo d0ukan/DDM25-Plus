@@ -702,6 +702,11 @@ def main():
         "CONFIG_NAV_FOLLOW="+("y" if args.plus else "n"),
         "CONFIG_LOCATOR="+("y" if args.plus else "n"),
         "CONFIG_SOS_KEY="+("y" if args.plus else "n"),
+        "CONFIG_HEARD="+("y" if args.plus else "n"),
+        "CONFIG_SPECTRUM_WF="+("y" if args.plus else "n"),
+        "CONFIG_MAP_COVERAGE="+("y" if args.plus else "n"),
+        "CONFIG_GPS_DASH="+("y" if args.plus else "n"),
+        "CONFIG_CLOCK_TOOLS="+("y" if args.plus else "n"),
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

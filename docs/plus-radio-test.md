@@ -396,6 +396,34 @@ traffic) open. Build 7c90427b (artifacts/plus-20261117c) is installed but its ne
 | I33-9 | Keys locked (long *); press SK1; OK; hold SK1 (one action On, **TX: owner approval and an authorised frequency**) | the page opens while locked; OK says the keys are locked; holding SK1 confirms |
 | I33-10 | Power off and on | Tools > SOS key all Off again; SK1 still set to SOS (the key assignment is stored as before) |
 
+### Round 13 ideas 2 (docs/plus.md "Round 13 ideas 2")
+
+| # | Do | Expect |
+|---|---|---|
+| RR13-1 | Boot; `tools/plus_txdiag.py --health` (read only) | normal boot; `tasks.heap_min_free` and the task stacks' free bytes as before this build (the heap and stacks were not changed); no crash record |
+| RR13-2 | Tools > Spectrum (a sweep runs); then Tools > P25 search, DMR search, P25 trunk (on a P25 channel), DMR trunk (on a DMR channel), Pager with a message open, each opened from the spectrum and Back to it | each screen shows its own content, never another's (no WACN line on the search, no find rows on the trunk screens); back on the spectrum the bars and Hit / Floor lines come back within a second; OK on the spectrum tunes the VFO to its hit |
+| RR13-3 | P25 search with at least two finds: # and at once Back, then open Tools > Spectrum | the save stops: toast "Stopped" or "Stopped: n saved"; any channel written in "Bulunanlar N" is one of the finds, whole (name, NAC, talkgroup as the list showed) |
+| RR13-4 | With the PC live panel (`tools/plus_live.py`) open for a few minutes | the log view still shows the radio's lines (the debug log ring is now 512 B: fewer kept between reads) |
+| I24-1 | Receive the other radio's P25 calls (NAC $659, TG 101) three times, 10 s apart; a DMR call or two on a DMR channel; Tools > Heard list | rows "P25 <its ID>" "TG101 $659 x3 ..." and the DMR station's; newest on top; the age counts up |
+| I24-2 | One long P25 call (30 s) | its row counts it once (x+1), not per second |
+| I24-3 | OK on the P25 row; OK | the page shows TG 101, the ID, $659, 433.500, the calls; OK: Home in the VFO on 433.500 P25, NAC $659, talkgroup 101 (VFO settings show them); receives the other radio's next call |
+| I24-4 | OK on a DMR row; OK | the VFO on that frequency in DMR with the colour code and slot heard; toast "Talking to TG ..."; a call from that talkgroup is heard |
+| I24-5 | Power off and on; Tools > Heard list | "Nothing heard yet" |
+| I26-1 | Tools > Spectrum around an active frequency (a repeater, or the other radio keyed on and off) | the bars on top, the waterfall below fills from the top a row a sweep; a carrier shows as a bright column where it is; the hint names * |
+| I26-2 | *; * again; Up / Down (another center) | "Waterfall off" (bars use the whole height); "Waterfall on" (the rows start empty); a new center starts the rows over |
+| I26-3 | With the waterfall open for a minute: `tools/plus_txdiag.py --health` (read only); then Back and read again | `tasks.heap_min_free` stays at 1 KB or more with the waterfall (about 1.3 KB less than without); after Back the heap's free bytes are back; note both numbers in the log |
+| I26-4 | Open the spectrum on the APRS frequency in FM (APRS receive on) | as I26-1 (the APRS ring stays during the sweep): no "No room"; if "No room" shows, note heap_min_free |
+| I27-1 | Map track on (it records while the GPS has a fix); walk or drive 2-3 km away from a repeater on its output (FM), the squelch open or with its beacon / traffic; Tools > Map, * | toast "Coverage: track by signal"; the track's points coloured green near, yellow, then red far; the legend "S7+ S5 <S5" under the map |
+| I27-2 | * again; power off and on | "Coverage off"; after power on coverage is off (and the track empty, as before) |
+| I29-1 | Tools > GPS standing still with a fix for 2 minutes | speed 0 (or 1), heading "-", altitude, "Fix 3D, n satellites"; trip stays 0 m |
+| I29-2 | Drive (or walk) a known distance, about 1 km, with the screen closed part of the time | trip within a few % of the distance; top speed about the highest speed driven; heading's compass point and degrees match the way |
+| I29-3 | OK; hold OK | "Hold OK to reset the trip"; "Trip reset", trip 0 m, top speed 0 |
+| I34-1 | Tools > Clock without a GPS fix since power on | "No clock: needs GPS"; the title shows no time |
+| I34-2 | Stopwatch: OK, # twice, OK; # | runs; Lap 1 / Lap 2 with their own times; stops; # resets to 0:00.0 |
+| I34-3 | Countdown: down to 0:30 with Left; OK; go Home (or any screen) | after 30 s a tone and the banner "Countdown done" on that screen, the backlight on |
+| I34-4 | With a GPS fix: the title shows local time (+03:00) equal to a phone's; Alarm two minutes ahead, OK (On); open Tools > Map | at that minute a tone and the banner "Alarm hh:mm" over the map; the alarm row shows Off afterwards |
+| I34-5 | Alarm set and on; lose the fix (indoors) until it is due | it still rings on time (the clock runs on without the fix) |
+
 ## 7. Not testable here
 
 YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec2 too heavy for the CPU).

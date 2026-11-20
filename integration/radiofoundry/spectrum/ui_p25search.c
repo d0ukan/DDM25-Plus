@@ -15,6 +15,7 @@
 #include "gfx.h"
 #include "radio/radio.h"
 #include "radio/p25search.h"
+#include "ui/ui_scratch.h"
 #if CONFIG_FIND_SAVE
 #include "ui/findsave.h"
 #endif
@@ -22,7 +23,8 @@
 enum { R_500K, R_1M, R_2M5, R_UHF, R_VHF, R_COUNT };
 static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5 MHz", "430-440 MHz", "144-146 MHz" };
 static uint8_t range_i = R_1M;
-static p25s_view_t sv;
+/* The search as last copied: the tool screens' shared buffer (ui_scratch.h), refilled by snap() in each draw and key */
+#define sv	(ui_scratch.p25s)
 #if CONFIG_FIND_SAVE
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
 #endif
@@ -56,13 +58,15 @@ static void hexnac(sbuf_t *b, uint16_t nac)
 		sb_chr(b, "0123456789ABCDEF"[(nac >> sh) & 15u]);
 }
 
-/* The search's state; while finds are being saved, the list as the save began */
+/* The search's state; while finds are being saved, the list as the save began (still in the buffer unless another
+ * screen has taken it since: then the save stops, ui_p25search_find) */
 static bool snap(void)
 {
 #if CONFIG_FIND_SAVE
-	if (ui_findsave_busy())
+	if (ui_findsave_busy() && ui_scratch_mine(UI_SCRATCH_P25S))
 		return true;
 #endif
+	ui_scratch_take(UI_SCRATCH_P25S);
 	return p25s_snapshot(&sv);
 }
 
@@ -78,7 +82,7 @@ static int sel_row(void)
 
 bool ui_p25search_find(uint8_t i, findsave_item_t *out)
 {
-	if (i >= sv.found_n)
+	if (!ui_scratch_mine(UI_SCRATCH_P25S) || i >= sv.found_n)
 		return false;
 	const p25s_found_t *f = &sv.found[i];
 	memset(out, 0, sizeof *out);

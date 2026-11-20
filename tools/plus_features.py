@@ -182,6 +182,7 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_p25nac", fromlist=["x"]).prepare_p25_txnac(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_brand", fromlist=["x"]).prepare_brand(transform)
     __import__((__package__ + "." if __package__ else "") + "plus_fieldx", fromlist=["x"]).prepare_fieldx(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_toolbox", fromlist=["x"]).prepare_toolbox(transform, install)
 
 
 def prepare_sat_alarm(transform):
@@ -1623,7 +1624,8 @@ PLUS_RAM_TRIM = {
     'P25_WORKER_WORDS': 1408,	# 5,632 B: static deepest 4,528 B (the live encoder), measured 2,844 B
     'PLUS_DMR_TASK_WORDS': 320,	# 1,280 B: static deepest 284 B, measured 240 B
     'PLUS_GPS_TASK_WORDS': 256,	# 1,024 B: static deepest 356 B, measured 416 B
-    'PLUS_DLOG_RING_BYTES': 1024,	# debug link log: about a dozen lines instead of two dozen
+    # debug link log: about half a dozen lines (upstream 2,048 B: two dozen; 1,024 until the round 13 RAM reclaim)
+    'PLUS_DLOG_RING_BYTES': 512,
     'PLUS_HOST_TASK_WORDS': PLUS_HOST_TASK_WORDS,
     'PLUS_VIEW_NONE_CONST': 1,	# ui_app.c view_none (720 B) in flash
     'PLUS_STARTUP_STACK_IN_HEAP': 2048,	# bytes main() may use at the top of the heap (was the 2 KB .stack section)

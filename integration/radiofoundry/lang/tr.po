@@ -28,7 +28,7 @@ msgstr "PC Yükleyici bağlı"
 msgid "Power-cycle to exit"
 msgstr "Çıkmak için kapat-aç"
 
-#: core/ui/fmt.c core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_beacon.c core/ui/ui_lone.c core/ui/ui_menus.c core/ui/ui_scanx.c core/ui/ui_screens.c core/ui/ui_sos.c
+#: core/ui/fmt.c core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_beacon.c core/ui/ui_clock.c core/ui/ui_lone.c core/ui/ui_menus.c core/ui/ui_scanx.c core/ui/ui_screens.c core/ui/ui_sos.c
 msgid "Off"
 msgstr "Kapalı"
 
@@ -156,7 +156,7 @@ msgstr "GPS konumu (ve tarihi) gerekli"
 msgid "Settings > Location"
 msgstr "Ayarlar > Konum"
 
-#: core/ui/ui_almanac.c core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_rpt.c core/ui/ui_sat.c core/ui/ui_screens.c core/ui/ui_sos.c core/ui/ui_sstv.c
+#: core/ui/ui_almanac.c core/ui/ui_aprs.c core/ui/ui_heard.c core/ui/ui_menus.c core/ui/ui_rpt.c core/ui/ui_sat.c core/ui/ui_screens.c core/ui/ui_sos.c core/ui/ui_sstv.c
 msgid "Back"
 msgstr "Geri"
 
@@ -424,7 +424,7 @@ msgstr "VFO: bu sürümde FM yok"
 msgid "VFO: frequency outside its bands"
 msgstr "VFO: frekans bant dışında"
 
-#: core/ui/ui_app.c
+#: core/ui/ui_app.c core/ui/ui_heard.c
 msgid "VFO: not in this build"
 msgstr "VFO: bu sürümde yok"
 
@@ -848,7 +848,7 @@ msgstr "Yeni mesaj"
 msgid "SOS (emergency)"
 msgstr "SOS (acil durum)"
 
-#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c core/ui/ui_sos.c
+#: core/ui/ui_aprs.c core/ui/ui_clock.c core/ui/ui_menus.c core/ui/ui_screens.c core/ui/ui_sos.c
 msgid "On"
 msgstr "Açık"
 
@@ -928,7 +928,7 @@ msgstr "Duyulan"
 msgid "OK follow  Back"
 msgstr "OK takip et  Geri"
 
-#: core/ui/ui_aprs.c core/ui/ui_fmdec.c
+#: core/ui/ui_aprs.c core/ui/ui_fmdec.c core/ui/ui_heard.c
 msgid "Nothing heard yet"
 msgstr "Henüz bir şey duyulmadı"
 
@@ -1171,6 +1171,70 @@ msgstr "OK durdur  Geri"
 #: core/ui/ui_beacon.c
 msgid "OK send  ^v <> pick"
 msgstr "OK gönder  ^v <> seç"
+
+#: core/ui/ui_clock.c core/ui/ui_sat.c
+msgid "Alarm "
+msgstr "Alarm "
+
+#: core/ui/ui_clock.c
+msgid "Countdown done"
+msgstr "Geri sayım bitti"
+
+#: core/ui/ui_clock.c core/ui/ui_menus.c core/ui/ui_sstv.c
+msgid "Clock"
+msgstr "Saat"
+
+#: core/ui/ui_clock.c
+msgid "Stopwatch"
+msgstr "Kronometre"
+
+#: core/ui/ui_clock.c
+msgid "Lap "
+msgstr "Tur "
+
+#: core/ui/ui_clock.c
+msgid "Countdown"
+msgstr "Geri sayım"
+
+#: core/ui/ui_clock.c
+msgid "Alarm"
+msgstr "Alarm"
+
+#: core/ui/ui_clock.c
+msgid "UTC offset"
+msgstr "UTC farkı"
+
+#: core/ui/ui_clock.c
+msgid "No clock: needs GPS"
+msgstr "Saat yok: GPS gerekli"
+
+#: core/ui/ui_clock.c
+msgid "Rings on any screen"
+msgstr "Her ekranda çalar"
+
+#: core/ui/ui_clock.c
+msgid "OK stop  # lap  ^v row"
+msgstr "OK durdur  # tur  ^v satır"
+
+#: core/ui/ui_clock.c
+msgid "OK start  # reset  ^v row"
+msgstr "OK başlat  # sıfırla  ^v satır"
+
+#: core/ui/ui_clock.c
+msgid "OK stop  ^v row"
+msgstr "OK durdur  ^v satır"
+
+#: core/ui/ui_clock.c
+msgid "OK start  <> time  ^v row"
+msgstr "OK başlat  <> süre  ^v satır"
+
+#: core/ui/ui_clock.c
+msgid "OK on/off  <> time  ^v row"
+msgstr "OK aç/kapa  <> saat  ^v satır"
+
+#: core/ui/ui_clock.c
+msgid "<> offset  ^v row"
+msgstr "<> fark  ^v satır"
 
 #: core/ui/ui_cw.c
 msgid "Not enough memory for CW"
@@ -1892,7 +1956,7 @@ msgstr "3D Konum"
 msgid "2D Fix"
 msgstr "2D Konum"
 
-#: core/ui/ui_gps.c
+#: core/ui/ui_gps.c core/ui/ui_gpsdash.c
 msgid "Fix"
 msgstr "Konum"
 
@@ -1947,6 +2011,66 @@ msgstr "GPS yok veya kapalı"
 #: core/ui/ui_gps.c
 msgid "Up Down page  Back"
 msgstr "Yuk Aşa sayfa  Geri"
+
+#: core/ui/ui_gpsdash.c
+msgid "Heading"
+msgstr "Yön"
+
+#: core/ui/ui_gpsdash.c
+msgid "Altitude"
+msgstr "Yükseklik"
+
+#: core/ui/ui_gpsdash.c
+msgid "Trip"
+msgstr "Yol"
+
+#: core/ui/ui_gpsdash.c
+msgid "Top speed"
+msgstr "En yüksek hız"
+
+#: core/ui/ui_gpsdash.c
+msgid "GPS off"
+msgstr "GPS kapalı"
+
+#: core/ui/ui_gpsdash.c
+msgid "No fix"
+msgstr "Konum yok"
+
+#: core/ui/ui_gpsdash.c core/ui/ui_menus.c
+msgid " satellites"
+msgstr " uydu"
+
+#: core/ui/ui_gpsdash.c
+msgid "Hold OK reset  Back"
+msgstr "OK basılı: sıfırla  Geri"
+
+#: core/ui/ui_gpsdash.c
+msgid "Trip reset"
+msgstr "Yol sıfırlandı"
+
+#: core/ui/ui_gpsdash.c
+msgid "Hold OK to reset the trip"
+msgstr "Yolu sıfırlamak için OK'e basılı tutun"
+
+#: core/ui/ui_heard.c core/ui/ui_menus.c
+msgid "Heard list"
+msgstr "Duyulanlar"
+
+#: core/ui/ui_heard.c core/ui/ui_msg.c
+msgid "OK open  Back"
+msgstr "OK aç  Geri"
+
+#: core/ui/ui_heard.c
+msgid "Calls "
+msgstr "Çağrı "
+
+#: core/ui/ui_heard.c
+msgid "Last "
+msgstr "Son "
+
+#: core/ui/ui_heard.c
+msgid "OK tune VFO  Back"
+msgstr "OK VFO'yu ayarla  Geri"
 
 #: core/ui/ui_locator.c core/ui/ui_menus.c
 msgid "Locator"
@@ -2119,6 +2243,18 @@ msgstr "0 takip edilecek istasyonu seçer"
 #: core/ui/ui_map.c
 msgid "Hold 7 to clear the track"
 msgstr "İzi silmek için 7'ye basılı tutun"
+
+#: core/ui/ui_map.c
+msgid "Coverage off"
+msgstr "Kapsama kapalı"
+
+#: core/ui/ui_map.c
+msgid "Coverage: track by signal"
+msgstr "Kapsama: iz sinyale göre"
+
+#: core/ui/ui_map.c
+msgid "Coverage: no track yet"
+msgstr "Kapsama: henüz iz yok"
 
 #: core/ui/ui_map.c core/ui/ui_rpt.c
 msgid "No repeaters in this build"
@@ -3191,10 +3327,6 @@ msgstr "Henüz konum yok. Dışarı çık, binalardan uzaklaş."
 #: core/ui/ui_menus.c
 msgid "Fix, "
 msgstr "Konum, "
-
-#: core/ui/ui_menus.c
-msgid " satellites"
-msgstr " uydu"
 
 #: core/ui/ui_menus.c
 msgid "Altitude "
@@ -4389,10 +4521,6 @@ msgid "Tone only"
 msgstr "Yalnız ton"
 
 #: core/ui/ui_msg.c
-msgid "OK open  Back"
-msgstr "OK aç  Geri"
-
-#: core/ui/ui_msg.c
 msgid "repeated"
 msgstr "tekrar"
 
@@ -4515,10 +4643,6 @@ msgstr "yakında geçiş yok"
 #: core/ui/ui_sat.c
 msgid "bad elements"
 msgstr "hatalı TLE"
-
-#: core/ui/ui_sat.c
-msgid "Alarm "
-msgstr "Alarm "
 
 #: core/ui/ui_sat.c
 msgid "Alarm: none in 36 h"
@@ -5345,6 +5469,10 @@ msgid "OK on/off  Back"
 msgstr "OK aç/kapat  Geri"
 
 #: core/ui/ui_spectrum.c
+msgid "No room"
+msgstr "Yer yok"
+
+#: core/ui/ui_spectrum.c
 msgid "Sweeping..."
 msgstr "Taranıyor..."
 
@@ -5357,8 +5485,24 @@ msgid "Floor "
 msgstr "Taban "
 
 #: core/ui/ui_spectrum.c
+msgid "{OK tune  <> span  * waterfall|OK tune  <> span  *}"
+msgstr "{OK ayarla  <> açıklık  * şelale|OK ayarla  <> açıklık  *}"
+
+#: core/ui/ui_spectrum.c
 msgid "OK tune  <> span  Back"
 msgstr "OK ayarla  <> açıklık  Geri"
+
+#: core/ui/ui_spectrum.c
+msgid "Waterfall off"
+msgstr "Şelale kapalı"
+
+#: core/ui/ui_spectrum.c
+msgid "Waterfall on"
+msgstr "Şelale açık"
+
+#: core/ui/ui_spectrum.c
+msgid "Waterfall: no room"
+msgstr "Şelale: yer yok"
 
 #: core/ui/ui_sstv.c
 msgid "Not enough memory for SSTV"
@@ -5387,10 +5531,6 @@ msgstr "Sinyal kayboldu"
 #: core/ui/ui_sstv.c
 msgid "Mode not decoded: VIS"
 msgstr "Mod çözülmedi: VIS"
-
-#: core/ui/ui_sstv.c
-msgid "Clock"
-msgstr "Saat"
 
 #: core/ui/ui_sstv.c
 msgid "Waiting for the next picture"

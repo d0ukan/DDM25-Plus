@@ -17,6 +17,7 @@
 #include "gfx.h"
 #include "radio/radio.h"
 #include "radio/dmrsearch.h"
+#include "ui/ui_scratch.h"
 #if CONFIG_FIND_SAVE
 #include "ui/findsave.h"
 #endif
@@ -25,22 +26,25 @@ enum { R_500K, R_1M, R_2M5, R_UHF, R_VHF, R_COUNT };
 static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5 MHz", "430-440 MHz", "144-146 MHz" };
 static uint8_t range_i = R_1M;
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
-static dmrs_view_t sv;
+/* The search as last copied: the tool screens' shared buffer (ui_scratch.h), refilled by snap() in each draw and key */
+#define sv	(ui_scratch.dmrs)
 
-/* The search's state; while finds are being saved, the list as the save began */
+/* The search's state; while finds are being saved, the list as the save began (still in the buffer unless another
+ * screen has taken it since: then the save stops, ui_dmrsearch_find) */
 static bool snap(void)
 {
 #if CONFIG_FIND_SAVE
-	if (ui_findsave_busy())
+	if (ui_findsave_busy() && ui_scratch_mine(UI_SCRATCH_DMRS))
 		return true;
 #endif
+	ui_scratch_take(UI_SCRATCH_DMRS);
 	return dmrs_snapshot(&sv);
 }
 
 #if CONFIG_FIND_SAVE
 bool ui_dmrsearch_find(uint8_t i, findsave_item_t *out)
 {
-	if (i >= sv.found_n)
+	if (!ui_scratch_mine(UI_SCRATCH_DMRS) || i >= sv.found_n)
 		return false;
 	const dmrs_found_t *f = &sv.found[i];
 	memset(out, 0, sizeof *out);

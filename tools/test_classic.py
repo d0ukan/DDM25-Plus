@@ -266,7 +266,8 @@ def fmdec_tests(flags, host):
     argv[argv.index('uiFlowTest.c')]=str(ROOT/'tests/plus/test_ui_fmdec.c')
     argv[argv.index('-o')+1]=str(OUT/'test_ui_fmdec')
     run([*argv,'-I'+str(host),'-DCONFIG_P25_CHANNELS=1','-DCONFIG_MSG_RX=1','-DCONFIG_TONE_FIND=1','-DCONFIG_SELCALL=1',
-         str(APP/'core/ui/ui_msg.c'),str(APP/'core/ui/ui_fmdec.c'),str(radio/'tonefind.c')],cwd=host)
+         str(APP/'core/ui/ui_msg.c'),str(APP/'core/ui/ui_scratch.c'),str(APP/'core/ui/ui_fmdec.c'),str(radio/'tonefind.c')],
+        cwd=host)
     run([OUT/'test_ui_fmdec'],cwd=host)
 
 def main():
@@ -848,5 +849,8 @@ def main():
     # DDM25 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/test_fieldx.py)
     import test_fieldx
     test_fieldx.main(ROOT,APP,OUT,flags,host)
+    # DDM25 Plus round 13 ideas 2: shared screen buffer, heard list, waterfall, coverage, GPS, clock (tools/test_toolbox.py)
+    import test_toolbox
+    test_toolbox.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

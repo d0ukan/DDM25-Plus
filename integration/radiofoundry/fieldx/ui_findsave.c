@@ -190,13 +190,18 @@ static void finish(uint8_t why)
 static void __attribute__((noinline)) step_start(void)
 {
 	int16_t at;
+	findsave_item_t f;
+	if (!item(fs.next, &f)) {
+		fs.phase = FS_IDLE;	/* the list is gone (ui_scratch.h): nothing written, no zone made */
+		ui_toast(TR("Stopped"));
+		return;
+	}
 	uint16_t top = zones_scan(&at);
 	if (fs.one && at >= 0) {
-		findsave_item_t f;
 		look_t l;
 		fs.num = top;
 		fs.zone = (uint16_t)at;
-		if (item(fs.next, &f) && zone_read(&f, &l)) {
+		if (zone_read(&f, &l)) {
 			if (l.dup) {
 				fs.dup = 1;
 				finish(WHY_DONE);
@@ -228,7 +233,7 @@ static void __attribute__((noinline)) step_add(void)
 		return;
 	}
 	if (!item(fs.next, &f)) {
-		fs.next = fs.end;
+		finish(WHY_FAILED);	/* the list is gone: another screen took the shared buffer (ui_scratch.h) */
 		return;
 	}
 	if (!zone_look(&f, &l)) {
