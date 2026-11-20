@@ -238,6 +238,50 @@ public sealed class FlowTests(RadioInputs inputs) : IClassFixture<RadioInputs>
     }
 
     [Fact]
+    public void TheBackupStepKeepsItsOwnResult()
+    {
+        var w = new Wizard();
+        w.SetPort("COM7");
+        w.SetPackage(new Pkg());
+        w.StartBackup(@"E:\DDM32-dev-backups\dm32-20261120");
+        Assert.Equal("Wiz_BackupRunning", w.BackupMessage.Key);
+        w.BackupFinished(BackupOk);
+        Assert.Equal("Wiz_BackupDone", w.BackupMessage.Key);
+        Assert.Equal(@"E:\DDM32-dev-backups\dm32-20261120", w.BackupMessage.Args[0]);
+        w.StartDetect();
+        w.DetectFinished(Classic);
+        w.StartPlan();
+        w.PlanFinished(PlanOk);
+        Assert.Equal("Wiz_PlanReady", w.Message.Key);                 // the check step's
+        Assert.Equal("Wiz_BackupDone", w.BackupMessage.Key);          // the backup step still says what the backup did
+        w.StartBackup("b2");
+        w.BackupFinished(new StepResult(false, false, true, "DumpError: the radio did not start its serial boot ROM within 120 s"));
+        Assert.Equal("Wiz_BackupTimeout", w.BackupMessage.Key);
+    }
+
+    [Fact]
+    public void TheQuickUpdateFindsBackupsInChosenFolders()
+    {
+        using var tmp = new TempDir();
+        var chosen = tmp.Sub("DDM32-dev-backups");
+        var yedekler = tmp.Sub("yedekler");
+        Directory.CreateDirectory(yedekler);
+        Assert.Null(BackupFinder.Last([yedekler, chosen], Codec.Dm32));
+        // a stock backup in yedekler is not offered; the DDM32 Plus backup in the chosen folder is
+        RadioFixtures.WriteBackup(Path.Combine(yedekler, "dm32-20261113"), inputs.Stock, inputs.Data);
+        var taken = Path.Combine(chosen, "dm32-20261120");
+        RadioFixtures.WriteBackup(taken, inputs.Program, inputs.Data);
+        Directory.CreateDirectory(Path.Combine(chosen, "not-a-backup"));
+        Assert.Equal(taken, BackupFinder.Last([yedekler, chosen, chosen, tmp.Sub("missing")], Codec.Dm32));
+        Assert.Equal(2, BackupFinder.Candidates([yedekler, chosen]).Count);
+        // the chosen folder is remembered in the settings
+        var s = new Core.Storage.Settings(tmp.Sub("settings.json"));
+        s.RememberBackupFolder(chosen);
+        s.RememberBackupFolder(chosen + System.IO.Path.DirectorySeparatorChar);
+        Assert.Equal([chosen], s.BackupFolders());
+    }
+
+    [Fact]
     public void NormalPathIsTheDefault()
     {
         var w = new Wizard();

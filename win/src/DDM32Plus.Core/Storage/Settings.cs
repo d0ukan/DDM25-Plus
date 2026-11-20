@@ -77,6 +77,20 @@ public sealed class Settings(string path)
         set => Save(IncludeBetaKey, value);
     }
 
+    /// <summary>Folders the user chose to keep backups in (besides yedekler): searched for the quick update.</summary>
+    public List<string> BackupFolders() =>
+        Load()["backup_folders"] is JsonArray a ? [.. a.Select(x => x?.ToString() ?? "").Where(x => x.Length > 0)] : [];
+
+    public void RememberBackupFolder(string folder)
+    {
+        var list = BackupFolders();
+        static string Norm(string p) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(p));
+        if (list.Any(x => string.Equals(Norm(x), Norm(folder), StringComparison.OrdinalIgnoreCase)))
+            return;
+        list.Add(folder);
+        Save("backup_folders", new JsonArray([.. list.Select(x => (JsonNode?)x)]));
+    }
+
     /// <summary>The disclaimer was accepted for this text version (pc/ddm32_app/disclaimer.py accepted()).</summary>
     public bool DisclaimerAccepted(string version) =>
         Load()[DisclaimerKey] is JsonObject d && d["version"] is JsonValue vv && vv.TryGetValue<string>(out var v) &&

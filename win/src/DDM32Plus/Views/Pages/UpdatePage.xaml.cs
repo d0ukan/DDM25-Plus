@@ -119,7 +119,7 @@ public partial class UpdatePage : UserControl, IPage
         QuickButton.IsEnabled = gate && w.Running is null;
         QuickText.Text = lookingForLast ? Loc.T("Upd_QuickLooking") : lastBackup is null ? Loc.T("Upd_QuickNone") : "";
         NoBackupButton.IsEnabled = gate && UnderstandBox.IsChecked == true && w.Running is null;
-        BackupStatus.Text = string.Join("\n", new[] { w.Port is null ? Loc.T("Upd_NoCable") : "", Msg(w.Message) }.Where(x => x.Length > 0));
+        BackupStatus.Text = string.Join("\n", new[] { w.Port is null ? Loc.T("Upd_NoCable") : "", Msg(w.BackupMessage) }.Where(x => x.Length > 0));
         RecheckButton.IsEnabled = w.CanDetect();
         DetectStatus.Text = w.Path == BackupPath.None ? Loc.T("Upd_NoBackupTitle") : DetectionText(w.Detection);
         CheckStatus.Text = w.Path == BackupPath.None ? Loc.T("Upd_NoBackupCheck")
@@ -320,6 +320,7 @@ public partial class UpdatePage : UserControl, IPage
             if (dlg.ShowDialog(Window.GetWindow(this)) != true)
                 return;
             parent = dlg.FolderName;
+            state.Settings.RememberBackupFolder(parent);     // the quick update looks there too
         }
         var outDir = AppPaths.UniqueFolder(parent, $"dm32-{AppPaths.Today()}");
         wizard.StartBackup(outDir);
@@ -339,7 +340,16 @@ public partial class UpdatePage : UserControl, IPage
         else
             wizard.BackupFinished(StepResult.Backup(outDir, end.Error));
         if (wizard.Backup == StepState.Ok)
+        {
             await DetectAndPlan();
+            // the backup just taken is the last backup of this radio: offer it right away
+            if (Wizard.IsDdm32(wizard.Detection))
+            {
+                lastBackup = outDir;
+                lastBackupDate = Directory.GetLastWriteTime(outDir);
+                lookedForLast = true;
+            }
+        }
         Refresh();
     }
 
@@ -468,24 +478,9 @@ public partial class UpdatePage : UserControl, IPage
         lookingForLast = true;
         Refresh();
         var roots = new List<string> { state.Paths.Backups };
+        roots.AddRange(state.Settings.BackupFolders());
         roots.AddRange(state.PythonData.Select(d => d.Backups));
-        var found = await Task.Run(() =>
-        {
-            var cands = roots.Where(Directory.Exists).SelectMany(Directory.GetDirectories)
-                .Where(AppPaths.IsVerifiedBackup).OrderByDescending(Directory.GetLastWriteTime).Take(6);
-            foreach (var c in cands)
-            {
-                try
-                {
-                    if (Wizard.IsDdm32(FileSteps.DetectBackup(c, Codec.Dm32)))
-                        return c;
-                }
-                catch (Exception e) when (e is ToolError or IOException or UnauthorizedAccessException or System.Text.Json.JsonException or KeyNotFoundException)
-                {
-                }
-            }
-            return null;
-        });
+        var found = await Task.Run(() => BackupFinder.Last(roots, Codec.Dm32));
         lastBackup = found;
         if (found is not null)
             lastBackupDate = Directory.GetLastWriteTime(found);

@@ -874,4 +874,7 @@ Yedek yok. Yazma yarıda kalırsa geri dönülecek yedek olmaz.
   <data name="Dev_ChooseFolder" xml:space="preserve">
     <value>Yedeğin yazılacağı klasörü seçin (geliştirici derlemesi)</value>
   </data>
+  <data name="Wiz_BackupDone" xml:space="preserve">
+    <value>Yedek alındı ve doğrulandı ({0}). Telsizi şimdi kapatıp açın: yedek alındıktan sonra telsiz, kapatılıp açılana kadar normal kullanıma dönmez.</value>
+  </data>
 </root>

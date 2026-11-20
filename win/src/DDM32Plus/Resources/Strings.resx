@@ -874,4 +874,7 @@ There is no backup. If the write stops part way there is no backup to go back to
   <data name="Dev_ChooseFolder" xml:space="preserve">
     <value>Choose the folder for the backup (developer build)</value>
   </data>
+  <data name="Wiz_BackupDone" xml:space="preserve">
+    <value>Backup taken and verified ({0}). Switch the radio off and on now: after a backup the radio stays in its loader until it is switched off and on.</value>
+  </data>
 </root>

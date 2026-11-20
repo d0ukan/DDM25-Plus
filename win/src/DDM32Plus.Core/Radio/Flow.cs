@@ -81,6 +81,10 @@ public sealed class Wizard
     public bool Locked { get; private set; }
     public string? Running { get; private set; }
     public (string Key, object?[] Args) Message { get; private set; } = ("", []);
+
+    /// <summary>What the Backup step shows: the backup's own result (Message moves on with the later steps).</summary>
+    public (string Key, object?[] Args) BackupMessage { get; private set; } = ("", []);
+
     public BackupPath Path { get; private set; } = BackupPath.Normal;
 
     /// <summary>The "I understand" box and the second confirmation of the install without backup.</summary>
@@ -195,7 +199,7 @@ public sealed class Wizard
         (DetectState, Detection) = (StepState.Idle, null);
         ResetPlan();
         (Install, InstallResult) = (StepState.Idle, null);
-        Message = ("Wiz_BackupRunning", []);
+        Message = BackupMessage = ("Wiz_BackupRunning", []);
     }
 
     public void BackupFinished(StepResult result)
@@ -206,11 +210,13 @@ public sealed class Wizard
             Backup = StepState.Ok;
             Locked = false;
             Message = ("Wiz_BackupVerified", []);
+            // the radio stays in its boot ROM / the monitor until it is switched off and on
+            BackupMessage = ("Wiz_BackupDone", [BackupDir]);
         }
         else
         {
             Backup = StepState.Failed;
-            Message = result.Timeout ? ("Wiz_BackupTimeout", []) : ("Wiz_BackupFailed", [result.Error]);
+            Message = BackupMessage = result.Timeout ? ("Wiz_BackupTimeout", []) : ("Wiz_BackupFailed", [result.Error]);
         }
     }
 
@@ -224,7 +230,7 @@ public sealed class Wizard
         Locked = false;
         ResetPlan();
         (Install, InstallResult) = (StepState.Idle, null);
-        Message = ("Wiz_ExistingBackup", []);
+        Message = BackupMessage = ("Wiz_ExistingBackup", []);
     }
 
     public void StartDetect()
@@ -420,6 +426,52 @@ public sealed class RestoreFlow
             Message = (result.Timeout ? "Wiz_InstallNotStartedTimeout" : "Wiz_InstallNotStarted", [result.Error]);
             Plan = StepState.Idle;
         }
+    }
+}
+
+/// <summary>
+/// The backups the quick update may offer: the verified backup folders under each root (this program's yedekler,
+/// every folder the user chose for a backup, the Python program's yedekler), newest first; the first that holds
+/// DDM32 Plus is "the last backup of this radio" (the tool still checks live that it is the same radio).
+/// </summary>
+public static class BackupFinder
+{
+    public static List<string> Candidates(IEnumerable<string> roots)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var out_ = new List<string>();
+        foreach (var root in roots.Where(r => !string.IsNullOrWhiteSpace(r) && Directory.Exists(r)))
+        {
+            IEnumerable<string> dirs;
+            try
+            {
+                dirs = Directory.GetDirectories(root);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                continue;
+            }
+            foreach (var d in dirs)
+                if (seen.Add(System.IO.Path.GetFullPath(d)) && Storage.AppPaths.IsVerifiedBackup(d))
+                    out_.Add(d);
+        }
+        return [.. out_.OrderByDescending(Directory.GetLastWriteTimeUtc)];
+    }
+
+    public static string? Last(IEnumerable<string> roots, Codec codec, int max = 8)
+    {
+        foreach (var c in Candidates(roots).Take(max))
+        {
+            try
+            {
+                if (Wizard.IsDdm32(FileSteps.DetectBackup(c, codec)))
+                    return c;
+            }
+            catch (Exception e) when (e is ToolError or IOException or UnauthorizedAccessException or JsonException or KeyNotFoundException)
+            {
+            }
+        }
+        return null;
     }
 }
 
