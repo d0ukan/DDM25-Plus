@@ -122,8 +122,8 @@ static void test_slots(void)
 	CHECK(active_is(DPK_RADIOID, pa, sizeof pa) && dpk_active(DPK_RADIOID)->seq == 1u);
 	CHECK(write_pack(DPK_RADIOID, pb, sizeof pb, "RadioID TR2", 500));
 	CHECK(active_is(DPK_RADIOID, pb, sizeof pb) && dpk_active(DPK_RADIOID)->seq == 2u);
-	CHECK(strncmp(dpk_active(DPK_RADIOID)->name, "RadioID TR2", 16) == 0);
-	CHECK(memcmp(dpk_active(DPK_RADIOID)->date, "20261120", 8) == 0);
+	dpk_hdr_t hd;
+	CHECK(dpk_header(DPK_RADIOID, &hd) && strncmp(hd.name, "RadioID TR2", 16) == 0 && memcmp(hd.date, "20261120", 8) == 0);
 	CHECK(write_pack(DPK_AIR, air, sizeof air, "TR aerodromes", 128) && active_is(DPK_AIR, air, sizeof air));
 	CHECK(active_is(DPK_RADIOID, pb, sizeof pb));	/* the types keep to their own slots */
 	/* after a restart the same */

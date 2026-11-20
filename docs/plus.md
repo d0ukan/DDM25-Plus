@@ -2403,7 +2403,14 @@ publications), kept on the data chip in **0xE70000-0xEFFFFF**, the one region AG
 - Air band pack payload (format 1): a 4-byte header (count), per airfield its code (8 bytes), its frequency count and
   the frequencies as `air_freq_t` (channel 2 bytes, type 1). Airfields the table lacks are not added (format 1:
   frequencies only).
-| 4 | Loading from the PC: the CPS session's close (`C` 5) checks the slots again; the builder `tools/datapack.py` (RadioID pack from the user's radioid.net `user.csv`, air band pack from the aerodromes' AD 2.18 pages the user downloads, `info`) | see the commit | | |
+| 4 | Loading from the PC: the CPS session's close (`C` 5) checks the slots again; the builder `tools/datapack.py` (RadioID pack from the user's radioid.net `user.csv`, air band pack from the aerodromes' AD 2.18 pages the user downloads, `info`) | 812,208 (+4) | 209,824 (1,632) | 890,968 |
+| rebase | onto `main` 42a0ff4 (r14-aprs merged): base public 814,356 B, RAM 209,640 B (1,816 free) | | | |
+| 5a | **The built-in ID database leaves program flash in every profile** (owner, 2026-11-21: the RadioID pack replaces it; `CONFIG_ID_DB=n` in `build_radiofoundry.py`, `tools/iddb.py` stays as the pack builder's source). RAM: the kept pack state cut to 8 bytes a type (the rest of the header is read from the chip when About draws), and **Settings > About's text is built in the heap while the page draws** instead of a 752-byte static buffer ("No room" if the heap has none) | 816,232 (+1,876 over main) | 209,040 (**2,416**: +600 over main) | 816,232: the same image |
+
+**Profiles after 5a.** `--plus` and `--plus --public` build the same image (the same bytes; only the output directory,
+the manifest's "kind" text and the public build's audit that no ID database code is in the ELF differ). The public
+profile still has to differ only by that audit and by refusing `--feature ID_DB=y`; a `--plus` developer build can
+still turn the old table on with `--feature ID_DB=y` (not for release).
 
 **Loading a pack from the PC (for the Windows programmer).** Through the firmware's own open-firmware CPS protocol
 (`docs/spec/open-firmware-cps.md` 2), never our flash tools: flash area 1 takes physical addresses and the pack

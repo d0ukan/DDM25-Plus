@@ -12,8 +12,9 @@ ART_AUTHOR, ART_CALLSIGN; names, never translated), then "Based on Open25-DM32 C
 "DDM32 Plus: GPL-3.0-or-later" goes right above them (LICENSING.md) and, with the repeater list, its sources
 ("Repeater data: RadioID.net, TRAC") at the end. Internal names (CONFIG_*, files, --plus, prepare_*) do not change.
 
-Public build (`build_radiofoundry.py --plus --public`, build/dm32-p25-plus-public/): the same firmware without the
-RadioID.net user / DMR ID database (CONFIG_ID_DB=n: radio/iddb_data.c compiles to nothing, nothing in the image comes
+Public build (`build_radiofoundry.py --plus --public`, build/dm32-p25-plus-public/): since round 14 (data packs) every
+profile is built without the built-in table (the names come from the user's RadioID data pack, docs/r14.md 7); the
+public profile keeps its guards: without the RadioID.net user / DMR ID database (CONFIG_ID_DB=n: radio/iddb_data.c compiles to nothing, nothing in the image comes
 from research-data/user.csv). The builder refuses a --public command that would turn the database on, and after the
 link refuses an ELF that holds any of its tables or code (public_audit). The repeater list stays in.
 

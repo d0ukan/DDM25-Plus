@@ -674,7 +674,7 @@ def main():
         "CONFIG_MSG_RX="+("y" if args.plus else "n"),
         "CONFIG_SSTV="+("y" if args.plus else "n"),
         "CONFIG_APRS_MSG="+("y" if args.plus else "n"),
-        "CONFIG_ID_DB="+("y" if args.plus and not args.public else "n"),
+        "CONFIG_ID_DB=n",	# the RadioID names come from the user's data pack (docs/r14.md 7); tools/iddb.py feeds tools/datapack.py
         "CONFIG_REPEATERS="+("y" if args.plus else "n"),
         "CONFIG_NAC_DEC="+("y" if args.plus else "n"),
         "CONFIG_PLUS_ART="+("y" if args.plus else "n"),

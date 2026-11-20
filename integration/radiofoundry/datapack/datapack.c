@@ -112,9 +112,6 @@ static void scan_type(uint8_t type)
 		if (slot_ok(type, s, &h, &bad) && (cur[i].slot == 0xFF || h.seq > cur[i].h.seq)) {
 			cur[i].h.seq = h.seq;
 			cur[i].h.len = h.len;
-			cur[i].h.crc = h.crc;
-			memcpy(cur[i].h.date, h.date, sizeof h.date);
-			memcpy(cur[i].h.name, h.name, sizeof h.name);
 			cur[i].slot = s;
 		}
 	}
@@ -135,6 +132,12 @@ const dpk_info_t *dpk_active(uint8_t type)
 uint8_t dpk_state(uint8_t type)
 {
 	return type >= 1u && type <= DPK_TYPES ? cur[type - 1u].state : DPK_NONE;
+}
+
+bool dpk_header(uint8_t type, dpk_hdr_t *h)
+{
+	return dpk_active(type) != NULL && rd(dpk_slot_addr(type, cur[type - 1u].slot), h, sizeof *h) &&
+	       dpk_hdr_ok(h, type);
 }
 
 bool dpk_read(uint8_t type, uint32_t off, void *buf, uint32_t len)
@@ -192,10 +195,10 @@ bool dpk_id_text(uint32_t id, char *out, size_t len)
 
 bool dpk_about(uint8_t type, char *out, size_t len)
 {
-	const dpk_info_t *h = dpk_active(type);
+	dpk_hdr_t hh, *h = &hh;
 	sbuf_t b;
 	sb_init(&b, out, len);
-	if (h == NULL)
+	if (!dpk_header(type, h))
 		return false;
 	char name[sizeof h->name + 1];
 	memcpy(name, h->name, sizeof h->name);

@@ -55,7 +55,18 @@ def prepare_datapack(transform, install):
     # Settings > About: each pack type's line ("RadioID pack: RadioID TR, 2026-11-17, 98 KB", "none", "damaged")
     transform('core/ui/ui_menus.c', [
         ('#include "rfoundry_about.h"\n', '#include "rfoundry_about.h"\n' + ON + '#include "storage/datapack.h"\n#endif\n'),
-        ('\tstatic char t[640 + 48 * CONFIG_ID_DB];', '\tstatic char t[640 + 48 * CONFIG_ID_DB + 112 * CONFIG_DATAPACK];'),
+        # The About text is built in the heap while the page draws, not in a static buffer: 752 bytes of static RAM
+        # back for the whole radio (the page's text lives only during its draw; without room it says so)
+        ('static const char *about_text(void)\n{\n\tstatic char t[640 + 48 * CONFIG_ID_DB];\t// DM32 Plus: the ID database line\n'
+         '\tsbuf_t b;\n\tsb_init(&b, t, sizeof t);',
+         '#define ABOUT_BYTES\t(640u + 48u * CONFIG_ID_DB + 112u * CONFIG_DATAPACK)\t// DM32 Plus: the ID database, the packs\n'
+         '#ifdef __csky__\n#include "FreeRTOS.h"\n#define about_alloc\tpvPortMalloc\n#define about_free\tvPortFree\n#else\n'
+         '#include <stdlib.h>\n#define about_alloc\tmalloc\n#define about_free\tfree\n#endif\n'
+         'static const char *about_text(char *t)\n{\n\tsbuf_t b;\n\tsb_init(&b, t, ABOUT_BYTES);'),
+        ('\tabout_max = (uint16_t)ui_draw_text_page(ui_view(), &ui_st, TR("About"), about_text(), &about_first);',
+         '\tchar *t = about_alloc(ABOUT_BYTES);\t// DDM32 Plus: the text only while the page draws\n'
+         '\tabout_max = (uint16_t)ui_draw_text_page(ui_view(), &ui_st, TR("About"), t != NULL ? about_text(t) : TR("No room"),\n'
+         '\t\t\t\t\t\t &about_first);\n\tabout_free(t);'),
         ('\tsb_str(&b, TR("AMBE+2 codec: DVSI (stock)"));',
          ON + '\tfor (uint8_t k = 1; k <= DPK_TYPES; k++) {\t// DDM32 Plus: the user data packs (docs/r14.md 7)\n'
          '\t\tchar d[40];\n'

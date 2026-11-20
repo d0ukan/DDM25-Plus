@@ -41,11 +41,9 @@ typedef struct {
 	uint32_t hcrc;		/* storage_crc32 of the 60 bytes before */
 } dpk_hdr_t;
 
-/* What the radio keeps of a pack in force (36 bytes a type: the whole header stays on the chip) */
+/* What the radio keeps of a pack in force (8 bytes a type: the rest of the header stays on the chip, dpk_header) */
 typedef struct {
-	uint32_t seq, len, crc;
-	char date[8];
-	char name[16];
+	uint32_t seq, len;
 } dpk_info_t;
 
 /* The slots of a type: 0 and 1; their address and size (0 for a type out of range) */
@@ -58,6 +56,8 @@ void dpk_scan(void);
  * or DPK_BAD (a slot holds a header or payload that does not check: a broken pack) */
 const dpk_info_t *dpk_active(uint8_t type);
 uint8_t dpk_state(uint8_t type);
+/* The whole header of the pack in force, read from the chip */
+bool dpk_header(uint8_t type, dpk_hdr_t *h);
 /* Payload bytes of the pack in force */
 bool dpk_read(uint8_t type, uint32_t off, void *buf, uint32_t len);
 
