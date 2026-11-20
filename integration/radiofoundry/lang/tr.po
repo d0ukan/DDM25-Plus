@@ -6007,3 +6007,24 @@ msgstr "Hava bandı paketi: "
 #: core/ui/ui_menus.c
 msgid "damaged, not used"
 msgstr "bozuk, kullanılmıyor"
+
+# DOTA content type "data pack" (branch datapack, docs/dota.md 20)
+#: core/ui/ui_dota.c
+msgid "RadioID pack"
+msgstr "RadioID paketi"
+
+#: core/ui/ui_dota.c
+msgid "Air band pack"
+msgstr "Hava bandı paketi"
+
+#: core/ui/ui_dota.c
+msgid "Data pack: ^. Accept?"
+msgstr "Veri paketi: ^. Kabul?"
+
+#: core/ui/ui_dota.c
+msgid "data pack"
+msgstr "veri paketi"
+
+#: core/ui/ui_dota.c
+msgid "Not accepted"
+msgstr "Kabul edilmedi"

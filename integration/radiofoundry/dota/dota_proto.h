@@ -20,7 +20,8 @@
 #define DOTA_FRAME_MAX		(DOTA_HDR + DOTA_CALL + DOTA_PAYLOAD_MAX + 2u)
 #define DOTA_SPAN		32u	/* frame numbers in flight from the receiver's base (the answer's bitmap) */
 #define DOTA_WINDOW_MAX		7u
-#define DOTA_FRAMES_MAX		512u	/* data frames in one transfer */
+#define DOTA_FRAMES_MAX		2240u	/* data frames in one transfer: a data pack of the largest slot (256 KB) in
+					 * 120-byte frames; the receiver keeps a 32-frame window, not a bitmap */
 #define DOTA_FW_MAX		24u
 
 enum { DOTA_T_HELLO = 1, DOTA_T_REFUSE, DOTA_T_DATA, DOTA_T_ACK, DOTA_T_END, DOTA_T_END_ACK, DOTA_T_ABORT, DOTA_T_POLL };
@@ -31,7 +32,9 @@ enum { DOTA_SEC_NONE, DOTA_SEC_CONTACTS, DOTA_SEC_LISTS, DOTA_SEC_CHANNELS, DOTA
 
 /* Refusals (DOTA_T_REFUSE status) */
 enum { DOTA_R_OK, DOTA_R_VERSION, DOTA_R_MODE, DOTA_R_CHANNELS, DOTA_R_ZONES, DOTA_R_CONTACTS, DOTA_R_ZONE_FULL,
-       DOTA_R_NOT_READY, DOTA_R_LISTS };
+       DOTA_R_NOT_READY, DOTA_R_LISTS,
+       DOTA_R_WAIT,		/* a data pack: the receiver's user is asked; HELLO again (not a refusal yet) */
+       DOTA_R_DECLINED };	/* a data pack: the receiver's user said no */
 /* END_ACK results */
 enum { DOTA_E_DONE, DOTA_E_MISSING, DOTA_E_CRC, DOTA_E_FLASH, DOTA_E_WRITING };
 /* ABORT reasons */
@@ -65,8 +68,12 @@ typedef struct {
 	uint8_t zones;				/* zones (DOTA Clone; the zones section counts their parts) */
 	uint16_t recs[DOTA_SEC_COUNT];		/* records per section ([0] unused) */
 	uint16_t frames[DOTA_SEC_COUNT];	/* frames per section ([0] unused) */
+	const uint8_t *pack;			/* a data pack's 64-byte header after the 21 bytes (HELLO's attachment,
+						 * docs/dota.md 20), NULL: none. Points into the sender's or the frame's
+						 * bytes: valid while they are */
 } dota_manifest_t;
 #define DOTA_MANIFEST_MAX	21u
+#define DOTA_PACK_HDR		64u	/* the attachment: older builds take only 21 bytes, so they drop such a HELLO */
 size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max);
 bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m);
 uint16_t dota_manifest_total(const dota_manifest_t *m);	/* data frames N */
@@ -189,7 +196,9 @@ typedef struct {
 	uint16_t total;
 	uint16_t base;			/* the lowest frame not in */
 	uint16_t got_n;
-	uint8_t got[DOTA_FRAMES_MAX / 8u];
+	uint32_t got;			/* frames base .. base + 31 in (bit 0: base, never set); every frame below base is
+					 * in. The sender keeps its new frames within DOTA_SPAN of the lowest one not
+					 * acknowledged, so nothing it sends lies beyond */
 	uint32_t crc;
 	bool slow;			/* a frame found no room: say so */
 	uint8_t answer;			/* the answer due: DOTA_T_* or 0 */

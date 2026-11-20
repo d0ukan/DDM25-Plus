@@ -53,6 +53,19 @@ def main(ROOT, APP, OUT, flags, host):
          core / 'storage/storage.c', host / 'sim/sim_flash.c', core / 'aprs/ax25.c', core / 'aprs/hdlc.c',
          core / 'aprs/afsk.c', '-lm', '-o', OUT / 'test_dota_fm'], cwd=ROOT)
     run([OUT / 'test_dota_fm'], cwd=ROOT)
+    # A user data pack (docs/dota.md 20): dota.c built with CONFIG_DATAPACK twice (a_ sends, b_ receives), the real
+    # pack store over a simulated 16 MiB data chip; c_: a receiver built without data packs
+    pack = ['-DCONFIG_DATAPACK=1', '-DCONFIG_APRS=1', '-DCONFIG_DMR_DATA_CORE=1', '-I' + str(host)]
+    for side, on in (('a', True), ('b', True), ('c', False)):
+        run(['clang', *flags, *dota, *(pack if on else pack[1:]),
+             *(f'-D{f}={side}_{f}' for f in (*api, 'dota_pack_offer', 'dota_pack_answer')), '-c',
+             core / 'radio/dota.c', '-o', OUT / f'dota_pack_{side}.o'], cwd=ROOT)
+    run(['clang', *flags, *dota, *pack, tp / 'test_dota_pack.c', *(OUT / f'dota_pack_{s}.o' for s in 'abc'),
+         core / 'radio/dota_proto.c', core / 'radio/dota_rec.c', core / 'radio/dota_import.c', *codeplug,
+         core / 'codeplug/zone_edit.c', core / 'codeplug/zone_shift.c', core / 'codeplug/zone_settle.c',
+         core / 'settings/settings.c', core / 'storage/storage.c', core / 'storage/datapack.c', core / 'ui/fmt.c',
+         host / 'sim/sim_flash.c', core / 'aprs/ax25.c', core / 'aprs/hdlc.c', '-o', OUT / 'test_dota_pack'], cwd=ROOT)
+    run([OUT / 'test_dota_pack'], cwd=ROOT)
     # The screens through upstream's UI simulator (the engine faked), English and Turkish (the tables made from tr.po)
     run(['make', 'out/gen/lang_tables.h'], cwd=host, stdout=subprocess.DEVNULL)
     command = run(['make', '-Bn', 'uiFlowTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout
@@ -60,6 +73,7 @@ def main(ROOT, APP, OUT, flags, host):
     argv[argv.index('uiFlowTest.c')] = str(tp / 'test_ui_dota.c')
     argv[argv.index('-o') + 1] = str(OUT / 'test_ui_dota')
     run([*argv, '-I' + str(host), '-Wno-unused-function', '-DCONFIG_DOTA=1', '-DCONFIG_APRS_MSG=1', '-DCONFIG_APRS=1',
+         '-DCONFIG_DATAPACK=1',
          '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_LANG_TR=1', str(core / 'ui/ui_dota.c'), str(core / 'ui/ui_aprsmsg.c'),
          *(str(core / 'aprs' / f) for f in ('aprs_plus.c', 'aprs_fmt.c', 'ax25.c')), '-lm'], cwd=host)
     run([OUT / 'test_ui_dota'], cwd=host)

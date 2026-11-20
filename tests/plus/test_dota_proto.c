@@ -65,10 +65,14 @@ static size_t fill(void *ctx, uint8_t sec, uint16_t first, uint8_t *count, uint8
 	return n;
 }
 
+/* A data pack's header, HELLO's attachment (docs/dota.md 20; NULL: none) */
+static const uint8_t *attach;
+
 /* The manifest for recs[]: frames per section as fill packs them */
 static void plan(dota_manifest_t *m, uint16_t payload)
 {
 	memset(m, 0, sizeof *m);
+	m->pack = attach;
 	m->rec_ver = DOTA_REC_VERSION;
 	m->layout = DOTA_LAYOUT;
 	uint8_t buf[DOTA_PAYLOAD_MAX];
@@ -84,18 +88,27 @@ static void plan(dota_manifest_t *m, uint16_t payload)
 }
 
 /* --- The receiver's side: what it keeps --- */
-#define RECS_MAX 600
+#define RECS_MAX 3000
 static uint8_t kept[DOTA_SEC_COUNT][RECS_MAX];
 static int commits, kept_frames, queue_room, commit_delay;
 static bool committed;
 static uint8_t hello_answer;
+static int wait_left, hellos;	/* a data pack: "wait" to this many HELLOs first (-1: always) */
+static bool declined;		/* then its user's No */
 static uint8_t hello(void *ctx, const dota_manifest_t *m, const char *peer)
 {
 	(void)ctx;
 	(void)peer;
+	hellos++;
 	if (m->rec_ver != DOTA_REC_VERSION)
 		return DOTA_R_VERSION;
-	return hello_answer;
+	CHECK((m->pack != NULL) == (attach != NULL) && (attach == NULL || memcmp(m->pack, attach, DOTA_PACK_HDR) == 0));
+	if (wait_left != 0) {
+		if (wait_left > 0)
+			wait_left--;
+		return DOTA_R_WAIT;
+	}
+	return declined ? DOTA_R_DECLINED : hello_answer;
 }
 static int refuse_every, data_calls;
 static bool data(void *ctx, uint8_t sec, uint16_t first, uint8_t count, const uint8_t *p, uint8_t len)
@@ -163,6 +176,7 @@ static void reset_rx(void)
 	commit_delay = 0;
 	committed = false;
 	hello_answer = DOTA_R_OK;
+	hellos = 0;
 }
 
 /* One transfer through the fake link; returns the sender's state */
@@ -189,6 +203,8 @@ static uint8_t run(const dota_link_t *l, const dota_link_t *rl, const chan_t *c,
 			}
 			if (key > max_key_ms)
 				max_key_ms = key;
+			if (attach != NULL && tx.win[0] == DOTA_WIN_HELLO)
+				CHECK(n == 1);	/* a data pack's HELLO goes alone: the receiver's user answers first */
 			/* the frames, in order but for the odd swap, some lost or twice */
 			uint32_t t = now;
 			for (uint8_t i = 0; i < n; i++) {
@@ -335,10 +351,27 @@ static void test_codecs(void)
 	CHECK(n == DOTA_MANIFEST_MAX);
 	CHECK(dota_manifest_get(buf, n, &b) && memcmp(&m, &b, sizeof m) == 0 && dota_manifest_total(&b) == 245);
 	CHECK(!dota_manifest_get(buf, n - 1, &b));
-	m.frames[3] = 600;	/* more than DOTA_FRAMES_MAX */
+	m.frames[3] = 600;	/* more than the 512 of the first builds: a data pack's frames */
+	n = dota_manifest_put(&m, buf, sizeof buf);
+	CHECK(dota_manifest_get(buf, n, &b) && dota_manifest_total(&b) == 640);
+	m.frames[3] = 3000;	/* more than DOTA_FRAMES_MAX */
 	n = dota_manifest_put(&m, buf, sizeof buf);
 	CHECK(!dota_manifest_get(buf, n, &b));
 	CHECK(dota_manifest_put(&m, buf, 20) == 0);
+	/* A data pack's header after the 21 bytes: 85 bytes, which the first builds' rule (21 only) drops */
+	uint8_t hdr[DOTA_PACK_HDR];
+	for (unsigned i = 0; i < sizeof hdr; i++)
+		hdr[i] = (uint8_t)(i * 5 + 1);
+	m.frames[3] = 205;
+	m.pack = hdr;
+	n = dota_manifest_put(&m, buf, sizeof buf);
+	CHECK(n == DOTA_MANIFEST_MAX + DOTA_PACK_HDR && n != DOTA_MANIFEST_MAX);
+	CHECK(dota_manifest_get(buf, n, &b) && b.pack == buf + DOTA_MANIFEST_MAX && memcmp(b.pack, hdr, sizeof hdr) == 0);
+	CHECK(b.recs[3] == 1024 && dota_manifest_total(&b) == 245);
+	CHECK(!dota_manifest_get(buf, n - 1, &b) && !dota_manifest_get(buf, n + 1, &b));
+	CHECK(dota_manifest_put(&m, buf, n - 1) == 0);
+	m.pack = NULL;
+	CHECK(dota_manifest_get(buf, DOTA_MANIFEST_MAX, &b) && b.pack == NULL);
 }
 
 /* Many runs over a lossy link; at most `fail_ok` percent may fail */
@@ -394,6 +427,50 @@ static void test_transfers(void)
 	set_recs(0, 0, 600, 0);
 	CHECK(run(&fm, &rx_link_fm, &clean, 7, 7) == DOTA_TX_DONE);
 	CHECK(rests > 0);
+	/* More frames than the first builds' 512 (a data pack's): the receiver's 32-frame window, with loss */
+	set_recs(0, 0, 3000, 0);
+	CHECK(run(&fm, &rx_link_fm, &ten, 8, 8) == DOTA_TX_DONE);
+	outcome_rules();
+	CHECK(tx.total > 512u && rx.got_n == tx.total && rx.base == tx.total + 1u && rx.got == 0);
+	printf("  FM 10 %%, %u frames: done, %u resent\n", tx.total, tx.resent);
+	CHECK(run(&dmr, &rx_link_dmr, &ten, 9, 9) == DOTA_TX_DONE);
+	outcome_rules();
+}
+
+/* A data pack's HELLO (docs/dota.md 20): it goes alone, its receiver answers "wait" while its user is asked; the
+ * sender asks again for ~20 s, then gives up ("not accepted"); Yes in time: the transfer; No: refused */
+static void test_pack_question(void)
+{
+	static const chan_t clean = { 0, 0, 0, 0 }, ten = { 10, 3, 5, 5 };
+	uint8_t hdr[DOTA_PACK_HDR];
+	memset(hdr, 0x5A, sizeof hdr);
+	attach = hdr;
+	set_recs(0, 0, 300, 0);
+	/* Yes after the third HELLO */
+	for (int lk = 0; lk < 2; lk++) {
+		const dota_link_t *l = lk ? &dmr : &fm, *rl = lk ? &rx_link_dmr : &rx_link_fm;
+		wait_left = 2;
+		CHECK(run(l, rl, lk ? &ten : &clean, 31, 31) == DOTA_TX_DONE);
+		outcome_rules();
+		CHECK(hellos == 3);
+		/* never answered: HELLO again for about 20 s, then "not accepted" (a refusal: nothing written) */
+		wait_left = -1;
+		CHECK(run(l, rl, &clean, 32, 32) == DOTA_TX_FAILED);
+		CHECK(tx.fail == DOTA_TF_REFUSED && tx.status == DOTA_R_WAIT && kept_frames == 0 && !committed);
+		CHECK(hellos == 1 + l->polls);
+		uint32_t asked = now - 1000;
+		printf("  %s: a pack's question answered on the third HELLO; unanswered: given up after %u.%u s\n",
+		       lk ? "DMR" : "FM", asked / 1000u, asked % 1000u / 100u);
+		CHECK(asked >= 15000u && asked <= 26000u);
+		/* No: refused at the next HELLO */
+		wait_left = 1;
+		declined = true;
+		CHECK(run(l, rl, &clean, 33, 33) == DOTA_TX_FAILED);
+		CHECK(tx.fail == DOTA_TF_REFUSED && tx.status == DOTA_R_DECLINED && kept_frames == 0 && hellos == 2);
+		wait_left = 0;
+		declined = false;
+	}
+	attach = NULL;
 }
 
 static void test_refusals(void)
@@ -515,6 +592,7 @@ int main(void)
 	test_transfers();
 	test_refusals();
 	test_window_limit();
+	test_pack_question();
 	printf("dota protocol: %d checks, %d failures\n", checks, failures);
 	return failures != 0;
 }

@@ -14,7 +14,8 @@
 #include "radio/dota_rec.h"
 
 /* What is sent (the manifest's kind) */
-enum { DOTA_KIND_CHANNEL, DOTA_KIND_SELECTED, DOTA_KIND_ZONE, DOTA_KIND_CLONE };
+enum { DOTA_KIND_CHANNEL, DOTA_KIND_SELECTED, DOTA_KIND_ZONE, DOTA_KIND_CLONE,
+       DOTA_KIND_PACK };	/* a user data pack (CONFIG_DATAPACK, docs/dota.md 20): its chunks as channels records */
 /* Where one channel, selected channels or one zone go */
 enum { DOTA_IMP_NEW, DOTA_IMP_ADD };
 

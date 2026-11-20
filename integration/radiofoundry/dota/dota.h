@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include "config.h"
 #include "radio/dota_import.h"
+#if CONFIG_DATAPACK
+#include "storage/datapack.h"
+#endif
 
 #define DOTA_PORT		4101u	/* UDP, both ends (zone sharing has 4100) */
 #define DOTA_CTCSS_DEFAULT	885u	/* 88.5 Hz */
@@ -37,6 +40,7 @@ typedef struct {
 	/* Sending: what (DOTA_KIND_*); kind CHANNEL: channel; kind ZONE: zone; SELECTED: dota_selection() */
 	uint8_t kind;
 	uint16_t channel, zone;
+	uint8_t pack;		/* kind PACK: DPK_RADIOID / DPK_AIR (the pack in force of that type) */
 	/* Receiving: where it goes */
 	dota_imp_cfg_t imp;
 } dota_req_t;
@@ -70,8 +74,9 @@ typedef struct {
 	uint16_t ch_added;
 	uint8_t zones_added;
 	bool keyed;			/* our transmitter is on */
-	bool asking;			/* sending: waiting for the answer */
+	bool asking;			/* sending: waiting for the answer; receiving: the user is asked about a data pack */
 	bool ptt_prompt;		/* PTT was pressed during the transfer: ask "Stop the transfer?" */
+	bool pack;		/* a data pack goes (sending) / came (receiving) */
 	uint32_t serial;		/* bumped on every change worth a redraw */
 } dota_view_t;
 
@@ -93,6 +98,12 @@ void dota_ptt_prompt_clear(void);
 bool dota_job_wanted(void);
 /* The storage job (the start-up task): stage queued frames, commit, undo */
 void dota_job(void *ctx);
+#if CONFIG_DATAPACK
+/* Receiving: the data pack the user is asked about (view.asking; true: *h filled), and the answer (OK yes, Back
+ * no): the sender's next HELLO is accepted or refused */
+bool dota_pack_offer(dpk_hdr_t *h);
+void dota_pack_answer(bool yes);
+#endif
 
 /* The radio task's request (radio_task.c): arg 1 a session to take, 0 one to end */
 void radio_req_dota(bool on);

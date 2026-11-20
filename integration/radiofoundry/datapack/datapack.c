@@ -106,16 +106,21 @@ static void scan_type(uint8_t type)
 {
 	dpk_hdr_t h;
 	bool bad = false;
-	uint8_t i = (uint8_t)(type - 1u);
-	cur[i].slot = 0xFF;
+	uint8_t i = (uint8_t)(type - 1u), slot = 0xFF;
+	uint32_t seq = 0, len = 0;
 	for (uint8_t s = 0; s < 2u; s++) {
-		if (slot_ok(type, s, &h, &bad) && (cur[i].slot == 0xFF || h.seq > cur[i].h.seq)) {
-			cur[i].h.seq = h.seq;
-			cur[i].h.len = h.len;
-			cur[i].slot = s;
+		if (slot_ok(type, s, &h, &bad) && (slot == 0xFF || h.seq > seq)) {
+			seq = h.seq;
+			len = h.len;
+			slot = s;
 		}
 	}
-	cur[i].state = cur[i].slot != 0xFF ? DPK_OK : bad ? DPK_BAD : DPK_NONE;
+	/* Found first, then taken: a reader elsewhere (another task) sees the old pack until here, not a half scan */
+	cur[i].state = DPK_NONE;
+	cur[i].h.seq = seq;
+	cur[i].h.len = len;
+	cur[i].slot = slot;
+	cur[i].state = slot != 0xFF ? DPK_OK : bad ? DPK_BAD : DPK_NONE;
 }
 
 void dpk_scan(void)
@@ -195,11 +200,19 @@ bool dpk_id_text(uint32_t id, char *out, size_t len)
 
 bool dpk_about(uint8_t type, char *out, size_t len)
 {
-	dpk_hdr_t hh, *h = &hh;
+	dpk_hdr_t h;
+	if (len != 0u)
+		out[0] = '\0';
+	if (!dpk_header(type, &h))
+		return false;
+	dpk_describe(&h, out, len);
+	return true;
+}
+
+void dpk_describe(const dpk_hdr_t *h, char *out, size_t len)
+{
 	sbuf_t b;
 	sb_init(&b, out, len);
-	if (!dpk_header(type, h))
-		return false;
 	char name[sizeof h->name + 1];
 	memcpy(name, h->name, sizeof h->name);
 	name[sizeof h->name] = '\0';
@@ -213,7 +226,6 @@ bool dpk_about(uint8_t type, char *out, size_t len)
 	sb_str(&b, ", ");
 	sb_u32(&b, (h->len + 1023u) / 1024u, 1);
 	sb_str(&b, " KB");
-	return true;
 }
 
 bool dpk_begin(dpk_writer_t *w, const dpk_hdr_t *h)

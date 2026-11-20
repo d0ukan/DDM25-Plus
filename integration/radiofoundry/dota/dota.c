@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM32 Plus DOTA Transfer: the session (dota.h, docs/dota.md 3, 4, 5, 11, 13). Installed as core/radio/dota.c. */
+/* DDM32 Plus DOTA Transfer: the session (dota.h, docs/dota.md 3, 4, 5, 11, 13; a data pack: 20). Installed as
+ * core/radio/dota.c. */
 #include "config.h"
 #if CONFIG_DOTA
 #include <string.h>
@@ -12,6 +13,9 @@
 #include "dmr/dmrData.h"
 #include "dmr/dmrDataService.h"
 #include "board.h"
+#if CONFIG_DATAPACK
+#include "storage/datapack.h"
+#endif
 
 #define PREAMBLE_FLAGS	60u	/* 400 ms: the receiver's CTCSS detector opens first */
 #define TAIL_FLAGS	3u
@@ -27,6 +31,8 @@
 #define AX_HDR		16u	/* AX.25 UI: two addresses, control, PID */
 #define DMR_SLOTS	3u
 #define UDP_HDR		8u
+#define PACK_CHUNK	120u	/* a data pack's bytes in one DATA frame (one "record" of the channels section) */
+#define PACK_ASK_MS	10000u	/* the receiver's question goes when no HELLO came for this long */
 
 /* --- Links (docs/dota.md 4.3, 5.3, 7.2) --- */
 static const dota_link_t fm_link = {
@@ -49,6 +55,9 @@ typedef struct {
 	zone_t z;					/* kind ZONE / CHANNEL: the channels in order; else a zone read */
 	uint8_t stage;					/* the preparation's step */
 	uint16_t k;
+#if CONFIG_DATAPACK
+	dpk_hdr_t ph;					/* kind PACK: the pack's header, HELLO's attachment */
+#endif
 	union {
 		struct {
 			uint8_t half[2][HALF];
@@ -66,8 +75,21 @@ typedef struct {
 } qframe_t;
 
 typedef struct {
+	/* First: below the sender's transport area, which the UI borrows while no session runs (dota_scratch) */
+	bool pack;					/* this session takes a data pack (u.pk, not u.im) */
+	volatile bool begin;				/* a data pack: the storage job starts its slot */
+	volatile uint8_t ask;				/* a data pack's question: PK_* */
+	uint32_t t_ask;					/* the last HELLO of the pack asked about */
 	dota_rx_t p;
-	dota_imp_t im;
+	union {
+		dota_imp_t im;				/* channels, zones, contacts, RX group lists */
+#if CONFIG_DATAPACK
+		struct {
+			dpk_hdr_t h;			/* the pack offered (asked about), then the one written */
+			dpk_writer_t w;
+		} pk;					/* a data pack (docs/dota.md 20) */
+#endif
+	} u;
 	qframe_t q[2];
 	volatile uint8_t qh, qt;			/* the radio task puts, the storage job takes */
 	union {
@@ -84,6 +106,9 @@ static union {
 	rxs_t rx;
 	uint32_t align;
 } b;
+
+/* The receiver's data pack question (rxs_t.ask) */
+enum { PK_NONE, PK_ASK, PK_YES, PK_NO };
 
 /* The UI's scratch while no session runs (the pickers' zone and channel copies): the sender's transport area */
 void *dota_scratch(void)
@@ -205,28 +230,77 @@ void dota_ptt_prompt_clear(void)
 
 bool dota_job_wanted(void)
 {
-	return !sending() && (b.rx.qh != b.rx.qt || want_commit || want_undo);
+	return !sending() && (b.rx.qh != b.rx.qt || want_commit || want_undo || (b.rx.begin && active));
 }
+
+#if CONFIG_DATAPACK
+/* The receiver: the data pack its user is asked about (true: *h filled) */
+bool dota_pack_offer(dpk_hdr_t *h)
+{
+	if (sending() || b.rx.ask != PK_ASK)
+		return false;
+	*h = b.rx.u.pk.h;
+	return b.rx.ask == PK_ASK;	/* still the question (the radio task may have moved on) */
+}
+
+/* The user's answer: the next HELLO of that pack is accepted (or refused) */
+void dota_pack_answer(bool yes)
+{
+	if (!sending() && b.rx.ask == PK_ASK) {
+		b.rx.ask = yes ? PK_YES : PK_NO;
+		view.asking = false;
+		touch();
+	}
+}
+
+/* A frame of the pack: the chunk at its record's place, whole (the last one as long as the pack's end leaves it) */
+static bool pack_frame_ok(const dpk_hdr_t *h, uint8_t sec, uint16_t first, uint8_t count, uint8_t len)
+{
+	uint32_t off = (uint32_t)first * PACK_CHUNK;
+	return sec == DOTA_SEC_CHANNELS && count == 1u && off < h->len &&
+	       len == (h->len - off < PACK_CHUNK ? h->len - off : PACK_CHUNK);
+}
+#endif
 
 /* The start-up task's storage job: the queued frames, then the commit or the undo */
 void dota_job(void *ctx)
 {
 	(void)ctx;
 	rxs_t *r = &b.rx;
+#if CONFIG_DATAPACK
+	/* A data pack: the slot not in force erased first (the pack in force stays until the commit) */
+	if (r->begin && active && r->pack) {
+		if (!job_failed && !dpk_begin(&r->u.pk.w, &r->u.pk.h))
+			job_failed = true;
+		r->begin = false;
+	}
+#endif
 	while (r->qt != r->qh) {
 		qframe_t *f = &r->q[r->qt & 1u];
-		if (!job_failed && !dota_imp_frame(&r->im, f->sec, f->first, f->count, f->p, f->len))
+#if CONFIG_DATAPACK
+		bool ok = r->pack ? dpk_put(&r->u.pk.w, (uint32_t)f->first * PACK_CHUNK, f->p, f->len) :
+				    dota_imp_frame(&r->u.im, f->sec, f->first, f->count, f->p, f->len);
+#else
+		bool ok = dota_imp_frame(&r->u.im, f->sec, f->first, f->count, f->p, f->len);
+#endif
+		if (!job_failed && !ok)
 			job_failed = true;
 		__atomic_signal_fence(__ATOMIC_RELEASE);
 		r->qt++;
 	}
 	if (want_commit) {
-		bool ok = !job_failed && dota_imp_commit(&r->im);
+#if CONFIG_DATAPACK
+		/* the payload read back against its CRC, then the header: the new pack is in force */
+		bool ok = !job_failed && (r->pack ? dpk_commit(&r->u.pk.w) : dota_imp_commit(&r->u.im));
+#else
+		bool ok = !job_failed && dota_imp_commit(&r->u.im);
+#endif
 		want_commit = false;
 		commit_result = ok ? 1u : 2u;
 	}
 	if (want_undo) {
-		dota_imp_undo(&r->im);
+		if (!r->pack)
+			dota_imp_undo(&r->u.im);	/* a data pack: nothing to take back (its header was never written) */
 		want_undo = false;
 	}
 }
@@ -372,6 +446,19 @@ static size_t put_record(uint8_t sec, uint16_t k, uint8_t *out, size_t max)
 static size_t fill(void *ctx, uint8_t sec, uint16_t first, uint8_t *count, uint8_t *out, size_t max)
 {
 	(void)ctx;
+#if CONFIG_DATAPACK
+	if (req.kind == DOTA_KIND_PACK) {
+		/* a data pack: one chunk a frame, read from the pack in force */
+		const dpk_hdr_t *h = &b.tx.ph;
+		uint32_t off = (uint32_t)first * PACK_CHUNK, n = off < h->len ? h->len - off : 0u;
+		if (n > PACK_CHUNK)
+			n = PACK_CHUNK;
+		if (sec != DOTA_SEC_CHANNELS || n == 0u || n > max || *count > 1u || !dpk_read(req.pack, off, out, n))
+			return 0;
+		*count = 1;
+		return n;
+	}
+#endif
 	size_t n = 0;
 	uint8_t c = 0;
 	uint8_t rec[DOTA_ZONE_MAX > DOTA_LIST_MAX ? DOTA_ZONE_MAX : DOTA_LIST_MAX];
@@ -399,6 +486,18 @@ static bool prep_step(void)
 	dota_manifest_t *m = &t->p.m;
 	switch (t->stage) {
 	case 0:
+#if CONFIG_DATAPACK
+		if (req.kind == DOTA_KIND_PACK) {
+			/* a data pack: its chunks are the channels section's records, one a frame; no pack: nothing */
+			memset(m, 0, sizeof *m);
+			if (dpk_header(req.pack, &t->ph) && t->ph.len != 0u) {
+				m->recs[DOTA_SEC_CHANNELS] = m->frames[DOTA_SEC_CHANNELS] =
+					(uint16_t)((t->ph.len + PACK_CHUNK - 1u) / PACK_CHUNK);
+				m->pack = (const uint8_t *)&t->ph;
+			}
+			return true;
+		}
+#endif
 		memset(t->cts, 0, sizeof t->cts);
 		memset(t->lists, 0, sizeof t->lists);
 		memset(t->parts, 0, sizeof t->parts);
@@ -563,6 +662,8 @@ static void finish_send(const dota_io_t *io)
 	view.keyed = false;
 	if (window)
 		dota_tx_sent(&b.tx.p, keyed, now_ms);
+	if (!sending() && b.rx.p.state == DOTA_RX_ARMED)
+		peer_dmr = 0;	/* a refusal went (DMR: to whoever asked): back to waiting for anyone's HELLO */
 	t_heard = now_ms;
 	touch();
 }
@@ -724,6 +825,37 @@ static uint8_t our_modes(void)
 			 (CONFIG_NXDN ? 0x10u : 0u) | (CONFIG_DPMR ? 0x20u : 0u));
 }
 
+#if CONFIG_DATAPACK
+/* A data pack's HELLO: checked, then its user asked (the HELLO answered "wait" until the answer); the next HELLO of
+ * the same pack after Yes is accepted, after No refused */
+static uint8_t pack_hello(rxs_t *r, const dota_manifest_t *m)
+{
+	dpk_hdr_t h;
+	memcpy(&h, m->pack, sizeof h);
+	uint16_t chunks = (uint16_t)((h.len + PACK_CHUNK - 1u) / PACK_CHUNK);
+	if (h.type < 1u || h.type > DPK_TYPES || !dpk_hdr_ok(&h, h.type) || h.len == 0u || dota_manifest_total(m) != chunks ||
+	    m->recs[DOTA_SEC_CHANNELS] != chunks || m->frames[DOTA_SEC_CHANNELS] != chunks)
+		return DOTA_R_VERSION;
+	bool same = r->ask != PK_NONE && memcmp(&r->u.pk.h, &h, sizeof h) == 0;
+	r->t_ask = now_ms;
+	if (same && r->ask == PK_NO)
+		return DOTA_R_DECLINED;
+	if (same && r->ask == PK_YES) {
+		r->ask = PK_NONE;
+		r->pack = true;
+		r->begin = true;	/* the storage job erases the slot not in force */
+		return DOTA_R_OK;
+	}
+	if (!same) {
+		r->u.pk.h = h;
+		r->ask = PK_ASK;
+		view.asking = true;	/* the screen asks "Data pack: RadioID TR, 2026-11-17, 98 KB. Accept?" */
+		touch();
+	}
+	return DOTA_R_WAIT;
+}
+#endif
+
 static uint8_t rx_hello(void *ctx, const dota_manifest_t *m, const char *peer)
 {
 	(void)ctx;
@@ -733,7 +865,29 @@ static uint8_t rx_hello(void *ctx, const dota_manifest_t *m, const char *peer)
 		return DOTA_R_VERSION;	/* owner 2026-11-20: only the protocol / record versions must match */
 	if ((m->modes & ~our_modes()) != 0)
 		return DOTA_R_MODE;
-	uint8_t st = dota_imp_begin(&r->im, &req.imp, m, board.power_count, &r->p.free_ch, &r->p.free_zones,
+	r->pack = false;
+	if (m->kind == DOTA_KIND_PACK || m->pack != NULL) {
+#if CONFIG_DATAPACK
+		uint8_t st = m->kind == DOTA_KIND_PACK && m->pack != NULL ? pack_hello(r, m) : DOTA_R_VERSION;
+		if (st == DOTA_R_OK) {
+			r->qh = r->qt = 0;
+			job_failed = false;
+			view.channels = m->recs[DOTA_SEC_CHANNELS];
+			view.pack = true;
+		}
+		return st;
+#else
+		return DOTA_R_VERSION;	/* a build without data packs: "Other version", nothing written */
+#endif
+	}
+#if CONFIG_DATAPACK
+	if (r->ask != PK_NONE) {
+		r->ask = PK_NONE;	/* another sender's channels: the question goes (u.pk is overwritten now) */
+		view.asking = false;
+		touch();
+	}
+#endif
+	uint8_t st = dota_imp_begin(&r->u.im, &req.imp, m, board.power_count, &r->p.free_ch, &r->p.free_zones,
 				    &r->p.zone_room);
 	if (st == DOTA_R_OK) {
 		r->qh = r->qt = 0;
@@ -750,6 +904,10 @@ static bool rx_data(void *ctx, uint8_t sec, uint16_t first, uint8_t count, const
 {
 	(void)ctx;
 	rxs_t *r = &b.rx;
+#if CONFIG_DATAPACK
+	if (r->pack && !pack_frame_ok(&r->u.pk.h, sec, first, count, len))
+		return false;	/* not a chunk of the pack: never taken (the sender's tries run out) */
+#endif
 	if ((uint8_t)(r->qh - r->qt) >= 2u)
 		return false;	/* both slots wait for the storage job */
 	qframe_t *f = &r->q[r->qh & 1u];
@@ -784,6 +942,7 @@ bool dota_begin(dota_req_t *r, uint32_t now)
 	view.role = req.role;
 	view.method = req.method;
 	view.code = req.code;
+	view.pack = req.kind == DOTA_KIND_PACK && sending();
 	lk = fm() ? fm_link : dmr_link;
 	memset(&me, 0, sizeof me);
 	(void)ax25_addr_parse(req.call, strlen(req.call), &me);
@@ -804,6 +963,8 @@ bool dota_begin(dota_req_t *r, uint32_t now)
 		phase = DOTA_P_PREP;
 	} else {
 		dota_rx_t *p = &b.rx.p;
+		b.rx.pack = b.rx.begin = false;
+		b.rx.ask = PK_NONE;
 		dota_rx_arm(p, &lk, req.code, rx_hello, rx_data, rx_commit, NULL, now);
 		phase = DOTA_P_WAIT;
 	}
@@ -874,8 +1035,8 @@ static void rx_result(const dota_io_t *io)
 	rxs_t *r = &b.rx;
 	dota_rx_t *p = &r->p;
 	if (p->state == DOTA_RX_DONE) {
-		view.ch_added = r->im.added;
-		view.zones_added = r->im.zones_added;
+		view.ch_added = r->pack ? 0u : r->u.im.added;
+		view.zones_added = r->pack ? 0u : r->u.im.zones_added;
 		conclude(io, DOTA_RES_DONE, 0, 8000u);
 	} else if (p->state == DOTA_RX_FAILED) {
 		conclude(io, p->fail == DOTA_RF_FLASH ? DOTA_RES_FLASH : p->fail == DOTA_RF_TX_STOPPED ?
@@ -954,30 +1115,34 @@ static void rx_poll(const dota_io_t *io)
 	rxs_t *r = &b.rx;
 	dota_rx_t *p = &r->p;
 	dota_rx_tick(p, now_ms);
+	if (r->ask != PK_NONE && (p->state != DOTA_RX_ARMED || now_ms - r->t_ask >= PACK_ASK_MS)) {
+		r->ask = PK_NONE;	/* no HELLO of the pack asked about for a while: the sender gave up */
+		view.asking = false;
+		touch();
+	}
 	if (job_failed && p->state == DOTA_RX_RECEIVING) {
 		uint8_t tmp[24];
 		(void)dota_rx_stop(p, DOTA_A_USER, tmp, sizeof tmp);
 		p->fail = DOTA_RF_FLASH;
 	}
 	if (commit_result != 0 && p->state == DOTA_RX_COMMIT) {
-		p->ch_added = r->im.added;
-		p->zones_added = r->im.zones_added;
-		p->ct_added = r->im.ct_added;
-		p->ct_matched = r->im.ct_matched;
-		p->lists_added = r->im.lists_added;
-		undo_needed = commit_result != 1u;
+		if (!r->pack) {		/* a data pack: END_ACK's counts stay 0 */
+			p->ch_added = r->u.im.added;
+			p->zones_added = r->u.im.zones_added;
+			p->ct_added = r->u.im.ct_added;
+			p->ct_matched = r->u.im.ct_matched;
+			p->lists_added = r->u.im.lists_added;
+		}
+		undo_needed = commit_result != 1u && !r->pack;
 		dota_rx_commit_done(p, commit_result == 1u);
 		commit_result = 0;
 	}
 	if (ts.st == TS_IDLE && p->answer != 0) {
-		uint8_t type = p->answer;
 		if (!fm() && peer_dmr == 0)
-			peer_dmr = answer_to;	/* a refusal goes back to whoever asked */
+			peer_dmr = answer_to;	/* a refusal goes back to whoever asked (forgotten once sent: finish_send) */
 		size_t n = dota_rx_answer(p, now_ms, fm() ? io->clear : io->dmr_ready, own_frame(), own_room());
 		if (n != 0)
 			(void)send_start(io, 1, true, (uint8_t)n);
-		if (n != 0 && type == DOTA_T_REFUSE && p->state == DOTA_RX_ARMED)
-			peer_dmr = 0;	/* forgotten: back to waiting for anyone's HELLO */
 	}
 	if (phase == DOTA_P_WAIT && p->state == DOTA_RX_RECEIVING) {
 		phase = DOTA_P_RUN;
@@ -1015,7 +1180,7 @@ void dota_poll(const dota_io_t *io, uint32_t now)
 			} else {
 				m->rec_ver = DOTA_REC_VERSION;
 				m->layout = DOTA_LAYOUT;
-				m->modes = our_modes();
+				m->modes = req.kind == DOTA_KIND_PACK ? 0u : our_modes();	/* a pack uses no mode */
 				m->kind = req.kind;
 				dota_manifest_t keep = *m;
 				dota_tx_start(&b.tx.p, &lk, &keep, req.code, session_id, fill, NULL);

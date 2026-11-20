@@ -4,7 +4,10 @@
  * prompt), each drawn as a list (ui_draw_list); and the picker for a channel, channels ticked in any zone (Left /
  * Right: another zone) or a zone. Up / Down pick a row, Left / Right (or the knob) change it, digits type the numbers,
  * OK acts, Back goes back (during a transfer: "Stop the transfer?"). The form is RAM only: it comes back as it was
- * until power off. The session itself is radio/dota.c. Installed as core/ui/ui_dota.c. */
+ * until power off. The session itself is radio/dota.c. Installed as core/ui/ui_dota.c.
+ * CONFIG_DATAPACK (docs/dota.md 20): What also offers the RadioID and the air band pack in force (the row under it names
+ * the pack, greyed "none" without one); the receiver's waiting page asks "Data pack: RadioID TR, 2026-11-17, 98 KB.
+ * Accept?" when a sender offers one (OK yes, Back no). */
 #include "config.h"
 #if CONFIG_DOTA
 #include <string.h>
@@ -41,6 +44,17 @@ static uint32_t last_hz;	/* the last session's frequency (until power off) */
 static char digits[9];		/* a number being typed on the focused row */
 static uint32_t shown_serial;
 static uint16_t est_s, est_ch;	/* the sender's estimate, made when the form changes */
+
+/* What (R_WHAT): the kinds, then (CONFIG_DATAPACK) the two pack types */
+#define WHATS	(4u + 2u * CONFIG_DATAPACK)
+static uint8_t what_i(void)
+{
+#if CONFIG_DATAPACK
+	if (rq.kind == DOTA_KIND_PACK)
+		return (uint8_t)(3u + rq.pack);	/* DPK_RADIOID 4, DPK_AIR 5 */
+#endif
+	return rq.kind;
+}
 
 
 static bool sending(void)
@@ -108,6 +122,15 @@ static void estimate(void)
 	uint16_t ch = 1;
 	uint8_t zones = 0;
 	zone_t *z = dota_scratch();
+#if CONFIG_DATAPACK
+	if (rq.kind == DOTA_KIND_PACK) {
+		/* a data pack: its bytes at the steady rate, HELLO and END (no commit to speak of) */
+		const dpk_info_t *pk = dpk_active(rq.pack);
+		est_ch = 0;
+		est_s = (uint16_t)(6u + (pk != NULL ? pk->len : 0u) / (dmr() ? 124u : 93u));
+		return;
+	}
+#endif
 	if (rq.kind == DOTA_KIND_SELECTED) {
 		ch = 0;
 		for (uint16_t n = 1; n <= CODEPLUG_CHANNELS_MAX; n++)
@@ -131,7 +154,11 @@ static dota_view_t rv;		/* the transfer as the run page draws it */
 static void row_text(uint8_t r, bool f, sbuf_t *b, const char **label)
 {
 	static const char *const what[] = { TRN("One channel"), TRN("Selected channels"), TRN("A zone"),
-					    TRN("DOTA Clone (all)") };
+					    TRN("DOTA Clone (all)"),
+#if CONFIG_DATAPACK
+					    TRN("RadioID pack"), TRN("Air band pack"),
+#endif
+	};
 	/* By R_*; R_ITEM and R_GO name themselves below */
 	static const char *const labels[] = { TRN("Role"), TRN("Method"), TRN("What"), "", TRN("Frequency"), "MHz",
 					      TRN("Tone"), TRN("Receiver ID"), TRN("Power"), TRN("Code"), "", TRN("Import"),
@@ -142,9 +169,9 @@ static void row_text(uint8_t r, bool f, sbuf_t *b, const char **label)
 	switch (r) {
 	case R_ROLE: sb_str(b, sending() ? TR("Send") : TR("Receive")); break;
 	case R_METHOD: sb_str(b, dmr() ? "DMR" : "FM"); break;
-	case R_WHAT: sb_str(b, tr(what[rq.kind])); break;
+	case R_WHAT: sb_str(b, tr(what[what_i()])); break;
 	case R_ITEM:
-		*label = tr(what[rq.kind]);
+		*label = tr(what[what_i()]);
 		if (rq.kind == DOTA_KIND_ZONE) {
 			zone_t *z = dota_scratch();
 			if (z != NULL && codeplug_zone(rq.zone, z))
@@ -173,6 +200,36 @@ static void row_text(uint8_t r, bool f, sbuf_t *b, const char **label)
 	}
 }
 
+#if CONFIG_DATAPACK
+/* The pack row: its name, then its date and size, the date alone or the size alone where they don't fit (the size is
+ * in the estimate above too); greyed "none" without one */
+static void __attribute__((noinline)) pack_row(ui_item_t *it, const char *what)
+{
+	dpk_hdr_t h;
+	sbuf_t b;
+	sb_init(&b, it->value, sizeof it->value);
+	if (!dpk_header(rq.pack, &h)) {
+		str_copy(it->label, sizeof it->label, what);
+		sb_str(&b, TR("none"));
+		it->flags |= UI_ITEM_DIM;	/* nothing to send */
+		return;
+	}
+	char d[40];
+	dpk_describe(&h, d, sizeof d);	/* "RadioID TR, 2026-11-17, 98 KB" */
+	const char *size = strrchr(d, ',') + 2, *date = size - 12;
+	memcpy(it->label, h.name, sizeof h.name);
+	it->label[sizeof h.name] = '\0';
+	sb_str(&b, TEXT_ALT_OPEN);
+	sb_str(&b, date);		/* "2026-11-17, 98 KB" */
+	sb_str(&b, TEXT_ALT_NEXT);
+	for (unsigned i = 0; i < 10u; i++)
+		sb_chr(&b, date[i]);	/* "2026-11-17" */
+	sb_str(&b, TEXT_ALT_NEXT);
+	sb_str(&b, size);		/* "98 KB" */
+	sb_str(&b, TEXT_ALT_CLOSE);
+}
+#endif
+
 static void form_item(uint16_t i, ui_item_t *it)
 {
 	uint8_t r[12];
@@ -181,6 +238,12 @@ static void form_item(uint16_t i, ui_item_t *it)
 	rows(r);
 	sb_init(&b, it->value, sizeof it->value);
 	row_text(r[i], i == focus, &b, &label);
+#if CONFIG_DATAPACK
+	if (r[i] == R_ITEM && rq.kind == DOTA_KIND_PACK) {
+		pack_row(it, label);	/* the pack's name, date and size */
+		return;
+	}
+#endif
 	str_copy(it->label, sizeof it->label, label);
 }
 
@@ -213,13 +276,17 @@ static void result_text(const dota_view_t *v, sbuf_t *b)
 	const char *t = v->result < sizeof text / sizeof text[0] ? text[v->result] : text[0];
 	if (v->result == DOTA_RES_REFUSED)
 		t = v->why == DOTA_R_VERSION ? TRN("Other version") :
-		    v->why == DOTA_R_NOT_READY || v->why == DOTA_R_MODE ? TRN("Not ready") : TRN("Codeplug full");
+		    v->why == DOTA_R_NOT_READY || v->why == DOTA_R_MODE ? TRN("Not ready") :
+		    v->why == DOTA_R_WAIT || v->why == DOTA_R_DECLINED ? TRN("Not accepted") : TRN("Codeplug full");
 	else if (v->result == DOTA_RES_PEER_STOPPED)
 		t = sending() ? TRN("Receiver stopped") : text[0];
 	char what[24];	/* "1024 channels, 68 zones" */
 	sbuf_t w;
 	sb_init(&w, what, sizeof what);
-	count(&w, v->ch_added, TRN(" channel"), TRN(" channels"));
+	if (v->pack)
+		sb_str(&w, TR("data pack"));	/* "Sent data pack", "Imported data pack" */
+	else
+		count(&w, v->ch_added, TRN(" channel"), TRN(" channels"));
 	if (v->zones_added != 0) {
 		sb_str(&w, ", ");
 		count(&w, v->zones_added, TRN(" zone"), TRN(" zones"));
@@ -242,6 +309,13 @@ static void run_item(uint16_t i, ui_item_t *it)
 		sb_str(&l, rv.peer);
 		sb_u32(&b, rv.pct, 1);
 		sb_str(&b, " %");
+	} else if (rv.pack) {
+		/* a data pack: "12/98 KB" (its 120-byte frames) */
+		uint32_t kb = ((uint32_t)rv.channels * 120u + 1023u) / 1024u;
+		sb_u32(&l, kb * rv.pct / 100u, 1);
+		sb_chr(&l, '/');
+		sb_u32(&l, kb, 1);
+		sb_str(&l, " KB");
 	} else {
 		sb_u32(&l, (uint32_t)rv.channels * rv.pct / 100u, 1);
 		sb_chr(&l, '/');
@@ -249,9 +323,24 @@ static void run_item(uint16_t i, ui_item_t *it)
 	}
 }
 
+#if CONFIG_DATAPACK
+/* The receiver's question: "Data pack: RadioID TR, 2026-11-17, 98 KB. Accept?" (false: none now) */
+static bool __attribute__((noinline)) pack_question(sbuf_t *b)
+{
+	dpk_hdr_t h;
+	char d[40];
+	if (!dota_pack_offer(&h))
+		return false;
+	dpk_describe(&h, d, sizeof d);
+	for (const char *t = TR("Data pack: ^. Accept?"); *t != '\0'; t++)
+		*t == '^' ? sb_str(b, d) : sb_chr(b, *t);
+	return true;
+}
+#endif
+
 static void dota_draw(void)
 {
-	char head[24], body[48];
+	char head[24], body[64];
 	uint8_t r[12];
 	sbuf_t b;
 	ui_list_t l;
@@ -276,6 +365,10 @@ static void dota_draw(void)
 		sb_init(&b, body, sizeof body);
 		if ((asks & ASK_STOP) || rv.ptt_prompt) {
 			sb_str(&b, TR("Stop the transfer?"));
+#if CONFIG_DATAPACK
+		} else if (!sending() && rv.asking && !ended && pack_question(&b)) {
+			/* the hint asks OK yes / Back no */
+#endif
 		} else if (ended) {
 			result_text(&rv, &b);
 			l.hint = TR("Back");
@@ -310,7 +403,12 @@ static void step(uint8_t r, int dir)
 	switch (r) {
 	case R_ROLE: rq.role = !rq.role; break;
 	case R_METHOD: rq.method = !rq.method; break;
-	case R_WHAT: rq.kind = (uint8_t)((rq.kind + 4 + dir) % 4); break;
+	case R_WHAT: {
+		uint8_t w = (uint8_t)((what_i() + WHATS + (unsigned)dir) % WHATS);
+		rq.kind = w < 4u ? w : DOTA_KIND_PACK;
+		rq.pack = (uint8_t)(w < 4u ? 0u : w - 3u);
+		break;
+	}
 	case R_TONE: {
 		unsigned i = 0, n = sizeof tone_list / sizeof tone_list[0];
 		while (i < n && tone_list[i] != rq.ctcss)
@@ -376,6 +474,10 @@ static void begin(void)
 		why = TR("APRS frequency");
 	else if (sending() && (rq.code >= 10000u || (dmr() && rq.peer_id == 0)))
 		why = TR("Code / ID needed");
+#if CONFIG_DATAPACK
+	else if (sending() && rq.kind == DOTA_KIND_PACK && dpk_active(rq.pack) == NULL)
+		why = TR("Nothing to send");
+#endif
 	else if (!sending() && rq.imp.mode == DOTA_IMP_NEW && rq.imp.name[0] == '\0')
 		why = TR("Zone name needed");
 	if (why != NULL) {
@@ -411,6 +513,14 @@ static bool run_key(const input_event_t *ev)
 	bool live = dota_on() && v.phase != DOTA_P_DONE && v.phase != DOTA_P_FAILED;
 	if (ev->gesture != GESTURE_PRESS)
 		return ev->action != ACT_BACK;
+#if CONFIG_DATAPACK
+	if (!sending() && v.asking && live && !(asks & ASK_STOP) && !v.ptt_prompt &&
+	    (ev->action == ACT_SELECT || ev->action == ACT_BACK)) {
+		dota_pack_answer(ev->action == ACT_SELECT);	/* the sender's next HELLO is taken or refused */
+		ui_dirty();
+		return true;
+	}
+#endif
 	if ((asks & ASK_STOP) || v.ptt_prompt) {
 		if (ev->action == ACT_SELECT)
 			dota_stop();
@@ -474,7 +584,7 @@ static bool dota_key(const input_event_t *ev)
 		return false;
 	} else if (ndigits) {
 		typed(r);
-	} else if (r == R_ITEM) {
+	} else if (r == R_ITEM && rq.kind != DOTA_KIND_PACK) {	/* a pack: no picker */
 		ui_push(SCR_DOTA_PICK, rq.kind == DOTA_KIND_ZONE ? 2u : rq.kind == DOTA_KIND_SELECTED ? 1u : 0u);
 	} else if (r == R_ZNAME) {
 		ui_text_edit(rq.imp.name, CODEPLUG_NAME_LEN, ui_dirty, 1);

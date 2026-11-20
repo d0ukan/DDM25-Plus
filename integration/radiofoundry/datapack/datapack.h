@@ -84,6 +84,8 @@ bool dpk_hdr_ok(const dpk_hdr_t *h, uint8_t type);
 bool dpk_id_text(uint32_t id, char *out, size_t len);
 /* The pack in force as "RadioID TR, 2026-11-17, 98 KB" (About); false (out "") without one */
 bool dpk_about(uint8_t type, char *out, size_t len);
+/* A pack's header as dpk_about says it (DOTA's question about a pack offered) */
+void dpk_describe(const dpk_hdr_t *h, char *out, size_t len);
 
 /* The guarded flash calls (also the tests' handle on the guard): false outside [DPK_BASE, DPK_END) */
 bool dpk_erase(uint32_t addr);

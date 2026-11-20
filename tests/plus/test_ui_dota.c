@@ -92,6 +92,62 @@ void dota_job(void *ctx)
 	(void)ctx;
 }
 
+/* --- Data packs (CONFIG_DATAPACK, docs/dota.md 20): a RadioID pack in force, none of the air band; the offer the
+ * receiver's view asks about, the user's answer --- */
+static dpk_hdr_t rid = { .magic = { 'D', 'P', 'K', '1' }, .type = DPK_RADIOID, .fmt = 1, .seq = 3, .len = 100000,
+			 .date = { '2', '0', '2', '6', '1', '1', '1', '7' }, .name = "RadioID TR" };
+static dpk_info_t rid_info = { .seq = 3, .len = 100000 };
+static int answers, answered_yes;
+
+const dpk_info_t *dpk_active(uint8_t type)
+{
+	return type == DPK_RADIOID ? &rid_info : NULL;
+}
+
+bool dpk_header(uint8_t type, dpk_hdr_t *h)
+{
+	if (type != DPK_RADIOID)
+		return false;
+	*h = rid;
+	return true;
+}
+
+void dpk_describe(const dpk_hdr_t *h, char *out, size_t len)
+{
+	snprintf(out, len, "%.16s, %.4s-%.2s-%.2s, %u KB", h->name, h->date, h->date + 4, h->date + 6,
+		 (unsigned)((h->len + 1023u) / 1024u));
+}
+
+/* Settings > About's lines (ui_menus.c) */
+uint8_t dpk_state(uint8_t type)
+{
+	return type == DPK_RADIOID ? DPK_OK : DPK_NONE;
+}
+
+bool dpk_about(uint8_t type, char *out, size_t len)
+{
+	if (type != DPK_RADIOID)
+		return false;
+	dpk_describe(&rid, out, len);
+	return true;
+}
+
+bool dota_pack_offer(dpk_hdr_t *h)
+{
+	if (!fv.asking)
+		return false;
+	*h = rid;
+	return true;
+}
+
+void dota_pack_answer(bool yes)
+{
+	answers++;
+	answered_yes += yes;
+	fv.asking = false;
+	fv.serial++;
+}
+
 /* --- What the screen reads besides: APRS's checks (aprs.c is not in the simulator), the storage jobs --- */
 static bool callsign_ok = true;
 
@@ -577,6 +633,99 @@ static void receiver_done(void)
 
 /* --- The picker --- */
 
+/* --- Data packs --- */
+
+/* What: the RadioID pack in force (its name, date and size), the air band pack none (greyed, nothing to send) */
+static void pack_send(void)
+{
+	start("data pack: send the RadioID pack");
+	ok_run("down down left left");	/* What: One channel, then back round to the air band, the RadioID pack */
+	expect(T("shows=RadioID_pack shows=RadioID_TR shows=2026-11-17 shows=About", "shows=RadioID_paketi shows=RadioID_TR "
+		 "shows=2026-11-17 shows=Yakla"));
+	layout();
+	ok_run("shot:pack-send");
+	ok_run("right");		/* the air band pack: none */
+	expect(T("shows=Air_band_pack shows=none hides=RadioID_TR", "shows=Hava shows=yok hides=RadioID_TR"));
+	layout();
+	type_code("1 2 3 4");
+	ok_run("down ok");
+	expect(T("toast=Nothing_to_send", "toast=G"));
+	check(starts == 0, "started without a pack");
+	ok_run("up up up up up up up up up up down down left");	/* What: the RadioID pack */
+	ok_run("down down down down down down down ok ok");	/* Send, Receiver ready? */
+	check(starts == 1 && got.kind == DOTA_KIND_PACK && got.pack == DPK_RADIOID && got.code == 1234, "the pack's request");
+	/* its progress in KB, its result */
+	fv.phase = DOTA_P_RUN;
+	fv.pack = true;
+	fv.channels = 834;	/* 100,000 B in 120-byte frames */
+	fv.pct = 50;
+	strcpy(fv.peer, "TA1BBB");
+	moved();
+	expect("shows=TA1BBB shows=49/98_KB");
+	layout();
+	fv.phase = DOTA_P_DONE;
+	fv.result = DOTA_RES_SENT;
+	on = false;
+	moved();
+	expect(T("shows=Sent_data_pack", "shows=veri_paketi_g"));
+	layout();
+}
+
+/* The receiver: "Data pack: RadioID TR, 2026-11-17, 98 KB. Accept?" while it waits; OK yes, Back no */
+static void pack_question(int yes)
+{
+	start(yes ? "data pack: the receiver's Yes" : "data pack: the receiver's No");
+	ok_run("right down down down down down right down down ok");	/* Receive, Import: Current zone, Ready */
+	check(starts == 1, "receiver started");
+	fv.asking = true;
+	moved();
+	expect(T("shows=Data_pack:_RadioID_TR, shows=2026-11-17, shows=Accept? shows=OK_yes shows=Back_no",
+		 "shows=Veri_paketi:_RadioID shows=2026-11-17, shows=Kabul? shows=OK_evet"));
+	layout();
+	if (yes)
+		ok_run("shot:pack-question");
+	ok_run(yes ? "ok" : "back");
+	check(answers == 1 && answered_yes == yes, "the answer");
+	check(stops == 0 && on, "still waiting (no stop question, no stop)");
+	expect(T("hides=Accept? shows=Waiting_for_sender", "hides=Kabul? shows=bekleniyor"));
+}
+
+static void pack_yes(void)
+{
+	pack_question(1);
+}
+
+static void pack_no(void)
+{
+	pack_question(0);
+}
+
+/* Done: "Imported data pack"; the sender's "Not accepted" */
+static void pack_results(void)
+{
+	start("data pack: the results");
+	ok_run("right down down down down down right down down ok");
+	fv.phase = DOTA_P_DONE;
+	fv.result = DOTA_RES_DONE;
+	fv.pack = true;
+	on = false;
+	moved();
+	expect(T("shows=Imported_data_pack", "shows=veri_paketi_i"));
+	layout();
+	start("data pack: not accepted");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	for (uint8_t why = DOTA_R_WAIT; why <= DOTA_R_DECLINED; why++) {
+		fv.phase = DOTA_P_FAILED;
+		fv.result = DOTA_RES_REFUSED;
+		fv.why = why;
+		on = false;
+		moved();
+		expect(T("shows=Not_accepted", "shows=Kabul_edilmedi"));
+		layout();
+	}
+}
+
 static void picker_zone(void)
 {
 	start("picker: a zone");
@@ -611,7 +760,8 @@ static const case_fn all[] = {
 	form_send_fm, form_receive_dmr, form_sender_dmr, form_freq_source, form_freq_channel_last, start_needs_code,
 	start_asks_ready, start_question_no,
 	start_band_and_battery, start_refusals, receiver_start, receiver_dmr_id, run_page, back_stop_no, back_stop_yes,
-	ptt_prompt, writing_holds, results, receiver_done, picker_zone, picker_selected,
+	ptt_prompt, writing_holds, results, receiver_done, picker_zone, picker_selected, pack_send, pack_yes, pack_no,
+	pack_results,
 };
 
 int main(void)

@@ -112,7 +112,7 @@ uint32_t dota_frame_crc(uint16_t seq, uint16_t first, uint8_t count, const uint8
  * record versions must match, so no model or firmware string travels) */
 size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max)
 {
-	if (max < DOTA_MANIFEST_MAX)
+	if (max < DOTA_MANIFEST_MAX + (m->pack != NULL ? DOTA_PACK_HDR : 0u))
 		return 0;
 	out[0] = m->rec_ver;
 	out[1] = m->layout;
@@ -123,14 +123,19 @@ size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max)
 		put16(out + 1u + 4u * s, m->recs[s]);
 		put16(out + 3u + 4u * s, m->frames[s]);
 	}
-	return DOTA_MANIFEST_MAX;
+	if (m->pack == NULL)
+		return DOTA_MANIFEST_MAX;
+	memcpy(out + DOTA_MANIFEST_MAX, m->pack, DOTA_PACK_HDR);	/* a data pack's header (docs/dota.md 20) */
+	return DOTA_MANIFEST_MAX + DOTA_PACK_HDR;
 }
 
 bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m)
 {
-	if (n != DOTA_MANIFEST_MAX)
+	if (n != DOTA_MANIFEST_MAX && n != DOTA_MANIFEST_MAX + DOTA_PACK_HDR)
 		return false;
 	memset(m, 0, sizeof *m);
+	if (n != DOTA_MANIFEST_MAX)
+		m->pack = in + DOTA_MANIFEST_MAX;
 	m->rec_ver = in[0];
 	m->layout = in[1];
 	m->modes = in[2];
@@ -227,7 +232,9 @@ uint8_t dota_tx_window(dota_tx_t *s, uint32_t now, uint8_t *scratch)
 	} else {
 		if (!s->hello_ok) {
 			s->win[s->nwin++] = DOTA_WIN_HELLO;
-			bytes += frame_bytes(s, DOTA_MANIFEST_MAX);
+			bytes += frame_bytes(s, DOTA_MANIFEST_MAX + (s->m.pack != NULL ? DOTA_PACK_HDR : 0u));
+			if (s->m.pack != NULL)
+				w = 1;	/* a data pack: its receiver's user answers first, so HELLO goes alone */
 		}
 		/* Resends first, lowest number first (fly is kept in order) */
 		for (uint8_t i = 0; i < s->nfly && s->nwin < w; i++) {
@@ -290,7 +297,7 @@ size_t dota_tx_frame(dota_tx_t *s, uint8_t i, uint8_t *out, size_t max)
 	dota_frame_t f;
 	memset(&f, 0, sizeof f);
 	uint8_t *pay = out + DOTA_HDR + (s->link->call ? DOTA_CALL : 0u);	/* packed where dota_frame_put puts it */
-	uint8_t body[DOTA_MANIFEST_MAX];
+	uint8_t body[2u * DOTA_SEC_COUNT + 4u];
 	f.code = s->code;
 	f.session = s->session;
 	f.left = (uint8_t)(s->nwin - 1u - i);
@@ -299,8 +306,8 @@ size_t dota_tx_frame(dota_tx_t *s, uint8_t i, uint8_t *out, size_t max)
 	uint16_t e = s->win[i];
 	if (e == DOTA_WIN_HELLO) {
 		f.type = DOTA_T_HELLO;
-		f.len = (uint8_t)dota_manifest_put(&s->m, body, sizeof body);
-		f.payload = body;
+		f.len = (uint8_t)dota_manifest_put(&s->m, pay, s->link->payload_max);	/* in place, as DATA */
+		f.payload = pay;
 	} else if (e == DOTA_WIN_END) {
 		f.type = DOTA_T_END;
 		s->end_sent = true;
@@ -384,6 +391,13 @@ void dota_tx_heard(dota_tx_t *s, const uint8_t *in, size_t n, const char *peer, 
 		if (f.len < 5u)
 			return;
 		s->status = p[0];
+		if (p[0] == DOTA_R_WAIT && !s->hello_ok) {
+			/* A data pack: the receiver's user is asked. HELLO again after the answer wait, as when no answer
+			 * came, so the user has the HELLOs' time to answer (link polls x (ack_ms + a HELLO): ~20 s) */
+			s->state = DOTA_TX_WAIT;
+			s->t_ms = now;
+			return;
+		}
 		s->free_ch = get16(p + 1);
 		s->free_zones = p[3];
 		s->zone_room = p[4];
@@ -440,7 +454,9 @@ void dota_tx_tick(dota_tx_t *s, uint32_t now)
 	if (s->state != DOTA_TX_WAIT || now - s->t_ms < s->link->ack_ms)
 		return;
 	if (++s->polls > s->link->polls) {
-		tx_fail(s, s->acked == s->total ? DOTA_TF_UNSURE : DOTA_TF_NO_ANSWER);
+		/* the receiver's user never answered its data pack question: not accepted (status DOTA_R_WAIT) */
+		tx_fail(s, !s->hello_ok && s->status == DOTA_R_WAIT ? DOTA_TF_REFUSED :
+			   s->acked == s->total ? DOTA_TF_UNSURE : DOTA_TF_NO_ANSWER);
 		return;
 	}
 	s->state = DOTA_TX_READY;	/* the next window asks again */
@@ -490,7 +506,8 @@ void dota_rx_arm(dota_rx_t *r, const dota_link_t *link, uint16_t code, dota_hell
 
 static bool got_bit(const dota_rx_t *r, uint16_t seq)
 {
-	return seq >= 1u && seq <= DOTA_FRAMES_MAX && (r->got[(seq - 1u) >> 3] >> ((seq - 1u) & 7u)) & 1u;
+	uint16_t d = (uint16_t)(seq - r->base);
+	return seq >= 1u && (seq < r->base || (d < 32u && ((r->got >> d) & 1u)));
 }
 
 /* When the answer is due: after the POLL frame, or when the window should have ended */
@@ -573,12 +590,14 @@ void dota_rx_heard(dota_rx_t *r, const uint8_t *in, size_t n, const char *peer, 
 		    f.seq >= sec_start(r, f.sec) && f.seq < sec_start(r, (uint8_t)(f.sec + 1u)) && !got_bit(r, f.seq) &&
 		    r->base >= sec_start(r, f.sec)) {
 			/* in its section, not had, every frame of the sections before it in: keep it if there is room */
-			if (r->data(r->ctx, f.sec, f.first, f.count, f.payload, f.len)) {
-				r->got[(f.seq - 1u) >> 3] |= (uint8_t)(1u << ((f.seq - 1u) & 7u));
+			if ((uint16_t)(f.seq - r->base) < 32u && r->data(r->ctx, f.sec, f.first, f.count, f.payload, f.len)) {
+				r->got |= 1u << (f.seq - r->base);
 				r->got_n++;
 				r->crc += dota_frame_crc(f.seq, f.first, f.count, f.payload, f.len);
-				while (r->base <= r->total && got_bit(r, r->base))
+				while (r->got & 1u) {	/* the window moves on past every frame in */
+					r->got >>= 1;
 					r->base++;
+				}
 			} else {
 				r->slow = true;
 			}
@@ -627,12 +646,8 @@ size_t dota_rx_answer(dota_rx_t *r, uint32_t now, bool clear, uint8_t *out, size
 		r->session = 0;		/* forgotten: back to waiting for a HELLO */
 		break;
 	case DOTA_T_ACK: {
-		uint32_t bits = 0;
-		for (uint8_t i = 0; i < 32u; i++)
-			if (got_bit(r, (uint16_t)(r->base + i)))
-				bits |= 1u << i;
 		f.seq = r->base;
-		put32(p, bits);
+		put32(p, r->got);	/* bit i: frame base + i is in */
 		put16(p + 4, r->got_n);
 		p[6] = r->slow ? 1u : 0u;
 		r->slow = false;
