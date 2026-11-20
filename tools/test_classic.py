@@ -880,5 +880,8 @@ def main():
     # DDM32 Plus round 14 APRS job: SOS key actions, Mic-E beacons, the station page (tools/test_aprsx.py)
     import test_aprsx
     test_aprsx.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 14 air items: the airfield table, air watch, the 3D waterfall (tools/test_air.py)
+    import test_air
+    test_air.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

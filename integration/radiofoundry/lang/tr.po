@@ -5972,3 +5972,8 @@ msgstr "Artık duyulmuyor"
 #: core/ui/ui_aprs.c
 msgid "OK details  Back"
 msgstr "OK ayrıntı  Geri"
+
+# Branch r14-air (round 14: airfield table, air watch, 3D waterfall)
+#: core/ui/ui_airfield.c
+msgid "{No frequencies in the data|No frequencies}"
+msgstr "{Veride frekans yok|Frekans yok}"

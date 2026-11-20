@@ -463,6 +463,13 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | A48-S | SK1 = SOS, every action Off (Settings > Keys > SOS key); press SK1, then OK | "No SOS actions" and "Pick: Settings > Keys", nothing cut at the right edge (Turkish too); OK: toast "No SOS actions: Settings > Keys", nothing keyed |
 | A49-5 | Up / Down on the page | the previous / next heard station; turn the other radio off and wait until it drops out of the list (12 stations): "Not heard any more" |
 
+### Round 14 air band and spectrum (docs/plus.md "Round 14: air band and spectrum", branch `r14-air`)
+
+| # | Do | Expect |
+|---|---|---|
+| AW1 | Tools > Airfields near Antalya (or the fixed APRS position there); then near Ankara | LTAI's line "TWR 125.000 +1"; LTAB's "TWR 132.000" without "+"; LTAD Etimesgut shows only TWR 122.100 (no APP 119.100) |
+| AW2 | OK on LTAI; Down to the last frequency; OK | seven rows (ATIS, GND, TWR x2, APP x3), the page scrolls to APP 124.425; OK tunes 124.425 in AM, receive only |
+
 ## 7. Not testable here
 
 YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec2 too heavy for the CPU).

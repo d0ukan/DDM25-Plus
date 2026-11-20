@@ -2253,3 +2253,44 @@ sentences: later lines are no longer taken as NMEA. Likely the `\n` after the `\
 KISS decoder, which then holds a byte, and a `$` is only taken as NMEA while that decoder is empty
 (`aprs_host.c`, `aprs_host_feed`); not confirmed. A host program that sends CR LF NMEA through the KISS
 port (APRS position from the PC) may be hit. `tests/plus/test_aprs_mice.c` feeds `aprs_nmea` directly instead.
+
+## Round 14: air band and spectrum (branch `r14-air`)
+
+ROADMAP rows 44 and 45, the owner's decisions in `docs/r14.md` (branch `r14`). Hooks in `tools/plus_air.py`, host
+tests in `tools/test_air.py` (run from `tools/test_classic.py`). Budget per commit, both profiles
+(`--stack-check --verify-rebuild`: zero warnings, forced rebuild identical, every task inside its stack):
+
+| Step | What | Public FLASH B | Public RAM B (free) | Owner FLASH B | Owner RAM B (free) | Stacks: UI / radio free |
+|---|---|---:|---:|---:|---:|---|
+| base | `ddm25` 22b4049 | 810,224 | 209,608 (1,848) | 888,996 | 209,656 (1,800) | 196 / 760 |
+| 44a | the airfield table (67 rows out: -484 B of table), "+N", the short "No frequencies" | 809,912 (-312) | 209,608 (1,848) | 888,684 (-312) | 209,656 (1,800) | 196 / 760 |
+
+### 44a. The airfield table (owner: "D", 2026-11-20)
+
+- **Only removed, nothing added**: the entries of the pinned OurAirports data that are not in that aerodrome's own
+  official publication (its AD 2.18 table), compared by the owner's research outside this repository. The
+  publication is copyrighted: no frequency was added, changed or given another service from it. `tools/airfields.py`
+  `EXCLUDE`: 61 entries (code, channel name, reason), applied by code and channel name whatever the type (LTAJ's
+  "TWR/APP 120.100" goes as both rows). 58 are "not in the aerodrome's official publication" (among them 119.100 at
+  LTAD Etimesgut and LTAE Akıncı: Esenboğa approach's); TR-0018 Bolu's 122.100 and 123.300 are unofficial (no published
+  aerodrome); TR-0040 Manavgat's 128.025 is Antalya approach's. The list must match the pinned data: an exclusion that
+  matches nothing fails the run (a refresh reviews it), as `--check` does for the table. Result: **74 airfields, 122
+  frequencies, 3,744 B** (was 79 / 188 / 4,228; 67 rows removed, the duplicate counted before was one of them). Five
+  small airfields are no longer listed: the selection keeps a small field only with a frequency (LTBK Gaziemir, LTBP
+  Yalova, LTBV Bodrum-İmsık, TR-0018 Bolu, TR-0040 Manavgat); 18 large / medium ones now say "No frequencies in the
+  data" (13 before).
+- **Every frequency of an airfield**: `FREQ_MAX` 10 -> 64 (`air_field_t.count` is a `uint8_t`; the generator refuses
+  more than 255; the 12 KB byte cap stays). Today's most is LTAI Antalya with 7. The details page scrolls (its rows
+  follow the picked one) and Up / Down wrap; the list line is unchanged in height.
+- **"+N" on the list line** when the service shown (the tower, else the first frequency) has more frequencies:
+  "TWR 125.000 +1" at LTAI, none at LTAB's one tower. No new text.
+- **Fixed on the way**: an airfield's page without frequencies drew "No frequencies in the data" wider than the
+  panel (the layout check found it once TR-0004, without frequencies, became the last airfield by code); it now
+  has the shorter alternate "No frequencies" ("Frekans yok"); the toast keeps the long text. One Turkish entry.
+- Tests: `tools/test_air.py` (the list well formed: 61 entries, codes as the table has them, channel names of the band,
+  once each, a reason each; applied to a synthetic pair: removed whatever the type, counted, a small field left without
+  a frequency dropped, an unmatched one reported, bad entries refused; none of them in the committed table);
+  `tests/plus/test_airfield.c` (the shipped table: 74 / 122); `tests/plus/test_ui_misc.c` (its airfield flows on the
+  new table: LTAB GND 120.200 tuned, LTFJ's DEL first, TR-0004 last by code, Antalya "TWR 125.000 +1", LTAB without
+  "+"); `tests/plus/test_ui_air.c` (English and Turkish: "+1", Antalya's seven frequencies scrolled to the last and
+  tuned, Etimesgut without 119.100, Kastamonu without frequencies, layout). Radio rows AW1-AW2.

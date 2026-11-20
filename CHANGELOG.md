@@ -20,6 +20,9 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   it; Up / Down: the previous / next station.
 - The SOS key's page with no action chosen fits the screen ("No SOS actions") and points to Settings > Keys, where the
   actions are picked now (it still said Tools > SOS key).
+- Airfields: the frequencies that are not in an aerodrome's official publication are removed (61, among them
+  another unit's approach frequencies and the unofficial ones of Bolu); nothing is added. An airfield keeps all of
+  its frequencies (up to 64), and the list line shows "+1" when the service shown has more ("TWR 125.000 +1").
 
 ## v1.0.0-beta.3 (2026-11-20)
 

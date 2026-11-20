@@ -85,10 +85,18 @@ static void __attribute__((noinline)) row(int y, int h, uint16_t i, bool focus, 
 	if (a->count == 0) {
 		sb_str(&b, TR("No frequencies in the data"));
 	} else {
-		uint8_t k = 0;
+		uint8_t k = 0, more = 0;
 		while (k + 1u < a->count && air_freqs[a->first + k].type != AIR_TWR)
 			k++;
-		sb_air_freq(&b, &air_freqs[a->first + (air_freqs[a->first + k].type == AIR_TWR ? k : 0u)]);
+		const air_freq_t *f = &air_freqs[a->first + (air_freqs[a->first + k].type == AIR_TWR ? k : 0u)];
+		sb_air_freq(&b, f);
+		/* "TWR 125.000 +1": the service has more frequencies (all of them in the details) */
+		for (k = 0; k < a->count; k++)
+			more = (uint8_t)(more + (air_freqs[a->first + k].type == f->type));
+		if (more > 1u) {
+			sb_str(&b, " +");
+			sb_u32(&b, more - 1u, 1);
+		}
 	}
 	gfx_text_fit(s, buf, w - 4, fit, sizeof fit);
 	gfx_text(s, 2, y + m->h + 2, fit, dim);
@@ -153,7 +161,9 @@ static void __attribute__((noinline)) draw_info(int y, uint16_t i, const air_her
 	gfx_text(s, 0, y, fit, ui_col.dim);
 	y += s->h + 4;
 	if (a->count == 0) {
-		gfx_text(s, 0, y, TR("No frequencies in the data"), ui_col.warn);
+		gfx_text_fit(s, TR(TEXT_ALT_OPEN "No frequencies in the data" TEXT_ALT_NEXT "No frequencies" TEXT_ALT_CLOSE), w,
+			     fit, sizeof fit);	/* the long one is wider than the panel */
+		gfx_text(s, 0, y, fit, ui_col.warn);
 		return;
 	}
 	if (fsel >= a->count)
