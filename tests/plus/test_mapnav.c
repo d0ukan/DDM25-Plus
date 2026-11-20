@@ -334,17 +334,17 @@ static void test_track_draw(void)
 
 #define P(la, lo) (int32_t)((la) * 1e5 + 0.5), (int32_t)((lo) * 1e5 + 0.5)
 const rpt_entry_t rpt_table[] = {
-	{ P(39.93, 32.86), 145600000, -480, 885, RPT_FM, 0, "TA2RAK", "Ankara" },		/* 0: Ankara centre */
-	{ P(39.80, 32.60), 145625000, -480, 0, RPT_FM, 0, "TA2RGB", "Golbasi" },		/* 1: 26 km SW */
-	{ P(40.20, 32.86), 145650000, -480, 1000, RPT_FM | RPT_NARROW, 0, "TA2RKZ", "Kazan" },	/* 2: 30 km N */
-	{ P(39.94, 32.87), 145675000, -480, 0, RPT_C4FM, 0, "TA2YSF", "Ankara" },		/* 3: C4FM (refused) */
-	{ RPT_NOPOS, RPT_NOPOS, 145700000, -480, 0, RPT_FM, 0, "TA2NOP", "" },			/* 4: no position */
-	{ P(39.931, 32.861), 145725000, 0, 0, RPT_FM, 0, "TA2SPX", "Ankara" },			/* 5: simplex, 150 m */
-	{ P(39.85, 33.52), 145750000, -480, 0, RPT_FM, 0, "TA2RKK", "Kirikkale" },		/* 6: 57 km E */
-	{ P(39.95, 32.88), 145787500, -480, 0, RPT_FM, 0, "TA2RCK", "Cankaya" },		/* 7: 2.8 km NE */
-	{ P(39.92, 32.85), 439100000, -6080, 0, RPT_DMR, 1 | 3 << 4, "TA2DMR", "Ankara" },	/* 8: DMR */
-	{ P(39.40, 32.85), 439200000, -6080, 0, RPT_DMR, 2 | 2 << 4, "TA2DMS", "Haymana" },	/* 9: DMR, 59 km S */
-	{ P(39.92, 32.84), 1297000000, -24000, 0, RPT_FM, 0, "TA2SHF", "Ankara" },		/* 10: 23 cm: not in band */
+	{ P(39.93, 32.86), 145600000, -480, 885, RPT_FM, 0, "TA2RAK", "Ankara", RPT_PROV_UNKNOWN },		/* 0: Ankara centre */
+	{ P(39.80, 32.60), 145625000, -480, 0, RPT_FM, 0, "TA2RGB", "Golbasi", RPT_PROV_UNKNOWN },		/* 1: 26 km SW */
+	{ P(40.20, 32.86), 145650000, -480, 1000, RPT_FM | RPT_NARROW, 0, "TA2RKZ", "Kazan", RPT_PROV_UNKNOWN },	/* 2: 30 km N */
+	{ P(39.94, 32.87), 145675000, -480, 0, RPT_C4FM, 0, "TA2YSF", "Ankara", RPT_PROV_UNKNOWN },		/* 3: C4FM (refused) */
+	{ RPT_NOPOS, RPT_NOPOS, 145700000, -480, 0, RPT_FM, 0, "TA2NOP", "", RPT_PROV_UNKNOWN },			/* 4: no position */
+	{ P(39.931, 32.861), 145725000, 0, 0, RPT_FM, 0, "TA2SPX", "Ankara", RPT_PROV_UNKNOWN },			/* 5: simplex, 150 m */
+	{ P(39.85, 33.52), 145750000, -480, 0, RPT_FM, 0, "TA2RKK", "Kirikkale", RPT_PROV_UNKNOWN },		/* 6: 57 km E */
+	{ P(39.95, 32.88), 145787500, -480, 0, RPT_FM, 0, "TA2RCK", "Cankaya", RPT_PROV_UNKNOWN },		/* 7: 2.8 km NE */
+	{ P(39.92, 32.85), 439100000, -6080, 0, RPT_DMR, 1 | 3 << 4, "TA2DMR", "Ankara", RPT_PROV_UNKNOWN },	/* 8: DMR */
+	{ P(39.40, 32.85), 439200000, -6080, 0, RPT_DMR, 2 | 2 << 4, "TA2DMS", "Haymana", RPT_PROV_UNKNOWN },	/* 9: DMR, 59 km S */
+	{ P(39.92, 32.84), 1297000000, -24000, 0, RPT_FM, 0, "TA2SHF", "Ankara", RPT_PROV_UNKNOWN },		/* 10: 23 cm: not in band */
 };
 const rpt_info_t rpt_info = { sizeof rpt_table / sizeof rpt_table[0], 0, "2026-11-19", "test" };
 

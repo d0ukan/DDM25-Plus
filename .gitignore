@@ -165,6 +165,7 @@
 !/tools/bootstrap_rust.sh
 !/tools/bootstrap_toolchain.sh
 !/tools/build_radiofoundry.py
+!/tools/cc_vendored.sh
 !/tools/classic_channels.py
 !/tools/codec_cache.py
 !/tools/prepare_web_firmware.py

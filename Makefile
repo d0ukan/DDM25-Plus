@@ -21,7 +21,7 @@ protocol-test:
 	sh tests/protocol/run_sanitizers.sh
 
 codec-test:
-	python3 third_party/imbe/tools/test_c.py --out build/imbe-c-tests --sanitize
+	CC=$(CURDIR)/tools/cc_vendored.sh python3 third_party/imbe/tools/test_c.py --out build/imbe-c-tests --sanitize
 	python3 tools/test_codec_slot.py
 	python3 experiments/codec/build.py --full-ubsan
 	mkdir -p artifacts/codec-tests logs
