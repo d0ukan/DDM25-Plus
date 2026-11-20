@@ -5779,3 +5779,11 @@ msgstr "Kod / ID gerekli"
 #: core/ui/ui_dota.c
 msgid "Zone name needed"
 msgstr "Bölge adı gerekli"
+
+#: core/ui/ui_dota.c
+msgid "Sent ^"
+msgstr "^ gönderildi"
+
+#: core/ui/ui_dota.c
+msgid "Imported ^"
+msgstr "^ içe aktarıldı"

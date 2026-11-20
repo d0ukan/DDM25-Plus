@@ -429,14 +429,14 @@ traffic) open. Build 7c90427b (artifacts/plus-20261117c) is installed but its ne
 **Every row transmits from both radios (the receiver answers): owner approval for the step, an authorised amateur
 frequency, Power Low, FM with a CTCSS tone. Both radios need their callsign as the radio name; DMR rows need the
 sender's DMR ID set and the receiver's ID typed on the sender.** Sender A, receiver B, 2 m apart unless the row says
-otherwise. Times are docs/dota.md 8.2's estimates.
+otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c), DMR docs/dota.md 8.2's estimates.
 
 | # | Do | Expect |
 |---|---|---|
-| D-F1 | B: Tools > DOTA Transfer, Role Receive, FM, 433.500 / 88.5, Import New zone, Zone name "DOTA1", Ready (note B's code). A: Role Send, FM, One channel (a DMR channel with a contact), same frequency and tone, the code, Send, OK | both play "dit dit diiit"; B's speaker plays the AFSK; A "Sent 1 channels, 0 zones", B "Imported 1 channels, 1 zones" and the success tones; on B the zone "DOTA1" holds the channel, identical in the editor (frequency, mode, CC, slot, contact, RX group list), receive only |
-| D-F2 | As D-F1 with A sending "A zone" of 16 channels | done in about 7 s; the zone and its channels identical on B; the contacts and RX group lists the channels use are on B once (matched by ID where B had them) |
+| D-F1 | B: Tools > DOTA Transfer, Role Receive, FM, 433.500 / 88.5, Import New zone, Zone name "DOTA1", Ready (note B's code). A: Role Send, FM, One channel (a DMR channel with a contact), same frequency and tone, the code, Send, OK | both play "dit dit diiit"; B's speaker plays the AFSK; A "Sent 1 channel", B "Imported 1 channel, 1 zone" and the success tones; on B the zone "DOTA1" holds the channel, identical in the editor (frequency, mode, CC, slot, contact, RX group list), receive only |
+| D-F2 | As D-F1 with A sending "A zone" of 16 channels | done in about 13 s (the host test's real-time figure); the zone and its channels identical on B; the contacts and RX group lists the channels use are on B once (matched by ID where B had them) |
 | D-F3 | A third radio (or the SDR) on the frequency, first without, then with A's tone; then a run with B on another tone than A | the third radio's speaker opens only with the tone set; B with the wrong tone takes nothing (A: "No answer") |
-| D-F4 | FM, 80 channels (Selected channels from two zones, or a zone of 80) | about 22 s; the progress counts up; a resend is a pause, never a failure; after each minute keyed A rests 5 s |
+| D-F4 | FM, 80 channels (Selected channels from two zones, or a zone of 80) | about 25 s (64 channels took 20.3 s in the host test); the progress counts up; a resend is a pause, never a failure; after each minute keyed A rests 5 s |
 | D-S1 | Listen to A during its transmissions in D-F1 / D-F2 | A's own AFSK at the knob's level (the amplifier on during AFSK transmit). If A is silent while keyed, note it: owner answer 6 accepts a silent FM sender only when this fails |
 | D-S2 | During D-D1 / D-D2 listen to A and B | while either transmits: a click every 50-140 ms (the amplifier's switch-on pop); between transmissions: the crackle while data comes in and while A waits for the answer; note any silent gap and its length |
 | D-D1 | As D-F1 over DMR: both on 433.500, CC 1, TS 1; A's Receiver ID = B's DMR ID (B's run page shows it) | as D-F1; A and B show "On air" in turns |

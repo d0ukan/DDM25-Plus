@@ -755,7 +755,9 @@ into `core/radio/` (`dota_proto.c`, `dota_rec.c`, `dota_import.c`, `dota.c`, `ra
 | Session memory | `dota_buf` 1,280 B + `ui_scratch` | one static union `b` in `dota.c`, 1,676 B (sender: selection, contact / list maps, zone parts, the transport buffers; receiver: protocol state, import state, a 2-frame queue for the storage job, answer buffers). While no session runs, the UI borrows the sender's transport area for its zone and channel copies (`dota_scratch()`) |
 | Import | section 10 | channels staged into free slots without their in-use bit (`codeplug_stage_channel`, a twin of `codeplug_set_channel`), zones staged raw into free zone slots; one commit sets the bank bitmaps, then the zone bitmap or the current zone's record; contacts and RX group lists are added visibly and taken away again by the undo (a snapshot of the free slots). Writes run as storage jobs on the start-up task, posted from the UI tick |
 | Screens | five screens (`SCR_DOTA`, `_TX`, `_RX`, `_RUN`, `_PICK`) | two: `SCR_DOTA` (the form with Role and Method on top and the role's rows below, its questions, the run page) and `SCR_DOTA_PICK` (`dota-pick`: a channel of a zone, channels ticked in any zone with Left / Right for the zone, a zone). Every page is a `ui_draw_list` list (scrolls, wraps the long texts) |
-| Texts | section 12 | shorter, to fit the flash budget: "Sent 12 channels, 1 zones", "Imported ...", "No answer", "Other version", "Not ready", "Codeplug full", "Receiver stopped", "Nothing changed", "No final answer", "Channel busy", "Battery low. Sure?", "Receiver ready?", "Not amateur band: send?"; reused where the catalog had them ("Color code", "Can't transmit there", "Sent ", "Imported ", "Codeplug full", "Back"). 43 new Turkish entries in `integration/radiofoundry/lang/tr.po` |
+| Texts | section 12 | shorter, to fit the flash budget: "Sent 12 channels, 1 zone" / "Imported 1 channel" (singular and plural;
+the counts sit where the language puts them: "Sent ^" / "^ gönderildi", "Imported ^" / "^ içe aktarıldı"; no zone
+count when no zone went), "No answer", "Other version", "Not ready", "Codeplug full", "Receiver stopped", "Nothing changed", "No final answer", "Channel busy", "Battery low. Sure?", "Receiver ready?", "Not amateur band: send?"; reused where the catalog had them ("Color code", "Can't transmit there", " channel(s)", " zone(s)", "Codeplug full", "Back"). 45 new Turkish entries in `integration/radiofoundry/lang/tr.po` |
 | Sound | section 13 | as section 13 with 13.1: the DMR sender's amplifier click while keyed; FM sender's monitor through the amplifier (unverified) |
 | PTT | refused | refused with the deny tone and the prompt "Stop the transfer?" (answer 4) |
 | Power | Low / Mid / High | stored as a class 0-2, mapped by `dota_power_level` to the board's levels |
@@ -766,12 +768,26 @@ into `core/radio/` (`dota_proto.c`, `dota_rec.c`, `dota_import.c`, `dota.c`, `ra
 |---|---:|---:|---|
 | Base (`ddm25` 1c391c7) | 864,036 | 209,672 (1,784) | 268 / 760 / 348 |
 | DOTA, steps 0-6 | 888,540 (+24,504) | 209,648 (1,808) | 216 / 760 / 348 |
+| DOTA, after the review (plural texts, stack edges) | 888,652 (+24,616) | 209,648 (1,808) | 196 / 760 / 348 |
 
 The limits of the job were FLASH headroom >= 12 KB (<= 888,832 B) and static RAM free >= 1,500 B: both held, with
-292 B of flash to spare. The estimate of section 14.2 was ~19.8 K (16-24 K); the result is at its top end, and step 6
-needed trimming (shorter texts, table-driven results, list pages) to stay inside. The storage jobs' depth on the
-start-up task is not covered by `--stack-check` (jobs are called through a pointer); `dota_job` keeps its buffers in
-`b` for that reason.
+180 B of flash to spare. The estimate of section 14.2 was ~19.8 K (16-24 K); the result is at its top end, and step 6
+needed trimming (shorter texts, table-driven results, list pages) to stay inside.
+
+**Stacks** (the check's figures include the HR_C7000 port's 68 B and the 128 B margin; "free" is beyond both):
+
+| Chain | Task (stack) | Deepest | Free |
+|---|---|---:|---:|
+| The receiver's storage job: `startup_task` > `storage_job_poll` > (pointer) `dota_job` > `dota_imp_commit` > `make_zone` > `zone_edit_create` > `codeplug_set_zone` > `materialize` > `set_channel_as` > ... `codeplug_kv_write` > `write_chain` > `storage_sector_write` > `flash_crc` > ... > the tick interrupt's crash capture | start (2,560 B) | 16 + 1,972 = 1,988 B (`dota_job` alone 1,880 B) | 376 B |
+| The start task's deepest chain (boot: `radio_sm_init` > `aprs_init` > ...), unchanged by DOTA | start | 2,016 B | 348 B |
+| `dota_poll` (radio task) > `prep_step` > `fill` > `codeplug_channel` > ... | radio (3,072 B) | 1,424 B below `radio_task`'s own frames; the task's deepest chain is not DOTA's (2,116 B) | 760 B |
+| `dota_draw` > `ui_draw_list` > a list item (the UI task's deepest chain) | ui (2,016 B) | 1,624 B | 196 B |
+
+The check follows the storage job's pointer from `storage_job_post`'s callers, and `tools/plus_dota.py`'s
+`STACK_EDGES` (added to the Plus build's table by `build_radiofoundry.py`) names it as well (`call storage_job_poll
+dota_job`), together with the session's transport calls (`dota_io_t.key` / `.beep` are set in `radio_dota.inc`, which
+the source scanner does not read: before, the check listed `io->key` as unresolved and skipped `io->beep`). The check
+now reports no unresolved DOTA call.
 
 ### 19.2 Host tests (`tools/test_dota.py`, from `tools/test_classic.py`)
 
@@ -781,9 +797,10 @@ start-up task is not covered by `--stack-check` (jobs are called through a point
 | `test_dota_rec.c` | every mode and field through encoder and decoder, refusals, 200,000 fuzzed records |
 | `test_dota_import.c` | the real `codeplug.c` on the simulated flash: staging unseen, power cuts at every flash write during staging and commit, the undo, names, contacts and lists matched |
 | `test_dota_session.c` | two whole sessions (`dota.c` twice): FM tone buffers decoded bit by bit by the HDLC decoder, CTCSS required; DMR chained datagrams; zones, DOTA Clone, loss, a wrong code, stops, the PTT prompt |
-| `test_ui_dota.c` | the screens in upstream's UI simulator (engine faked), English and Turkish: rows per role and method, scrolling, digits, the steps, the checks and questions in order, the request, the picker, progress, Back and the PTT prompt (No goes on, Yes stops), writing can't be stopped, every result text, every page inside the screen |
+| `test_dota_fm.c` | FM end to end through audio: each side's tone buffers through `afsk.c`'s modulator at 8 kHz, a sample dropped or repeated at every half boundary, the transmitter's CTCSS at -16 dB and noise on the air in real time (25 ms ticks), heard through `afsk.c`'s demodulator and a CTCSS detector standing in for the FD6818's (a Goertzel at the receiver's tone over 200 ms). A zone of 16 clean, at 20 dB and 12 dB SNR, and a zone of 64 at 12 dB: done, identical, no FCS error. The sender without a tone, and on 100.0 Hz against 88.5: the receiver demodulates the frames and takes none, the sender ends with "No answer", nothing written |
+| `test_dota_radio.inc` (`test_radio_dota`, from `tools/test_classic.py`) | the real radio core (`radio_sm.c` with `radio_dota.inc`) and the real session on radioCoreTest's fake board, after upstream's and Classic's radio suites pass with DOTA built in: the session channel (433.500, 12.5 kHz, CTCSS both ways, lowest power; DMR: CC, slot, direct mode); PTT refused with the deny tone and the prompt, never keyed; channel / VFO / zone requests dropped during the session and working after it; the user's channel, and the VFO, back exactly (frequency, tones, mode, power) after "No answer", after the user's stop, after a DMR receiver's wait; every keyed span at most 10 s |
+| `test_ui_dota.c` | the screens in upstream's UI simulator (engine faked), English and Turkish: rows per role and method, scrolling, digits, the steps, the checks and questions in order, the request, the picker, progress, Back and the PTT prompt (No goes on, Yes stops), writing can't be stopped, every result text in singular and plural, every page inside the screen |
 
-Not built from section 16.1: `test_dota_fm.c` (the half-buffer encoder against the APRS host modem with noise and a
-CTCSS tone added) and `test_dota_radio.inc` (the radio core block in upstream's radio state machine test). The radio
-core block (`radio_dota.inc`) is compiled only in the firmware; its behaviour (session channel, PTT refusal, held
-requests, restore) waits for the radio rows.
+In `test_dota_fm.c` a zone of 16 takes 12.9 s in real time, not section 8.2's 7 s: the key-ups, the 400 ms
+preamble, the turnarounds and the answers cost more than the estimate counted (64 channels: 20.3 s). The radio rows
+take the measured figures.

@@ -178,11 +178,19 @@ static const char *question(void)
 	return tr(q[i < 3u ? i : 2u]);
 }
 
+/* n and its noun, singular or plural ("1 channel", "2 channels") */
+static void count(sbuf_t *b, uint32_t n, const char *one, const char *many)
+{
+	sb_u32(b, n, 1);
+	sb_str(b, tr(n == 1u ? one : many));
+}
+
 static void result_text(const dota_view_t *v, sbuf_t *b)
 {
-	/* By DOTA_RES_*; NULL: the refusal's reason, or the other side's stop */
+	/* By DOTA_RES_*; NULL: the refusal's reason, or the other side's stop. In "Sent ^" / "Imported ^" the ^ stands for
+	 * what went ("12 channels, 1 zone"), where the language puts it */
 	static const char *const text[] = {
-		TRN("Nothing changed"), TRN("Sent "), TRN("Imported "), TRN("No answer"),
+		TRN("Nothing changed"), TRN("Sent ^"), TRN("Imported ^"), TRN("No answer"),
 		NULL, TRN("Nothing changed"), NULL, TRN("No final answer"),
 		TRN("Nothing changed"), TRN("Nothing changed"), TRN("Flash write failed"),
 		TRN("Channel busy"), TRN("Nothing to send"),
@@ -193,14 +201,16 @@ static void result_text(const dota_view_t *v, sbuf_t *b)
 		    v->why == DOTA_R_NOT_READY || v->why == DOTA_R_MODE ? TRN("Not ready") : TRN("Codeplug full");
 	else if (v->result == DOTA_RES_PEER_STOPPED)
 		t = sending() ? TRN("Receiver stopped") : text[0];
-	sb_str(b, tr(t));
-	if (v->result == DOTA_RES_SENT || v->result == DOTA_RES_DONE) {
-		sb_u32(b, v->ch_added, 1);
-		sb_str(b, TR(" channels"));
-		sb_str(b, ", ");
-		sb_u32(b, v->zones_added, 1);
-		sb_str(b, TR(" zones"));
+	char what[24];	/* "1024 channels, 68 zones" */
+	sbuf_t w;
+	sb_init(&w, what, sizeof what);
+	count(&w, v->ch_added, TRN(" channel"), TRN(" channels"));
+	if (v->zones_added != 0) {
+		sb_str(&w, ", ");
+		count(&w, v->zones_added, TRN(" zone"), TRN(" zones"));
 	}
+	for (t = tr(t); *t != '\0'; t++)
+		*t == '^' ? sb_str(b, what) : sb_chr(b, *t);
 }
 
 /* The run page's rows: the receiver's code (and DMR ID) while it waits; else the other side and the progress */
@@ -220,8 +230,7 @@ static void run_item(uint16_t i, ui_item_t *it)
 	} else {
 		sb_u32(&l, (uint32_t)rv.channels * rv.pct / 100u, 1);
 		sb_chr(&l, '/');
-		sb_u32(&l, rv.channels, 1);
-		sb_str(&l, TR(" channels"));
+		count(&l, rv.channels, TRN(" channel"), TRN(" channels"));
 	}
 }
 

@@ -477,7 +477,7 @@ static void results(void)
 		uint8_t phase, result, why;
 		const char *en, *tr;
 	} r[] = {
-		{ DOTA_P_DONE, DOTA_RES_SENT, 0, "shows=Sent_12_channels", "shows=12_kanal" },
+		{ DOTA_P_DONE, DOTA_RES_SENT, 0, "shows=Sent_12_channels,_2 shows=zones", "shows=12_kanal,_2_b shows=nderildi" },
 		{ DOTA_P_FAILED, DOTA_RES_NO_ANSWER, 0, "shows=No_answer", "shows=Yan" },
 		{ DOTA_P_FAILED, DOTA_RES_REFUSED, DOTA_R_VERSION, "shows=Other_version", "shows=Farkl" },
 		{ DOTA_P_FAILED, DOTA_RES_REFUSED, DOTA_R_NOT_READY, "shows=Not_ready", "shows=Haz" },
@@ -511,11 +511,18 @@ static void receiver_done(void)
 	ok_run("right down down down down right down down ok");
 	fv.phase = DOTA_P_DONE;
 	fv.result = DOTA_RES_DONE;
-	fv.ch_added = 3;
+	fv.ch_added = 1;
 	fv.zones_added = 1;
 	on = false;
 	moved();
-	expect(T("shows=Imported_3_channels", "shows=3_kanal"));
+	/* one of each: singular in English; Turkish puts the verb last */
+	expect(T("shows=Imported_1_channel,_1 shows=zone hides=channels hides=zones", "shows=1_kanal,_1_b shows=aktar"));
+	layout();
+	/* no zone: the count of zones is left out */
+	fv.ch_added = 5;
+	fv.zones_added = 0;
+	moved();
+	expect(T("shows=Imported_5_channels hides=zone", "shows=5_kanal hides=lge"));
 }
 
 /* --- The picker --- */
