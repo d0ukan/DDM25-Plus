@@ -54,6 +54,9 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   speaker FIFO feed between m0 (as before), m1 (one block of margin before the FIFO starts), m2 (paced, as P25) and
   m3 (both); 9 zeroes the counters. Power-on is always m0: nothing changes until the owner presses 0. **For the radio
   test rows DA-*;** the default changes once they show which feed sounds right.
+- Zones show their size where channels are added: the zone list's Add channel row "26/80", the channel editor's
+  Zones "26/80", Create New Zone "5/68"; a full zone says "Zone full: max 80 channels"; a channel the radio can't
+  read shows in its zone as "27 ? Ch 123" instead of vanishing (Home skips it).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

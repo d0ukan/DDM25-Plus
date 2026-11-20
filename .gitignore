@@ -569,3 +569,9 @@ __pycache__/
 !/integration/radiofoundry/dmraudio/pcm_diag.inc
 !/tests/plus/test_dmraudio_pcm.c
 !/tests/plus/test_ui_dmraudio.c
+# DDM32 Plus r15 channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/plus_chux.py)
+!/tools/plus_chux.py
+!/tools/test_chux.py
+!/tests/plus/test_zone_cap.c
+!/tests/plus/test_zone_radio.inc
+!/tests/plus/test_ui_chux.c

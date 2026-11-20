@@ -552,3 +552,13 @@ Reading the result: a mode that sounds clean with `gp0` where m0 had `gp` above 
 high -> the signal, not the audio path (move the radios, check the frequency). `pk` near 32767 on normal speech ->
 clipping. Every mode as rough as m0 with clean counters while the stock radio sounds clean on the same over -> the
 decoder call itself (candidate 4).
+## Round 15 channels (branch `r15-channels`)
+
+Zones, DMR channel rows, digital monitor, Delete channel, P25 NAC in decimal (docs/plus.md "Round 15"). Receive only
+unless a row says it transmits.
+
+| # | Do | Expect |
+|---|---|---|
+| Z-1 | Menu > Zones > the 27-channel zone: look at the Add channel row and the list; then on Home step Up past 26 | "Add channel 27/80"; every position listed (one that can't be read shows "27 ? Ch nnn", "Can't be read"); Home's top right counts "27/27" on the 27th. If Home still stops at 26: note whether Home shows "x/27" or "x/26", the Settings > Keys > Up/Down value and whether dual / multi-watch is on |
+| Z-2 | Add channels to a zone until it holds 80, then Add channel once more; Copy here on one of its channels; the channel editor's Zones row | "80/80" dimmed; "Zone full: max 80 channels" each time, nothing written; in the editor's Zones list "80/80" dimmed beside that zone |
+| Z-3 | Menu > Zones, Create New Zone row | "n/68" with n the zones stored |

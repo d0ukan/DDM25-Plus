@@ -2646,3 +2646,62 @@ dry after a fast first block, m1 and m3 do not, the counters match the model, a 
 mode applied while running, the reset), `tests/plus/test_ui_dmraudio.c` (the real formatter and digit handler cut out
 of the generated `diag_dm32.c`; 4 flows, English and Turkish, layout). Radio rows: `docs/plus-radio-test.md` "DMR
 receive audio", DA-*. Next: the default becomes the mode the rows show clean (one line), or the counters point at 3-5.
+## Round 15: channels, zones and DMR rows (branch `r15-channels`, `CONFIG_CHAN_EXTRAS`)
+
+The owner's reports after v1.0.0-beta.3 (`tools/plus_chux.py`, tests `tools/test_chux.py`). One switch for the job; it
+needs `ZONE_EDIT` and `CHANNEL_EDIT`.
+
+### 1. Zone size ("I can add a 27th channel, but on Home I can only go up to 26")
+
+The limits are the codeplug's: **80 channels a zone** (`codeplug_zone_capacity()`; 16 in a codeplug that still has
+the old 16-channel zone records), **68 zones**, **1024 channels**. Nothing between the codeplug and Home stops below
+them, measured on host: the real codeplug, its RFKV records and `zone_edit.c` over a simulated flash grow a zone of FM,
+DMR and P25 channels one at a time from 26 to 80, every one read back, after a power cycle too, the 81st refused
+(`tests/plus/test_zone_cap.c`; also all 68 zones x 80 checked once); the real radio state machine steps Home through 26,
+then 27 added underneath (as a zone edit's write arrives), then 80 positions both ways, and keeps position 80 over a
+reboot (`tests/plus/test_zone_radio.inc`). No host path gives 26, so the radio's case is one of: a channel the radio
+cannot read (Home's `find_channel` skips it silently, and the zone list hid it: its row vanished), or Up / Down set to
+the zone or the talk target (Settings > Keys), or dual / multi-watch skipping the positions the other watched channels
+hold. What changed:
+
+- the zone list's **Add channel** row shows `26/80` (dimmed at the capacity, and OK there refuses at once), the channel
+  editor's Zones list `26/80` beside each zone the channel is not in, Zones > Create New Zone `5/68`;
+- a full zone refuses with **"Zone full: max 80 channels"** (Add channel, Copy here, the channel editor's Zones; the
+  last one's toast was not translated);
+- a zone position whose channel cannot be read now **shows** in the zone list as `27 ? Ch 123`, "Can't be read"
+  (warning colour) instead of vanishing, so the user sees why Home skips it and can remove it (# menu).
+
+Radio test row Z-1 (`docs/plus-radio-test.md`) narrows the owner's case down.
+
+#### Above 80 channels a zone? (owner's question; not changed)
+
+Measured on the public build (`--plus --public`, base 743c1b7: RAM 209,368 B, 2,088 B free; rule >= 1,500 B free).
+A `zone_t` is 180 B (name 17 + count 2 + 80 x 2); every extra channel costs 2 B in each copy. Static copies in the image
+(map file): the radio core's `sm.zone` and `buf` (radio_sm.c), 12 in `ui_dual.c` (dual / multi-watch, `mw_z`), 8 in
+`ui_menus.c` (zone list cache, the zone editor's `ze_z`, `chz_z`, Find, ...), 2 in `ui_find.c`, 1 each in
+`ui_app.c`, `ui_svc_radio.c` and `zone_edit.c` (`work`): **27 copies, about 54 B per channel**; the tool screens'
+shared buffer (`ui_scratch`, the cross-band picker) grows too if a zone becomes its largest member. Stack copies: the
+codeplug's zone read buffer (176 B, every task that reads a zone, the UI task among them: 184 B free), `zone_t` locals
+in the radio core (select_in_zone, RREQ_ZONE, persist), scan priority (3) and Find & save (3, UI task).
+
+| Per zone | Static RAM | Free (rule 1,500) | UI stack | Data chip record | CPS tools |
+|---:|---:|---:|---|---|---|
+| 80 (today) | 0 | 2,088 | 184 B free | 0xB0, 68 slots at EE 0x8030-0xAEF0 | qdmr, upstream web CPS, our viewer: 80 |
+| 90 | +540 | ~1,550 | ~140 B | does not fit the record | lost past 80 |
+| 100 | +1,080 | ~1,010 (fails) | ~100 B | does not fit the record | lost past 80 |
+| 128 | +2,590 | negative (does not link) | overflow likely | does not fit | lost past 80 |
+| 250 | +9,180 | negative | overflow | does not fit | lost past 80 |
+
+The format is the hard limit, not RAM: the open-firmware zone record is a fixed 0xB0 bytes (16 name + 80 x 2), 68 of
+them packed from 0x8030 to 0xAEF0 with the layout byte at 0x806F (`docs/spec/open-firmware-cps.md` 7.3.4); qdmr, the
+upstream web CPS and our programmer's read-only viewer (`pc/ddm32_app/codeplug.py`, `zone_capacity = 80`) all write or
+read exactly that, and the 16-channel legacy layout is told apart by that byte. More channels would need a second
+record type (an extension area or RFKV entries keyed by zone slot with a check of the base record, as the P25 tags do),
+which the CPS tools would neither show nor keep: a CPS write of the zone would leave a stale extension behind. DOTA's
+zone record also caps `total` at `CODEPLUG_ZONE_MAX` (a protocol change with other radios). Flash cost of a larger
+constant is negligible (< 200 B).
+
+Recommendation: **keep 80**. If the owner needs more in one place, the cheap path is two zones (Zones > Copy, or a
+"continued" zone the zone step reaches next), not bigger records. If 100 is ever wanted on our own format, first fold
+`ui_dual.c`'s 12 static zones into one shared buffer (-1,980 B at 80), which makes 100 fit with ~1,100 B margin left of
+the rule's; 128 and 250 need on-demand reads instead of whole-zone copies everywhere.

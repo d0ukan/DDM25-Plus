@@ -6117,3 +6117,12 @@ msgstr "Çapraz bant kapalı: bellek yok"
 #: core/ui/ui_xband.c
 msgid "Cross-band off: refused"
 msgstr "Çapraz bant kapalı: reddedildi"
+
+# DDM32 Plus branch r15-channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/plus_chux.py)
+#: core/ui/ui_menus.c
+msgid "Zone full: max "
+msgstr "Bölge dolu: en çok "
+
+#: core/ui/ui_menus.c
+msgid "Can't be read"
+msgstr "Okunamıyor"

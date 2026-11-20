@@ -905,5 +905,8 @@ def main():
     # DDM32 Plus DMR receive audio diagnostics: the PCM driver's counters and prefill, the page (tools/test_dmraudio.py)
     import test_dmraudio
     test_dmraudio.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus r15 channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/test_chux.py)
+    import test_chux
+    test_chux.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()
