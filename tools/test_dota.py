@@ -23,3 +23,9 @@ def main(ROOT, APP, OUT, flags, host):
     run(['clang', *flags, *dota, tp / 'test_dota_rec.c', core / 'radio/dota_rec.c', '-o', OUT / 'test_dota_rec'],
         cwd=ROOT)
     run([OUT / 'test_dota_rec'], cwd=ROOT)
+    # The import on the real codeplug over a simulated flash: staging unseen, power cuts, the commit, the undo
+    run(['clang', *flags, *dota, '-I' + str(host), tp / 'test_dota_import.c', core / 'radio/dota_import.c',
+         core / 'radio/dota_rec.c', *codeplug, core / 'codeplug/zone_edit.c', core / 'codeplug/zone_shift.c',
+         core / 'codeplug/zone_settle.c', core / 'settings/settings.c', core / 'storage/storage.c',
+         host / 'sim/sim_flash.c', '-o', OUT / 'test_dota_import'], cwd=ROOT)
+    run([OUT / 'test_dota_import'], cwd=ROOT)

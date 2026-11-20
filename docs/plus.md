@@ -2130,6 +2130,7 @@ identical, every task inside its stack). Limits for the job: FLASH headroom >= 1
 | 0 | `audio_mux.c`'s APRS ring compiled out (`PLUS_AUDIO_MUX_NO_APRS`; the DM-32 reads APRS audio from its own AFSK receive path) | 863,704 (-332) | 207,616 (-2,056) | 3,840 | 268 / 760 |
 | 1 | `CONFIG_DOTA`, the protocol (`dota_proto.c`: frames, manifest, both ends' ARQ). Built, not linked until the radio core calls it (object: 4,487 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
 | 2 | The records, format version 1 (`dota_rec.c`). Not linked yet (object: 2,560 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
+| 3 | The import (`dota_import.c`, `codeplug_dota.inc`: staging without in-use bits, one commit, undo); `codeplug_set_channel` gains a staging twin. Import not linked yet (object: 2,404 B text) | 863,760 (+56) | 207,616 (0) | 3,840 | 268 / 760 |
 
 ## Name and public build
 
