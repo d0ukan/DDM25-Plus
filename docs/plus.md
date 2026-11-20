@@ -2121,8 +2121,8 @@ service). Design, owner's decisions and test plan: [dota.md](dota.md). Code in `
 hooks in `tools/plus_dota.py`, host tests in `tools/test_dota.py` (run from `tools/test_classic.py`).
 
 Budget, measured after each phase 2 step (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild
-identical, every task inside its stack). Limits for the job: FLASH headroom >= 12 KB (<= 889,088 B), static RAM free
->= 1,500 B (<= 209,956 B).
+identical, every task inside its stack). Limits for the job: FLASH headroom >= 12 KB (<= 888,832 B of 901,120),
+static RAM free >= 1,500 B (<= 209,956 B).
 
 | Step | What | FLASH B | RAM B | RAM free | Stacks: UI / radio free |
 |---|---|---:|---:|---:|---|
@@ -2132,6 +2132,7 @@ identical, every task inside its stack). Limits for the job: FLASH headroom >= 1
 | 2 | The records, format version 1 (`dota_rec.c`). Not linked yet (object: 2,560 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
 | 3 | The import (`dota_import.c`, `codeplug_dota.inc`: staging without in-use bits, one commit, undo); `codeplug_set_channel` gains a staging twin. Import not linked yet (object: 2,404 B text) | 863,760 (+56) | 207,616 (0) | 3,840 | 268 / 760 |
 | 4-5 | The session (`dota.c`: preparation, windows, answers, FM over AX.25 and the AFSK path with `tx_more`, DMR over chained UDP, sounds), the radio core's side (`radio_dota.inc`: the session channel, PTT refused, requests held, keying), hooks in `aprs.c`, `dmrDataService.c`, `hrc_afsk.c`, `radio_dm32.c`, `beep.c`. `dota_buf` 1,740 B | 878,356 (+14,596) | 209,632 (+2,016) | 1,824 | 268 / 760 |
+| 6 | Tools > DOTA Transfer and its picker (`ui_dota.c`: the form, questions, run page and PTT prompt as `ui_draw_list` pages), 43 Turkish entries, the PTT prompt's path. First measured at 892,012 B (over the limit); trimmed to fit: shorter texts and reused catalog strings, table-driven results, the power as a class, list pages instead of hand drawing. Flash headroom left: 12,580 B (292 B above the job's limit) | 888,540 (+10,184) | 209,648 (+16) | 1,808 | 216 / 760 |
 
 ## Name and public build
 

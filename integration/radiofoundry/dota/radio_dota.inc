@@ -79,7 +79,8 @@ static void dota_take(radio_sm_t *sm, uint32_t now_ms)
 		ch->contact = 0;
 		ch->listen_list = 0;
 	}
-	sm->view.power = r.power;	/* RAM only: reload() puts the channel's back */
+	/* RAM only: reload() puts the channel's back */
+	sm->view.power = dota_power_level((uint8_t)(r.power + 1u), board.power_count);
 	dota_owned = true;
 	tune(sm, now_ms);
 }

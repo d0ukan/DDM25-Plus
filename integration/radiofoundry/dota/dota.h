@@ -27,7 +27,7 @@ typedef struct {
 	uint16_t ctcss;		/* FM: Hz x 10 */
 	uint8_t cc, ts;		/* DMR: colour code 0-15, slot 1-2 */
 	uint32_t peer_id;	/* DMR, sending: the receiver's ID */
-	uint8_t power;		/* the board's level (0 = lowest) */
+	uint8_t power;		/* 0 low, 1 mid, 2 high (dota_power_level - 1) */
 	uint16_t code;		/* sending: the receiver's code */
 	char call[CODEPLUG_NAME_LEN + 1];	/* our callsign (the radio name) */
 	/* Sending: what (DOTA_KIND_*); kind CHANNEL: channel; kind ZONE: zone; SELECTED: dota_selection() */
@@ -62,13 +62,9 @@ typedef struct {
 	uint16_t done, total;		/* sending: frames acknowledged / all; receiving: channels in / all */
 	uint16_t channels;		/* in the transfer */
 	uint16_t code;
-	uint32_t own_id;		/* DMR: shown on the receiver's Ready screen */
 	char peer[DOTA_CALL + 1];
-	char peer_fw[DOTA_FW_MAX + 1];
-	uint16_t resent;
-	uint16_t free_ch;
-	uint16_t ch_added, skipped, ct_added, ct_matched;
-	uint8_t zones_added, lists_added;
+	uint16_t ch_added;
+	uint8_t zones_added;
 	bool keyed;			/* our transmitter is on */
 	bool asking;			/* sending: waiting for the answer */
 	bool ptt_prompt;		/* PTT was pressed during the transfer: ask "Stop the transfer?" */
@@ -79,6 +75,9 @@ typedef struct {
 bool dota_on(void);
 /* The sending selection: a bit per codeplug channel (number - 1), set before dota_start with kind SELECTED */
 uint8_t *dota_selection(void);
+/* While no session runs: a scratch area (DOTA_SCRATCH bytes) the UI may use; NULL during a session */
+#define DOTA_SCRATCH	512u
+void *dota_scratch(void);
 /* Start (false: one runs already). The radio core takes it at its next tick */
 bool dota_start(const dota_req_t *req);
 /* The user stops (Back on the progress screen, Yes on the PTT prompt) */
@@ -86,10 +85,6 @@ void dota_stop(void);
 void dota_view(dota_view_t *v);
 /* The PTT prompt answered No: the transfer goes on */
 void dota_ptt_prompt_clear(void);
-/* An estimate in seconds for this many record bytes and frames' worth of overhead (docs/dota.md 8) */
-uint32_t dota_estimate_s(uint8_t method, uint32_t bytes);
-/* Record bytes a selection of channels takes about (the estimate's input before anything is read) */
-uint32_t dota_estimate_bytes(uint16_t channels, uint16_t dmr_channels, uint8_t zones);
 /* The UI's tick: true when a storage job (dota_job) is wanted now */
 bool dota_job_wanted(void);
 /* The storage job (the start-up task): stage queued frames, commit, undo */

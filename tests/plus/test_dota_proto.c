@@ -69,16 +69,14 @@ static size_t fill(void *ctx, uint8_t sec, uint16_t first, uint8_t *count, uint8
 static void plan(dota_manifest_t *m, uint16_t payload)
 {
 	memset(m, 0, sizeof *m);
-	memcpy(m->model, "DM32", 5);
 	m->rec_ver = DOTA_REC_VERSION;
 	m->layout = DOTA_LAYOUT;
-	strcpy(m->fw, "dm32-plus-test");
 	uint8_t buf[DOTA_PAYLOAD_MAX];
 	for (uint8_t s = 1; s < DOTA_SEC_COUNT; s++) {
 		m->recs[s] = recs[s];
 		for (uint16_t k = 0; k < recs[s];) {
 			uint8_t c = 0;
-			m->bytes += fill(NULL, s, k, &c, buf, payload);
+			(void)fill(NULL, s, k, &c, buf, payload);
 			k = (uint16_t)(k + c);
 			m->frames[s]++;
 		}
@@ -177,8 +175,6 @@ static uint8_t run(const dota_link_t *l, const dota_link_t *rl, const chan_t *c,
 	reset_rx();
 	now = 1000;
 	tx_frames_sent = answers_sent = max_key_ms = 0;
-	memset(rx.fw, 0, sizeof rx.fw);
-	strcpy(rx.fw, "dm32-plus-test");
 	dota_rx_arm(&rx, rl, code_rx, hello, data, commit, NULL, now);
 	dota_tx_start(&tx, l, &m, code_tx, (uint16_t)(1 + rnd() % 60000u), fill, NULL);
 	int commit_wait = -1;
@@ -322,7 +318,6 @@ static void test_codecs(void)
 	/* The manifest */
 	dota_manifest_t m, b;
 	memset(&m, 0, sizeof m);
-	memcpy(m.model, "DM32", 5);
 	m.rec_ver = 1;
 	m.layout = 1;
 	m.modes = 0x3F;
@@ -336,10 +331,8 @@ static void test_codecs(void)
 	m.frames[2] = 9;
 	m.frames[3] = 205;
 	m.frames[4] = 14;
-	m.bytes = 0x01ABCD;
-	strcpy(m.fw, "dm32-plus-0.1.0-dev-2026");
 	n = dota_manifest_put(&m, buf, sizeof buf);
-	CHECK(n == 29 + 24 && n <= DOTA_MANIFEST_MAX);
+	CHECK(n == DOTA_MANIFEST_MAX);
 	CHECK(dota_manifest_get(buf, n, &b) && memcmp(&m, &b, sizeof m) == 0 && dota_manifest_total(&b) == 245);
 	CHECK(!dota_manifest_get(buf, n - 1, &b));
 	m.frames[3] = 600;	/* more than DOTA_FRAMES_MAX */
@@ -423,7 +416,6 @@ static void test_refusals(void)
 	plan(&m, fm.payload_max);
 	reset_rx();
 	hello_answer = DOTA_R_CHANNELS;
-	strcpy(rx.fw, "dm32-plus-other");
 	dota_rx_arm(&rx, &rx_link_fm, 42, hello, data, commit, NULL, 0);
 	rx.free_ch = 3;
 	dota_tx_start(&tx, &fm, &m, 42, 77, fill, NULL);
@@ -439,7 +431,7 @@ static void test_refusals(void)
 	CHECK(a != 0);
 	dota_tx_heard(&tx, buf, a, "TA1RRR", 5100);
 	CHECK(tx.state == DOTA_TX_FAILED && tx.fail == DOTA_TF_REFUSED && tx.status == DOTA_R_CHANNELS &&
-	      tx.free_ch == 3 && strcmp(tx.peer_fw, "dm32-plus-other") == 0 && strcmp(tx.peer, "TA1RRR") == 0);
+	      tx.free_ch == 3 && strcmp(tx.peer, "TA1RRR") == 0);
 	/* Another sender's session after ours is bound: ignored */
 	hello_answer = DOTA_R_OK;
 	dota_rx_arm(&rx, &rx_link_fm, 42, hello, data, commit, NULL, 0);

@@ -1,0 +1,585 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* DDM32 Plus DOTA Transfer's screens (core/ui/ui_dota.c, docs/dota.md 12) through the real UI in upstream's simulator,
+ * on the DM-32UV's display class (240 x 320, insets 10 x 5, key map M: Left / Right), in English and in Turkish. The
+ * session engine (radio/dota.c, tests/plus/test_dota_session.c) is faked here: what the screen asks it for is recorded,
+ * and the view it shows is set by the test. Covers the form (rows by role and method, digits, the power and tone
+ * steps), the checks before a start, the questions in their order, the start's request, the picker, the progress
+ * page, Back's "Stop the transfer?", the PTT prompt (No: the transfer goes on; Yes: it stops), the results, and that
+ * every page fits in both languages. Each case runs in a child process (the screens' static state starts over). */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include "sim/ui_sim.h"
+#include "ui/ui_app.h"
+#include "ui/ui_nav.h"
+#include "ui/i18n.h"
+#include "radio/dota.h"
+#include "aprs/aprs.h"
+#include "aprs/aprs_plus.h"
+#include "storage/storage.h"
+#include "codeplug/codeplug.h"
+
+/* --- The engine, faked --- */
+static dota_req_t got;
+static bool on;
+static int starts, stops, clears;
+static dota_view_t fv;
+static uint8_t sel[CODEPLUG_CHANNELS_MAX / 8u];
+static uint32_t scratch[1024 / 4];
+
+bool dota_on(void)
+{
+	return on;
+}
+
+uint8_t *dota_selection(void)
+{
+	return sel;
+}
+
+void *dota_scratch(void)
+{
+	return on ? NULL : (void *)scratch;
+}
+
+bool dota_start(const dota_req_t *r)
+{
+	if (on)
+		return false;
+	got = *r;
+	on = true;
+	starts++;
+	memset(&fv, 0, sizeof fv);
+	fv.role = r->role;
+	fv.method = r->method;
+	fv.code = r->code;
+	fv.phase = r->role == DOTA_SEND ? DOTA_P_PREP : DOTA_P_WAIT;
+	fv.serial = 1;
+	return true;
+}
+
+void dota_stop(void)
+{
+	stops++;
+	fv.phase = DOTA_P_FAILED;
+	fv.result = DOTA_RES_STOPPED;
+	fv.ptt_prompt = false;
+	fv.serial++;
+	on = false;
+}
+
+void dota_view(dota_view_t *v)
+{
+	*v = fv;
+}
+
+void dota_ptt_prompt_clear(void)
+{
+	clears++;
+	fv.ptt_prompt = false;
+	fv.serial++;
+}
+
+bool dota_job_wanted(void)
+{
+	return false;
+}
+
+void dota_job(void *ctx)
+{
+	(void)ctx;
+}
+
+/* --- What the screen reads besides: APRS's checks (aprs.c is not in the simulator), the storage jobs --- */
+static bool callsign_ok = true;
+
+void aprs_get_cfg(aprs_cfg_t *c)
+{
+	memset(c, 0, sizeof *c);
+}
+
+uint32_t aprs_cfg_freq(const aprs_cfg_t *c)
+{
+	(void)c;
+	return 144800000u;
+}
+
+bool aprs_amateur_hz(uint32_t hz)
+{
+	return (hz >= 144000000u && hz <= 146000000u) || (hz >= 430000000u && hz <= 440000000u);
+}
+
+bool aprs_callsign_ok(const char *call)
+{
+	return callsign_ok && call[0] != '\0';
+}
+
+/* The APRS message engine (the text entry comes with CONFIG_APRS_MSG): nothing waiting, nothing heard, nothing sent */
+void aprs_plus_state(aprs_plus_t *s)
+{
+	memset(s, 0, sizeof *s);
+	s->block = APRS_OK;
+}
+
+uint8_t aprs_sos_set(bool sos)
+{
+	(void)sos;
+	return APRS_OK;
+}
+
+void aprs_sos_heard(char *call)
+{
+	call[0] = '\0';
+}
+
+uint8_t aprs_msg_count(void) { return 0; }
+bool aprs_msg(uint8_t i, aprs_msg_t *out) { (void)i; (void)out; return false; }
+bool aprs_msg_peek(uint8_t i, aprs_msg_t *out) { (void)i; (void)out; return false; }
+bool aprs_rx_listening(void) { return true; }
+bool aprs_send_message(const char *to, const char *text) { (void)to; (void)text; return false; }
+
+/* The radio name is the callsign (the simulator's codeplug has none) */
+void codeplug_radio_name(char out[CODEPLUG_NAME_LEN + 1])
+{
+	strcpy(out, "TA1BBB");
+}
+
+bool storage_job_busy(void)
+{
+	return false;
+}
+
+bool storage_job_post(storage_job_fn fn, void *ctx)
+{
+	(void)fn;
+	(void)ctx;
+	return true;
+}
+
+/* --- The checks --- */
+static int fails, cases;
+static const char *name;
+
+static void ok_run(const char *script)
+{
+	char err[300];
+	if (!sim_run(script, err, sizeof err)) {
+		printf("FAIL %s: %s: %s\n", name, script, err);
+		fails++;
+	}
+}
+
+static void expect(const char *e)
+{
+	char buf[600], *o = buf;
+	while (*e && o < buf + sizeof buf - 16) {
+		while (*e == ' ')
+			e++;
+		if (!*e)
+			break;
+		memcpy(o, "expect:", 7);
+		o += 7;
+		while (*e && *e != ' ' && o < buf + sizeof buf - 2)
+			*o++ = *e++;
+		*o++ = ' ';
+	}
+	*o = 0;
+	ok_run(buf);
+}
+
+static void check(bool c, const char *what)
+{
+	if (!c) {
+		printf("FAIL %s: %s\n", name, what);
+		fails++;
+	}
+}
+
+static void layout(void)
+{
+	char issues[SIM_LAYOUT_MAX][160];
+	int n = sim_layout_issues(issues, SIM_LAYOUT_MAX);
+	for (int k = 0; k < n; k++)
+		printf("FAIL %s: layout: %s\n", name, issues[k]);
+	fails += n != 0;
+}
+
+static bool turkish;
+
+static void start(const char *n)
+{
+	name = n;
+	sim_reset(sim_geom_find("240x320i10x5"), SIM_MAP_M);
+	const char *shots = getenv("DOTA_SHOTS");	/* a directory: the pages as PNG files */
+	if (shots != NULL)
+		sim_set_shot_dir(shots, turkish ? "tr-" : "en-");
+	if (turkish && !lang_set(lang_find('t' << 8 | 'r'))) {
+		printf("FAIL %s: no Turkish in this build\n", name);
+		fails++;
+	}
+	ok_run("wait:100");
+	ui_push(SCR_DOTA, 0);
+	ok_run("wait:100");
+	ok_run("down down down down 4 3 3 5 0 0 up up up up");	/* 433.500 MHz, back on the first row */
+}
+
+/* The view moved: the screen's tick draws it */
+static void moved(void)
+{
+	fv.serial++;
+	ok_run("wait:300");
+}
+
+/* English or Turkish (Turkish: an ASCII part of the translation, as the screen draws it) */
+#define T(en, tr) (turkish ? (tr) : (en))
+
+/* --- The form --- */
+
+static void form_send_fm(void)
+{
+	start("form: sender, FM");
+	expect("screen=dota");
+	expect(T("shows=Role shows=Send shows=Method shows=FM shows=What shows=One_channel shows=Frequency shows=88.5 "
+		 "shows=Power shows=Low shows=Code shows=About hides=Import hides=Slot",
+		 "shows=Rol shows=Frekans shows=Ton shows=Kod shows=Yakla hides=Slot"));
+	layout();
+	ok_run("shot:form-send");
+	/* Power: Left from Low wraps to High, Right twice from there: Mid */
+	ok_run("down down down down down down");	/* Role, Method, What, item, Frequency, Tone, Power */
+	ok_run("left");
+	expect(T("shows=High", "shows=Y"));
+	ok_run("right right");
+	expect(T("shows=Mid", "shows=Orta"));
+	/* the tone steps through the CTCSS list */
+	ok_run("up right");
+	expect("hides=88.5 shows=91.5");
+}
+
+static void form_receive_dmr(void)
+{
+	start("form: receiver, DMR");
+	ok_run("right down right");	/* Role: Receive; Method: DMR */
+	expect(T("shows=Receive shows=DMR shows=Color_code shows=Slot shows=Import shows=New_zone shows=Zone_name "
+		 "shows=May_transmit shows=Off shows=Ready hides=What hides=Power hides=About",
+		 "shows=Al shows=DMR shows=Color_code shows=Slot shows=Yeni shows=nderebilir"));
+	layout();
+	/* Import: Current zone takes the zone name row away */
+	ok_run("down down down down right");	/* Frequency, CC, Slot, Import */
+	expect(T("shows=Current_zone hides=Zone_name", "shows=Ge"));
+	layout();
+}
+
+static void form_sender_dmr(void)
+{
+	start("form: sender, DMR");
+	ok_run("down right");
+	expect(T("shows=Receiver_ID shows=Color_code shows=Slot hides=88.5", "shows=ID shows=Color_code hides=88.5"));
+	layout();
+	/* more rows than fit: the last ones scroll into view */
+	ok_run("down down down down down down down down down down down");
+	expect(T("shows=Code hides=Method", "shows=Kod hides=ntem"));
+	layout();
+}
+
+/* --- Starting --- */
+
+static void type_code(const char *digits)
+{
+	/* the code row: Role, Method, What, item, Frequency, Tone, Power, Code */
+	ok_run("up up up up up up up up up down down down down down down down");
+	ok_run(digits);
+	ok_run("ok");
+}
+
+static void start_needs_code(void)
+{
+	start("start: the code first");
+	ok_run("down down down down down down down down ok");	/* Send without a code */
+	expect(T("toast=Code_/_ID_needed", "toast=Kod_/_ID_gerekli"));
+	check(starts == 0, "started without a code");
+}
+
+static void start_asks_ready(void)
+{
+	start("start: receiver ready? then the request");
+	type_code("1 2 3 4");
+	expect("shows=1234");
+	ok_run("down ok");	/* Send */
+	expect(T("shows=Receiver_ready?", "shows=haz"));
+	layout();
+	check(starts == 0, "started before the question");
+	ok_run("ok");
+	check(starts == 1, "not started after Yes");
+	check(got.role == DOTA_SEND && got.method == DOTA_FM && got.code == 1234 && got.power == 0 &&
+	      got.ctcss == DOTA_CTCSS_DEFAULT && got.kind == DOTA_KIND_CHANNEL && got.channel != 0 && got.hz != 0,
+	      "the request");
+	expect(T("screen=dota shows=Send shows=FM shows=Back_stop", "screen=dota shows=Geri"));
+}
+
+static void start_question_no(void)
+{
+	start("start: No on the question");
+	type_code("1 2 3 4");
+	ok_run("down ok back");
+	check(starts == 0, "started after No");
+	expect(T("shows=Role", "shows=Rol"));
+}
+
+static void start_band_and_battery(void)
+{
+	start("start: band, battery, ready in turn");
+	ok_run("battery:5");
+	ok_run("down down down down 4 4 6 0 0 0 up");	/* 446.000 MHz: not an amateur band here */
+	expect("shows=446");
+	ok_run("down down down down 1 2 3 4 down ok");
+	expect(T("shows=Not_amateur_band", "shows=bant"));
+	layout();
+	ok_run("shot:question");
+	ok_run("ok");
+	expect(T("shows=Battery_low", "shows=Pil"));
+	layout();
+	ok_run("ok");
+	expect(T("shows=Receiver_ready?", "shows=haz"));
+	ok_run("ok");
+	check(starts == 1 && got.hz == 446000000u, "started on 446 MHz after the three questions");
+}
+
+static void start_refusals(void)
+{
+	start("start: no callsign, APRS frequency");
+	callsign_ok = false;
+	type_code("1 2 3 4");
+	ok_run("down ok");
+	if (!turkish)
+		expect("toast=Set_your_callsign");
+	callsign_ok = true;
+	ok_run("up up up up 1 4 4 8 0 0 ok");	/* 144.800 MHz */
+	ok_run("down down down down ok");
+	expect(T("toast=APRS_frequency", "toast=APRS"));
+	check(starts == 0, "started on APRS");
+}
+
+static void receiver_start(void)
+{
+	start("receiver: the zone name, the code and the wait");
+	ok_run("right down down down down down down down ok");	/* Ready: a new zone without a name */
+	expect(T("toast=Zone_name_needed", "toast=B"));
+	check(starts == 0, "started without a zone name");
+	ok_run("up up up right");	/* Import: Current zone (the name row goes) */
+	ok_run("down down ok");	/* May transmit, Ready */
+	check(starts == 1 && got.role == DOTA_RECEIVE && got.code < 10000u, "the receiver's start");
+	char e[64];
+	snprintf(e, sizeof e, "shows=%04u", got.code);
+	expect(e);
+	expect(T("shows=Receive shows=Waiting_for_sender", "shows=Al shows=bekleniyor"));
+	layout();
+}
+
+static void receiver_dmr_id(void)
+{
+	start("receiver: DMR shows our ID");
+	ok_run("right down right");
+	ok_run("down down down down right down down ok");	/* Import: Current zone; Ready */
+	check(starts == 1 && got.method == DOTA_DMR, "DMR receiver started");
+	expect("shows=3101276");
+	ok_run("shot:dmr-wait");
+}
+
+/* --- The transfer --- */
+
+static void run_page(void)
+{
+	start("transfer: progress");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	fv.phase = DOTA_P_RUN;
+	strcpy(fv.peer, "TA1AAA");
+	fv.channels = 10;
+	fv.pct = 50;
+	fv.keyed = true;
+	moved();
+	expect(T("shows=TA1AAA shows=5/10_channels shows=On_air", "shows=TA1AAA shows=5/10 shows=Yay"));
+	layout();
+	ok_run("shot:run");
+	fv.keyed = false;
+	fv.asking = true;
+	moved();
+	expect(T("shows=Waiting_for_answer", "shows=bekleniyor"));
+}
+
+static void back_stop_no(void)
+{
+	start("transfer: Back, then No");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	fv.phase = DOTA_P_RUN;
+	moved();
+	ok_run("back");
+	expect(T("screen=dota shows=Stop_the_transfer? shows=OK_yes", "screen=dota shows=durdurulsun"));
+	layout();
+	ok_run("back");
+	check(stops == 0, "stopped on No");
+	expect(T("hides=Stop_the_transfer?", "hides=durdurulsun"));
+}
+
+static void back_stop_yes(void)
+{
+	start("transfer: Back, then Yes");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	fv.phase = DOTA_P_RUN;
+	moved();
+	ok_run("back ok");
+	check(stops == 1, "not stopped on Yes");
+	expect(T("screen=dota shows=Nothing_changed shows=Back", "screen=dota shows=Hi"));
+	ok_run("back");
+	expect("screen=home");
+}
+
+static void ptt_prompt(void)
+{
+	start("transfer: the PTT prompt, No then Yes");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	fv.phase = DOTA_P_RUN;
+	moved();
+	fv.ptt_prompt = true;	/* the radio core refused PTT (its deny tone) and asks */
+	moved();
+	expect(T("shows=Stop_the_transfer? shows=OK_yes shows=Back_no", "shows=durdurulsun shows=OK_evet"));
+	layout();
+	ok_run("shot:ptt");
+	ok_run("back");
+	check(clears == 1 && stops == 0 && on, "No: the transfer goes on");
+	expect(T("hides=Stop_the_transfer?", "hides=durdurulsun"));
+	fv.ptt_prompt = true;
+	moved();
+	ok_run("ok");
+	check(stops == 1, "Yes: stopped");
+}
+
+static void writing_holds(void)
+{
+	start("transfer: writing can't be stopped");
+	ok_run("right down down down down right down down ok");
+	fv.phase = DOTA_P_WRITING;
+	moved();
+	expect(T("shows=Writing", "shows=Yaz"));
+	ok_run("back");
+	expect(T("hides=Stop_the_transfer?", "hides=durdurulsun"));
+	check(stops == 0, "stopped while writing");
+}
+
+static void results(void)
+{
+	static const struct {
+		uint8_t phase, result, why;
+		const char *en, *tr;
+	} r[] = {
+		{ DOTA_P_DONE, DOTA_RES_SENT, 0, "shows=Sent_12_channels", "shows=12_kanal" },
+		{ DOTA_P_FAILED, DOTA_RES_NO_ANSWER, 0, "shows=No_answer", "shows=Yan" },
+		{ DOTA_P_FAILED, DOTA_RES_REFUSED, DOTA_R_VERSION, "shows=Other_version", "shows=Farkl" },
+		{ DOTA_P_FAILED, DOTA_RES_REFUSED, DOTA_R_NOT_READY, "shows=Not_ready", "shows=Haz" },
+		{ DOTA_P_FAILED, DOTA_RES_REFUSED, DOTA_R_CHANNELS, "shows=Codeplug_full", "shows=Codeplug_dolu" },
+		{ DOTA_P_FAILED, DOTA_RES_PEER_STOPPED, 0, "shows=Receiver_stopped", "shows=durdurdu" },
+		{ DOTA_P_FAILED, DOTA_RES_UNSURE, 0, "shows=No_final_answer", "shows=Son" },
+		{ DOTA_P_FAILED, DOTA_RES_BUSY, 0, "shows=Channel_busy", "shows=Kanal" },
+		{ DOTA_P_FAILED, DOTA_RES_NOTHING, 0, "shows=Nothing_to_send", "shows=bir" },
+	};
+	for (unsigned i = 0; i < sizeof r / sizeof r[0]; i++) {
+		start("transfer: results");
+		type_code("1 2 3 4");
+		ok_run("down ok ok");
+		fv.phase = r[i].phase;
+		fv.result = r[i].result;
+		fv.why = r[i].why;
+		fv.ch_added = 12;
+		fv.zones_added = 2;
+		on = false;
+		moved();
+		expect(T(r[i].en, r[i].tr));
+		layout();
+		if (i == 0)
+			ok_run("shot:result");
+	}
+}
+
+static void receiver_done(void)
+{
+	start("receiver: done");
+	ok_run("right down down down down right down down ok");
+	fv.phase = DOTA_P_DONE;
+	fv.result = DOTA_RES_DONE;
+	fv.ch_added = 3;
+	fv.zones_added = 1;
+	on = false;
+	moved();
+	expect(T("shows=Imported_3_channels", "shows=3_kanal"));
+}
+
+/* --- The picker --- */
+
+static void picker_zone(void)
+{
+	start("picker: a zone");
+	ok_run("down down right right");	/* What: A zone */
+	expect(T("shows=A_zone", "shows=Bir"));
+	ok_run("down ok");
+	expect("screen=dota-pick");
+	layout();
+	ok_run("down ok");
+	expect("screen=dota");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	check(starts == 1 && got.kind == DOTA_KIND_ZONE && got.zone == 1, "zone 1 sent");
+}
+
+static void picker_selected(void)
+{
+	start("picker: channels ticked in two zones");
+	ok_run("down down right");	/* What: Selected channels */
+	ok_run("down ok");
+	expect("screen=dota-pick");
+	ok_run("ok down ok right ok back");	/* two in this zone, one in the next */
+	expect("screen=dota shows=3");
+	unsigned n = 0;
+	for (unsigned i = 0; i < sizeof sel * 8u; i++)
+		n += (sel[i >> 3] >> (i & 7u)) & 1u;
+	check(n == 3, "three channels ticked");
+}
+
+typedef void (*case_fn)(void);
+static const case_fn all[] = {
+	form_send_fm, form_receive_dmr, form_sender_dmr, start_needs_code, start_asks_ready, start_question_no,
+	start_band_and_battery, start_refusals, receiver_start, receiver_dmr_id, run_page, back_stop_no, back_stop_yes,
+	ptt_prompt, writing_holds, results, receiver_done, picker_zone, picker_selected,
+};
+
+int main(void)
+{
+	int bad = 0, run = 0;
+	for (int l = 0; l < 2; l++) {
+		for (unsigned i = 0; i < sizeof all / sizeof all[0]; i++) {
+			fflush(stdout);
+			pid_t pid = fork();
+			if (pid == 0) {
+				turkish = l == 1;
+				all[i]();
+				cases++;
+				fflush(stdout);
+				_exit(fails != 0);
+			}
+			int st = 0;
+			waitpid(pid, &st, 0);
+			run++;
+			if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+				bad++;
+				if (!WIFEXITED(st))
+					printf("FAIL case %u (%s): crashed\n", i, l ? "tr" : "en");
+			}
+		}
+	}
+	printf("DOTA screens: %d cases (English and Turkish), %d failed\n", run, bad);
+	return bad != 0;
+}

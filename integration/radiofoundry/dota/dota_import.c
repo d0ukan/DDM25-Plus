@@ -281,25 +281,13 @@ static bool zone_name_taken(dota_imp_t *im, const char *name)
 	return false;
 }
 
-/* A zone name not in use here: name, else "name 2" ... "name 99", cut to fit (zone sharing's rule). Uses im->z */
+/* A zone name not in use here: name, else "name 2", cut to fit (the zone editor's copy rule). Uses im->z */
 static void unique_name(dota_imp_t *im, char *name)
 {
 	char base[CODEPLUG_NAME_LEN + 1];
 	memcpy(base, name, sizeof base);
-	for (unsigned k = 2; k <= 99u && zone_name_taken(im, name); k++) {
-		char s[4];
-		size_t sl = 0;
-		s[sl++] = ' ';
-		if (k >= 10u)
-			s[sl++] = (char)('0' + k / 10u);
-		s[sl++] = (char)('0' + k % 10u);
-		size_t bl = strnlen(base, CODEPLUG_NAME_LEN);
-		if (bl + sl > CODEPLUG_NAME_LEN)
-			bl = CODEPLUG_NAME_LEN - sl;
-		memcpy(name, base, bl);
-		memcpy(name + bl, s, sl);
-		name[bl + sl] = '\0';
-	}
+	if (zone_name_taken(im, name))
+		zone_copy_name(name, base);
 }
 
 /* A new zone named name with the channels in im->rec.numbers */

@@ -108,48 +108,39 @@ uint32_t dota_frame_crc(uint16_t seq, uint16_t first, uint8_t count, const uint8
 
 /* --- The manifest --- */
 
+/* rec_ver, layout, modes, kind, zones, then recs and frames per section (owner 2026-11-20: only the protocol and
+ * record versions must match, so no model or firmware string travels) */
 size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max)
 {
-	size_t fw = strnlen(m->fw, DOTA_FW_MAX);
-	if (max < 29u + fw)
+	if (max < DOTA_MANIFEST_MAX)
 		return 0;
-	memcpy(out, m->model, 4);
-	out[4] = m->rec_ver;
-	out[5] = m->layout;
-	out[6] = m->modes;
-	out[7] = m->kind;
+	out[0] = m->rec_ver;
+	out[1] = m->layout;
+	out[2] = m->modes;
+	out[3] = m->kind;
+	out[4] = m->zones;
 	for (unsigned s = 1; s < DOTA_SEC_COUNT; s++) {
-		put16(out + 8u + (s - 1u) * 2u, m->recs[s]);
-		put16(out + 16u + (s - 1u) * 2u, m->frames[s]);
+		put16(out + 1u + 4u * s, m->recs[s]);
+		put16(out + 3u + 4u * s, m->frames[s]);
 	}
-	out[24] = (uint8_t)(m->bytes >> 16);	/* 3 octets: at most 512 frames of 192 */
-	out[25] = (uint8_t)(m->bytes >> 8);
-	out[26] = (uint8_t)m->bytes;
-	out[27] = m->zones;
-	out[28] = (uint8_t)fw;
-	memcpy(out + 29, m->fw, fw);
-	return 29u + fw;
+	return DOTA_MANIFEST_MAX;
 }
 
 bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m)
 {
-	if (n < 29u || in[28] > DOTA_FW_MAX || n != 29u + in[28])
+	if (n != DOTA_MANIFEST_MAX)
 		return false;
 	memset(m, 0, sizeof *m);
-	memcpy(m->model, in, 4);
-	m->rec_ver = in[4];
-	m->layout = in[5];
-	m->modes = in[6];
-	m->kind = in[7];
-	uint32_t total = 0;
+	m->rec_ver = in[0];
+	m->layout = in[1];
+	m->modes = in[2];
+	m->kind = in[3];
+	m->zones = in[4];
 	for (unsigned s = 1; s < DOTA_SEC_COUNT; s++) {
-		m->recs[s] = get16(in + 8u + (s - 1u) * 2u);
-		m->frames[s] = get16(in + 16u + (s - 1u) * 2u);
-		total += m->frames[s];
+		m->recs[s] = get16(in + 1u + 4u * s);
+		m->frames[s] = get16(in + 3u + 4u * s);
 	}
-	m->bytes = ((uint32_t)in[24] << 16) | ((uint32_t)in[25] << 8) | in[26];
-	m->zones = in[27];
-	memcpy(m->fw, in + 29, in[28]);
+	uint16_t total = dota_manifest_total(m);
 	return total >= 1u && total <= DOTA_FRAMES_MAX;
 }
 
@@ -396,10 +387,6 @@ void dota_tx_heard(dota_tx_t *s, const uint8_t *in, size_t n, const char *peer, 
 		s->free_ch = get16(p + 1);
 		s->free_zones = p[3];
 		s->zone_room = p[4];
-		if (f.len >= 6u && p[5] <= DOTA_FW_MAX && f.len >= 6u + p[5]) {
-			memcpy(s->peer_fw, p + 6, p[5]);
-			s->peer_fw[p[5]] = '\0';
-		}
 		tx_fail(s, DOTA_TF_REFUSED);
 		return;
 	case DOTA_T_ACK:
@@ -459,6 +446,22 @@ void dota_tx_tick(dota_tx_t *s, uint32_t now)
 	s->state = DOTA_TX_READY;	/* the next window asks again */
 }
 
+/* An ABORT from us: one frame (both ends) */
+static size_t abort_frame(const dota_link_t *l, uint16_t code, uint16_t session, uint8_t reason, uint8_t *out,
+			  size_t max)
+{
+	dota_frame_t f;
+	memset(&f, 0, sizeof f);
+	f.type = DOTA_T_ABORT;
+	f.code = code;
+	f.session = session;
+	f.flags = l->call ? DOTA_F_CALL : 0u;
+	memcpy(f.call, l->me, sizeof f.call);
+	f.len = 1;
+	f.payload = &reason;
+	return dota_frame_put(&f, out, max);
+}
+
 size_t dota_tx_stop(dota_tx_t *s, uint8_t reason, uint8_t *out, size_t max)
 {
 	bool live = s->state != DOTA_TX_IDLE && s->state != DOTA_TX_DONE && s->state != DOTA_TX_FAILED;
@@ -466,16 +469,7 @@ size_t dota_tx_stop(dota_tx_t *s, uint8_t reason, uint8_t *out, size_t max)
 		tx_fail(s, DOTA_TF_STOPPED);
 	if (!live)
 		return 0;
-	dota_frame_t f;
-	memset(&f, 0, sizeof f);
-	f.type = DOTA_T_ABORT;
-	f.code = s->code;
-	f.session = s->session;
-	f.flags = s->link->call ? DOTA_F_CALL : 0u;
-	memcpy(f.call, s->link->me, sizeof f.call);
-	f.len = 1;
-	f.payload = &reason;
-	return dota_frame_put(&f, out, max);
+	return abort_frame(s->link, s->code, s->session, reason, out, max);
 }
 
 /* --- The receiver --- */
@@ -483,10 +477,7 @@ size_t dota_tx_stop(dota_tx_t *s, uint8_t reason, uint8_t *out, size_t max)
 void dota_rx_arm(dota_rx_t *r, const dota_link_t *link, uint16_t code, dota_hello_fn hello, dota_data_fn data,
 		 dota_commit_fn commit, void *ctx, uint32_t now)
 {
-	char fw[DOTA_FW_MAX + 1];
-	memcpy(fw, r->fw, sizeof fw);	/* set by the caller before arming */
 	memset(r, 0, sizeof *r);
-	memcpy(r->fw, fw, sizeof fw);
 	r->link = link;
 	r->code = code;
 	r->hello = hello;
@@ -617,7 +608,7 @@ size_t dota_rx_answer(dota_rx_t *r, uint32_t now, bool clear, uint8_t *out, size
 {
 	if (r->answer == 0 || (int32_t)(now - r->answer_at) < 0 || !clear)
 		return 0;
-	uint8_t p[6u + DOTA_FW_MAX];
+	uint8_t p[9];
 	dota_frame_t f;
 	memset(&f, 0, sizeof f);
 	f.type = r->answer;
@@ -627,18 +618,14 @@ size_t dota_rx_answer(dota_rx_t *r, uint32_t now, bool clear, uint8_t *out, size
 	memcpy(f.call, r->link->me, sizeof f.call);
 	f.payload = p;
 	switch (r->answer) {
-	case DOTA_T_REFUSE: {
-		size_t fw = strnlen(r->fw, DOTA_FW_MAX);
+	case DOTA_T_REFUSE:
 		p[0] = r->refused_status;
 		put16(p + 1, r->free_ch);
 		p[3] = r->free_zones;
 		p[4] = r->zone_room;
-		p[5] = (uint8_t)fw;
-		memcpy(p + 6, r->fw, fw);
-		f.len = (uint8_t)(6u + fw);
+		f.len = 5;
 		r->session = 0;		/* forgotten: back to waiting for a HELLO */
 		break;
-	}
 	case DOTA_T_ACK: {
 		uint32_t bits = 0;
 		for (uint8_t i = 0; i < 32u; i++)
@@ -697,22 +684,6 @@ size_t dota_rx_stop(dota_rx_t *r, uint8_t reason, uint8_t *out, size_t max)
 	r->answer = 0;
 	if (!live)
 		return 0;
-	dota_frame_t f;
-	memset(&f, 0, sizeof f);
-	f.type = DOTA_T_ABORT;
-	f.code = r->code;
-	f.session = r->session;
-	f.flags = r->link->call ? DOTA_F_CALL : 0u;
-	memcpy(f.call, r->link->me, sizeof f.call);
-	f.len = 1;
-	f.payload = &reason;
-	return dota_frame_put(&f, out, max);
-}
-
-uint8_t dota_rx_percent(const dota_rx_t *r)
-{
-	if (r->state == DOTA_RX_DONE)
-		return 100;
-	return r->total ? (uint8_t)((uint32_t)r->got_n * 100u / r->total) : 0u;
+	return abort_frame(r->link, r->code, r->session, reason, out, max);
 }
 #endif

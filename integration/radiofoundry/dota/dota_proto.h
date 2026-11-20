@@ -61,15 +61,12 @@ uint32_t dota_frame_crc(uint16_t seq, uint16_t first, uint8_t count, const uint8
 
 /* --- The manifest (HELLO's payload, docs/dota.md 6.1) --- */
 typedef struct {
-	char model[5];
 	uint8_t rec_ver, layout, modes, kind;
 	uint8_t zones;				/* zones (DOTA Clone; the zones section counts their parts) */
 	uint16_t recs[DOTA_SEC_COUNT];		/* records per section ([0] unused) */
 	uint16_t frames[DOTA_SEC_COUNT];	/* frames per section ([0] unused) */
-	uint32_t bytes;
-	char fw[DOTA_FW_MAX + 1];
 } dota_manifest_t;
-#define DOTA_MANIFEST_MAX	(29u + DOTA_FW_MAX)
+#define DOTA_MANIFEST_MAX	21u
 size_t dota_manifest_put(const dota_manifest_t *m, uint8_t *out, size_t max);
 bool dota_manifest_get(const uint8_t *in, size_t n, dota_manifest_t *m);
 uint16_t dota_manifest_total(const dota_manifest_t *m);	/* data frames N */
@@ -146,7 +143,6 @@ typedef struct {
 	uint8_t free_zones, zone_room;
 	uint16_t ch_added, ct_added, ct_matched;
 	uint8_t zones_added, lists_added;
-	char peer_fw[DOTA_FW_MAX + 1];
 	char peer[DOTA_CALL + 1];	/* the receiver's callsign */
 } dota_tx_t;
 
@@ -202,7 +198,6 @@ typedef struct {
 	uint8_t refused_status;		/* the last refusal's DOTA_R_* */
 	uint8_t result;			/* END_ACK's */
 	char peer[DOTA_CALL + 1];
-	char fw[DOTA_FW_MAX + 1];	/* ours, for refusals */
 	uint16_t free_ch;		/* ours, for refusals (the hello callback sets them) */
 	uint8_t free_zones, zone_room;
 	uint16_t ch_added, ct_added, ct_matched;	/* END_ACK's counts (set before dota_rx_commit_done) */
@@ -218,7 +213,5 @@ size_t dota_rx_answer(dota_rx_t *r, uint32_t now, bool clear, uint8_t *out, size
 void dota_rx_tick(dota_rx_t *r, uint32_t now);
 void dota_rx_commit_done(dota_rx_t *r, bool ok);
 size_t dota_rx_stop(dota_rx_t *r, uint8_t reason, uint8_t *out, size_t max);
-/* 0..100 */
-uint8_t dota_rx_percent(const dota_rx_t *r);
 
 #endif

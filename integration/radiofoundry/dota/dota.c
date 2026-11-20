@@ -85,6 +85,12 @@ static union {
 	uint32_t align;
 } b;
 
+/* The UI's scratch while no session runs (the pickers' zone and channel copies): the sender's transport area */
+void *dota_scratch(void)
+{
+	return dota_on() ? NULL : (void *)&b.tx.io;
+}
+
 /* The sending selection lives in the buffer: the UI fills it before the start */
 uint8_t *dota_selection(void)
 {
@@ -159,25 +165,7 @@ static unsigned rank(const uint8_t *m, unsigned i)
 		r += bit(m, j);
 	return r;
 }
-static unsigned count_set(const uint8_t *m, unsigned bits)
-{
-	return rank(m, bits);
-}
 
-/* --- Estimates (docs/dota.md 8) --- */
-uint32_t dota_estimate_bytes(uint16_t channels, uint16_t dmr_channels, uint8_t zones)
-{
-	return 22u * channels + 14u * ((dmr_channels + 3u) / 4u) + 20u * zones;
-}
-
-uint32_t dota_estimate_s(uint8_t method, uint32_t bytes)
-{
-	/* FM: 110 B a frame, 7 frames and 8.3 s a window; DMR: 176 B a packet, 6 and 8.5 s; HELLO, END, the commit */
-	uint32_t per = method == DOTA_FM ? 110u : 176u, w = method == DOTA_FM ? 7u : 6u;
-	uint32_t frames = (bytes + per - 1u) / per + 2u, windows = (frames + w - 1u) / w;
-	uint32_t s = windows * (method == DOTA_FM ? 83u : 85u) / 10u + 3u;
-	return (s + 4u) / 5u * 5u;
-}
 
 /* --- Any task --- */
 bool dota_on(void)
@@ -431,7 +419,7 @@ static bool prep_step(void)
 							set_bit(t->sel, t->z.channels[j] - 1u);
 		}
 		m->recs[DOTA_SEC_CHANNELS] = (uint16_t)(req.kind == DOTA_KIND_CHANNEL || req.kind == DOTA_KIND_ZONE ?
-							 t->z.count : count_set(t->sel, CODEPLUG_CHANNELS_MAX));
+							 t->z.count : rank(t->sel, CODEPLUG_CHANNELS_MAX));
 		t->k = 0;
 		t->stage = 1;
 		return false;
@@ -459,8 +447,8 @@ static bool prep_step(void)
 					if (l.contacts[j] >= 1u && l.contacts[j] <= CODEPLUG_CONTACTS_MAX)
 						set_bit(t->cts, l.contacts[j] - 1u);
 		}
-		m->recs[DOTA_SEC_CONTACTS] = (uint16_t)count_set(t->cts, CODEPLUG_CONTACTS_MAX);
-		m->recs[DOTA_SEC_LISTS] = (uint16_t)count_set(t->lists, CODEPLUG_LISTS_MAX);
+		m->recs[DOTA_SEC_CONTACTS] = (uint16_t)rank(t->cts, CODEPLUG_CONTACTS_MAX);
+		m->recs[DOTA_SEC_LISTS] = (uint16_t)rank(t->lists, CODEPLUG_LISTS_MAX);
 		t->stage = req.kind == DOTA_KIND_CLONE ? 3 : 4;
 		return false;
 	case 3:	/* DOTA Clone: each zone's parts */
@@ -494,7 +482,6 @@ static bool prep_step(void)
 				return true;	/* a record gone or too long: the start fails */
 			}
 			m->frames[sec]++;
-			m->bytes += n;
 			t->k = (uint16_t)(t->k + count);
 		}
 		return sec >= DOTA_SEC_COUNT;
@@ -742,14 +729,12 @@ static uint8_t rx_hello(void *ctx, const dota_manifest_t *m, const char *peer)
 	(void)ctx;
 	(void)peer;
 	rxs_t *r = &b.rx;
-	memcpy(view.peer_fw, m->fw, sizeof view.peer_fw);
 	if (m->rec_ver != DOTA_REC_VERSION || m->layout != DOTA_LAYOUT)
 		return DOTA_R_VERSION;	/* owner 2026-11-20: only the protocol / record versions must match */
 	if ((m->modes & ~our_modes()) != 0)
 		return DOTA_R_MODE;
 	uint8_t st = dota_imp_begin(&r->im, &req.imp, m, board.power_count, &r->p.free_ch, &r->p.free_zones,
 				    &r->p.zone_room);
-	view.free_ch = r->p.free_ch;
 	if (st == DOTA_R_OK) {
 		r->qh = r->qt = 0;
 		job_failed = false;
@@ -819,10 +804,6 @@ bool dota_begin(dota_req_t *r, uint32_t now)
 		phase = DOTA_P_PREP;
 	} else {
 		dota_rx_t *p = &b.rx.p;
-		memset(p->fw, 0, sizeof p->fw);
-#ifdef RFOUNDRY_VERSION
-		strncpy(p->fw, RFOUNDRY_VERSION, DOTA_FW_MAX);
-#endif
 		dota_rx_arm(p, &lk, req.code, rx_hello, rx_data, rx_commit, NULL, now);
 		phase = DOTA_P_WAIT;
 	}
@@ -873,26 +854,19 @@ static void tx_result(const dota_io_t *io)
 	if (p->state == DOTA_TX_DONE) {
 		view.ch_added = p->ch_added;
 		view.zones_added = p->zones_added;
-		view.ct_added = p->ct_added;
-		view.ct_matched = p->ct_matched;
-		view.lists_added = p->lists_added;
 		conclude(io, DOTA_RES_SENT, 0, 0);
 		return;
 	}
+	/* By DOTA_TF_* */
+	static const uint8_t res[] = { DOTA_RES_FAILED, DOTA_RES_NO_ANSWER, DOTA_RES_REFUSED, DOTA_RES_STOPPED,
+				       DOTA_RES_PEER_STOPPED, DOTA_RES_FAILED, DOTA_RES_FAILED, DOTA_RES_FAILED,
+				       DOTA_RES_UNSURE };
 	if (p->state != DOTA_TX_FAILED)
 		return;
-	memcpy(view.peer_fw, p->peer_fw, sizeof view.peer_fw);
-	view.free_ch = p->free_ch;
-	switch (p->fail) {
-	case DOTA_TF_REFUSED: conclude(io, DOTA_RES_REFUSED, p->status, 0); break;
-	case DOTA_TF_RX_STOPPED: conclude(io, DOTA_RES_PEER_STOPPED, 0, 0); break;
-	case DOTA_TF_UNSURE:	/* nothing ever heard back: "No answer" (it doesn't claim nothing changed either) */
-		conclude(io, p->hello_ok ? DOTA_RES_UNSURE : DOTA_RES_NO_ANSWER, 0, 0);
-		break;
-	case DOTA_TF_STOPPED: conclude(io, DOTA_RES_STOPPED, 0, 0); break;
-	case DOTA_TF_NO_ANSWER: conclude(io, DOTA_RES_NO_ANSWER, 0, 0); break;
-	default: conclude(io, DOTA_RES_FAILED, p->fail, 0); break;
-	}
+	uint8_t r = p->fail < sizeof res ? res[p->fail] : DOTA_RES_FAILED;
+	if (r == DOTA_RES_UNSURE && !p->hello_ok)
+		r = DOTA_RES_NO_ANSWER;	/* nothing ever heard back (it doesn't claim nothing changed either) */
+	conclude(io, r, p->fail == DOTA_TF_REFUSED ? p->status : p->fail, 0);
 }
 
 static void rx_result(const dota_io_t *io)
@@ -901,11 +875,7 @@ static void rx_result(const dota_io_t *io)
 	dota_rx_t *p = &r->p;
 	if (p->state == DOTA_RX_DONE) {
 		view.ch_added = r->im.added;
-		view.skipped = r->im.skipped;
 		view.zones_added = r->im.zones_added;
-		view.ct_added = r->im.ct_added;
-		view.ct_matched = r->im.ct_matched;
-		view.lists_added = r->im.lists_added;
 		conclude(io, DOTA_RES_DONE, 0, 8000u);
 	} else if (p->state == DOTA_RX_FAILED) {
 		conclude(io, p->fail == DOTA_RF_FLASH ? DOTA_RES_FLASH : p->fail == DOTA_RF_TX_STOPPED ?
@@ -972,7 +942,6 @@ static void tx_poll(const dota_io_t *io)
 	}
 	view.done = p->acked;
 	view.total = p->total;
-	view.resent = p->resent;
 	view.asking = p->state == DOTA_TX_WAIT;
 	view.pct = p->total ? (uint8_t)((uint32_t)p->acked * 100u / p->total) : 0;
 	memcpy(view.peer, p->peer, sizeof view.peer);
@@ -1019,7 +988,7 @@ static void rx_poll(const dota_io_t *io)
 	memcpy(view.peer, p->peer, sizeof view.peer);
 	view.done = p->got_n;
 	view.total = p->total;
-	view.pct = dota_rx_percent(p);
+	view.pct = p->state == DOTA_RX_DONE ? 100u : p->total ? (uint8_t)((uint32_t)p->got_n * 100u / p->total) : 0u;
 	if (ts.st == TS_IDLE && p->answer == 0)
 		rx_result(io);
 }
@@ -1044,14 +1013,10 @@ void dota_poll(const dota_io_t *io, uint32_t now)
 			if (dota_manifest_total(m) == 0 || m->frames[DOTA_SEC_CHANNELS] == 0) {
 				conclude(io, DOTA_RES_NOTHING, 0, 0);
 			} else {
-				memcpy(m->model, "DM32", 4);
 				m->rec_ver = DOTA_REC_VERSION;
 				m->layout = DOTA_LAYOUT;
 				m->modes = our_modes();
 				m->kind = req.kind;
-#ifdef RFOUNDRY_VERSION
-				strncpy(m->fw, RFOUNDRY_VERSION, DOTA_FW_MAX);
-#endif
 				dota_manifest_t keep = *m;
 				dota_tx_start(&b.tx.p, &lk, &keep, req.code, session_id, fill, NULL);
 				view.total = b.tx.p.total;

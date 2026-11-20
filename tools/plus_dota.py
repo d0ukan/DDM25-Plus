@@ -20,6 +20,8 @@ FILES = [
     ('core/radio/dota.h', 'dota.h'),
     ('core/radio/dota.c', 'dota.c'),
     ('core/radio/radio_dota.inc', 'radio_dota.inc'),
+    ('core/ui/ui_dota.c', 'ui_dota.c'),
+    ('core/ui/ui_dota.h', 'ui_dota.h'),
 ]
 
 ON = '#if CONFIG_DOTA\n'
@@ -34,8 +36,9 @@ def prepare_dota(transform, install):
         ('CONFIG_CLOCK_TOOLS ?= n\nFEATURES += CLOCK_TOOLS\n',
          'CONFIG_CLOCK_TOOLS ?= n\nFEATURES += CLOCK_TOOLS\n'
          'CONFIG_DOTA ?= n\nFEATURES += DOTA\n'
-         # needs APRS, APRS_RX, DMR and ZONE_EDIT: off where a board's build lacks one (the registry asks every board)
-         'ifneq ($(CONFIG_APRS)$(CONFIG_APRS_RX)$(CONFIG_DMR)$(CONFIG_ZONE_EDIT),yyyy)\n'
+         # needs APRS, APRS_RX, APRS_MSG (the text entry), DMR and ZONE_EDIT: off where a board's build lacks one (the
+         # registry asks every board)
+         'ifneq ($(CONFIG_APRS)$(CONFIG_APRS_RX)$(CONFIG_APRS_MSG)$(CONFIG_DMR)$(CONFIG_ZONE_EDIT),yyyyy)\n'
          'override CONFIG_DOTA := n\nendif\n'),
     ])
     transform('core/config.h', [
@@ -194,8 +197,8 @@ def prepare_dota(transform, install):
          + ON + 'void radio_req_dota(bool on) { post(RREQ_DOTA, on, 0); }\t// DDM32 Plus (radio/dota.h)\n#endif\n'),
     ])
     transform('core/radio/radio_sm.c', [
-        ('#include "aprs/afsk.h"\t\t\t// AFSK_BAUD, the tones\n',
-         '#include "aprs/afsk.h"\t\t\t// AFSK_BAUD, the tones\n'
+        ('#include "radio/radio_sm.h"\n',
+         '#include "radio/radio_sm.h"\n'
          + ON + '#include "radio/dota.h"\t\t// DDM32 Plus DOTA Transfer (docs/dota.md 11.3)\n#else\n#define dota_on() false\n#endif\n'),
         ('void radio_sm_request(radio_sm_t *sm, const radio_req_t *req, uint32_t now_ms)\n{\n',
          ON + '#include "radio/radio_dota.inc"\t// DDM32 Plus DOTA Transfer: the radio core\'s side\n#endif\n\n'
@@ -214,4 +217,35 @@ def prepare_dota(transform, install):
         ('\t\tnxdn = nxdn && !spectrum_on();\n', '\t\tnxdn = nxdn && !spectrum_on() && !dota_on();\n'),
         ('\t\tdpmr = dpmr && !spectrum_on();\n', '\t\tdpmr = dpmr && !spectrum_on() && !dota_on();\n'),
         ('ZONES_MOVED(sm)) && !ZONE_WRITE_BUSY() &&', 'ZONES_MOVED(sm)) && !ZONE_WRITE_BUSY() && !dota_on() &&'),
+    ])
+
+    # --- Tools > DOTA Transfer (docs/dota.md 12, ui_dota.c), after Clock ---
+    transform('core/ui/ui_nav.h', [
+        ('\tSCR_CLOCK,\t\t\t// DDM32 Plus: Tools > Clock (CONFIG_CLOCK_TOOLS)\n',
+         '\tSCR_CLOCK,\t\t\t// DDM32 Plus: Tools > Clock (CONFIG_CLOCK_TOOLS)\n'
+         '\tSCR_DOTA, SCR_DOTA_PICK,\t// DDM32 Plus: Tools > DOTA Transfer, its picker (CONFIG_DOTA)\n'),
+    ])
+    transform('core/ui/ui_menus.c', [
+        ('extern const ui_scr_def_t ui_clock_screen;\t// ui_clock.c (DDM32 Plus)',
+         'extern const ui_scr_def_t ui_clock_screen;\t// ui_clock.c (DDM32 Plus)\n'
+         'extern const ui_scr_def_t ui_dota_screen, ui_dota_pick_screen;\t// ui_dota.c (DDM32 Plus)'),
+        ('#if CONFIG_CLOCK_TOOLS\n\t[SCR_CLOCK] = &ui_clock_screen,\n#endif\n',
+         '#if CONFIG_CLOCK_TOOLS\n\t[SCR_CLOCK] = &ui_clock_screen,\n#endif\n'
+         + ON + '\t[SCR_DOTA] = &ui_dota_screen,\n\t[SCR_DOTA_PICK] = &ui_dota_pick_screen,\n#endif\n'),
+        ('T_SELCALL, T_SOS, T_HEARD, T_GPSDASH, T_CLOCK, T_CW, T_BATTERY,',
+         'T_SELCALL, T_SOS, T_HEARD, T_GPSDASH, T_CLOCK, T_DOTA, T_CW, T_BATTERY,'),
+        ('(i != T_CLOCK || CONFIG_CLOCK_TOOLS) &&', '(i != T_CLOCK || CONFIG_CLOCK_TOOLS) && (i != T_DOTA || CONFIG_DOTA) &&'),
+        ('TRN("Clock"), TRN("CW decoder"),', 'TRN("Clock"), TRN("DOTA Transfer"), TRN("CW decoder"),'),
+        ('#if CONFIG_CLOCK_TOOLS\n\tcase T_CLOCK: ui_push(SCR_CLOCK, 0); break;\n#endif\n',
+         '#if CONFIG_CLOCK_TOOLS\n\tcase T_CLOCK: ui_push(SCR_CLOCK, 0); break;\n#endif\n'
+         + ON + '\tcase T_DOTA: ui_push(SCR_DOTA, 0); break;\n#endif\n'),
+        ('[T_CLOCK] = ART_ICON_ALMANAC + 1,', '[T_CLOCK] = ART_ICON_ALMANAC + 1, [T_DOTA] = ART_ICON_BEACON + 1,'),
+    ])
+    transform('core/ui/ui_app.c', [
+        ('#if CONFIG_CLOCK_TOOLS\n#include "ui/ui_clock.h"\n#endif\n',
+         '#if CONFIG_CLOCK_TOOLS\n#include "ui/ui_clock.h"\n#endif\n' + ON + '#include "ui/ui_dota.h"\n#endif\n'),
+        ('\tif (ui_clock_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n',
+         '\tif (ui_clock_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'
+         + ON + '\t// DDM32 Plus DOTA Transfer: the receiver\'s storage jobs, the transfer\'s redraws (ui_dota.c)\n'
+         '\tif (ui_dota_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'),
     ])

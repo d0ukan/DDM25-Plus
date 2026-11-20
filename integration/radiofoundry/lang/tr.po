@@ -5607,3 +5607,175 @@ msgstr "Bu telsizin okuyabildiği bölge değil"
 #: core/ui/ui_svc_zone.c
 msgid "The offer is gone"
 msgstr "Teklif artık yok"
+
+#: core/ui/ui_dota.c
+msgid "One channel"
+msgstr "Tek kanal"
+
+#: core/ui/ui_dota.c
+msgid "Selected channels"
+msgstr "Seçili kanallar"
+
+#: core/ui/ui_dota.c
+msgid "A zone"
+msgstr "Bir bölge"
+
+#: core/ui/ui_dota.c
+msgid "DOTA Clone (all)"
+msgstr "DOTA Klon (tümü)"
+
+#: core/ui/ui_dota.c
+msgid "Role"
+msgstr "Rol"
+
+#: core/ui/ui_dota.c
+msgid "Method"
+msgstr "Yöntem"
+
+#: core/ui/ui_dota.c
+msgid "What"
+msgstr "Ne"
+
+#: core/ui/ui_dota.c
+msgid "Slot"
+msgstr "Slot"
+
+#: core/ui/ui_dota.c
+msgid "Receiver ID"
+msgstr "Alıcı ID"
+
+#: core/ui/ui_dota.c
+msgid "Code"
+msgstr "Kod"
+
+#: core/ui/ui_dota.c
+msgid "Zone name"
+msgstr "Bölge adı"
+
+#: core/ui/ui_dota.c
+msgid "May transmit"
+msgstr "Gönderebilir"
+
+#: core/ui/ui_dota.c
+msgid "Receive"
+msgstr "Al"
+
+#: core/ui/ui_dota.c
+msgid "Low"
+msgstr "Düşük"
+
+#: core/ui/ui_dota.c
+msgid "Mid"
+msgstr "Orta"
+
+#: core/ui/ui_dota.c
+msgid "High"
+msgstr "Yüksek"
+
+#: core/ui/ui_dota.c
+msgid "New zone"
+msgstr "Yeni bölge"
+
+#: core/ui/ui_dota.c
+msgid "Current zone"
+msgstr "Geçerli bölge"
+
+#: core/ui/ui_dota.c
+msgid "Ready"
+msgstr "Hazır"
+
+#: core/ui/ui_dota.c
+msgid "DOTA Transfer"
+msgstr "DOTA Aktarım"
+
+#: core/ui/ui_dota.c
+msgid "About "
+msgstr "Yaklaşık "
+
+#: core/ui/ui_dota.c
+msgid "Stop the transfer?"
+msgstr "Aktarım durdurulsun mu?"
+
+#: core/ui/ui_dota.c
+msgid "Not amateur band: send?"
+msgstr "Amatör bant değil: gönderilsin mi?"
+
+#: core/ui/ui_dota.c
+msgid "Battery low. Sure?"
+msgstr "Pil zayıf. Emin misiniz?"
+
+#: core/ui/ui_dota.c
+msgid "Receiver ready?"
+msgstr "Alıcı hazır mı?"
+
+#: core/ui/ui_dota.c
+msgid "No answer"
+msgstr "Yanıt yok"
+
+#: core/ui/ui_dota.c
+msgid "Other version"
+msgstr "Farklı sürüm"
+
+#: core/ui/ui_dota.c
+msgid "Not ready"
+msgstr "Hazır değil"
+
+#: core/ui/ui_dota.c
+msgid "Receiver stopped"
+msgstr "Alıcı durdurdu"
+
+#: core/ui/ui_dota.c
+msgid "Nothing changed"
+msgstr "Hiçbir şey değişmedi"
+
+#: core/ui/ui_dota.c
+msgid "No final answer"
+msgstr "Son yanıt yok"
+
+#: core/ui/ui_dota.c
+msgid "Flash write failed"
+msgstr "Flaş yazılamadı"
+
+#: core/ui/ui_dota.c
+msgid "Nothing to send"
+msgstr "Gönderilecek bir şey yok"
+
+#: core/ui/ui_dota.c
+msgid "Back stop"
+msgstr "Geri durdur"
+
+#: core/ui/ui_dota.c
+msgid "Waiting for sender"
+msgstr "Gönderici bekleniyor"
+
+#: core/ui/ui_dota.c
+msgid "Preparing"
+msgstr "Hazırlanıyor"
+
+#: core/ui/ui_dota.c
+msgid "Writing"
+msgstr "Yazılıyor"
+
+#: core/ui/ui_dota.c
+msgid "Waiting for answer"
+msgstr "Yanıt bekleniyor"
+
+#: core/ui/ui_dota.c
+msgid "OK pick  <> change"
+msgstr "OK seç  <> değiştir"
+
+#: core/ui/ui_dota.c
+msgid "Set your DMR ID first"
+msgstr "Önce DMR ID'nizi girin"
+
+#: core/ui/ui_dota.c
+msgid "APRS frequency"
+msgstr "APRS frekansı"
+
+#: core/ui/ui_dota.c
+msgid "Code / ID needed"
+msgstr "Kod / ID gerekli"
+
+#: core/ui/ui_dota.c
+msgid "Zone name needed"
+msgstr "Bölge adı gerekli"
