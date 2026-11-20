@@ -50,6 +50,7 @@ extern const uint16_t art_icon_bits[ART_ICON_COUNT][ART_ICON_H];
 extern const uint8_t art_mark_bits[ART_MARK_H * ART_MARK_STRIDE];
 extern const uint16_t art_mark_rgb[3];	// RGB565 of colors 1..3
 extern const uint8_t art_mark_ink[3];	// on a 1 bpp panel: 1 ink, 0 paper
+extern const uint8_t art_mark_fg[3];	// 1: the theme's foreground on color panels (RGB unused)
 
 // The wordmark: 1 bit a pixel, MSB first, rows of ART_WORD_STRIDE bytes; columns from ART_WORD_SPLIT on
 // take the accent color

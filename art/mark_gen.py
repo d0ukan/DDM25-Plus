@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Draws the DM32 Plus splash mark into art/mark.txt (the source tools/art_build.py reads).
+"""Draws the DDM32 Plus splash mark into art/mark.txt (the source tools/art_build.py reads).
 
-The mark (owner's choice 2026-11-18, "antenna and waves"): a dark navy round badge (color a), two pairs of teal arcs
-radiating from the antenna's top (b), and a yellow mast with a ball top (c). Run this after changing the shapes below,
-then tools/art_build.py; or edit mark.txt by hand and leave this script alone. Deterministic: 8 x 8 samples a pixel,
-a pixel takes a shape at half coverage or more.
+The mark (owner's own design, 2026-11-20): a handheld radio drawn as a "D". Its antenna is the D's stem, rising above
+the body with two signal arcs at its tip; the body is a D outline with chamfered right corners, a smaller D outline
+inside it, and an orange key on the stem's left side. The outlines, stem and arcs (b) take the theme's text color
+(white on dark, black on light: role fg), the key is the accent orange (a), which also colors "Plus", the rule and
+the callsign. Run this after changing the shapes below, then tools/art_build.py. Deterministic: 8 x 8 samples a
+pixel, a pixel takes a shape at half coverage or more.
 """
 import math
 import os
 
 W = H = 56
 SS = 8
-COLORS = {  # name: (R, G, B, on a 1 bpp panel)
-    'a': ((18, 32, 47), 'ink'),        # badge: dark navy
-    'b': ((0, 200, 180), 'paper'),     # waves: teal
-    'c': ((255, 196, 0), 'paper'),     # antenna: warm yellow
+COLORS = {  # name: (R, G, B, role: ink/paper on a 1 bpp panel, or fg: the theme's text color)
+    'a': ((240, 120, 0), 'ink'),       # the key; the accent: orange, reads on black and on white
+    'b': ((255, 255, 255), 'fg'),      # outlines, antenna, arcs: the theme's text color (white is the preview's)
+    'c': ((240, 120, 0), 'ink'),       # unused (the format has three colors)
 }
-
-
-def circle(cx, cy, r):
-    return lambda x, y: (x - cx) ** 2 + (y - cy) ** 2 <= r * r
 
 
 def ring(cx, cy, r0, r1, a0, a1):
@@ -45,16 +43,6 @@ def poly(pts):
     return f
 
 
-def rrect(x0, y0, x1, y1, r):
-    def f(x, y):
-        if not (x0 <= x <= x1 and y0 <= y <= y1):
-            return False
-        cx = min(max(x, x0 + r), x1 - r)
-        cy = min(max(y, y0 + r), y1 - r)
-        return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
-    return f
-
-
 def rect(x0, y0, x1, y1):
     return lambda x, y: x0 <= x <= x1 and y0 <= y <= y1
 
@@ -63,25 +51,31 @@ def union(*fs):
     return lambda x, y: any(f(x, y) for f in fs)
 
 
-# A four-level trace: (x from, x to, level 0..3), joined by verticals, stroke t
-def trace(steps, top, pitch, t):
-    parts = []
-    for i, (xa, xb, lv) in enumerate(steps):
-        y = top + (3 - lv) * pitch
-        parts.append(rect(xa - t / 2, y - t / 2, xb + t / 2, y + t / 2))
-        if i + 1 < len(steps):
-            y2 = top + (3 - steps[i + 1][2]) * pitch
-            parts.append(rect(xb - t / 2, min(y, y2) - t / 2, xb + t / 2, max(y, y2) + t / 2))
-    return union(*parts)
+def minus(f, g):
+    return lambda x, y: f(x, y) and not g(x, y)
 
 
-C = 27.5	# the badge's centre
-TOP = 22	# the antenna's ball, where the waves start
+def d_shape(x0, y0, x1, y1, c):
+    """A D: a rectangle whose two right corners are cut by c"""
+    return poly([(x0, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1 - c), (x1 - c, y1), (x0, y1)])
+
+
+def d_outline(x0, y0, x1, y1, c, t):
+    """The D's outline, t thick (the inner cut keeps the stroke even along the chamfers)"""
+    k = t * (math.sqrt(2) - 1)
+    return minus(d_shape(x0, y0, x1, y1, c), d_shape(x0 + t, y0 + t, x1 - t, y1 - t, c - k))
+
+
+STEM_X0, STEM_X1 = 17.0, 21.0	# the antenna and the body's left side
+TIP = 12.0			# the antenna's top, where the arcs start
 SHAPES = [
-    ('a', circle(C, C, 28)),
-    ('b', union(ring(C, TOP, 9, 12.5, 125, 235), ring(C, TOP, 9, 12.5, -55, 55),
-                ring(C, TOP, 16, 19.5, 130, 230), ring(C, TOP, 16, 19.5, -50, 50))),
-    ('c', union(circle(C, TOP, 4.5), poly([(C - 2.2, 25), (C + 2.2, 25), (C + 7, 48), (C - 7, 48)]))),
+    ('b', union(
+        rect(STEM_X0, TIP, STEM_X1, 54.0),				# antenna and stem
+        d_outline(STEM_X0, 25.0, 50.0, 54.0, 9.0, 4.0),		# the body
+        d_outline(25.5, 32.0, 42.0, 47.0, 5.0, 3.0),		# the D inside
+        ring(STEM_X0 + 2.0, TIP + 1.0, 5.0, 8.0, 95, 170),		# the signal arcs, up and left of the tip
+        ring(STEM_X0 + 2.0, TIP + 1.0, 10.5, 13.5, 95, 170))),
+    ('a', rect(11.0, 30.0, 16.0, 35.5)),				# the key, left of the stem
 ]
 
 
@@ -93,12 +87,12 @@ def main():
                 n = sum(f(x + (sx + .5) / SS, y + (sy + .5) / SS) for sy in range(SS) for sx in range(SS))
                 if n * 2 >= SS * SS:
                     px[y][x] = name
-    out = ['; DM32 Plus splash mark. Written by art/mark_gen.py (or edit by hand).',
-           '; "." none; a, b, c the colors below (RGB, then what each is on a 1 bpp panel).',
+    out = ['; DDM32 Plus splash mark. Written by art/mark_gen.py (or edit by hand).',
+           '; "." none; a, b, c the colors below (RGB, then its role: ink/paper on a 1 bpp panel, fg the theme\'s text).',
            'size %d %d' % (W, H)]
     for k in 'abc':
-        rgb, mono = COLORS[k]
-        out.append('color %s %d %d %d %s' % (k, rgb[0], rgb[1], rgb[2], mono))
+        rgb, role = COLORS[k]
+        out.append('color %s %d %d %d %s' % (k, rgb[0], rgb[1], rgb[2], role))
     out += [''.join(r) for r in px]
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mark.txt')
     with open(path, 'w', encoding='utf-8', newline='\n') as f:

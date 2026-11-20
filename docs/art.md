@@ -39,11 +39,16 @@ row is 24 px (`ui_layout_init`), so 16x16 icons fit with 4 px above and below.
   is small (fox, plane, pin). Keep a pixel of air between separate parts.
 - Icons are a mask tinted with **one color**: the row's text color (label color, focus text, dim gray). So an
   icon never adds a palette entry on the 4 bpp panel and follows every theme and accent automatically.
-- The mark is the only multi-color art: teal tile `(0,150,136)`, white C4FM four-level step trace, warm yellow
-  plus `(255,214,64)`. It is drawn at 2x (112x112) on 240 px panels: square pixels on purpose, matching the
-  pixel wordmark. Three fixed colors + the theme's bg/fg/dim stay well under 16.
-- The wordmark: "DDM32" in the theme's text color, "Plus" in the mark's teal (white/black on mono).
-- Mono (1 bpp) fallback: mark colors marked `ink` in fg, `paper` in bg; wordmark in fg.
+- The mark (owner's design, 2026-11-20): a handheld radio drawn as a "D" - the antenna is the D's stem with two
+  signal arcs at its tip, a chamfered D outline as the body, a smaller D inside, an orange key on the stem's left.
+  Outlines, antenna and arcs use the role `fg` (the theme's text color: white on dark, black on light), the key the
+  accent orange `(240,120,0)`, which reads on black and on white. Drawn at 2x (112x112) on 240 px panels: square
+  pixels on purpose, matching the pixel wordmark. One fixed color + the theme's bg/fg/dim stay well under 16.
+- Color roles in `mark.txt`: `ink` / `paper` (a fixed RGB; on a 1 bpp panel fg / bg) or `fg` (the theme's text
+  color; RGB is only the preview's stand-in). Color `a` is the accent (`art_accent`: "Plus", the rule, the callsign)
+  and must be a fixed color that reads on both themes.
+- The wordmark: "DDM32" in the theme's text color, "Plus" in the accent (white/black on mono).
+- Mono (1 bpp) fallback: mark colors marked `ink` or `fg` in fg, `paper` in bg; wordmark in fg.
 - Source order is the ABI: append new icons at the end of `icons.txt`, never reorder (the enum follows it).
 
 ## Cost

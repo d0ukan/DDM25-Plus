@@ -73,7 +73,9 @@ def load_icons(path):
 
 
 def _image(path, chars):
-    """Header lines ("size W H", "color k R G B ink|paper", "split X") then rows of the given characters."""
+    """Header lines ("size W H", "color k R G B ink|paper|fg", "split X") then rows of the given characters.
+    A color's role: ink or paper on a 1 bpp panel; fg: the theme's foreground on color panels (R G B is then only
+    the preview's dark-theme stand-in) and ink on a 1 bpp panel."""
     meta, rows = {'color': {}}, []
     for n, line in _lines(path):
         word = line.split()
@@ -81,8 +83,8 @@ def _image(path, chars):
             meta['size'] = (int(word[1]), int(word[2]))
         elif word[0] == 'split' and len(word) == 2:
             meta['split'] = int(word[1])
-        elif word[0] == 'color' and len(word) == 6 and word[1] in chars[1:] and word[5] in ('ink', 'paper'):
-            meta['color'][word[1]] = (tuple(int(v) for v in word[2:5]), word[5] == 'ink')
+        elif word[0] == 'color' and len(word) == 6 and word[1] in chars[1:] and word[5] in ('ink', 'paper', 'fg'):
+            meta['color'][word[1]] = (tuple(int(v) for v in word[2:5]), word[5] != 'paper', word[5] == 'fg')
         else:
             if set(line) - set(chars):
                 raise SystemExit('%s:%d: unknown character in pixel row' % (path, n))
@@ -98,7 +100,9 @@ def _image(path, chars):
 def load_mark(path):
     meta, rows = _image(path, '.abc')
     if sorted(meta['color']) != ['a', 'b', 'c']:
-        raise SystemExit('%s: needs "color a|b|c R G B ink|paper" for each of a, b, c' % path)
+        raise SystemExit('%s: needs "color a|b|c R G B ink|paper|fg" for each of a, b, c' % path)
+    if meta['color']['a'][2]:
+        raise SystemExit('%s: color a is the accent (Plus, the rule, the callsign): a fixed color, not fg' % path)
     return meta, rows
 
 
@@ -169,6 +173,7 @@ def gen_c(icons, mark, word):
     h.append('extern const uint8_t art_mark_bits[ART_MARK_H * ART_MARK_STRIDE];')
     h.append('extern const uint16_t art_mark_rgb[3];\t// RGB565 of colors 1..3')
     h.append('extern const uint8_t art_mark_ink[3];\t// on a 1 bpp panel: 1 ink, 0 paper')
+    h.append('extern const uint8_t art_mark_fg[3];\t// 1: the theme\'s foreground on color panels (RGB unused)')
     h.append('')
     h.append('// The wordmark: 1 bit a pixel, MSB first, rows of ART_WORD_STRIDE bytes; columns from ART_WORD_SPLIT on')
     h.append('// take the accent color')
@@ -203,8 +208,9 @@ def gen_c(icons, mark, word):
     c.append('};')
     c.append('')
     cols = [mmeta['color'][k] for k in 'abc']
-    c.append('const uint16_t art_mark_rgb[3] = { %s };' % ', '.join('0x%04X' % rgb565(*rgb) for rgb, _ in cols))
-    c.append('const uint8_t art_mark_ink[3] = { %s };' % ', '.join('1' if ink else '0' for _, ink in cols))
+    c.append('const uint16_t art_mark_rgb[3] = { %s };' % ', '.join('0x%04X' % rgb565(*col[0]) for col in cols))
+    c.append('const uint8_t art_mark_ink[3] = { %s };' % ', '.join('1' if col[1] else '0' for col in cols))
+    c.append('const uint8_t art_mark_fg[3] = { %s };' % ', '.join('1' if col[2] else '0' for col in cols))
     c.append('')
     c.append('const uint8_t art_word_bits[ART_WORD_H * ART_WORD_STRIDE] = {')
     c.append(_hex_rows(wbits, (ww + 7) // 8, '0x%02X'))
@@ -305,9 +311,10 @@ def draw_icon(cv, rows, x, y, color, k=1):
                 cv.fill(x + c * k, y + r * k, k, k, color)
 
 
-def draw_mark(cv, mark, x, y, k):
+def draw_mark(cv, mark, x, y, k, fg=None):
     meta, rows = mark
-    cols = [rgb565_to_888(rgb565(*meta['color'][ch][0])) for ch in 'abc']
+    cols = [fg if fg is not None and meta['color'][ch][2] else rgb565_to_888(rgb565(*meta['color'][ch][0]))
+            for ch in 'abc']
     for r, row in enumerate(rows):
         for c, v in enumerate(row):
             if v:
@@ -364,7 +371,7 @@ def mock_splash(mark, word, fonts, theme):
     lines = ['TA0XXX', 'P25 RX']
     lf, tiny = fonts.get('12x24', fonts['9x18']), fonts.get('8x16', fonts['9x18'])
     k, mx, my, wx, wy, rule_y, ly, foot_y, call_y = splash_layout(mark, word, len(lines), lf.h, tiny.h)
-    draw_mark(cv, mark, mx, my, k)
+    draw_mark(cv, mark, mx, my, k, t['fg'])
     accent = q(mark[0]['color']['a'][0])
     draw_word(cv, word, wx, wy, k, t['fg'], accent)
     cv.fill(120 - 40, rule_y, 80, 1, accent)

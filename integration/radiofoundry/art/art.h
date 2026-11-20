@@ -26,8 +26,9 @@
 // range draws nothing
 void art_icon(unsigned id, int x, int y, uint16_t color);
 
-// The splash mark at x, y, each source pixel a scale x scale block (scale 1..4). Its own colors on a color panel;
-// mono: colors marked ink in fg, the others in bg
+// The splash mark at x, y, each source pixel a scale x scale block (scale 1..4). Its own colors on a color panel,
+// a color marked fg in fg (the theme's text color, so it reads on dark and light); mono: colors marked ink or fg
+// in fg, the others in bg
 void art_mark(int x, int y, int scale, bool mono, uint16_t fg, uint16_t bg);
 
 // The wordmark at x, y, scale as above: "DDM32" in fg, "Plus" in accent

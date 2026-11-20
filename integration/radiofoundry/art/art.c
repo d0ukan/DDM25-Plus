@@ -58,7 +58,7 @@ void art_mark(int x, int y, int scale, bool mono, uint16_t fg, uint16_t bg)
 			while (c + n < ART_MARK_W && mark_px(r, c + n) == v)
 				n++;
 			if (v != 0) {
-				uint16_t col = mono ? (art_mark_ink[v - 1] ? fg : bg) : art_mark_rgb[v - 1];
+				uint16_t col = mono ? (art_mark_ink[v - 1] ? fg : bg) : art_mark_fg[v - 1] ? fg : art_mark_rgb[v - 1];
 				gfx_fill(x + c * scale, y + r * scale, n * scale, scale, col);
 			}
 			c += n;

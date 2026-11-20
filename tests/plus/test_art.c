@@ -176,7 +176,7 @@ static void test_icons(const char *dir)
 
 static int mark_src[ART_MARK_H][ART_MARK_W];
 static uint16_t mark_rgb_src[3];
-static int mark_ink_src[3];
+static int mark_ink_src[3], mark_fg_src[3];
 
 static uint16_t rgb565(int r, int g, int b)
 {
@@ -200,7 +200,8 @@ static void test_mark(const char *dir)
 			CHECK(k >= 'a' && k <= 'c', "color %c", k);
 			if (k >= 'a' && k <= 'c') {
 				mark_rgb_src[k - 'a'] = rgb565(r, g, b);
-				mark_ink_src[k - 'a'] = strcmp(role, "ink") == 0;
+				mark_ink_src[k - 'a'] = strcmp(role, "paper") != 0;
+				mark_fg_src[k - 'a'] = strcmp(role, "fg") == 0;
 			}
 			continue;
 		}
@@ -215,6 +216,7 @@ static void test_mark(const char *dir)
 	for (int i = 0; i < 3; i++) {
 		CHECK(art_mark_rgb[i] == mark_rgb_src[i], "mark color %d", i);
 		CHECK(art_mark_ink[i] == mark_ink_src[i], "mark mono %d", i);
+		CHECK(art_mark_fg[i] == mark_fg_src[i], "mark fg role %d", i);
 		CHECK(art_mark_rgb[i] != PAPER, "mark color %d is the test paper", i);
 	}
 	CHECK(art_accent() == art_mark_rgb[0], "accent");
@@ -232,7 +234,7 @@ static void test_mark(const char *dir)
 					int sx = (x - ox) / scale, sy = (y - oy) / scale;
 					int in = x >= ox && y >= oy && sx < ART_MARK_W && sy < ART_MARK_H;
 					int v = in ? mark_src[sy][sx] : 0;
-					uint16_t expect = v == 0 ? PAPER : mono ? (mark_ink_src[v - 1] ? fg : bg) : mark_rgb_src[v - 1];
+					uint16_t expect = v == 0 ? PAPER : mono ? (mark_ink_src[v - 1] ? fg : bg) : mark_fg_src[v - 1] ? fg : mark_rgb_src[v - 1];
 					bad += fb[y][x] != expect;
 				}
 			CHECK(bad == 0, "mark scale %d mono %d: %d pixels differ", scale, mono, bad);
