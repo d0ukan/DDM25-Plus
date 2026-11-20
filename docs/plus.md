@@ -2396,3 +2396,10 @@ publications), kept on the data chip in **0xE70000-0xEFFFFF**, the one region AG
 |---|---|---:|---:|---:|
 | base | `ddm25` da7577c | 810,388 | 209,616 (1,840) | 889,160 |
 | 1 | the store, boot scan | 810,928 (+540) | 209,696 (1,760) | 889,700 |
+| 2-3 | RadioID from the pack (a caller's name: the codeplug contact, then the pack, then the built-in table, then the CPS-uploaded database; binary search on the chip, no RAM copy); Settings > About: "RadioID pack: RadioID TR, 2026-11-17, 98 KB" / "none" / "damaged, not used", the same for the air band pack; the airfield screens ask `air_count` / `air_freq` (`core/ui/air_pack.c`): a pack that names an airfield replaces its frequency list, the table answers for the others | 812,204 (+1,276) | 209,824 (1,632) | 890,964 |
+
+- RadioID pack payload (format 1): an 8-byte header (count, record size, text characters) and records sorted by ID:
+  3 bytes LE, then 16 characters 6 bits each ("TA1ABC Ahmet"), 15 bytes a record (Turkey's ~8,700 IDs: ~130 KB).
+- Air band pack payload (format 1): a 4-byte header (count), per airfield its code (8 bytes), its frequency count and
+  the frequencies as `air_freq_t` (channel 2 bytes, type 1). Airfields the table lacks are not added (format 1:
+  frequencies only).

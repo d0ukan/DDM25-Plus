@@ -74,6 +74,17 @@ bool dpk_commit(dpk_writer_t *w);
 void dpk_seal(dpk_hdr_t *h);
 bool dpk_hdr_ok(const dpk_hdr_t *h, uint8_t type);
 
+/* --- RadioID pack (type DPK_RADIOID, format 1) ---
+ * Payload: an 8-byte header (record count 4 bytes LE, record size 1, text characters 1, 2 reserved) and the records
+ * sorted by ID: the ID 3 bytes LE, then the text ("TA1ABC Ahmet") 6 bits a character, 4 in 3 bytes, most significant
+ * first, alphabet space 0-9 A-Z a-z . (as the CPS's format N, open-firmware-cps.md 7.5), trailing spaces dropped */
+#define DPK_ID_HDR	8u
+#define DPK_ID_TEXT_MAX	32u
+/* "TA1ABC Ahmet" for a DMR ID from the pack in force, cut to len - 1; false (out "") if no pack or not in it */
+bool dpk_id_text(uint32_t id, char *out, size_t len);
+/* The pack in force as "RadioID TR, 2026-11-17, 98 KB" (About); false (out "") without one */
+bool dpk_about(uint8_t type, char *out, size_t len);
+
 /* The guarded flash calls (also the tests' handle on the guard): false outside [DPK_BASE, DPK_END) */
 bool dpk_erase(uint32_t addr);
 bool dpk_program(uint32_t addr, const void *data, uint32_t len);

@@ -10,6 +10,8 @@
 #include "storage/datapack.h"
 #include "sim/sim_flash.h"
 #include "board.h"
+#include "ui/airfield.h"
+#include "ui/air_pack.h"
 
 static int failures, checks;
 #define CHECK(c) do { checks++; if (!(c)) { failures++; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)
@@ -18,6 +20,7 @@ void storage_lock(void) {}
 void storage_unlock(void) {}
 void storage_quick_lock(void) {}
 void storage_quick_unlock(void) {}
+const char *tr(const char *en) { return en; }
 
 #define FLASH_SIZE	0x1000000u
 static const hal_flash_map_t map = {
@@ -197,6 +200,102 @@ static void test_cuts(void)
 	free(before);
 }
 
+/* --- The RadioID pack: records as tools/datapack.py writes them --- */
+static uint8_t code6(char c)
+{
+	return c == ' ' ? 0u : c >= '0' && c <= '9' ? (uint8_t)(1 + c - '0') : c >= 'A' && c <= 'Z' ? (uint8_t)(11 + c - 'A') :
+	       c >= 'a' && c <= 'z' ? (uint8_t)(37 + c - 'a') : 63u;
+}
+
+static uint32_t id_pack(uint8_t *out, uint32_t n, uint32_t first, uint32_t step)
+{
+	const uint32_t chars = 16, rec = 3 + chars * 3 / 4;
+	out[0] = (uint8_t)n, out[1] = (uint8_t)(n >> 8), out[2] = (uint8_t)(n >> 16), out[3] = (uint8_t)(n >> 24);
+	out[4] = (uint8_t)rec, out[5] = (uint8_t)chars, out[6] = out[7] = 0;
+	for (uint32_t i = 0; i < n; i++) {
+		uint8_t *r = out + DPK_ID_HDR + i * rec;
+		uint32_t id = first + i * step;
+		char t[17];
+		snprintf(t, sizeof t, "TA%uX%-3u Ali%-5u", (unsigned)(i % 9u), (unsigned)(i % 1000u), (unsigned)(i % 100u));
+		r[0] = (uint8_t)id, r[1] = (uint8_t)(id >> 8), r[2] = (uint8_t)(id >> 16);
+		for (uint32_t k = 0; k < chars; k += 4) {
+			uint32_t v = (uint32_t)code6(t[k]) << 18 | (uint32_t)code6(t[k + 1]) << 12 | (uint32_t)code6(t[k + 2]) << 6 |
+				     code6(t[k + 3]);
+			r[3 + k / 4 * 3] = (uint8_t)(v >> 16), r[4 + k / 4 * 3] = (uint8_t)(v >> 8), r[5 + k / 4 * 3] = (uint8_t)v;
+		}
+	}
+	return DPK_ID_HDR + n * rec;
+}
+
+static uint8_t ids[DPK_ID_HDR + 9000 * 15];
+
+static void test_radioid(void)
+{
+	uint32_t len = id_pack(ids, 9000, 2860001, 7);
+	CHECK(write_pack(DPK_RADIOID, ids, len, "RadioID TR", 192));
+	char t[40];
+	CHECK(dpk_id_text(2860001, t, sizeof t) && strcmp(t, "TA0X0   Ali0") == 0);
+	CHECK(dpk_id_text(2860001 + 7 * 8999, t, sizeof t) && strncmp(t, "TA8X999 Ali99", 13) == 0);
+	CHECK(dpk_id_text(2860001 + 7 * 1234, t, sizeof t) && strncmp(t, "TA1X234 Ali34", 13) == 0);
+	CHECK(!dpk_id_text(2860002, t, sizeof t) && t[0] == '\0');		/* between two IDs */
+	CHECK(!dpk_id_text(2860000, t, sizeof t) && !dpk_id_text(2860001 + 7 * 9000, t, sizeof t));
+	CHECK(dpk_id_text(2860001, t, 5) && strcmp(t, "TA0X") == 0);		/* cut to the room */
+	CHECK(dpk_about(DPK_RADIOID, t, sizeof t) && strcmp(t, "RadioID TR, 2026-11-20, 132 KB") == 0);
+	/* no pack in force: nothing */
+	uint32_t a = dpk_slot_addr(DPK_RADIOID, 0), b = dpk_slot_addr(DPK_RADIOID, 1);
+	CHECK(dpk_erase(a) && dpk_erase(b));
+	dpk_scan();
+	CHECK(!dpk_id_text(2860001, t, sizeof t) && !dpk_about(DPK_RADIOID, t, sizeof t) && dpk_state(DPK_RADIOID) == DPK_NONE);
+	CHECK(dpk_about(DPK_AIR, t, sizeof t));
+}
+
+/* --- The air band pack over the shipped airfield table (air_pack.c) --- */
+static uint16_t field(const char *code)
+{
+	for (uint16_t i = 0; i < air_field_count; i++)
+		if (strcmp(air_fields[i].code, code) == 0)
+			return i;
+	return AIR_NONE;
+}
+
+static void test_air(void)
+{
+	uint16_t ltac = field("LTAC"), ltab = field("LTAB");
+	CHECK(ltac != AIR_NONE && ltab != AIR_NONE);
+	/* no pack: the table's own */
+	uint32_t a0 = dpk_slot_addr(DPK_AIR, 0), a1 = dpk_slot_addr(DPK_AIR, 1);
+	CHECK(dpk_erase(a0) && dpk_erase(a1));
+	dpk_scan();
+	CHECK(air_count(ltac) == air_fields[ltac].count && air_freq(ltac, 0) == &air_freqs[air_fields[ltac].first]);
+	CHECK(air_freq(ltac, air_fields[ltac].count) == NULL);
+	/* a pack: LTAC with three frequencies, LTAB with none, an airfield the table lacks */
+	uint8_t p[64];
+	uint32_t n = 0;
+	p[n++] = 3, p[n++] = 0, p[n++] = 0, p[n++] = 0;
+	memcpy(p + n, "LTXX\0\0\0\0", 8), n += 8, p[n++] = 1, p[n++] = 0x10, p[n++] = 0x02, p[n++] = AIR_TWR;
+	memcpy(p + n, "LTAC\0\0\0\0", 8), n += 8, p[n++] = 3;
+	uint16_t ch[3] = { 2020, 2780, 3120 };	/* 118.100, 121.900, 123.600 */
+	uint8_t ty[3] = { AIR_TWR, AIR_GND, AIR_ATIS };
+	for (int k = 0; k < 3; k++)
+		p[n++] = (uint8_t)ch[k], p[n++] = (uint8_t)(ch[k] >> 8), p[n++] = ty[k];
+	memcpy(p + n, "LTAB\0\0\0\0", 8), n += 8, p[n++] = 0;
+	CHECK(write_pack(DPK_AIR, p, n, "TR aerodromes", 7));
+	CHECK(air_count(ltac) == 3 && air_count(ltab) == 0);
+	for (uint8_t k = 0; k < 3; k++)
+		CHECK(air_freq(ltac, k) != NULL && air_freq(ltac, k)->ch == ch[k] && air_freq(ltac, k)->type == ty[k]);
+	CHECK(air_freq(ltac, 3) == NULL && air_freq(ltab, 0) == NULL);
+	CHECK(air_freq_khz(air_freq(ltac, 1)) == 121900u);
+	/* every other airfield answers from the table */
+	uint16_t other = field("LTAI");
+	CHECK(other != AIR_NONE && air_count(other) == air_fields[other].count);
+	CHECK(air_freq(other, 1)->ch == air_freqs[air_fields[other].first + 1].ch);
+	/* the pack damaged: the table again */
+	sim_flash_data[dpk_slot_addr(DPK_AIR, 0) + DPK_HDR + 5] ^= 1u;
+	sim_flash_data[dpk_slot_addr(DPK_AIR, 1) + DPK_HDR + 5] ^= 1u;
+	dpk_scan();
+	CHECK(dpk_state(DPK_AIR) == DPK_BAD && air_count(ltac) == air_fields[ltac].count);
+}
+
 int main(void)
 {
 	sim_flash_create(FLASH_SIZE, &map);
@@ -207,6 +306,8 @@ int main(void)
 	test_slots();
 	test_broken();
 	test_cuts();
+	test_radioid();
+	test_air();
 	CHECK(outside() == h0);		/* not one byte outside the region changed */
 	CHECK(sim_flash_violations() == 0);
 	printf("datapack store: %d checks, %d failures\n", checks, failures);

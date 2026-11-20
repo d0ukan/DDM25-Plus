@@ -5993,3 +5993,17 @@ msgstr "Hava izleme kapalı"
 #: core/ui/ui_spectrum.c
 msgid "3D waterfall"
 msgstr "3B şelale"
+
+# --- branch datapack: user data packs (tools/plus_datapack.py) ---
+
+#: core/ui/ui_menus.c
+msgid "RadioID pack: "
+msgstr "RadioID paketi: "
+
+#: core/ui/ui_menus.c
+msgid "Air band pack: "
+msgstr "Hava bandı paketi: "
+
+#: core/ui/ui_menus.c
+msgid "damaged, not used"
+msgstr "bozuk, kullanılmıyor"

@@ -6,6 +6,7 @@
 #include "board.h"
 #include "storage/storage.h"
 #include "storage/datapack.h"
+#include "ui/fmt.h"
 
 /* RadioID: two 256 KB slots; air band: two 16 KB slots after them; the rest of the region spare */
 #define ID_SLOT		0x40000u
@@ -141,6 +142,75 @@ bool dpk_read(uint8_t type, uint32_t off, void *buf, uint32_t len)
 	const dpk_info_t *h = dpk_active(type);
 	return h != NULL && off <= h->len && len <= h->len - off &&
 	       rd(dpk_slot_addr(type, cur[type - 1u].slot) + DPK_HDR + off, buf, len);
+}
+
+static char unpack6(uint8_t c)
+{
+	return c == 0u ? ' ' : c <= 10u ? (char)('0' + c - 1u) : c <= 36u ? (char)('A' + c - 11u) :
+	       c <= 62u ? (char)('a' + c - 37u) : '.';
+}
+
+bool dpk_id_text(uint32_t id, char *out, size_t len)
+{
+	uint8_t h[DPK_ID_HDR], r[3u + DPK_ID_TEXT_MAX * 3u / 4u];
+	if (len != 0u)
+		out[0] = '\0';
+	if (len == 0u || !dpk_read(DPK_RADIOID, 0, h, sizeof h))
+		return false;
+	uint32_t n = h[0] | (uint32_t)h[1] << 8 | (uint32_t)h[2] << 16 | (uint32_t)h[3] << 24;
+	uint32_t rec = h[4], chars = h[5];
+	if (chars == 0u || chars > DPK_ID_TEXT_MAX || chars % 4u != 0u || rec != 3u + chars * 3u / 4u)
+		return false;
+	uint32_t lo = 0, hi = n;
+	while (lo < hi) {
+		uint32_t mid = lo + (hi - lo) / 2u;
+		if (!dpk_read(DPK_RADIOID, DPK_ID_HDR + mid * rec, r, 3))
+			return false;
+		uint32_t m = r[0] | (uint32_t)r[1] << 8 | (uint32_t)r[2] << 16;
+		if (m == id) {
+			if (!dpk_read(DPK_RADIOID, DPK_ID_HDR + mid * rec, r, rec))
+				return false;
+			size_t k = 0;
+			for (uint32_t i = 0; i < chars && k + 1u < len; i += 4u) {
+				const uint8_t *p = &r[3u + i / 4u * 3u];
+				uint32_t v = (uint32_t)p[0] << 16 | (uint32_t)p[1] << 8 | p[2];
+				for (int s = 18; s >= 0 && k + 1u < len; s -= 6)
+					out[k++] = unpack6((uint8_t)((v >> s) & 63u));
+			}
+			while (k > 0u && out[k - 1u] == ' ')
+				k--;
+			out[k] = '\0';
+			return k != 0u;
+		}
+		if (m < id)
+			lo = mid + 1u;
+		else
+			hi = mid;
+	}
+	return false;
+}
+
+bool dpk_about(uint8_t type, char *out, size_t len)
+{
+	const dpk_info_t *h = dpk_active(type);
+	sbuf_t b;
+	sb_init(&b, out, len);
+	if (h == NULL)
+		return false;
+	char name[sizeof h->name + 1];
+	memcpy(name, h->name, sizeof h->name);
+	name[sizeof h->name] = '\0';
+	sb_str(&b, name);
+	sb_str(&b, ", ");
+	for (unsigned i = 0; i < 8u; i++) {
+		if (i == 4u || i == 6u)
+			sb_chr(&b, '-');
+		sb_chr(&b, h->date[i]);
+	}
+	sb_str(&b, ", ");
+	sb_u32(&b, (h->len + 1023u) / 1024u, 1);
+	sb_str(&b, " KB");
+	return true;
 }
 
 bool dpk_begin(dpk_writer_t *w, const dpk_hdr_t *h)

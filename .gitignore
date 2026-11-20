@@ -512,6 +512,8 @@ __pycache__/
 !/tools/test_datapack.py
 !/integration/radiofoundry/datapack/datapack.h
 !/integration/radiofoundry/datapack/datapack.c
+!/integration/radiofoundry/datapack/air_pack.h
+!/integration/radiofoundry/datapack/air_pack.c
 !/tests/plus/test_datapack.c
 !/integration/radiofoundry/dota/ui_dota.h
 !/integration/radiofoundry/dota/ui_dota.c

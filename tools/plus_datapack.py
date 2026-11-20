@@ -12,6 +12,8 @@ PACK = 'integration/radiofoundry/datapack/'
 FILES = [
     ('core/storage/datapack.h', 'datapack.h'),
     ('core/storage/datapack.c', 'datapack.c'),
+    ('core/ui/air_pack.h', 'air_pack.h'),
+    ('core/ui/air_pack.c', 'air_pack.c'),
 ]
 
 ON = '#if CONFIG_DATAPACK\n'
@@ -38,4 +40,27 @@ def prepare_datapack(transform, install):
         ('\tstorage_init();\t\t\t// finishes a codeplug sector rewrite a power cut interrupted\n',
          '\tstorage_init();\t\t\t// finishes a codeplug sector rewrite a power cut interrupted\n'
          + ON + '\tdpk_scan();\t\t\t// DDM32 Plus: the user data packs in force (docs/r14.md 7)\n#endif\n'),
+    ])
+
+    # A DMR caller's name: the codeplug's contact, then the user's RadioID pack, then the built-in table (owner
+    # build), then the CPS-uploaded database (radio_sm.c find_name)
+    transform('core/radio/radio_sm.c', [
+        ('#include "codeplug/dmr_iddb.h"\n',
+         '#include "codeplug/dmr_iddb.h"\n' + ON + '#include "storage/datapack.h"\n#endif\n'),
+        ('#if CONFIG_ID_DB\n\t} else if (!group && iddb_text(id, n->name, sizeof(n->name))) {\n',
+         ON + '\t} else if (!group && dpk_id_text(id, n->name, sizeof(n->name))) {\n'
+         '\t\t// DDM32 Plus: the user\'s RadioID data pack (docs/r14.md 7)\n#endif\n'
+         '#if CONFIG_ID_DB\n\t} else if (!group && iddb_text(id, n->name, sizeof(n->name))) {\n'),
+    ])
+    # Settings > About: each pack type's line ("RadioID pack: RadioID TR, 2026-11-17, 98 KB", "none", "damaged")
+    transform('core/ui/ui_menus.c', [
+        ('#include "rfoundry_about.h"\n', '#include "rfoundry_about.h"\n' + ON + '#include "storage/datapack.h"\n#endif\n'),
+        ('\tstatic char t[640 + 48 * CONFIG_ID_DB];', '\tstatic char t[640 + 48 * CONFIG_ID_DB + 112 * CONFIG_DATAPACK];'),
+        ('\tsb_str(&b, TR("AMBE+2 codec: DVSI (stock)"));',
+         ON + '\tfor (uint8_t k = 1; k <= DPK_TYPES; k++) {\t// DDM32 Plus: the user data packs (docs/r14.md 7)\n'
+         '\t\tchar d[40];\n'
+         '\t\tsb_str(&b, k == DPK_RADIOID ? TR("RadioID pack: ") : TR("Air band pack: "));\n'
+         '\t\tsb_str(&b, dpk_about(k, d, sizeof d) ? d : dpk_state(k) == DPK_BAD ? TR("damaged, not used") : TR("none"));\n'
+         '\t\tsb_chr(&b, \'\\n\');\n\t}\n#endif\n'
+         '\tsb_str(&b, TR("AMBE+2 codec: DVSI (stock)"));'),
     ])

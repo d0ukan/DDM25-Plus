@@ -123,7 +123,7 @@ def main(ROOT, APP, OUT, flags, host):
     run([*argv, '-I' + str(host), '-I' + str(tp), '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_AM_RX=1', '-DCONFIG_APRS=1',
          '-DCONFIG_VFO=1', '-DCONFIG_AIRFIELDS=1', '-DCONFIG_LANG_TR=1', '-DCONFIG_LARGE_SCALE=1',
          '-DCONFIG_HOME_FREQ=1', '-DCONFIG_MULTI_WATCH=1', '-DCONFIG_VFO_MODES=1', '-DCONFIG_AIR_WATCH=1',
-         *(str(APP / 'core/ui' / f) for f in ('airfield.c', 'airfield_data.c', 'ui_airfield.c')),
+         *(str(APP / 'core/ui' / f) for f in ('airfield.c', 'airfield_data.c', 'ui_airfield.c', 'air_pack.c')),
          str(APP / 'core/aprs/aprs_fmt.c'), str(APP / 'core/radio/vfox.c'), '-lm'], cwd=host)
     run([OUT / 'test_ui_air'], cwd=host)
     # Item 45: the 3D waterfall into a test frame buffer, then Tools > Spectrum's views (the toolbox job's simulator:
