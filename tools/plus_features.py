@@ -185,6 +185,7 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_toolbox", fromlist=["x"]).prepare_toolbox(transform, install)
     prepare_large_scale(transform)
     prepare_home_freq(transform)
+    __import__((__package__ + "." if __package__ else "") + "plus_dota", fromlist=["x"]).prepare_dota(transform, install)
 
 
 def prepare_large_scale(transform):

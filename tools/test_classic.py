@@ -857,5 +857,8 @@ def main():
     # DDM32 Plus round 13 ideas 2: shared screen buffer, heard list, waterfall, coverage, GPS, clock (tools/test_toolbox.py)
     import test_toolbox
     test_toolbox.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus DOTA Transfer (tools/test_dota.py, docs/dota.md 16.1)
+    import test_dota
+    test_dota.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

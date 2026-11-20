@@ -709,6 +709,7 @@ def main():
         "CONFIG_MAP_COVERAGE="+("y" if args.plus else "n"),
         "CONFIG_GPS_DASH="+("y" if args.plus else "n"),
         "CONFIG_CLOCK_TOOLS="+("y" if args.plus else "n"),
+        "CONFIG_DOTA="+("y" if args.plus else "n"),	# DDM32 Plus DOTA Transfer (docs/dota.md)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

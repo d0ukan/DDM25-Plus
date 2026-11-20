@@ -2128,6 +2128,7 @@ identical, every task inside its stack). Limits for the job: FLASH headroom >= 1
 |---|---|---:|---:|---:|---|
 | base | ddm25 at 1c391c7 | 864,036 | 209,672 | 1,784 | 268 / 760 |
 | 0 | `audio_mux.c`'s APRS ring compiled out (`PLUS_AUDIO_MUX_NO_APRS`; the DM-32 reads APRS audio from its own AFSK receive path) | 863,704 (-332) | 207,616 (-2,056) | 3,840 | 268 / 760 |
+| 1 | `CONFIG_DOTA`, the protocol (`dota_proto.c`: frames, manifest, both ends' ARQ). Built, not linked until the radio core calls it (object: 4,487 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
 
 ## Name and public build
 
