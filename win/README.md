@@ -108,8 +108,10 @@ those folders and shows where their backups are (home and "Geri dön" pages); it
 
 The manifest's `app` entry is the Python program's zip. This program updates itself only from an **`app_net`**
 entry (same fields as `app`: version, file, url, sha256, size, notes), so neither program can replace itself with the
-other. The release tool (`pc/release/make_release.py`) must add `app_net` for a Windows program release; the zip must
-hold `DDM32Plus/DDM32Plus.exe` and nothing named like the user's data.
+other. The release tool writes it: `pc/release/make_release.py build ... --app-net-zip ZIP --app-net-version V`
+(asset `DDM32Plus-win-V.zip`); the zip must hold `DDM32Plus/DDM32Plus.exe` and nothing named like the user's data
+(`yedekler`, `settings.json`, `surumler`, `guncelleme`, the uninstaller). `pc/radiotools/signed_manifest.py` checks
+the entry like `app`; programs from before ignore the key, so adding it breaks no published checker.
 
 Update flow: check (on start unless switched off, or the button) → download → SHA-256 and size against the signed
 manifest → safe unzip into `guncelleme\app-VERSION\` → the new exe runs as the helper (`--self-update`), waits for the

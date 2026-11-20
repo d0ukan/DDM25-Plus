@@ -11,12 +11,15 @@ Ed25519 signature. Uploads NOTHING: the files land in --out; publishing them on 
 
   build --version V --channel beta|stable --build-dir DIR --settings-format N --codeplug-format N
         --min-compatible V --notes-tr TEXT --notes-en TEXT [--app-zip ZIP --app-version V
-        [--app-notes-tr TEXT --app-notes-en TEXT]] [--tag TAG] --out NEWDIR [--key PATH]
+        [--app-notes-tr TEXT --app-notes-en TEXT]] [--app-net-zip ZIP --app-net-version V
+        [--app-net-notes-tr TEXT --app-net-notes-en TEXT]] [--tag TAG] --out NEWDIR [--key PATH]
       DIR is a public DDM32 Plus build (tools/build_radiofoundry.py --plus --public: rfoundry_dm32.bin/.json/.map).
       Checks it like the installer does (reproducible Plus build, hashes, codec layout, size) and requires
       public_enabled. The release zip carries the application, a reduced linker map (the __codec_* symbol lines the
       installer checks) and a reduced build manifest (no build-machine paths). Signs the manifest and verifies the
       signature with the key's public half before it finishes.
+      --app-zip is the Python program (manifest "app"); --app-net-zip the Windows (.NET) program (manifest
+      "app_net", win/). Each program updates itself only from its own entry, never from the other one.
 
   verify DIR [--public-key HEX]
       Verifies DIR/ddm32-manifest.json(.sig) and every asset in DIR against the manifest's sizes and hashes.
@@ -167,6 +170,29 @@ def check_app_zip(path):
     return Path(path).read_bytes()
 
 
+# What the Windows program keeps in its install folder: an update must never bring a file of that name
+# (win/src/DDM32Plus.Core/AppInfo.cs ReservedNames)
+NET_RESERVED = {'yedekler', 'surumler', 'guncelleme', 'settings.json', 'unins000.exe', 'unins000.dat'}
+
+
+def check_app_net_zip(path):
+    """The Windows program's zip: DDM32Plus/DDM32Plus.exe (the single-file program) and nothing named like the user's
+    data in the install folder; the same private-file rules as the Python program's zip"""
+    data = check_app_zip(path)
+    with zipfile.ZipFile(path) as z:
+        names = z.namelist()
+    bad = [n for n in names if len(n.split('/')) > 1 and n.split('/')[1].lower() in NET_RESERVED
+           or '\\' in n or ':' in n]
+    if bad:
+        raise SystemExit("The Windows program zip holds names of the user's data: " + ', '.join(bad[:5]))
+    return data
+
+
+def _app_entry(tag, name, version, data, notes_tr, notes_en):
+    return {'version': version, 'file': name, 'url': f'{sm.URL_PREFIX}{tag}/{name}', 'sha256': sha256(data),
+            'size': len(data), 'notes': {'tr': notes_tr or '', 'en': notes_en or ''}}
+
+
 def build(args, secret):
     out = Path(args.out)
     if out.exists():
@@ -193,10 +219,17 @@ def build(args, secret):
         sm.parse_version(args.app_version)
         data = check_app_zip(args.app_zip)
         app_name = f'{EXE}-{args.app_version}.zip'
-        manifest['app'] = {'version': args.app_version, 'file': app_name, 'url': f'{sm.URL_PREFIX}{tag}/{app_name}',
-                           'sha256': sha256(data), 'size': len(data),
-                           'notes': {'tr': args.app_notes_tr or '', 'en': args.app_notes_en or ''}}
+        manifest['app'] = _app_entry(tag, app_name, args.app_version, data, args.app_notes_tr, args.app_notes_en)
         assets[app_name] = data
+    if getattr(args, 'app_net_zip', None):
+        if not args.app_net_version:
+            raise SystemExit('--app-net-zip needs --app-net-version')
+        sm.parse_version(args.app_net_version)
+        data = check_app_net_zip(args.app_net_zip)
+        net_name = f'{EXE}-win-{args.app_net_version}.zip'
+        manifest['app_net'] = _app_entry(tag, net_name, args.app_net_version, data, args.app_net_notes_tr,
+                                         args.app_net_notes_en)
+        assets[net_name] = data
     sm.check_manifest(manifest)
     data = (json.dumps(manifest, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
     sig = sm.sign_bytes(data, secret)
@@ -213,7 +246,7 @@ def build(args, secret):
 def verify(folder, public_hex=None):
     folder = Path(folder)
     m = sm.verify_files(folder, public_hex)
-    for e in m['firmware'] + ([m['app']] if m.get('app') else []):
+    for e in m['firmware'] + [m[k] for k in ('app', 'app_net') if m.get(k)]:
         body = (folder / e['file']).read_bytes()
         if len(body) != e['size'] or sha256(body) != e['sha256']:
             raise SystemExit(f'{e["file"]}: size or SHA-256 differs from the manifest')
@@ -238,6 +271,10 @@ def main(argv=None):
     b.add_argument('--app-version')
     b.add_argument('--app-notes-tr')
     b.add_argument('--app-notes-en')
+    b.add_argument('--app-net-zip', type=Path, help='the Windows (.NET) program: DDM32Plus/DDM32Plus.exe')
+    b.add_argument('--app-net-version')
+    b.add_argument('--app-net-notes-tr')
+    b.add_argument('--app-net-notes-en')
     b.add_argument('--tag')
     b.add_argument('--out', type=Path, required=True)
     b.add_argument('--key', dest='build_key', type=Path, default=None)
@@ -263,7 +300,8 @@ def main(argv=None):
         return 0
     if args.cmd == 'verify':
         m = verify(args.folder, args.public_key)
-        print(f'OK: {m["release"]}, {len(m["firmware"])} firmware' + (', program' if m.get('app') else ''))
+        print(f'OK: {m["release"]}, {len(m["firmware"])} firmware' + (', program' if m.get('app') else '') +
+              (', Windows program' if m.get('app_net') else ''))
         return 0
     ap.print_help()
     return 2

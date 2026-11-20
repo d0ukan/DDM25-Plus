@@ -127,6 +127,11 @@ def manifest_cases():
              ('app notes not a dict', raw(mutate(with_app, ['app', 'notes'], 'x'))),
              ('app without notes', raw(mutate(with_app, ['app', 'notes'], None, delete=True))),
              ('app bad url', raw(mutate(with_app, ['app', 'url'], 'https://example.com/x.zip'))),
+             ('app_net bad url', raw(dict(with_app, app_net=dict(rt.app_entry('2.0.0', b'n'),
+                                                                 url='https://example.com/DDM32Plus-2.0.0.zip')))),
+             ('app_net notes not a dict', raw(dict(with_app, app_net=dict(rt.app_entry('2.0.0', b'n'), notes=[])))),
+             ('app_net bad version', raw(dict(with_app, app_net=dict(rt.app_entry('2.0.0', b'n'), version='2')))),
+             ('app_net null', raw(dict(with_app, app_net=None))),
              ('extra keys ignored', raw(dict(base, extra=[1, 2, {'a': None}])))]
     for field, value in (('channel', 'nightly'), ('channel', None), ('url', 'https://example.com/x.zip'),
                          ('url', rt.url('v1.0.0', '../evil.zip')), ('url', rt.url('v1.0.0', 'x.zip?a')),

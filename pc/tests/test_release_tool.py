@@ -125,6 +125,61 @@ class ReleaseToolTest(unittest.TestCase):
             with self.subTest(private=private), self.assertRaisesRegex(SystemExit, 'must not be published'):
                 self.run_build('--app-zip', str(bad), '--app-version', '1.0.0-beta.2', out=self.top / f'o{i}')
 
+    def net_zip(self, name, *members):
+        path = self.top / name
+        with zipfile.ZipFile(path, 'w') as z:
+            z.writestr('DDM32Plus/DDM32Plus.exe', b'MZ net')
+            for m in members:
+                z.writestr(m, b'x')
+        return path
+
+    def test_windows_program_zip(self):
+        """app_net: the Windows (.NET) program, beside the Python program's app entry; each its own zip"""
+        py = self.net_zip('py.zip', 'DDM32Plus/radiotools/install_plus.py')
+        net = self.net_zip('net.zip')
+        code, out, text = self.run_build('--app-zip', str(py), '--app-version', '1.0.0-beta.2',
+                                         '--app-net-zip', str(net), '--app-net-version', '2.0.0-alpha.2',
+                                         '--app-net-notes-tr', 'Windows programı', '--app-net-notes-en', 'Windows program')
+        self.assertEqual(code, 0)
+        m = mr.verify(out, self.public)
+        self.assertEqual(m['app']['version'], '1.0.0-beta.2')
+        self.assertEqual(m['app_net']['version'], '2.0.0-alpha.2')
+        self.assertEqual(m['app_net']['file'], 'DDM32Plus-win-2.0.0-alpha.2.zip')
+        self.assertEqual(m['app_net']['notes'], {'tr': 'Windows programı', 'en': 'Windows program'})
+        self.assertEqual((out / 'DDM32Plus-win-2.0.0-alpha.2.zip').read_bytes(), net.read_bytes())
+        # the Python program's catalog still takes only "app" as its own update
+        cat = releases.Catalog()
+        cat.add(m['release'], m, out)
+        self.assertEqual([a[0]['version'] for a in cat.apps], ['1.0.0-beta.2'])
+        # a changed Windows zip fails verify
+        (out / 'DDM32Plus-win-2.0.0-alpha.2.zip').write_bytes(b'changed')
+        with self.assertRaisesRegex(SystemExit, 'differs from the manifest'):
+            mr.verify(out, self.public)
+
+    def test_windows_program_zip_refusals(self):
+        for i, member in enumerate(('DDM32Plus/yedekler/x.txt', 'DDM32Plus/settings.json', 'DDM32Plus/Guncelleme/a',
+                                    'DDM32Plus/unins000.exe', 'Other/x.txt', 'DDM32Plus/x/backup-manifest.json')):
+            bad = self.net_zip(f'bad-net{i}.zip', member)
+            with self.subTest(member=member), self.assertRaises(SystemExit):
+                self.run_build('--app-net-zip', str(bad), '--app-net-version', '2.0.0', out=self.top / f'n{i}')
+            self.assertFalse((self.top / f'n{i}').exists())
+        with self.assertRaisesRegex(SystemExit, '--app-net-version'):
+            self.run_build('--app-net-zip', str(self.net_zip('ok.zip')), out=self.top / 'n-noversion')
+
+    def test_app_net_schema_is_checked(self):
+        base = rt.manifest([rt.firmware_entry(fx.release_app('1.0.0'))], app=rt.app_entry('1.0.0', b'z'))
+        good = dict(base, app_net=dict(rt.app_entry('2.0.0', b'n'), file='DDM32Plus-win-2.0.0.zip',
+                                       url=rt.url('v2.0.0', 'DDM32Plus-win-2.0.0.zip')))
+        data, sig = rt.signed(good)
+        self.assertEqual(rt.sm.verify_bytes(data, sig, rt.TEST_PUBLIC_HEX)['app_net']['version'], '2.0.0')
+        for field, value in (('url', 'https://example.com/DDM32Plus-win-2.0.0.zip'), ('sha256', 'x'),
+                             ('notes', 'text'), ('version', '2.0')):
+            bad = json.loads(json.dumps(good))
+            bad['app_net'][field] = value
+            data, sig = rt.signed(bad)
+            with self.subTest(field=field), self.assertRaises(rt.sm.ManifestError):
+                rt.sm.verify_bytes(data, sig, rt.TEST_PUBLIC_HEX)
+
     def test_refusals(self):
         nonpublic = rt.write_plus(self.top / 'np', fx.release_app('1.0.0'), signed_for=False)
         j = json.loads((nonpublic / 'rfoundry_dm32.json').read_text())

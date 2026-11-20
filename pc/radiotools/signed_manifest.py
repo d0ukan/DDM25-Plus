@@ -19,7 +19,9 @@ Manifest (format ddm32-manifest/1), all fields required unless marked optional:
                settings_format, codeplug_format (integers: the storage formats this version writes),
                min_compatible_version (the oldest version that reads what this one saves),
                notes: {tr, en}} ]
-  app (optional): {version, file, url, sha256, size, notes (optional)}
+  app (optional): {version, file, url, sha256, size, notes (optional)}: the Python program's zip
+  app_net (optional): the same fields: the Windows (.NET) program's zip (win/). Each program updates itself only from
+                  its own entry. Older programs ignore this key, so adding it keeps every published checker working.
 """
 import hashlib
 import json
@@ -135,11 +137,12 @@ def check_manifest(m):
               f'{where}.notes')
         _need(e['version'] not in seen, f'{where}.version (duplicate)')
         seen.add(e['version'])
-    app = m.get('app')
-    if app is not None:
-        _asset(app, 'app')
-        if 'notes' in app:
-            _need(isinstance(app['notes'], dict), 'app.notes')
+    for key in ('app', 'app_net'):
+        app = m.get(key)
+        if app is not None:
+            _asset(app, key)
+            if 'notes' in app:
+                _need(isinstance(app['notes'], dict), f'{key}.notes')
     return m
 
 
