@@ -5,7 +5,13 @@
  * state starts over). Covers:
  *   - item 44a, Tools > Airfields after the table's cleanup: "+N" on the list line when the service shown has more
  *     frequencies (Antalya's two towers), none with one; an airfield's every frequency in its details, the list
- *     scrolling to the last one and OK tuning it; every page fits. */
+ *     scrolling to the last one and OK tuning it; every page fits;
+ *   - item 44b, air watch (CONFIG_AIR_WATCH, ui_airwatch.inc; the radio core faked in ui_sim_air.c): # on an
+ *     airfield's page puts its first six frequencies on the multi-watch ring, A..F each its own VFO; Back twice, or
+ *     # 5 Stop, brings the radio and the user's watch back as they were (off, or the user's ring with its selection
+ *     and channels), nothing saved meanwhile; two frequencies make dual watch's pair, one is tuned as OK does (a
+ *     channel name on two services counts once); refused while transmitting and without frequencies; a power off
+ *     during it doesn't bring it back. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +21,7 @@
 #include "ui/ui_app.h"
 #include "ui/ui_nav.h"
 #include "ui/i18n.h"
+#include "ui/ui_svc.h"
 #include "ui_sim_air.h"
 
 static int fails;
@@ -139,8 +146,156 @@ static void af_none(void)
 	layout();
 }
 
+/* --- Item 44b: air watch --- */
+
+#if CONFIG_AIR_WATCH
+static void check(bool c, const char *what)
+{
+	if (!c) {
+		printf("FAIL %s (%s): %s\n", name, turkish ? "tr" : "en", what);
+		fails++;
+	}
+}
+
+/* Antalya: GND 121.900, TWR 125.000, TWR 126.100, APP 119.650, APP 124.350, APP 124.425 (its ATIS 118.275 left out:
+ * the recording never stops) */
+static const uint32_t lti_hz[6] = { 121900000, 125000000, 126100000, 119650000, 124350000, 124425000 };
+
+static void antalya_watch(void)
+{
+	pos(36.8969, 30.7133);
+	airfields();
+	run("ok");
+	run("ctx");
+}
+
+/* # on Antalya's page: its six (not the ATIS) on the ring, A..F each its own VFO, received there; Home shows it */
+static void aw_watch(void)
+{
+	start("AW watch all");
+	pos(36.8969, 30.7133);
+	airfields();
+	run("ok");
+	expect(T("shows=#_watch_all", "shows=#_t"));
+	layout();
+	run("ctx");
+	expect(T("screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_Air_watch_on",
+		 "screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_Hava_izleme_a"));
+	check(air_sim.vfo_calls == 6, "six VFOs asked for");
+	for (uint8_t k = 0; k < 6; k++)
+		check(air_sim.hz[k] == lti_hz[k] && air_sim_vfo_hz(k) == lti_hz[k], "each letter's VFO on its frequency");
+	expect("vfo=1 vfoidx=0 freq=121900000 shows=121.90 shows=124.42 hides=118.27");
+	run("tune:e");
+	expect("vfo=1 vfoidx=4 freq=124350000");
+	run("shot:home-air");
+	layout();
+}
+
+/* Back twice stops it: the radio back on the channel it was on, the watch off, nothing saved meanwhile */
+static void aw_stop(void)
+{
+	start("AW stop: back as before");
+	uint16_t pos0 = ui_view()->zone_pos;
+	bool vfo0 = ui_view()->vfo;
+	int32_t b0 = ui_svc_setting_get(UI_SET_DUAL_B), p0 = ui_svc_setting_get(UI_SET_MW_P1);
+	antalya_watch();
+	expect("dual=1 mwn=6");
+	run("abkey abkey");	/* C selected: a change the user's watch never had */
+	expect("mwsel=C");
+	check(ui_svc_setting_get(UI_SET_DUAL_B) == b0 && ui_svc_setting_get(UI_SET_MW_P1) == p0, "nothing saved");
+	run("back back wait:300");
+	expect(T("dual=0 toast=Air_watch_off", "dual=0 toast=Hava_izleme_kapal"));
+	check(air_sim.end_calls == 1, "the end asked for once");
+	check(ui_view()->zone_pos == pos0 && ui_view()->vfo == vfo0, "the radio back where it was");
+	check(ui_svc_setting_get(UI_SET_DUAL_B) == b0 && ui_svc_setting_get(UI_SET_MW_P1) == p0, "the settings as before");
+	layout();
+}
+
+/* The user's ring of four, C selected: the air watch takes its place; # 5 Stop: the user's ring again as it was */
+static void aw_user_ring(void)
+{
+	start("AW the user's ring kept");
+	run("mwatch:4 quick 7 abkey abkey");
+	expect("dual=1 mwn=4 mwsel=C mwposb=4 mwposc=5 mwposd=6");
+	ui_go_home();
+	antalya_watch();
+	expect("dual=1 mwn=6 mwradion=6 mwsel=A");
+	run("ctx 5 wait:300");
+	expect("dual=1 mwn=4 mwradion=4 mwsel=C mwposb=4 mwposc=5 mwposd=6");
+	expect(T("toast=Air_watch_off", "toast=Hava_izleme_kapal"));
+	layout();
+}
+
+/* Two frequencies (Guvercinlik: GND 120.200, TWR 132.000): dual watch's pair of two VFOs */
+static void aw_pair(void)
+{
+	start("AW two frequencies: the pair");
+	airfields();
+	run("ok ctx");
+	expect("screen=home dual=1 mwn=0 mwradion=2 vfo=1 freq=120200000");
+	check(air_sim.vfo_calls == 2 && air_sim.hz[1] == 132000000, "two VFOs");
+	run("back back wait:300");
+	expect("dual=0");
+	check(air_sim.end_calls == 1, "ended");
+}
+
+/* One frequency (Etimesgut: TWR 122.100): tuned as OK does; one channel name on two services (Afyon: TWR and APP
+ * 122.100) is one frequency too */
+static void aw_one(void)
+{
+	start("AW one frequency: tuned");
+	airfields();
+	run("down ok ctx");
+	expect("screen=home dual=0 vfo=1 freq=122100000");
+	check(air_sim.vfo_calls == 0, "no ring");
+	pos(38.7264, 30.6011);	/* Afyon */
+	airfields();
+	expect("shows=LTAH");
+	run("ok ctx");
+	expect("screen=home dual=0 freq=122100000");
+	check(air_sim.vfo_calls == 0, "no ring for one channel name");
+}
+
+/* Refused while transmitting; an airfield without frequencies */
+static void aw_refused(void)
+{
+	start("AW refused");
+	pos(36.8969, 30.7133);
+	airfields();
+	run("ok");
+	air_sim_state(RS_TX);
+	run("ctx");
+	expect(T("screen=airfields toast=Can't_tune_while_transmitting", "screen=airfields"));
+	air_sim_state(RS_IDLE);
+	check(air_sim.vfo_calls == 0, "nothing asked for");
+	pos(41.3142, 33.7958);	/* Kastamonu: none in the data */
+	run("back back");
+	airfields();
+	run("ok ctx");
+	expect("screen=airfields dual=0");
+	check(air_sim.vfo_calls == 0, "nothing asked for");
+}
+
+/* A power off during it: the watch doesn't come back (nothing of it was saved) */
+static void aw_reboot(void)
+{
+	start("AW power off during it");
+	int32_t b0 = ui_svc_setting_get(UI_SET_DUAL_B);
+	antalya_watch();
+	expect("dual=1 mwn=6");
+	run("reboot wait:500");
+	expect("dual=0");
+	check(ui_svc_setting_get(UI_SET_DUAL_B) == b0, "the settings as before");
+}
+#endif
+
 typedef void (*case_fn)(void);
-static const case_fn all[] = { af_more, af_one, af_none };
+static const case_fn all[] = {
+	af_more, af_one, af_none,
+#if CONFIG_AIR_WATCH
+	aw_watch, aw_stop, aw_user_ring, aw_pair, aw_one, aw_refused, aw_reboot,
+#endif
+};
 
 int main(void)
 {

@@ -2264,6 +2264,7 @@ tests in `tools/test_air.py` (run from `tools/test_classic.py`). Budget per comm
 |---|---|---:|---:|---:|---:|---|
 | base | `ddm25` 22b4049 | 810,224 | 209,608 (1,848) | 888,996 | 209,656 (1,800) | 196 / 760 |
 | 44a | the airfield table (67 rows out: -484 B of table), "+N", the short "No frequencies" | 809,912 (-312) | 209,608 (1,848) | 888,684 (-312) | 209,656 (1,800) | 196 / 760 |
+| 44b | air watch: the UI (`ui_airwatch.inc`, `mw_keep` 54 B), the radio core's two requests and flag, # on the airfield page, 3 Turkish entries | 811,712 (+1,800) | 209,664 (1,792) | 890,484 (+1,800) | 209,712 (1,744) | 196 / 760 |
 
 ### 44a. The airfield table (owner: "D", 2026-11-20)
 
@@ -2294,3 +2295,47 @@ tests in `tools/test_air.py` (run from `tools/test_classic.py`). Budget per comm
   new table: LTAB GND 120.200 tuned, LTFJ's DEL first, TR-0004 last by code, Antalya "TWR 125.000 +1", LTAB without
   "+"); `tests/plus/test_ui_air.c` (English and Turkish: "+1", Antalya's seven frequencies scrolled to the last and
   tuned, Etimesgut without 119.100, Kastamonu without frequencies, layout). Radio rows AW1-AW2.
+
+### 44b. Air watch (`CONFIG_AIR_WATCH`; needs MULTI_WATCH, VFO_MODES, AIRFIELDS)
+
+- **Use**: Tools > Airfields, OK on an airfield, **#** ("OK listen  # watch all"; Turkish "OK dinle  # tümünü izle"):
+  its frequencies go on the multi-watch ring, letters A..F, **each letter its own VFO** (VFOs 0..5): up to 6, in the
+  airfield's list order, a channel name used by two services once (LTAH's TWR / APP 122.100 is one), **the ATIS left
+  out** (deviation from "all": an ATIS recording never stops, so the ring would stay on it and never reach the tower;
+  OK still tunes it). Toast "LTAI: Air watch on", Home shows the ring's rows ("VFO 121.9000" ...). The VFOs are FM
+  VFOs in the air band, so each letter is **received in AM** (`radio_am_channel`), its squelch on the signal strength
+  (`radio_am_noise`), and **never transmits** (TXDENY_AM). The ring is multi-watch's own: the one receiver hops
+  (150 ms a quiet letter: 0.9 s round six), a signal holds it on its letter, the Dual watch delay's wait looks at the
+  others and the ring goes on. Two frequencies make dual watch's pair of two VFOs (LTAB: GND 120.200, TWR 132.000);
+  one is tuned as OK does. Refused while transmitting ("Can't tune while transmitting"), without AM receive, outside
+  the radio's bands; an airfield without frequencies says so. Only from the airfield's page: the typed list in Tools >
+  Air band (docs/r14.md 44a, owner question 3) is not built.
+- **Leaving** is how any watch stops: Back twice, # 5 Stop, * 7, the watch key. Toast "Air watch off" and **everything
+  as before**: the radio core brings VFOs A / B and the position back from the settings as its start does
+  (`radio_sm_init`'s way), then the user's watch is asked for again as it was kept (off; or dual watch / the ring with
+  its letters, selected letter and pane 1's letter). Keys used during it (Up / Down on a letter, Change C, the VFO key)
+  change the air ring only and go with it. **Nothing of it is saved**: the UI's `state_save` / `mw_save` and the radio
+  core's `persist` return while it runs, so a power off during it comes back exactly as before it. Not kept: the
+  contents of C..F's own VFOs (RAM only; emptied as a power off empties them), so a user ring with a C..F VFO letter
+  gets that letter back as a fresh VFO. A Watch channels change made during it applies after it.
+- **How**: the UI (`integration/radiofoundry/air/ui_airwatch.inc`, included in `ui_dual.c` after `ui_mwatch.inc`)
+  keeps the user's watch (`mw_keep`, 54 B; the airfield page's two toast buffers became one), asks the radio core for each letter's VFO (`ui_svc_air_vfo` ->
+  `radio_req_air_vfo`, RREQ_AIR_VFO: arg the VFO, arg2 Hz; the queue keeps their order before the ring's RREQ_MWATCH),
+  then starts the ring through multi-watch's own `apply`; `ui_dual_tick` finds the watch off and ends it
+  (`ui_svc_air_end` -> RREQ_AIR_END). The radio core (`radio_airwatch.inc`): the first RREQ_AIR_VFO stops a scan or the
+  user's watch (back on its selected channel), notes the position and VFOs A / B (`persist`) and sets `sm.air`; each
+  VFO becomes a fresh VFO at the frequency (the one in use, the other of A / B, a parked one, or a C..F slot); RREQ_AIR_END
+  stops the ring, reloads VFOs A / B from the settings (`restore_vfo` + `vfox_load`), empties C..F, and selects the
+  saved position (`select_position`, then the VFO or the channel tuned). Requests while transmitting or in hotspot mode
+  are refused, as RREQ_MWATCH is.
+- Tests: `tests/plus/test_airwatch_radio.inc` (run by `tools/test_air.py` after upstream's radio suite, the Classic /
+  Plus P25 suites, the multi-watch ring and every mode in the VFO again with it built in): four air frequencies on the
+  letters' VFOs and the ring over them, each tuned on its own frequency in AM through the board's AM receiver, TX
+  refused; a signal on one letter holds the ring there (2 s) and the ring moves on after; nothing noted while it runs;
+  the end back on the channel and VFO A as before, C..F empty; a power off during it back as before; the user's ring
+  stopped on its selected channel and noted there; refusals (TX, off the band, a seventh VFO, an end without it).
+  `tests/plus/test_ui_air.c` (English and Turkish, the radio core's side faked in `ui_sim_air.c` on the simulator's
+  VFOs): Antalya's six on A..F (each VFO's frequency, the receiver on A, E on its own), Home's rows; Back twice: the
+  radio back on its channel, the watch off, the settings untouched throughout; the user's ring of four with C
+  selected kept and back with # 5 Stop; two frequencies the pair; one tuned; a channel name on two services once;
+  refusals; a power off during it doesn't bring it back; layout of the airfield page and Home. Radio rows AW3-AW7.

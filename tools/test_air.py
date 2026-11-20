@@ -5,6 +5,8 @@ tools/test_classic.py after its own (the build tree prepared, ASan / UBSan flags
 - item 44a, tools/airfields.py's exclusion list: its entries well formed, applied to a synthetic OurAirports pair
   (removed by code and channel name whatever the type, counted, a small field left without a frequency not listed,
   one that matches nothing reported), and none of them in the committed table;
+- item 44b, the air watch in the radio core (tests/plus/test_airwatch_radio.inc), after upstream's radio suite, the
+  Classic / Plus P25 suites, the multi-watch ring and every mode in the VFO run again with it built in;
 - the screens' UI flows in upstream's simulator, English and Turkish (tests/plus/test_ui_air.c)."""
 import re
 import shlex
@@ -76,8 +78,38 @@ def exclusion_tests(ROOT):
     print('airfields: %d exclusions well formed, applied, none in the committed table' % len(seen))
 
 
+def radio_tests(ROOT, APP, OUT, host):
+    # The fixture as tools/test_classic.py builds its own (the native receiver, an AM receiver; its radio task's
+    # dispatch is in OUT/classic_dispatch.inc, written there before this runs)
+    fixture = (host / 'radioCoreTest.c').read_text().replace('int main(void)', 'int upstream_radio_main(void)')
+    fixture = fixture.replace('const board_t board = {',
+                              'const board_t board = {\n\t.native_modem=&classic_ops,\n\t.caps=CAP_AM_RX,')
+    wrapper = OUT / 'radioCoreAir.c'
+    wrapper.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n' + fixture +
+                       '\n#define main classic_radio_main\n#include "' + str(ROOT / 'tests/classic/test_radio.inc') +
+                       '"\n#undef main\n#define main mwatch_radio_main\n#include "' +
+                       str(ROOT / 'tests/plus/test_mwatch_radio.inc') + '"\n#undef main\n'
+                       '#define main vfox_radio_main\n#include "' + str(ROOT / 'tests/plus/test_vfox_radio.inc') +
+                       '"\n#undef main\n#include "' + str(ROOT / 'tests/plus/test_airwatch_radio.inc') + '"\n')
+    command = run(['make', '-Bn', 'radioCoreTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout
+    argv = shlex.split(next(line for line in command.splitlines() if ' -o radioCoreTest ' in line))
+    argv[argv.index('radioCoreTest.c')] = str(wrapper)
+    argv[argv.index('-o') + 1] = str(OUT / 'test_radio_air')
+    run([*argv, '-I' + str(OUT), '-I' + str(host), '-I' + str(ROOT / 'tests/native/stubs'), '-I' + str(APP / 'core'),
+         '-I' + str(ROOT / 'src/modem'), '-I' + str(ROOT / 'integration/radiofoundry'), '-I' + str(ROOT / 'tests/classic'),
+         '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_P25_NATIVE=1', '-DCONFIG_P25=1', '-DCONFIG_DEV_TX=1',
+         '-DCONFIG_MULTI_WATCH=1', '-DCONFIG_P25_SCAN=1', '-DCONFIG_SPECTRUM=1', '-DCONFIG_FOX=1', '-DCONFIG_CW_BEACON=1',
+         '-DCONFIG_P25_SEARCH=1', '-DCONFIG_P25_CALLER=1', '-DCONFIG_P25_ANY=1', '-DCONFIG_VFO_MODES=1', '-DCONFIG_YSF=1',
+         '-DCONFIG_NXDN=1', '-DCONFIG_DPMR=1', '-DCONFIG_DMR_ANY=1', '-DCONFIG_AIR_WATCH=1',
+         str(ROOT / 'src/modem/native_test.c'), str(ROOT / 'integration/radiofoundry/native/native_lab.c'),
+         *(str(APP / 'core/radio' / f) for f in ('spectrum.c', 'fox.c', 'cw_beacon.c', 'p25search.c', 'vfox.c'))],
+        cwd=host)
+    run([OUT / 'test_radio_air'], cwd=host)
+
+
 def main(ROOT, APP, OUT, flags, host):
     exclusion_tests(ROOT)
+    radio_tests(ROOT, APP, OUT, host)
     tp = ROOT / 'tests/plus'
     # The screens through upstream's UI simulator (tests/plus/ui_sim_air.c wraps it), English and Turkish
     run(['make', 'out/gen/lang_tables.h'], cwd=host, stdout=subprocess.DEVNULL)
@@ -88,7 +120,7 @@ def main(ROOT, APP, OUT, flags, host):
     argv[argv.index('-o') + 1] = str(OUT / 'test_ui_air')
     run([*argv, '-I' + str(host), '-I' + str(tp), '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_AM_RX=1', '-DCONFIG_APRS=1',
          '-DCONFIG_VFO=1', '-DCONFIG_AIRFIELDS=1', '-DCONFIG_LANG_TR=1', '-DCONFIG_LARGE_SCALE=1',
-         '-DCONFIG_HOME_FREQ=1',
+         '-DCONFIG_HOME_FREQ=1', '-DCONFIG_MULTI_WATCH=1', '-DCONFIG_VFO_MODES=1', '-DCONFIG_AIR_WATCH=1',
          *(str(APP / 'core/ui' / f) for f in ('airfield.c', 'airfield_data.c', 'ui_airfield.c')),
-         str(APP / 'core/aprs/aprs_fmt.c'), '-lm'], cwd=host)
+         str(APP / 'core/aprs/aprs_fmt.c'), str(APP / 'core/radio/vfox.c'), '-lm'], cwd=host)
     run([OUT / 'test_ui_air'], cwd=host)

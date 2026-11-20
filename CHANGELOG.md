@@ -23,6 +23,9 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 - Airfields: the frequencies that are not in an aerodrome's official publication are removed (61, among them
   another unit's approach frequencies and the unofficial ones of Bolu); nothing is added. An airfield keeps all of
   its frequencies (up to 64), and the list line shows "+1" when the service shown has more ("TWR 125.000 +1").
+- Air watch: on an airfield's page, # puts up to six of its frequencies (not the ATIS) on the multi-watch ring, each
+  letter its own VFO, received in AM; the radio hops between them and stops on activity. Stopping the watch brings
+  everything back as it was (your channel or VFO, your own dual / multi-watch); nothing of it is saved.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

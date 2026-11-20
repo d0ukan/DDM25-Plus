@@ -7,7 +7,10 @@
  * frequency (radio_req_vfo + radio_req_vfo_set), received in AM because it is in the air band, and receive only: the
  * radio core refuses TX there whatever the VFO says (radio_sm_tx_check: TXDENY_AM). An 8.33 kHz channel name tunes its
  * grid point (air_freq_hz). The order is walked, never stored (air_next): the screen keeps the picked and the top
- * row's airfields and the picked frequency (6 B). */
+ * row's airfields and the picked frequency (6 B).
+ * CONFIG_AIR_WATCH (DDM32 Plus, item 44b): # in the details watches them: up to 6 (each channel name once, not the
+ * ATIS) on the multi-watch ring, each letter its own VFO, received in AM; one frequency is simply tuned
+ * (ui_airwatch.inc). */
 #include "config.h"
 #if CONFIG_AIRFIELDS
 #include "board.h"
@@ -20,10 +23,14 @@
 #include "radio/radio_am.h"
 #include "aprs/aprs.h"
 #include "ui/airfield.h"
+#if CONFIG_AIR_WATCH
+#include "ui_svc.h"	/* UI_MW_MAX */
+#endif
 
 static uint16_t sel = AIR_NONE, top = AIR_NONE;
 static uint8_t fsel;
 static bool info;
+static char done[48];		/* the toast after tuning (or watching) */
 
 /* Where we are now (the position APRS would send, ambiguity and all) */
 static void here_now(air_here_t *h, int32_t *lat, int32_t *lon)
@@ -204,13 +211,17 @@ static void airfield_draw(void)
 		draw_info(y, sel, &h, lat, lon);
 	else
 		draw_list(y, &h, lat, lon);
+#if CONFIG_AIR_WATCH
+	ui_draw_bottom(&ui_st, info ? TR(TEXT_ALT_OPEN "OK listen  # watch all" TEXT_ALT_NEXT "OK listen  # all"
+					 TEXT_ALT_CLOSE) : TR("^v pick  OK info  # nearest"));
+#else
 	ui_draw_bottom(&ui_st, info ? TR("OK listen  ^v pick  Back") : TR("^v pick  OK info  # nearest"));
+#endif
 	ui_draw_banner(&ui_st);
 }
 
 void ui_airfield_tune(uint16_t i, uint8_t k)
 {
-	static char done[48];
 	if (i >= air_field_count || k >= air_fields[i].count)
 		return;
 	const air_field_t *a = &air_fields[i];
@@ -240,6 +251,58 @@ void ui_airfield_tune(uint16_t i, uint8_t k)
 	ui_toast(done);
 	ui_go_home();
 }
+
+#if CONFIG_AIR_WATCH
+/* # in airfield i's details: its frequencies on the multi-watch ring (up to UI_MW_MAX, the first ones, each channel
+ * name once, the ATIS left out: its recording never stops, so the ring would stay on it); one alone is tuned as OK
+ * does (an ATIS alone too) */
+static void __attribute__((noinline)) watch_all(uint16_t i)
+{
+	const air_field_t *a = &air_fields[i];
+	uint32_t hz[UI_MW_MAX];
+	uint8_t n = 0, first = 0;
+	for (uint8_t k = 0; k < a->count && n < UI_MW_MAX; k++) {
+		if (air_freqs[a->first + k].type == AIR_ATIS)
+			continue;
+		uint32_t f = air_freq_hz(&air_freqs[a->first + k]);
+		bool twice = false;
+		for (uint8_t j = 0; j < n; j++)
+			twice = twice || hz[j] == f;
+		if (twice)
+			continue;
+		if (n == 0)
+			first = k;
+		hz[n++] = f;
+	}
+	if (n < 2) {
+		ui_airfield_tune(i, first);
+		return;
+	}
+	if (!radio_am_capable()) {
+		ui_toast(TR("No AM receive on this radio"));
+		return;
+	}
+	if (ui_view()->state == RS_TX) {
+		ui_toast(TR("Can't tune while transmitting"));
+		return;
+	}
+	for (uint8_t k = 0; k < n; k++) {
+		if (!radio_am_band(hz[k]) || !board_in_band(hz[k], false)) {
+			ui_toast(TR("Not in the radio's bands"));
+			return;
+		}
+	}
+	ui_go_home();
+	if (!ui_dual_air_watch(hz, n))
+		return;
+	sbuf_t b;
+	sb_init(&b, done, sizeof done);
+	sb_str(&b, a->code);
+	sb_str(&b, ": ");
+	sb_str(&b, TR("Air watch on"));
+	ui_toast(done);
+}
+#endif
 
 static bool airfield_key(const input_event_t *ev)
 {
@@ -276,6 +339,16 @@ static bool airfield_key(const input_event_t *ev)
 		ui_dirty();
 		return true;
 	}
+#if CONFIG_AIR_WATCH
+	if (ev->action == ACT_CONTEXT && ev->gesture == GESTURE_PRESS && info && sel < air_field_count) {
+		if (air_fields[sel].count == 0)
+			ui_toast(TR("No frequencies in the data"));
+		else
+			watch_all(sel);
+		ui_dirty();
+		return true;
+	}
+#endif
 	if (ev->action == ACT_CONTEXT && ev->gesture == GESTURE_PRESS) {
 		air_here_t h;
 		int32_t lat, lon;

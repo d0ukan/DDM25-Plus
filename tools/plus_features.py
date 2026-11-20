@@ -187,6 +187,7 @@ def prepare(transform, install):
     prepare_home_freq(transform)
     __import__((__package__ + "." if __package__ else "") + "plus_dota", fromlist=["x"]).prepare_dota(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_aprs", fromlist=["x"]).prepare_aprs(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_air", fromlist=["x"]).prepare_air(transform, install)
 
 
 def prepare_large_scale(transform):

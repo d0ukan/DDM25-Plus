@@ -5977,3 +5977,15 @@ msgstr "OK ayrıntı  Geri"
 #: core/ui/ui_airfield.c
 msgid "{No frequencies in the data|No frequencies}"
 msgstr "{Veride frekans yok|Frekans yok}"
+
+#: core/ui/ui_airfield.c
+msgid "{OK listen  # watch all|OK listen  # all}"
+msgstr "{OK dinle  # tümünü izle|OK dinle  # tümü}"
+
+#: core/ui/ui_airfield.c
+msgid "Air watch on"
+msgstr "Hava izleme açık"
+
+#: core/ui/ui_dual.c
+msgid "Air watch off"
+msgstr "Hava izleme kapalı"

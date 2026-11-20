@@ -44,6 +44,9 @@ static void mw_reset(void)
 	mw_p1_saved = 0xFF;
 	mw_p25_said = false;
 	memset(mw_heard, 0, sizeof mw_heard);
+#if CONFIG_AIR_WATCH
+	mw_air = false;		// DDM32 Plus air watch (ui_airwatch.inc)
+#endif
 }
 
 static bool mw_ring(void) { return dual()->on && mw_cnt > 2; }
@@ -214,6 +217,10 @@ static bool mw_taken(const ui_dual_ref_t *r, uint8_t pane)
 // selected channel under its letter. The other letters are found again from the codeplug (mw_default)
 static void mw_save(void)
 {
+#if CONFIG_AIR_WATCH
+	if (mw_air)
+		return;	// DDM32 Plus air watch: the user's ring stays as saved before it
+#endif
 	uint8_t p = mw_cnt > 2 ? mw_p1 : 1;
 #if CONFIG_VFO_MODES
 	if (ref[1].vfo && ref[1].pos >= 2)
@@ -312,6 +319,10 @@ static bool mw_set_letter(uint8_t k, const ui_dual_ref_t *r)
 void ui_dual_mw_set(int32_t v)
 {
 	uint8_t n = (uint8_t)(v < 2 ? 2 : v > UI_MW_MAX ? UI_MW_MAX : v);
+#if CONFIG_AIR_WATCH
+	if (mw_air)
+		return;	// DDM32 Plus air watch: its own ring; the setting is read again at its end (ui_airwatch.inc)
+#endif
 	if (n == mw_n)
 		return;
 	mw_n = n;
