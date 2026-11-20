@@ -517,3 +517,5 @@ __pycache__/
 !/tests/plus/ui_sim_aprsx.c
 !/tests/plus/ui_sim_aprsx.h
 !/tests/plus/test_aprs_mice.c
+!/integration/radiofoundry/aprsx/ui_aprsx.c
+!/integration/radiofoundry/aprsx/ui_aprsx.h

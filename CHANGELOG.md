@@ -13,6 +13,11 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   In service, Returning, Committed, Special, Priority; En route first). Manual, automatic and SmartBeaconing beacons
   (and the ISS one) go out as Mic-E positions with speed, heading, altitude and the comment: shorter packets. The
   emergency stays the SOS's own. Standard by default.
+- APRS station page: OK on a station in Tools > APRS > Stations heard opens its page: the callsign and its symbol by
+  name (car, house, ...), distance and direction from us, position (degrees and locator), altitude, speed and
+  heading, comment, when it was heard (direct or through a digipeater) and how many packets, and the last messages
+  from it and the one we sent it. OK: Go-To follows it; 0: the map centred on it with its details; #: a message to
+  it; Up / Down: the previous / next station.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

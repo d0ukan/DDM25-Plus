@@ -2212,3 +2212,31 @@ and longitudes in all four quadrants and every band of the Mic-E longitude code,
 field decode back), the beacons on the air through the fake radio decoded back (manual for each message, automatic
 every 60 s, SmartBeaconing from moving host NMEA with speed and course, the APRS-IS line), and the setting stored and
 read back with the neighbouring APRS bits intact. UI: Settings > APRS in English and Turkish with the layout check.
+
+**Item 49, the APRS station page (`CONFIG_APRS_STATION`, needs `APRS_RX`, `MAP` and `NAV_FOLLOW`).** Tools > APRS >
+Stations heard: OK opens the station's page (`integration/radiofoundry/aprsx/ui_aprsx.c`, `SCR_APRS_STATION`; the
+list's hint "OK details  Back"; before, OK started Go-To, which is now one key on the page). Lines, cut to the
+240 px screen: the callsign (medium font); the symbol by name and its two characters with the distance and direction
+from our GPS position ("Car /> 2.8 km NE"; "No GPS fix" / "No position heard" otherwise); the position in degrees
+and the Maidenhead locator (`loc_encode`, CONFIG_LOCATOR); altitude, speed in km/h and heading as a compass point when
+the station sent them; its comment without the "/A=" altitude (`mapnav_comment`); "Heard: 3m ago" and "Direct
+(or Via digi), 5 packets"; under a line, the message we sent it last ("> QSL (delivered)": the composer's addressee
+and text, the engine's sending / delivered / not delivered) and its messages in our inbox ("< text", unread ones in
+the warning colour, newest first, as many as fit; another station's are not shown), or "No messages with it".
+Symbol names (Turkish in `tr.po`): APRS101 appendix 2's common primary-table symbols (police, digipeater, gateway,
+aircraft, house, motorcycle, car, balloon, camper, bus, helicopter, boat, person, weather, ambulance, bicycle, fire
+truck, hospital, jeep, truck, laptop, repeater, van); on the alternate table or with an overlay only digipeater,
+gateway, house, car and weather keep their name; others show the two characters only. Keys: OK Go-To follows the
+station (`ui_follow_start`, as the list's OK did; Back returns to the page); 0 opens Tools > Map centred on it at zoom
+6 or closer with it picked and its details under the map (`ui_map_show_station` in `ui_map.c`; Back steps out of the
+details, the pick, then the map); # the composer to it (CONFIG_APRS_MSG); Up / Down the station before / after it in
+the list (round). The page names its station by the callsign's hash (2 B) and looks it up in the engine's list at each
+draw (no copy kept); one that drops out of the list shows "Not heard any more" and its keys do nothing. Drawn again
+once a second (`ui_aprsx_tick` in `ui_app.c`) so the age moves on. Its working copies (the station, one inbox
+message, two 48-character lines) live in the tool screens' shared buffer (`ui_scratch.h`, `UI_SCRATCH_APRSX`; it is
+larger already), so the page costs 7 B of static RAM (the hash, the tick, the map's centring flag) and nothing of
+the UI stack beyond what the stack check already counted. Cost (public build, on item 47): +3,124 B flash (the page,
+its texts and the 23 symbol names in two languages, the map's centring; above the 1.5-2.5 KB estimate), +8 B static
+RAM; stacks unchanged (UI 196 B free). The map also keeps other labels off the picked station's name now (the layout
+check found a district name under it at zoom 6). Not done from the design: the
+"how often" figure (the list keeps only the packet count) and the station's own Mic-E status (not kept in the list).

@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* DDM32 Plus: the tool screens' shared buffer (ui_scratch.h). Installed as core/ui/ui_scratch.c. */
 #include "config.h"
-#if CONFIG_SPECTRUM || CONFIG_DMR_SEARCH || CONFIG_P25_SEARCH || CONFIG_DMR_TRUNK || CONFIG_P25_TRUNK || CONFIG_MSG_RX
+#if CONFIG_SPECTRUM || CONFIG_DMR_SEARCH || CONFIG_P25_SEARCH || CONFIG_DMR_TRUNK || CONFIG_P25_TRUNK || CONFIG_MSG_RX || \
+    CONFIG_APRS_STATION
 #include "ui/ui_scratch.h"
 
 ui_scratch_t ui_scratch;

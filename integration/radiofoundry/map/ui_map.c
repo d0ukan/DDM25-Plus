@@ -9,6 +9,8 @@
  *   0: the APRS station nearest the centre (0 again: the next), "TA1ABC-9 4.2 km NE 3m ago" under the map; OK: its
  *      details there (symbol, altitude, comment), OK again: a message to it (CONFIG_APRS_MSG), Back: the way again,
  *      Back again drops the pick. # / 0 switch between repeaters and stations.
+ *   The APRS station page (CONFIG_APRS_STATION, ui_aprsx.c) opens the map centred on its station (zoom 6 at least),
+ *      picked with its details shown; the keys as after 0 and OK.
  *   9: Back to start: the track's first point saved as a waypoint and Tools > Go-To opened on it. 7 held: the track
  *      cleared (7 alone says so).
  *   *: Coverage (DDM32 Plus, CONFIG_MAP_COVERAGE) on / off: the track's points coloured by the signal of the channel
@@ -39,6 +41,9 @@
 #if CONFIG_REPEATERS
 #include "ui/rpt.h"
 #endif
+#if CONFIG_APRS_STATION
+#include "ui/ui_aprsx.h"
+#endif
 
 #define PROVINCE_NEAR_M		3000u	/* a fix this close to the simplified shore still names the province */
 #define DISTRICT_NEAR_M		30000u	/* the nearest district centre in the province, at most this far */
@@ -60,6 +65,10 @@ static uint16_t pick = RPT_NONE;	/* the picked repeater (#), RPT_NONE none */
 #endif
 #if CONFIG_MAP_COVERAGE
 static bool cov_on;		/* * : the track coloured by signal */
+#endif
+#if CONFIG_APRS_STATION
+#define CENTRE_ZOOM	6u		/* a few districts */
+static bool centre_pick;	/* the next draw centres the view on the picked station (ui_map_show_station) */
 #endif
 
 typedef struct {
@@ -209,11 +218,27 @@ static void __attribute__((noinline)) station_labels(map_occ_t *occ)
 	}
 }
 
+#if CONFIG_APRS_STATION
+/* The picked station's name first (pick_label writes it later, on top): no other label under it */
+static void __attribute__((noinline)) reserve_pick(map_occ_t *occ)
+{
+	aprs_station_t st;
+	int x, y;
+	const font_t *t = ui_layout.tiny;
+	if (spick != 0 && mapnav_station_find(ui_svc_aprs_station, ui_svc_aprs_station_count(), spick, &st) >= 0 &&
+	    map_project(&view, st.lat, st.lon, &x, &y))
+		(void)map_occ_take(occ, x + 5, y - t->h / 2, gfx_text_width(t, st.call), t->h);
+}
+#endif
+
 /* Province names, then the stations' callsigns, then the districts (dots, names): labels never overlap */
 static void __attribute__((noinline)) draw_names(void)
 {
 	map_occ_t occ;
 	map_occ_init(&occ, view.x, view.y, view.w, view.h);
+#if CONFIG_APRS_STATION
+	reserve_pick(&occ);
+#endif
 	if (view.zoom >= ZOOM_PROV_LABELS) {
 		color_t c = view.zoom >= ZOOM_DISTRICT_LABELS ? ui_col.fg : ui_col.dim;
 		for (uint8_t i = 0; i < 81u; i++) {
@@ -485,12 +510,42 @@ static void __attribute__((noinline)) draw_info(bool here, const ui_position_t *
 	ui_draw_bottom(&ui_st, hint);
 }
 
+#if CONFIG_APRS_STATION
+/* The view on the picked station, once (ui_map_show_station); later pans and zooms are the user's */
+static void __attribute__((noinline)) centre_on_pick(void)
+{
+	aprs_station_t st;
+	centre_pick = false;
+	if (mapnav_station_find(ui_svc_aprs_station, ui_svc_aprs_station_count(), spick, &st) < 0 || !st.has_pos)
+		return;
+	if (zoom < CENTRE_ZOOM)
+		zoom = CENTRE_ZOOM;
+	map_view_set(&view, st.lat, st.lon, zoom);
+}
+
+void ui_map_show_station(const char *call)
+{
+	spick = mapnav_call_hash(call);
+	details = true;
+	follow = false;
+	centre_pick = true;
+#if CONFIG_REPEATERS
+	pick = RPT_NONE;
+#endif
+	ui_push(SCR_MAP, 0);
+}
+#endif
+
 static void map_draw_screen(void)
 {
 	ui_position_t p;
 	gfx_clear(ui_col.bg);
 	int top = ui_draw_top(ui_view(), &ui_st, TR("Map"), "") + 1;
 	layout(top);
+#if CONFIG_APRS_STATION
+	if (centre_pick)
+		centre_on_pick();
+#endif
 	bool here = ui_svc_position(&p) && p.fix;
 	if (here && follow) {
 		map_view_set(&view, p.lat_e7, p.lon_e7, zoom);

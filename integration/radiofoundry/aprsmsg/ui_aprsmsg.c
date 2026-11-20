@@ -55,6 +55,15 @@ void ui_aprsmsg_compose_to(const char *to)
 	ui_push(SCR_APRS_COMPOSE, 0);
 }
 
+#if CONFIG_APRS_STATION
+/* DDM32 Plus APRS station page (ui_aprsx.h): the message we sent last, to whom (NULL: none since power on) */
+const char *ui_aprsmsg_sent(const char **text)
+{
+	*text = c_text;
+	return sent_to[0] != '\0' ? sent_to : NULL;
+}
+#endif
+
 /* --- Messages --- */
 
 #if CONFIG_APRS_RX

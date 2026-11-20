@@ -456,6 +456,11 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | A47-4 | As A47-3 while moving (GPS, SmartBeaconing on) | speed and heading in the decoded packet match the GPS page; packets shorter than with Standard (note the air time if the SDR shows it) |
 | A47-5 | Beacon format back to Standard; Send position now | `APZRDF` and `!` / `=` position as before |
 | A47-6 | Power off and on | Settings > APRS keeps the format and message |
+| A49-1 | APRS receive on 144.800, a second station beaconing (or a local digipeater); Tools > APRS > Stations heard, OK on it | its page: callsign, symbol name ("Car /> ..."), distance and direction from us (GPS fix), degrees and locator, altitude / speed / heading if it sends them, comment, "Heard: ... direct" or "via digi", packets; the age counts up every second |
+| A49-2 | On the page: OK, then Back | Go-To following that station (as I28), Back returns to the page |
+| A49-3 | On the page: 0 | the map centred on the station, picked, its details under the map; Back x3: the page |
+| A49-4 | On the page: #, Canned text QSL, Send; Back to the page; the other station acks | "> QSL (sending)", then "(delivered)"; a message it sends us appears as "< text" (newest first) |
+| A49-5 | Up / Down on the page | the previous / next heard station; turn the other radio off and wait until it drops out of the list (12 stations): "Not heard any more" |
 
 ## 7. Not testable here
 

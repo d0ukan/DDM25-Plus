@@ -8,7 +8,12 @@ aprsmsg/ui_aprsmsg.c, common/ui_scratch.h); upstream files change only through t
   APRS_MICE    (item 47) Settings > APRS: the beacon format (Standard / Mic-E) and the Mic-E message (M0-M6, En route
                by default; the emergency stays the SOS's own). Manual, automatic, SmartBeaconing and ISS beacons follow
                it; the APRS-IS copy carries the Mic-E destination. Needs APRS_MSG (the encoder).
+  APRS_STATION (item 49) Tools > APRS > Stations heard, OK: the station's page (symbol, distance and bearing, position,
+               altitude, speed, comment, heard, its messages); OK Go-To follows it, 0 the map centred on it, # a
+               message. Needs APRS_RX, MAP and NAV_FOLLOW.
 """
+
+APRSX = 'integration/radiofoundry/aprsx/'
 
 
 def prepare_aprs(transform, install):
@@ -171,4 +176,56 @@ def prepare_aprs(transform, install):
          'static bool set_hidden(const set_item_t *s)\n{\n'
          '#if CONFIG_APRS_MICE\n\tif (s->type != ST_ACTION && s->id == UI_SET_APRS_MICE_MSG)\n'
          '\t\treturn ui_svc_setting_get(UI_SET_APRS_MICE) == 0;\t// DDM32 Plus: the message only with Mic-E\n#endif\n'),
+    ])
+
+    # --- Item 49: the APRS station page (CONFIG_APRS_STATION) ---
+    for f in ('ui_aprsx.c', 'ui_aprsx.h'):
+        install('core/ui/' + f, APRSX + f)
+    transform('config/features.mk', [
+        ('override CONFIG_APRS_MICE := n\nendif\n',
+         'override CONFIG_APRS_MICE := n\nendif\n'
+         # needs the heard list (APRS_RX), the map's pick (MAP) and Go-To's follow (NAV_FOLLOW): off where one is missing
+         'CONFIG_APRS_STATION ?= n\nFEATURES += APRS_STATION\n'
+         'ifneq ($(CONFIG_APRS)$(CONFIG_APRS_RX)$(CONFIG_MAP)$(CONFIG_NAV_FOLLOW),yyyy)\n'
+         'override CONFIG_APRS_STATION := n\nendif\n'),
+    ])
+    transform('core/config.h', [
+        ('#ifndef CONFIG_APRS_MICE\n#define CONFIG_APRS_MICE 0\t/* DDM32 Plus Mic-E beacons (docs/plus.md, round 14) */\n'
+         '#endif\n',
+         '#ifndef CONFIG_APRS_MICE\n#define CONFIG_APRS_MICE 0\t/* DDM32 Plus Mic-E beacons (docs/plus.md, round 14) */\n'
+         '#endif\n#ifndef CONFIG_APRS_STATION\n#define CONFIG_APRS_STATION 0\t/* DDM32 Plus APRS station page (round 14) */\n'
+         '#endif\n'),
+    ])
+    transform('core/ui/ui_nav.h', [
+        ('\tSCR_COUNT\n} ui_scr_t;',
+         '\tSCR_APRS_STATION,\t\t// DDM32 Plus: a heard APRS station\'s page (CONFIG_APRS_STATION, ui_aprsx.c)\n'
+         '\tSCR_COUNT\n} ui_scr_t;'),
+    ])
+    transform('core/ui/ui_menus.c', [
+        ('extern const ui_scr_def_t ui_dota_screen, ui_dota_pick_screen;\t// ui_dota.c (DDM32 Plus)',
+         'extern const ui_scr_def_t ui_dota_screen, ui_dota_pick_screen;\t// ui_dota.c (DDM32 Plus)\n'
+         'extern const ui_scr_def_t ui_aprsx_screen;\t// ui_aprsx.c (DDM32 Plus)'),
+        ('\t[SCR_DOTA] = &ui_dota_screen,\n\t[SCR_DOTA_PICK] = &ui_dota_pick_screen,\n#endif\n',
+         '\t[SCR_DOTA] = &ui_dota_screen,\n\t[SCR_DOTA_PICK] = &ui_dota_pick_screen,\n#endif\n'
+         '#if CONFIG_APRS_STATION\n\t[SCR_APRS_STATION] = &ui_aprsx_screen,\n#endif\n'),
+    ])
+    transform('core/ui/ui_app.c', [
+        ('#include "ui/ui_dota.h"\n#endif\n',
+         '#include "ui/ui_dota.h"\n#endif\n#if CONFIG_APRS_STATION\n#include "ui/ui_aprsx.h"\n#endif\n'),
+        ('\tif (ui_dota_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n',
+         '\tif (ui_dota_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'
+         '#if CONFIG_APRS_STATION\n\t// DDM32 Plus: the APRS station page, drawn again once a second (ui_aprsx.c)\n'
+         '\tif (ui_aprsx_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'),
+    ])
+    # Tools > APRS > Stations heard: OK opens the station's page (Go-To is one key there)
+    transform('core/ui/ui_aprs.c', [
+        ('\tif (ui_svc_aprs_station((uint8_t)i, &s)) {\n\t\tui_follow_start(s.call);\n\t}\n',
+         '\tif (ui_svc_aprs_station((uint8_t)i, &s)) {\n#if CONFIG_APRS_STATION\n'
+         '\t\tui_aprsx_open(s.call);\t// DDM32 Plus: its page (ui_aprsx.c)\n#else\n'
+         '\t\tui_follow_start(s.call);\n#endif\n\t}\n'),
+        ('#if CONFIG_NAV_FOLLOW\n#include "ui/follow.h"\n',
+         '#if CONFIG_NAV_FOLLOW\n#include "ui/follow.h"\n#if CONFIG_APRS_STATION\n#include "ui/ui_aprsx.h"\n#endif\n'),
+        ('.prefix = TRN("Heard"), .hint = TRN("OK follow  Back"),\n',
+         '.prefix = TRN("Heard"),\n#if CONFIG_APRS_STATION\n\t.hint = TRN("OK details  Back"),\n#else\n'
+         '\t.hint = TRN("OK follow  Back"),\n#endif\n'),
     ])

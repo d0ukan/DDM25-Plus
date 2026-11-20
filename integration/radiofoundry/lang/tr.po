@@ -5836,3 +5836,139 @@ msgstr "Beacon biçimi"
 #: core/ui/ui_menus.c
 msgid "Mic-E message"
 msgstr "Mic-E mesajı"
+
+#: core/ui/ui_aprsx.c
+msgid "Police"
+msgstr "Polis"
+
+#: core/ui/ui_aprsx.c
+msgid "Digipeater"
+msgstr "Digipeater"
+
+#: core/ui/ui_aprsx.c
+msgid "Gateway"
+msgstr "Ağ geçidi"
+
+#: core/ui/ui_aprsx.c
+msgid "House"
+msgstr "Ev"
+
+#: core/ui/ui_aprsx.c
+msgid "Motorcycle"
+msgstr "Motosiklet"
+
+#: core/ui/ui_aprsx.c
+msgid "Car"
+msgstr "Araç"
+
+#: core/ui/ui_aprsx.c
+msgid "Balloon"
+msgstr "Balon"
+
+#: core/ui/ui_aprsx.c
+msgid "Camper"
+msgstr "Karavan"
+
+#: core/ui/ui_aprsx.c
+msgid "Bus"
+msgstr "Otobüs"
+
+#: core/ui/ui_aprsx.c
+msgid "Helicopter"
+msgstr "Helikopter"
+
+#: core/ui/ui_aprsx.c
+msgid "Boat"
+msgstr "Tekne"
+
+#: core/ui/ui_aprsx.c
+msgid "Person"
+msgstr "Kişi"
+
+#: core/ui/ui_aprsx.c
+msgid "Weather"
+msgstr "Hava istasyonu"
+
+#: core/ui/ui_aprsx.c
+msgid "Ambulance"
+msgstr "Ambulans"
+
+#: core/ui/ui_aprsx.c
+msgid "Bicycle"
+msgstr "Bisiklet"
+
+#: core/ui/ui_aprsx.c
+msgid "Fire truck"
+msgstr "İtfaiye"
+
+#: core/ui/ui_aprsx.c
+msgid "Hospital"
+msgstr "Hastane"
+
+#: core/ui/ui_aprsx.c
+msgid "Jeep"
+msgstr "Cip"
+
+#: core/ui/ui_aprsx.c
+msgid "Truck"
+msgstr "Kamyon"
+
+#: core/ui/ui_aprsx.c
+msgid "Laptop"
+msgstr "Dizüstü"
+
+#: core/ui/ui_aprsx.c
+msgid "Van"
+msgstr "Minibüs"
+
+#: core/ui/ui_aprsx.c
+msgid "No position heard"
+msgstr "Konum duyulmadı"
+
+#: core/ui/ui_aprsx.c
+msgid " (delivered)"
+msgstr " (iletildi)"
+
+#: core/ui/ui_aprsx.c
+msgid " (not delivered)"
+msgstr " (iletilemedi)"
+
+#: core/ui/ui_aprsx.c
+msgid "No messages with it"
+msgstr "Mesajlaşma yok"
+
+#: core/ui/ui_aprsx.c
+msgid "Heard: "
+msgstr "Duyuldu: "
+
+#: core/ui/ui_aprsx.c
+msgid "Direct, "
+msgstr "Doğrudan, "
+
+#: core/ui/ui_aprsx.c
+msgid "Via digi, "
+msgstr "Digi ile, "
+
+#: core/ui/ui_aprsx.c
+msgid " packet"
+msgstr " paket"
+
+#: core/ui/ui_aprsx.c
+msgid " packets"
+msgstr " paket"
+
+#: core/ui/ui_aprsx.c
+msgid "{OK Go-To  0 map  # message|OK Go-To  0 map  # msg|OK Go-To  0 map}"
+msgstr "{OK git  0 harita  # mesaj|OK git  0 harita  # msj|OK git  0 harita}"
+
+#: core/ui/ui_aprsx.c
+msgid "{OK Go-To  0 map  Back|OK Go-To  0 map}"
+msgstr "{OK git  0 harita  Geri|OK git  0 harita}"
+
+#: core/ui/ui_aprsx.c
+msgid "Not heard any more"
+msgstr "Artık duyulmuyor"
+
+#: core/ui/ui_aprs.c
+msgid "OK details  Back"
+msgstr "OK ayrıntı  Geri"
