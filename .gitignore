@@ -484,3 +484,4 @@ __pycache__/
 !/tests/plus/test_ui_toolbox.c
 !/tests/plus/ui_sim_toolbox.c
 !/tests/plus/ui_sim_toolbox.h
+!/CHANGELOG.md
