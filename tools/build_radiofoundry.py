@@ -772,6 +772,9 @@ def main():
                 "p25_lab_command":("playback_stats",)}.items():
                 extra+="call "+caller+" "+" ".join(targets)+"\n"
             extra+="call playback_amp_update dm32_speaker_pcm\n"
+            if args.plus:
+                from tools import plus_dota
+                extra+=plus_dota.STACK_EDGES	# DDM32 Plus DOTA: the session's io calls, the storage job
             edges.write_text((UP / "tools/stack_check_edges.txt").read_text()+extra)
             stack_args=[f"STACK_CHECK_ARGS=--edges {edges}"]
         with stack_log.open("w") as f:
