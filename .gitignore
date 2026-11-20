@@ -507,6 +507,12 @@ __pycache__/
 !/tests/plus/test_dota_session.c
 !/tests/plus/test_dota_fm.c
 !/tests/plus/test_dota_radio.inc
+# DDM32 Plus user data packs (tools/plus_datapack.py, docs/r14.md 7)
+!/tools/plus_datapack.py
+!/tools/test_datapack.py
+!/integration/radiofoundry/datapack/datapack.h
+!/integration/radiofoundry/datapack/datapack.c
+!/tests/plus/test_datapack.c
 !/integration/radiofoundry/dota/ui_dota.h
 !/integration/radiofoundry/dota/ui_dota.c
 !/tests/plus/test_ui_dota.c

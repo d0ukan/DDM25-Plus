@@ -2377,3 +2377,22 @@ After the rebase onto 42a0ff4: public 84,484 B flash and **1,760 B RAM free**; o
   without the switch. Radio rows WF3-1 - WF3-3.
 - **Also in this commit (item 44b's Home)**: a multi-watch row of an FM channel or VFO in the air band now says "AM"
   ("AM 124.425") where it said "FM": it is received in AM (`ui_mwatch_draw.inc`; the air watch's rows are all such).
+
+## User data packs (`CONFIG_DATAPACK`, ours; branch `datapack`, round 14)
+
+Data the user builds from sources they download themselves (RadioID.net's user list; the aerodromes' own
+publications), kept on the data chip in **0xE70000-0xEFFFFF**, the one region AGENTS.md rule 2 opens to the firmware
+(owner, 2026-11-20; checked erased in the owner's backups). Design: `docs/r14.md` section 7. Code:
+`integration/radiofoundry/datapack/`, hooks in `tools/plus_datapack.py`, host tests in `tools/test_datapack.py`.
+
+- Store (`core/storage/datapack.c`): per type two slots (RadioID 2 x 256 KB at 0xE70000 / 0xEB0000, air band 2 x 16 KB
+  at 0xEF0000 / 0xEF4000); a slot is a 64-byte header (`DPK1`, type, format, sequence, length, payload CRC-32, date,
+  name, builder tag, header CRC-32) and the payload. Written into the slot not in force: its sectors erased, the
+  payload programmed (any order), read back against its CRC, the header programmed last. The higher valid sequence is
+  in force; checked at boot (`dpk_scan` after `storage_init`). Every erase / program goes through `dpk_erase` /
+  `dpk_program`, which refuse anything outside the region. RAM: 2 x 40 B (what is kept of the pack in force).
+
+| Step | What | Public FLASH B | Public RAM B (free) | Owner FLASH B |
+|---|---|---:|---:|---:|
+| base | `ddm25` da7577c | 810,388 | 209,616 (1,840) | 889,160 |
+| 1 | the store, boot scan | 810,928 (+540) | 209,696 (1,760) | 889,700 |
