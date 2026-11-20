@@ -73,6 +73,8 @@ public sealed class FlowTests(RadioInputs inputs) : IClassFixture<RadioInputs>
         Assert.Equal(("b1", "aaaa", "install_plus_from_stock"), w.PlanKey);
         w.PlanFinished(PlanOk);
         Assert.True(w.CanInstall());
+        w.SetPackage(new Pkg());                       // the same application again (a page refresh): the plan stays
+        Assert.True(w.CanInstall());
         w.SetPackage(new Pkg("bbbb"));                 // another version: the plan is gone
         Assert.False(w.CanInstall());
     }

@@ -103,11 +103,12 @@ public sealed class Wizard
     {
         if (Running is not null)
             throw new InvalidOperationException("package change while a step runs");
-        if (!ReferenceEquals(package, Package))
-        {
-            Package = package;
+        // The page builds a new package object on every refresh: the same application (SHA-256) and installability
+        // is the same package, and must not throw away a plan that was just made (the Check step's Continue stayed
+        // off on the owner's first install)
+        if (package?.Sha256 != Package?.Sha256 || package?.Installable != Package?.Installable)
             ResetPlan();
-        }
+        Package = package;
     }
 
     private void ResetPlan()
