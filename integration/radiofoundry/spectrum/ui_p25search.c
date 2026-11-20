@@ -2,9 +2,12 @@
 /* DM32 Plus Tools > P25 search (radio/p25search.h): find P25 in a range whatever its NAC and talkgroup. Left / Right
  * pick the range (around the frequency in use, or a band), OK starts or stops; the screen shows the sweep, the
  * probe or the call being played, and the found list (frequency, NAC, talkgroup, source, how long ago). Back stops
- * it; leaving the screen otherwise stops it after a few seconds (P25S_IDLE_MS). */
+ * it; leaving the screen otherwise stops it after a few seconds (P25S_IDLE_MS).
+ * CONFIG_FIND_SAVE (ui/findsave.h): # saves every find into a new zone "Bulunanlar N"; Up / Down pick a find, OK on it
+ * saves that one (into the newest such zone). The list stays as it was while the save runs. */
 #include "config.h"
 #if CONFIG_P25_SEARCH
+#include <string.h>
 #include "ui_nav.h"
 #include "ui_screens.h"
 #include "fmt.h"
@@ -12,11 +15,17 @@
 #include "gfx.h"
 #include "radio/radio.h"
 #include "radio/p25search.h"
+#if CONFIG_FIND_SAVE
+#include "ui/findsave.h"
+#endif
 
 enum { R_500K, R_1M, R_2M5, R_UHF, R_VHF, R_COUNT };
 static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5 MHz", "430-440 MHz", "144-146 MHz" };
 static uint8_t range_i = R_1M;
 static p25s_view_t sv;
+#if CONFIG_FIND_SAVE
+static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
+#endif
 
 static void range_of(uint8_t r, uint32_t center, uint32_t *lo, uint32_t *hi)
 {
@@ -47,11 +56,51 @@ static void hexnac(sbuf_t *b, uint16_t nac)
 		sb_chr(b, "0123456789ABCDEF"[(nac >> sh) & 15u]);
 }
 
+/* The search's state; while finds are being saved, the list as the save began */
+static bool snap(void)
+{
+#if CONFIG_FIND_SAVE
+	if (ui_findsave_busy())
+		return true;
+#endif
+	return p25s_snapshot(&sv);
+}
+
+#if CONFIG_FIND_SAVE
+/* The picked find's row in the snapshot, -1 = none */
+static int sel_row(void)
+{
+	for (uint8_t i = 0; sel_hz != 0 && i < sv.found_n; i++)
+		if (sv.found[i].hz == sel_hz)
+			return i;
+	return -1;
+}
+
+bool ui_p25search_find(uint8_t i, findsave_item_t *out)
+{
+	if (i >= sv.found_n)
+		return false;
+	const p25s_found_t *f = &sv.found[i];
+	memset(out, 0, sizeof *out);
+	out->kind = FINDSAVE_P25;
+	out->hz = f->hz;
+	out->nac = f->nac;
+	out->tg = f->tg;
+	out->cc = FINDSAVE_CC_NONE;
+	return true;
+}
+#else
+static int sel_row(void)
+{
+	return -1;
+}
+#endif
+
 static void p25s_draw(void)
 {
 	char buf[40];
 	sbuf_t b;
-	bool have = p25s_snapshot(&sv);
+	bool have = snap();
 	gfx_clear(ui_col.bg);
 	int y = ui_draw_top(ui_view(), &ui_st, TR("P25 search"), "") + 2;
 	const font_t *s = ui_layout.small, *m = ui_layout.medium;
@@ -79,6 +128,11 @@ static void p25s_draw(void)
 	}
 	gfx_text(m, 0, y, buf, c);
 	y += m->h + 2;
+#if CONFIG_FIND_SAVE
+	if (ui_findsave_line(buf, sizeof buf)) {
+		gfx_text(s, 0, y, buf, ui_col.warn);
+	} else
+#endif
 	if (have && sv.phase != P25S_OFF) {
 		sb_init(&b, buf, sizeof buf);
 		sb_str(&b, TR("Pass "));
@@ -95,8 +149,13 @@ static void p25s_draw(void)
 	if (!have || sv.found_n == 0) {
 		gfx_text(s, 0, y, TR("No P25 found yet"), ui_col.dim);
 	}
+	int sel = have ? sel_row() : -1;
 	for (uint8_t i = 0; have && i < sv.found_n && y + s->h < ui_layout.hint_y; i++) {
 		const p25s_found_t *f = &sv.found[i];
+		bool picked = (int)i == sel;
+		int rows = f->src && y + 2 * s->h + 1 < ui_layout.hint_y ? 2 : 1;
+		if (picked)
+			gfx_fill(0, y - 1, gfx_width(), rows * (s->h + 1) + 1, ui_col.focus);
 		sb_init(&b, buf, sizeof buf);
 		sb_mhz4(&b, f->hz);
 		sb_str(&b, " $");
@@ -111,17 +170,26 @@ static void p25s_draw(void)
 		}
 		sb_chr(&b, ' ');
 		sb_age(&b, ui_st.now_ms - f->heard_ms);
-		gfx_text(s, 0, y, buf, i == 0 && sv.playing ? ui_col.rx : ui_col.fg);
+		gfx_text(s, 0, y, buf, picked ? ui_col.focus_fg : i == 0 && sv.playing ? ui_col.rx : ui_col.fg);
 		y += s->h + 1;
-		if (f->src && y + s->h < ui_layout.hint_y) {
+		if (rows == 2) {
 			sb_init(&b, buf, sizeof buf);
 			sb_str(&b, "   ID ");
 			sb_u32(&b, f->src, 1);
-			gfx_text(s, 0, y, buf, ui_col.dim);
+			gfx_text(s, 0, y, buf, picked ? ui_col.focus_fg : ui_col.dim);
 			y += s->h + 1;
 		}
 	}
-	ui_draw_bottom(&ui_st, have && sv.phase != P25S_OFF ? TR("OK stop  Back") : TR("OK start  <> range"));
+	const char *hint = have && sv.phase != P25S_OFF ? TR("OK stop  Back") : TR("OK start  <> range");
+#if CONFIG_FIND_SAVE
+	if (sel >= 0)
+		hint = TR(TEXT_ALT_OPEN "OK save this one  ^v pick" TEXT_ALT_NEXT "OK save  ^v pick" TEXT_ALT_CLOSE);
+	else if (have && sv.found_n != 0)
+		hint = sv.phase != P25S_OFF ?
+		       TR(TEXT_ALT_OPEN "OK stop  ^v pick  # save all" TEXT_ALT_NEXT "OK stop  # save all" TEXT_ALT_CLOSE) :
+		       TR(TEXT_ALT_OPEN "OK start  ^v pick  # save all" TEXT_ALT_NEXT "OK start  # save all" TEXT_ALT_CLOSE);
+#endif
+	ui_draw_bottom(&ui_st, hint);
 	ui_draw_banner(&ui_st);
 }
 
@@ -136,7 +204,8 @@ static void restart(void)
 static bool p25s_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
-	bool on = p25s_snapshot(&sv) && sv.phase != P25S_OFF;
+	bool have = snap();
+	bool on = have && sv.phase != P25S_OFF;
 	if (press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) {
 		range_i = (uint8_t)((range_i + (ev->action == ACT_NAV_RIGHT ? 1u : R_COUNT - 1u)) % R_COUNT);
 		if (on)
@@ -144,6 +213,31 @@ static bool p25s_key(const input_event_t *ev)
 		ui_dirty();
 		return true;
 	}
+#if CONFIG_FIND_SAVE
+	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN)) {
+		/* Down from nothing picks the newest; Up past the newest picks nothing again */
+		int r = have ? sel_row() : -1;
+		r += ev->action == ACT_NAV_DOWN ? 1 : -1;
+		if (!have || r < 0 || sv.found_n == 0)
+			sel_hz = 0;
+		else
+			sel_hz = sv.found[r < sv.found_n ? r : sv.found_n - 1].hz;
+		ui_dirty();
+		return true;
+	}
+	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_CONTEXT) {
+		ui_findsave_start(FINDSAVE_P25, 0, have ? sv.found_n : 0, false);	/* # saves them all */
+		ui_dirty();
+		return true;
+	}
+	if ((ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_LONG) && ev->action == ACT_SELECT && have &&
+	    sel_row() >= 0) {
+		uint8_t r = (uint8_t)sel_row();
+		ui_findsave_start(FINDSAVE_P25, r, (uint8_t)(r + 1u), true);	/* OK on a find saves that one */
+		ui_dirty();
+		return true;
+	}
+#endif
 	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_SELECT) {
 		if (on)
 			radio_req_p25_search(0, 0);
@@ -152,13 +246,20 @@ static bool p25s_key(const input_event_t *ev)
 		ui_dirty();
 		return true;
 	}
-	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_BACK)
+	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_BACK) {
+#if CONFIG_FIND_SAVE
+		sel_hz = 0;
+#endif
 		radio_req_p25_search(0, 0);	/* and the screen's own Back leaves */
+	}
 	return false;
 }
 
 static void p25s_enter(void)
 {
+#if CONFIG_FIND_SAVE
+	sel_hz = 0;
+#endif
 	ui_dirty();
 }
 

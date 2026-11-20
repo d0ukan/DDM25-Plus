@@ -165,13 +165,13 @@ static void test_plus_spectrum_sm(void)
         setup_codeplug();start();now+=1000;radio_sm_poll(&sm,now);
         strcpy(sm.radio_name,"TA1ABC");
         uint32_t rx_hz=sm.view.ch.rx_hz;int tx0=hw.tx_calls,off0=hw.tx_off_calls;
-        radio_req_t r={.type=RREQ_CW_BEACON,.arg=CW_BEACON_SOS,.arg2=0};radio_sm_request(&sm,&r,now);
+        radio_req_t rb={.type=RREQ_CW_BEACON,.arg=CW_BEACON_SOS,.arg2=0};radio_sm_request(&sm,&rb,now);
         now+=10;radio_sm_tick(&sm,now);cw_beacon_view(&bv);
         CHECK(bv.on && bv.keying && hw.tx_calls==tx0+1 && hw.tx_hz==sm.view.ch.tx_hz && hw.led[LED_RED]);
         for(int i=0;i<4000 && bv.keying;i++){ now+=10;radio_sm_tick(&sm,now);cw_beacon_view(&bv); }
         CHECK(!bv.keying && !bv.on && bv.sent==1 && hw.tx_off_calls>off0 && hw.rx_hz==rx_hz && !hw.led[LED_RED]);
         /* Periodic: the next one 30 s after the end of the last */
-        r.arg=CW_BEACON_DE;r.arg2=1;radio_sm_request(&sm,&r,now);
+        rb.arg=CW_BEACON_DE;rb.arg2=1;radio_sm_request(&sm,&rb,now);
         for(int i=0;i<4000;i++){ now+=10;radio_sm_tick(&sm,now);cw_beacon_view(&bv);if(i>5 && !bv.keying)break; }
         int tx1=hw.tx_calls;CHECK(bv.on && !bv.keying && bv.sent==2);
         for(int i=0;i<2900;i++){ now+=10;radio_sm_tick(&sm,now); }
@@ -183,16 +183,16 @@ static void test_plus_spectrum_sm(void)
         CHECK(!bv.on && !bv.keying && hw.tx_off_calls>off1);
         req(RREQ_PTT,0);
         /* No callsign: refused, nothing keyed */
-        sm.radio_name[0]='\0';int tx2=hw.tx_calls;r.arg=CW_BEACON_CQ;r.arg2=0;radio_sm_request(&sm,&r,now);
+        sm.radio_name[0]='\0';int tx2=hw.tx_calls;rb.arg=CW_BEACON_CQ;rb.arg2=0;radio_sm_request(&sm,&rb,now);
         now+=10;radio_sm_tick(&sm,now);cw_beacon_view(&bv);
         CHECK(!bv.on && !bv.keying && bv.refused!=0 && hw.tx_calls==tx2);
         /* TX inhibit: refused with its reason */
-        strcpy(sm.radio_name,"TA1ABC");sm.set.tx_inhibit=true;radio_sm_request(&sm,&r,now);
+        strcpy(sm.radio_name,"TA1ABC");sm.set.tx_inhibit=true;radio_sm_request(&sm,&rb,now);
         now+=10;radio_sm_tick(&sm,now);cw_beacon_view(&bv);
         CHECK(!bv.on && bv.refused!=0 && bv.refused!=0xFFu && hw.tx_calls==tx2);
         sm.set.tx_inhibit=false;
         /* Stop request while armed */
-        r.arg2=3;radio_sm_request(&sm,&r,now);r.arg=CW_BEACON_KINDS;radio_sm_request(&sm,&r,now);
+        rb.arg2=3;radio_sm_request(&sm,&rb,now);rb.arg=CW_BEACON_KINDS;radio_sm_request(&sm,&rb,now);
         now+=10;radio_sm_tick(&sm,now);cw_beacon_view(&bv);CHECK(!bv.on && !bv.keying);
         printf("Plus CW beacon: once, periodic, PTT cut, no callsign, TX inhibit, stop\n");
     }

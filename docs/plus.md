@@ -1932,6 +1932,90 @@ Queued by the owner (2026-11-18), with the feasibility notes from the discussion
 - [built, radio rows BR1-BR3] Name and public build (`tools/plus_brand.py`, `prepare_brand`; owner's request
   2026-11-19): "Name and public build" below.
 
+Round 13 "ideas 1" (owner's items 23, 28, 30 and 33; parallel job, 2026-11-20; `tools/plus_fieldx.py`, our code in
+integration/radiofoundry/fieldx/ installed into core/ui/). Host-tested, not yet on the radio (rows I23-*, I28-*,
+I30-*, I33-* in plus-radio-test.md):
+
+- [built] Search finds saved as channels (`CONFIG_FIND_SAVE`, item 23; needs ZONE_EDIT and P25_SEARCH or DMR_SEARCH).
+  On Tools > P25 search and Tools > DMR search **#** saves every find into a new zone **"Bulunanlar N"** (N one more
+  than the highest such zone; the name is not translated, it is codeplug data); **Save this one**: P25 search, Up /
+  Down pick a find (the DMR screen's pick, new on P25) and OK; DMR search, OK held on a picked find (OK alone still
+  tunes the VFO). It goes into the newest "Bulunanlar" zone, or a new one when there is none or it is full. **The
+  writes are the zone editor's own**: `ui_svc_zone_edit` with ZONE_OP_NEW for the zone, then one ZONE_OP_ADD_NEW a
+  find, the channel editor's "Copy here" path (a free channel number written and put at the zone's end in one storage
+  job, checked before anything is written; the foreign codeplug question applies as to any edit). One step a UI tick
+  (`ui_findsave.c`), the next only once the zone editor's queue is empty and the step is seen in the codeplug (the
+  zone found again by its name: an index can move). A find already in that zone (same mode, RX frequency and NAC /
+  colour code) is skipped; the zone's capacity (`codeplug_zone_capacity`), a codeplug with no free channel, no room
+  for another zone and a refused write end the save with the count so far. Toasts: "Bulunanlar 2: 5 saved, 1 there",
+  "Saved to / Already in Bulunanlar 2", "Zone full: 3 saved", "Codeplug full: 3 saved", "Stopped: 3 saved" (after the
+  refusal's own toast), "No room for another zone", "Nothing found to save"; "Saving 3 of 8" on the search screen
+  meanwhile, whose list stays as it was until the save has ended. Channels (`findsave.h`): named "P25 433.500" /
+  "DMR 438.7125" (a fourth decimal only when needed), simplex on the frequency found, 12.5 kHz, the radio's power.
+  **P25**: the NAC found (TX NAC Same as RX), Normal squelch (every talkgroup on that NAC: "TG Any"), the talkgroup
+  heard kept as the TX talkgroup. **Rule for TX**: RX only unless a talkgroup was heard (the system's own, from a voice
+  call's link control), our own P25 unit ID is known (the radio's default, `codeplug_p25_unit_id(0)`; the editor's
+  Radio ID "Default"), the frequency is in 144-148 / 420-450 MHz (the editor's outside-band rule) and in the radio's
+  TX bands; never with NAC $F7E / $F7F. That is `codeplug_p25_valid`'s own rule (TX needs a talkgroup and an ID) made
+  safe: a found system is not ours, and the source ID heard is the other radio's, never used as ours. **DMR**: the
+  colour code found (Any when none was named), the one slot seen (Any when both or none), RX group list Any, no TX
+  contact, always RX only (the search never learns a talkgroup we may use; pick a contact in the editor to talk).
+  RAM: 54 B (the save's state 14, its toast 36, P25 search's pick 4); the zone and channel copies live on the UI
+  stack only inside noinline readers, never with a zone_op_t (the UI task's deepest path is still upstream's).
+  Not changed: the P25 search's find rows were already wider than the DM-32's 220 px safe area with the NAC in
+  decimal ("433.5000 $1C8/456 TG655 1s ago": the end is cut on the screen); left for the screen's owner.
+- [built] Find my friend (`CONFIG_NAV_FOLLOW`, item 28; needs NAV and APRS). **5** on Tools > Map's APRS station pick
+  (0) or **OK** on Tools > APRS > Stations heard opens Go-To following that station: "Follow TA1ABC-9", the rose,
+  distance and bearing, and "Heard 3m ago"; once a second the station is looked up in upstream's heard list (no copy)
+  and a newer position taken, so the arrow moves live. Not heard for **10 minutes or more**: "STALE: heard 12m ago" in
+  the warning colour, the last position kept (also when the station drops out of the 12-entry list); "No position
+  from it yet" for one heard without a position. **Back** (toast "Following ended", Go-To closes), **Up / Down /
+  the knob** (another target: the list again) or **OK** (a new waypoint) end it; Tools > Go-To opened any other way
+  is not following. The age is the station's (any packet heard); a status packet without a position moves it but not
+  the position. RAM: 28 B (one callsign, position and time, 24; the poll time, 4). `follow.c` (pure), `ui_goto.c`.
+- [built] Locator calculator (`CONFIG_LOCATOR`, item 30; needs NAV and APRS_MSG, whose text entry it uses). **#** on
+  Go-To opens the page; # there types a 4 or 6 character Maidenhead locator with the radio's text entry (titled
+  "Locator"; keypad letters, a held digit is the digit; any case, written back as "KM69kw"); the page shows the
+  centre's latitude / longitude ("39.9375 N  32.8750 E"), the distance and bearing from where we are
+  (`aprs_position_now`: the GPS fix, else the computer's, else the fixed position, as Tools > Repeaters) and our own
+  locator; **OK** saves the centre as a waypoint named after the locator (Go-To's list, RAM only); a bad one is
+  refused ("Not a locator: like KM69 or KM69kw"). The existing locator code only goes from a position to a locator
+  (Tools > Repeaters' `rpt_locator`, Tools > Position's grid page); the way back, locator to centre, is new
+  (`locator.c`, integer 1e-7 degree) and encodes exactly as those do. RAM: 7 B (the text typed).
+- [built] One-key SOS (`CONFIG_SOS_KEY`, item 33; needs KEY_ASSIGN). Settings > Keys offers **"SOS"** for a side
+  key's press and long press (`KEYFN_SOS`, appended as value 17: stored values never move; input action `ACT_SOS`);
+  **not assigned by default**. Tools > **SOS key** picks the actions: APRS SOS, DMR emergency, CW SOS (once), each
+  On / Off, **RAM only, all off after power on** (no settings bit: the VFO / priority words are taken). The key opens
+  a confirmation page listing the actions chosen ("Send SOS now?", "It TRANSMITS"); **OK** or **a long press of the
+  same key** starts them (set on the press with the long press left at Default, the long press sends SOS too),
+  **Back** cancels; with nothing chosen it says so and sends nothing. Like the emergency key it works with the keys
+  locked (the page's OK is then locked; the key held confirms). The actions are the existing calls with all their
+  gates, as the lone worker's: the CW beacon's "SOS SOS SOS DE <call>" once (`radio_req_cw_beacon`), `aprs_sos_set`
+  (Tools > APRS > SOS: the Mic-E emergency position now and every 2 minutes), `ui_svc_emergency` (the emergency
+  key's). **Order**: the CW beacon is cut by any other radio request and keys the channel out of DMR, so it goes
+  first; the APRS SOS is turned on once the CW is on air (the engine waits for the channel), the DMR emergency once the
+  CW message has ended; without CW both start at once. The page and toasts say what was sent or why not ("CW SOS
+  sent", "CW SOS not sent: can't transmit here", "DMR emergency sent", "Not sent: needs a DMR channel", "SOS not
+  sent: no position", "SOS not sent: APRS not ready"; each SOS position's own toast is the APRS page's). The key
+  again while one runs offers **"Stop SOS?"** (OK or the key held): the CW cut, the emergency canceled, the APRS SOS
+  off; what went out stays sent; an emergency or APRS SOS that was on before (the user's own, the lone worker's) is
+  left alone. RAM: 17 B (`sos.c` 15, the page 2).
+- Tests: tests/plus/test_findsave.c (names, the P25 / DMR rules, the TX rule's every condition, duplicates, zone
+  names; with and without DMR_ANY), test_follow.c (update, other stations, kept position, the 10 minute edge, the
+  millisecond wrap), test_locator.c (published centres JN58td, FN31pr, IO91wm, KM69kw, 4 characters, the corners,
+  refusals; the encoder against a double precision reference over the world and back into the subsquare; nav_way's
+  distance / bearing between centres within 0.5 % / 1 degree of a double great circle), test_sos.c (recording fakes:
+  **nothing asked to transmit before sos_start, nor with every action off**; the order, once each, refusals and their
+  events, Stop, the user's own left alone; with and without the CW beacon), test_sos_key.c (`keyassign.c`: appended
+  value, both slots, the long press, a build without it reads Default), test_ui_fieldx.c (19 flows through the real
+  UI in upstream's simulator with the real zone_edit.c: zones and channels as written, duplicates, zone full,
+  codeplug full, no room for a zone; follow from the heard list and the map, live, stale, gone, the endings; the
+  locator page, typing, centre, distance, waypoint, refusal; Tools > SOS key, nothing chosen, Back, OK, the key held,
+  locked keys, Stop, a refusal), run by tools/test_fieldx.py from tools/test_classic.py.
+- Cost (all four): FLASH 841,040 -> 852,472 B (+11,432, strings and Turkish included), static RAM 210,584 ->
+  210,688 B (+104 of the 120 B budget: item 23 54, item 28 28, item 30 7, item 33 17, less alignment), every task's
+  deepest stack path unchanged (UI 268 B free, radio 760, p25-lab 328).
+
 ## Name and public build
 
 The product's name on the radio is **DDM25 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file

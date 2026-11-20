@@ -30,6 +30,9 @@
 #include "ui/map.h"
 #include "ui/mapnav.h"
 #include "ui/nav.h"
+#if CONFIG_NAV_FOLLOW
+#include "ui/follow.h"
+#endif
 #if CONFIG_REPEATERS
 #include "ui/rpt.h"
 #endif
@@ -378,6 +381,12 @@ static void __attribute__((noinline)) draw_info(bool here, const ui_position_t *
 #else
 		hint = details ? TR("0 next  Back") : TR("OK details  0 next  # repeater  Back clear");
 #endif
+#if CONFIG_NAV_FOLLOW
+		hint = details ? (CONFIG_APRS_MSG ? TR(TEXT_ALT_OPEN "OK message  5 follow  0 next" TEXT_ALT_NEXT
+						       "5 follow  0 next" TEXT_ALT_CLOSE) : TR("5 follow  0 next")) :
+			TR(TEXT_ALT_OPEN "OK details  5 follow  0 next  Back clear" TEXT_ALT_NEXT "OK details  5 follow  0 next"
+			   TEXT_ALT_NEXT "5 follow  0 next" TEXT_ALT_CLOSE);
+#endif
 		if (details) {	/* call, symbol, altitude, comment: cut at the end */
 			size_t max = (size_t)(w / s->w);
 			if (strlen(buf) > max)
@@ -534,6 +543,17 @@ static bool map_key(const input_event_t *ev)
 			station_next();
 		ui_dirty();
 		return true;
+#if CONFIG_NAV_FOLLOW
+	case ACT_DIGIT_5:	/* follow the picked station in Go-To (find my friend) */
+		if (ev->gesture == GESTURE_PRESS) {
+			aprs_station_t st;
+			if (spick != 0 && mapnav_station_find(ui_svc_aprs_station, ui_svc_aprs_station_count(), spick, &st) >= 0)
+				ui_follow_start(st.call);
+			else
+				ui_toast(TR("0 picks a station to follow"));
+		}
+		return true;
+#endif
 #if CONFIG_MAP_TRACK
 	case ACT_DIGIT_7:
 		if (ev->gesture == GESTURE_PRESS)

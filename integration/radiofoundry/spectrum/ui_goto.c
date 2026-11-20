@@ -2,7 +2,10 @@
 /* DM32 Plus Tools > Go-To (nav.h): a compass rose with an arrow to the target, its distance, bearing and the time to
  * get there. Targets: the saved waypoints, then every APRS station heard with a position. North is up while
  * standing; heading up (the GPS course) while moving. Up / Down: target, OK: save here as a waypoint, OK held:
- * delete the waypoint shown. Opened with arg n (Tools > Map's "Back to start"): target n - 1 shown first. */
+ * delete the waypoint shown. Opened with arg n (Tools > Map's "Back to start"): target n - 1 shown first.
+ * CONFIG_NAV_FOLLOW (ui/follow.h): opened with FOLLOW_GOTO_ARG it follows one APRS station (Tools > Map's 5, Tools >
+ * APRS > Stations heard's OK): its newest position heard, its age, "stale" from 10 minutes. Up / Down (another
+ * target), OK (a new waypoint) or Back ends following. CONFIG_LOCATOR: # opens the locator calculator. */
 #include "config.h"
 #if CONFIG_NAV
 #include <math.h>
@@ -16,8 +19,52 @@
 #include "i18n.h"
 #include "gfx.h"
 #include "ui/nav.h"
+#if CONFIG_NAV_FOLLOW
+#include "ui/follow.h"
+#endif
 
 static uint16_t sel;
+#if CONFIG_NAV_FOLLOW
+static follow_t fw;		/* the station followed (call "" = none) */
+static uint32_t fw_polled_ms;
+
+/* The station's newest from the APRS engine's heard list (no copy of the list) */
+static bool __attribute__((noinline)) follow_poll(void)
+{
+	aprs_station_t s;
+	bool changed = false;
+	for (uint8_t i = 0; i < ui_svc_aprs_station_count(); i++)
+		if (ui_svc_aprs_station(i, &s))
+			changed |= follow_update(&fw, s.call, s.has_pos, s.lat, s.lon, s.heard_ms);
+	return changed;
+}
+
+void ui_follow_start(const char *call)
+{
+	follow_set(&fw, call);
+	follow_poll();
+	fw_polled_ms = ui_st.now_ms;
+	ui_push(SCR_GOTO, FOLLOW_GOTO_ARG);
+}
+
+bool ui_follow_tick(uint8_t scr, uint32_t now_ms)
+{
+	if (!follow_on(&fw) || now_ms - fw_polled_ms < FOLLOW_POLL_MS)
+		return false;
+	fw_polled_ms = now_ms;
+	follow_poll();
+	return scr == SCR_GOTO;	/* the age moves on: draw again every second */
+}
+
+static void follow_end(bool say)
+{
+	if (!follow_on(&fw))
+		return;
+	follow_clear(&fw);
+	if (say)
+		ui_toast(TR("Following ended"));
+}
+#endif
 
 typedef struct {
 	char name[16];
@@ -117,8 +164,23 @@ static void goto_draw(void)
 		sel = n ? (uint16_t)(n - 1u) : 0;
 	bool here = ui_svc_position(&p) && p.fix;
 	bool have = n != 0 && target_get(sel, &t);
+	bool fol = false;
+#if CONFIG_NAV_FOLLOW
+	fol = follow_on(&fw);
+	bool stale = fol && follow_stale(&fw, ui_st.now_ms);
+	if (fol) {
+		str_copy(t.name, sizeof t.name, fw.call);
+		t.lat = fw.lat;
+		t.lon = fw.lon;
+		t.waypoint = false;
+		have = fw.has_pos;
+	}
+#endif
 	sb_init(&b, buf, sizeof buf);
-	if (have) {
+	if (fol) {
+		sb_str(&b, TR("Follow "));
+		sb_str(&b, t.name);
+	} else if (have) {
 		sb_u32(&b, (uint32_t)sel + 1u, 1);
 		sb_chr(&b, '/');
 		sb_u32(&b, n, 1);
@@ -127,12 +189,17 @@ static void goto_draw(void)
 	} else {
 		sb_str(&b, TR("No targets: OK saves here"));
 	}
+#if CONFIG_NAV_FOLLOW
+	if (fol)
+		gfx_text(m, 0, y, buf, stale || !have ? ui_col.warn : ui_col.rx);
+	else
+#endif
 	gfx_text(m, 0, y, buf, have && t.waypoint ? ui_col.fg : ui_col.rx);
 	y += m->h + 2;
 	nav_way_t way = { 0 };
 	if (here && have)
 		nav_way(p.lat_e7, p.lon_e7, t.lat, t.lon, p.speed_kmh, p.course, &way);
-	int r = (ui_layout.hint_y - y - 3 * s->h - 12) / 2;
+	int r = (ui_layout.hint_y - y - 3 * s->h - 12 - (fol ? s->h + 1 : 0)) / 2;
 	if (r > 70)
 		r = 70;
 	if (r >= 16) {
@@ -144,6 +211,7 @@ static void goto_draw(void)
 	if (!here) {
 		sb_str(&b, TR("No GPS fix"));
 		gfx_text(m, 0, y, buf, ui_col.warn);
+		y += m->h + 1;
 	} else if (have) {
 		sb_range(&b, way.meters, way.bearing);
 		sb_str(&b, "  ");
@@ -162,8 +230,28 @@ static void goto_draw(void)
 			sb_str(&b, TR("North up (standing)"));
 		}
 		gfx_text(s, 0, y, buf, ui_col.dim);
+		y += s->h + 1;
 	}
-	ui_draw_bottom(&ui_st, TR("^v target  OK save  hold del"));
+	const char *hint = TR("^v target  OK save  hold del");
+#if CONFIG_LOCATOR
+	hint = TR(TEXT_ALT_OPEN "^v target  OK save  hold del  # locator" TEXT_ALT_NEXT "^v target  OK save  # locator"
+		  TEXT_ALT_NEXT "OK save  # locator" TEXT_ALT_CLOSE);
+#endif
+#if CONFIG_NAV_FOLLOW
+	if (fol) {
+		/* "Heard 3m ago", "STALE: heard 12m ago" (10 minutes and more), or no position yet */
+		sb_init(&b, buf, sizeof buf);
+		if (!fw.has_pos) {
+			sb_str(&b, TR("No position from it yet"));
+		} else {
+			sb_str(&b, stale ? TR("STALE: heard ") : TR("Heard "));
+			sb_age_long(&b, follow_age_ms(&fw, ui_st.now_ms));
+		}
+		gfx_text(s, 0, y, buf, stale || !fw.has_pos ? ui_col.warn : ui_col.dim);
+		hint = TR(TEXT_ALT_OPEN "Following: Back or ^v ends it" TEXT_ALT_NEXT "Back ends following" TEXT_ALT_CLOSE);
+	}
+#endif
+	ui_draw_bottom(&ui_st, hint);
 	ui_draw_banner(&ui_st);
 }
 
@@ -171,6 +259,26 @@ static bool goto_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
 	uint16_t n = target_count();
+#if CONFIG_LOCATOR
+	if (ev->action == ACT_CONTEXT && ev->gesture == GESTURE_PRESS) {
+		ui_push(SCR_LOCATOR, 0);	/* the locator calculator; following goes on under it */
+		return true;
+	}
+#endif
+#if CONFIG_NAV_FOLLOW
+	if (follow_on(&fw)) {
+		if (ev->action == ACT_BACK && ev->gesture == GESTURE_PRESS) {
+			follow_end(true);
+			return false;	/* and the screen's own Back leaves */
+		}
+		if (ev->action == ACT_SELECT && ev->gesture == GESTURE_LONG)
+			return true;	/* no waypoint shown to delete */
+		if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP))
+			follow_end(true);	/* another target: the list again, from where it was */
+		else if (ev->action == ACT_SELECT && ev->gesture == GESTURE_PRESS)
+			follow_end(false);	/* a new waypoint here becomes the target */
+	}
+#endif
 	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {
 		int dir = ev->action == ACT_ENC_STEP ? (ev->value > 0 ? 1 : -1) : ev->action == ACT_NAV_DOWN ? 1 : -1;
 		if (n)
@@ -203,6 +311,13 @@ static bool goto_key(const input_event_t *ev)
 static void goto_enter(void)
 {
 	uint16_t arg = ui_frame()->arg;	/* 0: as it was; n: target n - 1 (Tools > Map's "Back to start": 1, the newest) */
+#if CONFIG_NAV_FOLLOW
+	if (arg == FOLLOW_GOTO_ARG) {	/* ui_follow_start: the station set is the target */
+		ui_dirty();
+		return;
+	}
+	follow_end(false);	/* opened any other way: not following */
+#endif
 	if (arg != 0)
 		sel = (uint16_t)(arg - 1u);
 	ui_dirty();

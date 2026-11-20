@@ -4,9 +4,12 @@
  * sweep, the probe or the call being played, and the found list (frequency, color code, slots, repeater or direct,
  * how long ago; the last call's talkgroup and source below). Up / Down pick a find; OK on it puts the VFO there in
  * DMR with its color code and slot. Back stops the search; leaving the screen otherwise stops it after a few
- * seconds (DMRS_IDLE_MS). */
+ * seconds (DMRS_IDLE_MS).
+ * CONFIG_FIND_SAVE (ui/findsave.h): # saves every find into a new zone "Bulunanlar N"; OK held on a picked find saves
+ * that one (into the newest such zone). The list stays as it was while the save runs. */
 #include "config.h"
 #if CONFIG_DMR_SEARCH
+#include <string.h>
 #include "ui_nav.h"
 #include "ui_screens.h"
 #include "fmt.h"
@@ -14,12 +17,40 @@
 #include "gfx.h"
 #include "radio/radio.h"
 #include "radio/dmrsearch.h"
+#if CONFIG_FIND_SAVE
+#include "ui/findsave.h"
+#endif
 
 enum { R_500K, R_1M, R_2M5, R_UHF, R_VHF, R_COUNT };
 static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5 MHz", "430-440 MHz", "144-146 MHz" };
 static uint8_t range_i = R_1M;
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
 static dmrs_view_t sv;
+
+/* The search's state; while finds are being saved, the list as the save began */
+static bool snap(void)
+{
+#if CONFIG_FIND_SAVE
+	if (ui_findsave_busy())
+		return true;
+#endif
+	return dmrs_snapshot(&sv);
+}
+
+#if CONFIG_FIND_SAVE
+bool ui_dmrsearch_find(uint8_t i, findsave_item_t *out)
+{
+	if (i >= sv.found_n)
+		return false;
+	const dmrs_found_t *f = &sv.found[i];
+	memset(out, 0, sizeof *out);
+	out->kind = FINDSAVE_DMR;
+	out->hz = f->hz;
+	out->cc = f->cc != DMRS_CC_NONE && f->cc <= 15u ? f->cc : FINDSAVE_CC_NONE;
+	out->ts_mask = f->ts_mask;
+	return true;
+}
+#endif
 
 static void range_of(uint8_t r, uint32_t center, uint32_t *lo, uint32_t *hi)
 {
@@ -77,7 +108,7 @@ static void dmrs_draw(void)
 {
 	char buf[40];
 	sbuf_t b;
-	bool have = dmrs_snapshot(&sv);
+	bool have = snap();
 	gfx_clear(ui_col.bg);
 	int y = ui_draw_top(ui_view(), &ui_st, TR("DMR search"), "") + 2;
 	const font_t *s = ui_layout.small, *m = ui_layout.medium;
@@ -105,6 +136,11 @@ static void dmrs_draw(void)
 	}
 	gfx_text(m, 0, y, buf, c);
 	y += m->h + 2;
+#if CONFIG_FIND_SAVE
+	if (ui_findsave_line(buf, sizeof buf)) {
+		gfx_text(s, 0, y, buf, ui_col.warn);
+	} else
+#endif
 	if (have && sv.phase != DMRS_OFF) {
 		sb_init(&b, buf, sizeof buf);
 		sb_str(&b, TR("Pass "));
@@ -153,6 +189,15 @@ static void dmrs_draw(void)
 	}
 	const char *hint = sel >= 0 ? TR("OK tune  ^v pick") :
 			   have && sv.phase != DMRS_OFF ? TR("OK stop  ^v pick") : TR("OK start  <> range");
+#if CONFIG_FIND_SAVE
+	if (sel >= 0)
+		hint = TR(TEXT_ALT_OPEN "OK tune  hold OK save  ^v pick" TEXT_ALT_NEXT "OK tune  hold OK save"
+			  TEXT_ALT_CLOSE);
+	else if (have && sv.found_n != 0)
+		hint = sv.phase != DMRS_OFF ?
+		       TR(TEXT_ALT_OPEN "OK stop  ^v pick  # save all" TEXT_ALT_NEXT "OK stop  # save all" TEXT_ALT_CLOSE) :
+		       TR(TEXT_ALT_OPEN "OK start  ^v pick  # save all" TEXT_ALT_NEXT "OK start  # save all" TEXT_ALT_CLOSE);
+#endif
 	ui_draw_bottom(&ui_st, hint);
 	ui_draw_banner(&ui_st);
 }
@@ -185,7 +230,7 @@ static void tune_find(const dmrs_found_t *f)
 static bool dmrs_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
-	bool have = dmrs_snapshot(&sv);
+	bool have = snap();
 	bool on = have && sv.phase != DMRS_OFF;
 	if (press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) {
 		range_i = (uint8_t)((range_i + (ev->action == ACT_NAV_RIGHT ? 1u : R_COUNT - 1u)) % R_COUNT);
@@ -205,6 +250,20 @@ static bool dmrs_key(const input_event_t *ev)
 		ui_dirty();
 		return true;
 	}
+#if CONFIG_FIND_SAVE
+	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_CONTEXT) {
+		ui_findsave_start(FINDSAVE_DMR, 0, have ? sv.found_n : 0, false);	/* # saves them all */
+		ui_dirty();
+		return true;
+	}
+	if (ev->gesture == GESTURE_LONG && ev->action == ACT_SELECT) {
+		int r = have ? sel_row() : -1;
+		if (r >= 0)	/* OK held on a find saves that one (OK alone tunes it) */
+			ui_findsave_start(FINDSAVE_DMR, (uint8_t)r, (uint8_t)(r + 1), true);
+		ui_dirty();
+		return true;
+	}
+#endif
 	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_SELECT) {
 		int r = have ? sel_row() : -1;
 		if (r >= 0)

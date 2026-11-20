@@ -368,6 +368,34 @@ traffic) open. Build 7c90427b (artifacts/plus-20261117c) is installed but its ne
 | R13-5 | The editor's "TX NAC" row on a P25 channel: hex digits, # (Same as RX), # # decimal; RX NAC Any with Same as RX; PTT on a channel with TX NAC $659 into the other radio set to NAC $659 (**TX: owner approval and an authorised frequency**) | the rows work as in the host tests; RX Any keeps TX (sends $293); the other radio hears the call only on $659 |
 | R13-6 | Channel editor: a new channel outside 144-148 / 420-450 MHz; then RX only Off | Classic r10's rule: it starts RX only; turning RX only off asks "Enable TX?" with Keep RX-only as the default |
 
+### Round 13 ideas 1 (docs/plus.md "Round 13 ideas 1")
+
+| # | Do | Expect |
+|---|---|---|
+| I23-1 | Tools > P25 search, range around 433.500 MHz, until the other radio's call (NAC $659, TG 101) is found; # | "Saving 1 of 1" briefly, then toast "Bulunanlar 1: 1 saved"; Zones lists "Bulunanlar 1" with "P25 433.500"; the channel editor shows P25, RX NAC $659, TX NAC Same as RX, squelch Normal, talkgroup 101, Radio ID Default, RX only No when 433.500 is in the TX band (else RX only); the codeplug's other zones and channels unchanged |
+| I23-2 | On that channel (Zones > Bulunanlar 1): receive the other radio's call | plays as on a hand-made P25 channel (every talkgroup on NAC $659) |
+| I23-3 | Back to P25 search: # again; then Down on the find, OK; then a second find (another frequency or NAC), Down to it, OK | "Bulunanlar 2: 1 saved"; "Already in Bulunanlar 2" (nothing written); "Saved to Bulunanlar 2" and Zones > Bulunanlar 2 holds both |
+| I23-4 | Tools > DMR search near a DMR repeater or simplex user; #; then Down on a find, hold OK; OK on a find | a new "Bulunanlar N" with "DMR 438.xxx" channels: colour code and slot as found (Any where unknown), RX group list Any, RX only, no contact; hold OK: "Already in ..." or "Saved to ..."; OK still tunes the VFO there (as before) |
+| I23-5 | A codeplug with few free channels (or a find zone of 80): # with several finds | the save stops cleanly: "Codeplug full: n saved" / "Zone full: n saved" (or the zone editor's own refusal toast, then "Stopped: n saved"); the radio keeps working; `tools/plus_txdiag.py --health`: no crash record |
+| I23-6 | A codeplug of another firmware (the "Start new" question pending): # on a search with finds | the codeplug question appears first (as for any edit); Cancel: "Stopped: 0 saved", nothing written; Start new: the zone and channels are written |
+| I28-1 | Two radios with APRS (the other one beaconing a GPS position every minute); Tools > APRS > Stations heard, OK on it | Go-To "Follow <call>", arrow, distance and bearing, "Heard 0s ago"; the hint "Back ends following" |
+| I28-2 | Walk away with the other radio (or let it send a new position) | within a second of its next beacon the distance / bearing change; the age starts again |
+| I28-3 | Turn the other radio's APRS off for 10 minutes | from 10 minutes "STALE: heard 10m ago" in the warning colour, the last distance kept |
+| I28-4 | Back; Tools > Go-To again; Tools > Map, 0 (pick it), 5; Up | "Following ended", Go-To closes; Go-To opened from Tools is not following; from the map: Go-To following it; Up: "Following ended", the waypoint / station list again |
+| I30-1 | Go-To, #, then # and type KM69kw (5 5, 6, hold 6, hold 9, 5 5, 9), OK | the page shows "KM69kw", "Centre" over "39.9375 N  32.8750 E", our distance / bearing to it (with a GPS fix or a fixed position) and "Here <our locator>" (the same as Tools > Position's grid page) |
+| I30-2 | OK; Back | "Saved as a waypoint"; Go-To shows waypoint "KM69kw" with the arrow towards it |
+| I30-3 | # and type KM6 (or ZZ00), OK | toast "Not a locator: like KM69 or KM69kw"; OK: "# types a locator", nothing saved |
+| I33-1 | Settings > Keys: SK1 press = SOS (SK1 long press left Default); Tools > SOS key | the value list offers "SOS"; Tools > SOS key: APRS SOS, DMR emergency, CW SOS (once), all Off |
+| I33-2 | All Off: press SK1; OK; hold SK1 | page "No SOS actions chosen" / "Tools > SOS key picks them"; OK: toast, nothing keyed (TX LED off, the other radio hears nothing) |
+| I33-3 | Tools > SOS key: CW SOS On; Home; press SK1, Back | "Send SOS now?", "CW SOS (once)", "It TRANSMITS"; Back: Home, nothing keyed |
+| I33-4 | **TX: owner approval and an authorised frequency.** A simplex FM channel; radio name = the callsign; press SK1, OK | "SOS started"; the other radio hears "SOS SOS SOS DE <call>" once; toast "CW SOS sent", the page "CW SOS (once): sent", "SOS ended" |
+| I33-5 | **TX: owner approval and an authorised frequency.** APRS SOS and DMR emergency On (a DMR channel with an ID; APRS configured with callsign and an amateur APRS frequency); press SK1, hold SK1 | the DMR emergency starts (the other DMR radio alarms) and the APRS emergency position goes out (aprs.fi / the other radio: Emergency); toasts "DMR emergency sent", "SOS position sent"; the page "SOS is on" |
+| I33-6 | Press SK1 again; OK | "Stop SOS?"; OK: "SOS stopped", the emergency canceled ("Emergency canceled" on the other side as upstream's cancel), no more SOS positions (watch 5 min) |
+| I33-7 | **TX: owner approval and an authorised frequency.** All three On on a DMR channel; press SK1, OK | the CW message first, then the DMR emergency; the APRS SOS once the CW is on air (it goes when the channel is free); note the order on the other radios |
+| I33-8 | Gates: TX inhibit on (or an RX only channel, or a P25 channel), all three On; press SK1, OK | nothing keyed; toasts "CW SOS not sent: can't transmit here", "Not sent: needs a DMR channel" (and the APRS one's reason if it has one); the page names each reason |
+| I33-9 | Keys locked (long *); press SK1; OK; hold SK1 (one action On, **TX: owner approval and an authorised frequency**) | the page opens while locked; OK says the keys are locked; holding SK1 confirms |
+| I33-10 | Power off and on | Tools > SOS key all Off again; SK1 still set to SOS (the key assignment is stored as before) |
+
 ## 7. Not testable here
 
 YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec2 too heavy for the CPU).

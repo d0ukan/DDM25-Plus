@@ -845,5 +845,8 @@ def main():
     # DM32 Plus Tools > Repeaters by province (tools/test_rptprov.py): rpt_list.py provinces, the screen's flows
     import test_rptprov
     test_rptprov.main(ROOT,APP,OUT,flags,host)
+    # DDM25 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/test_fieldx.py)
+    import test_fieldx
+    test_fieldx.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

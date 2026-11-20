@@ -698,6 +698,10 @@ def main():
         "CONFIG_CW_RX="+("y" if args.plus else "n"),
         "CONFIG_RPT_PROV="+("y" if args.plus else "n"),
         "CONFIG_P25_TXNAC="+("y" if args.plus else "n"),
+        "CONFIG_FIND_SAVE="+("y" if args.plus else "n"),
+        "CONFIG_NAV_FOLLOW="+("y" if args.plus else "n"),
+        "CONFIG_LOCATOR="+("y" if args.plus else "n"),
+        "CONFIG_SOS_KEY="+("y" if args.plus else "n"),
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

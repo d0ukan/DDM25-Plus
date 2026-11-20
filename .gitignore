@@ -439,3 +439,25 @@ __pycache__/
 /pc/build/
 /pc/dist/
 /pc/research/
+# DDM25 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/plus_fieldx.py)
+!/tools/plus_fieldx.py
+!/integration/radiofoundry/fieldx/findsave.c
+!/integration/radiofoundry/fieldx/findsave.h
+!/integration/radiofoundry/fieldx/ui_findsave.c
+!/integration/radiofoundry/fieldx/follow.c
+!/integration/radiofoundry/fieldx/follow.h
+!/integration/radiofoundry/fieldx/locator.c
+!/integration/radiofoundry/fieldx/locator.h
+!/integration/radiofoundry/fieldx/ui_locator.c
+!/integration/radiofoundry/fieldx/sos.c
+!/integration/radiofoundry/fieldx/sos.h
+!/integration/radiofoundry/fieldx/ui_sos.c
+!/tools/test_fieldx.py
+!/tests/plus/test_findsave.c
+!/tests/plus/test_follow.c
+!/tests/plus/test_locator.c
+!/tests/plus/test_sos.c
+!/tests/plus/test_sos_key.c
+!/tests/plus/test_ui_fieldx.c
+!/tests/plus/ui_sim_fieldx.c
+!/tests/plus/ui_sim_fieldx.h

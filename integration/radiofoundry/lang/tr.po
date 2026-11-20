@@ -28,7 +28,7 @@ msgstr "PC Yükleyici bağlı"
 msgid "Power-cycle to exit"
 msgstr "Çıkmak için kapat-aç"
 
-#: core/ui/fmt.c core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_beacon.c core/ui/ui_lone.c core/ui/ui_menus.c core/ui/ui_scanx.c core/ui/ui_screens.c
+#: core/ui/fmt.c core/ui/ui_aprs.c core/ui/ui_aprsmsg.c core/ui/ui_beacon.c core/ui/ui_lone.c core/ui/ui_menus.c core/ui/ui_scanx.c core/ui/ui_screens.c core/ui/ui_sos.c
 msgid "Off"
 msgstr "Kapalı"
 
@@ -156,7 +156,7 @@ msgstr "GPS konumu (ve tarihi) gerekli"
 msgid "Settings > Location"
 msgstr "Ayarlar > Konum"
 
-#: core/ui/ui_almanac.c core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_rpt.c core/ui/ui_sat.c core/ui/ui_screens.c core/ui/ui_sstv.c
+#: core/ui/ui_almanac.c core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_rpt.c core/ui/ui_sat.c core/ui/ui_screens.c core/ui/ui_sos.c core/ui/ui_sstv.c
 msgid "Back"
 msgstr "Geri"
 
@@ -848,7 +848,7 @@ msgstr "Yeni mesaj"
 msgid "SOS (emergency)"
 msgstr "SOS (acil durum)"
 
-#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c
+#: core/ui/ui_aprs.c core/ui/ui_menus.c core/ui/ui_screens.c core/ui/ui_sos.c
 msgid "On"
 msgstr "Açık"
 
@@ -923,6 +923,10 @@ msgstr "0-9 seç  Geri"
 #: core/ui/ui_aprs.c core/ui/ui_msg.c
 msgid "Heard"
 msgstr "Duyulan"
+
+#: core/ui/ui_aprs.c
+msgid "OK follow  Back"
+msgstr "OK takip et  Geri"
 
 #: core/ui/ui_aprs.c core/ui/ui_fmdec.c
 msgid "Nothing heard yet"
@@ -1000,7 +1004,7 @@ msgstr "Gönderiliyor: "
 msgid ", try "
 msgstr ", deneme "
 
-#: core/ui/ui_aprsmsg.c core/ui/ui_gps.c core/ui/ui_menus.c core/ui/ui_screens.c
+#: core/ui/ui_aprsmsg.c core/ui/ui_findsave.c core/ui/ui_gps.c core/ui/ui_menus.c core/ui/ui_screens.c
 msgid " of "
 msgstr " / "
 
@@ -1319,6 +1323,18 @@ msgstr "OK durdur  ^v seç"
 #: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
 msgid "OK start  <> range"
 msgstr "OK başlat  <> aralık"
+
+#: core/ui/ui_dmrsearch.c
+msgid "{OK tune  hold OK save  ^v pick|OK tune  hold OK save}"
+msgstr "{OK ayarla  tut OK kaydet  ^v seç|OK ayarla  tut OK kaydet}"
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "{OK stop  ^v pick  # save all|OK stop  # save all}"
+msgstr "{OK durdur  ^v seç  # tümünü kaydet|OK durdur  # tümünü kaydet}"
+
+#: core/ui/ui_dmrsearch.c core/ui/ui_p25search.c
+msgid "{OK start  ^v pick  # save all|OK start  # save all}"
+msgstr "{OK başlat  ^v seç  # tümünü kaydet|OK başlat  # tümünü kaydet}"
 
 #: core/ui/ui_dmrsearch.c
 msgid "Repeater: set the TX offset"
@@ -1644,6 +1660,50 @@ msgstr "Bu sonuç için işlem yok"
 msgid "PTT talk  OK open  # more"
 msgstr "PTT konuş  OK aç  # diğer"
 
+#: core/ui/ui_findsave.c
+msgid "Saved to "
+msgstr "Kaydedildi: "
+
+#: core/ui/ui_findsave.c
+msgid "Already in "
+msgstr "Zaten var: "
+
+#: core/ui/ui_findsave.c core/ui/ui_menus.c
+msgid "Zone full"
+msgstr "Bölge dolu"
+
+#: core/ui/ui_findsave.c
+msgid "Codeplug full"
+msgstr "Codeplug dolu"
+
+#: core/ui/ui_findsave.c
+msgid "Stopped"
+msgstr "Durdu"
+
+#: core/ui/ui_findsave.c
+msgid " saved"
+msgstr " kayıt"
+
+#: core/ui/ui_findsave.c
+msgid " there"
+msgstr " vardı"
+
+#: core/ui/ui_findsave.c core/ui/ui_menus.c core/ui/ui_svc_storage.c core/ui/ui_svc_zone.c
+msgid "No room for another zone"
+msgstr "Başka bölgeye yer yok"
+
+#: core/ui/ui_findsave.c
+msgid "Saving: wait"
+msgstr "Kaydediliyor: bekleyin"
+
+#: core/ui/ui_findsave.c
+msgid "Nothing found to save"
+msgstr "Kaydedilecek bulgu yok"
+
+#: core/ui/ui_findsave.c
+msgid "Saving "
+msgstr "Kaydediliyor "
+
 #: core/ui/ui_fmdec.c core/ui/ui_msg.c
 msgid "Listening on this frequency"
 msgstr "Bu frekans dinleniyor"
@@ -1736,9 +1796,17 @@ msgstr "Zay -"
 msgid "<> att  OK peak  Back"
 msgstr "<> zay  OK tepe  Geri"
 
+#: core/ui/ui_goto.c
+msgid "Following ended"
+msgstr "Takip bitti"
+
 #: core/ui/ui_goto.c core/ui/ui_menus.c
 msgid "Go-To"
 msgstr "Hedefe git"
+
+#: core/ui/ui_goto.c
+msgid "Follow "
+msgstr "Takip "
 
 #: core/ui/ui_goto.c
 msgid "No targets: OK saves here"
@@ -1759,6 +1827,26 @@ msgstr "Kuzey yukarı (dururken)"
 #: core/ui/ui_goto.c
 msgid "^v target  OK save  hold del"
 msgstr "^v hedef  OK kaydet  tut sil"
+
+#: core/ui/ui_goto.c
+msgid "{^v target  OK save  hold del  # locator|^v target  OK save  # locator|OK save  # locator}"
+msgstr "{^v hedef  OK kaydet  tut sil  # lokatör|^v hedef  OK kaydet  # lokatör|OK kaydet  # lokatör}"
+
+#: core/ui/ui_goto.c
+msgid "No position from it yet"
+msgstr "Henüz konumu gelmedi"
+
+#: core/ui/ui_goto.c
+msgid "STALE: heard "
+msgstr "ESKİ: "
+
+#: core/ui/ui_goto.c core/ui/ui_screens.c
+msgid "Heard "
+msgstr "Duyulan "
+
+#: core/ui/ui_goto.c
+msgid "{Following: Back or ^v ends it|Back ends following}"
+msgstr "{Takipte: Geri veya ^v bitirir|Geri takibi bitirir}"
 
 #: core/ui/ui_goto.c
 msgid "Waypoint deleted"
@@ -1860,19 +1948,55 @@ msgstr "GPS yok veya kapalı"
 msgid "Up Down page  Back"
 msgstr "Yuk Aşa sayfa  Geri"
 
-#: core/ui/ui_lone.c
+#: core/ui/ui_locator.c core/ui/ui_menus.c
+msgid "Locator"
+msgstr "Lokatör"
+
+#: core/ui/ui_locator.c
+msgid "Not a locator: like KM69 or KM69kw"
+msgstr "Lokatör değil: KM69 veya KM69kw gibi"
+
+#: core/ui/ui_locator.c
+msgid "# types a locator"
+msgstr "# lokatör yazar"
+
+#: core/ui/ui_locator.c
+msgid "Centre"
+msgstr "Merkez"
+
+#: core/ui/ui_locator.c
+msgid "Here "
+msgstr "Burası "
+
+#: core/ui/ui_locator.c
+msgid "No position: GPS or Settings > Location"
+msgstr "Konum yok: GPS veya Ayarlar > Konum"
+
+#: core/ui/ui_locator.c
+msgid "{# type  OK save waypoint  Back|# type  OK save}"
+msgstr "{# yaz  OK nokta kaydet  Geri|# yaz  OK kaydet}"
+
+#: core/ui/ui_locator.c
+msgid "# type  Back"
+msgstr "# yaz  Geri"
+
+#: core/ui/ui_locator.c
+msgid "Saved as a waypoint"
+msgstr "Nokta olarak kaydedildi"
+
+#: core/ui/ui_lone.c core/ui/ui_sos.c
 msgid "DMR emergency sent"
 msgstr "DMR acil durum gönderildi"
 
-#: core/ui/ui_lone.c
+#: core/ui/ui_lone.c core/ui/ui_sos.c
 msgid "Not sent: needs a DMR channel"
 msgstr "Gönderilmedi: DMR kanalı gerek"
 
-#: core/ui/ui_lone.c
+#: core/ui/ui_lone.c core/ui/ui_sos.c
 msgid "SOS not sent: no position"
 msgstr "SOS gönderilmedi: konum yok"
 
-#: core/ui/ui_lone.c
+#: core/ui/ui_lone.c core/ui/ui_sos.c
 msgid "SOS not sent: APRS not ready"
 msgstr "SOS gitmedi: APRS hazır değil"
 
@@ -1880,11 +2004,11 @@ msgstr "SOS gitmedi: APRS hazır değil"
 msgid "Sound only"
 msgstr "Yalnız ses"
 
-#: core/ui/ui_lone.c
+#: core/ui/ui_lone.c core/ui/ui_sos.c
 msgid "DMR emergency"
 msgstr "DMR acil durum"
 
-#: core/ui/ui_lone.c
+#: core/ui/ui_lone.c core/ui/ui_sos.c
 msgid "APRS SOS"
 msgstr "APRS SOS"
 
@@ -1945,6 +2069,18 @@ msgid "0 next  Back"
 msgstr "0 sonraki  Geri"
 
 #: core/ui/ui_map.c
+msgid "{OK message  5 follow  0 next|5 follow  0 next}"
+msgstr "{OK mesaj  5 takip  0 sonraki|5 takip  0 sonraki}"
+
+#: core/ui/ui_map.c
+msgid "5 follow  0 next"
+msgstr "5 takip  0 sonraki"
+
+#: core/ui/ui_map.c
+msgid "{OK details  5 follow  0 next  Back clear|OK details  5 follow  0 next|5 follow  0 next}"
+msgstr "{OK ayrıntı  5 takip  0 sonraki  Geri bırak|OK ayrıntı  5 takip  0 sonraki|5 takip  0 sonraki}"
+
+#: core/ui/ui_map.c
 msgid "OK details  # next  0 APRS  Back clear"
 msgstr "OK ayrıntı  # sonraki  0 APRS  Geri bırak"
 
@@ -1975,6 +2111,10 @@ msgstr "Başlangıç nokta olarak kaydedildi"
 #: core/ui/ui_map.c
 msgid "Track cleared"
 msgstr "İz silindi"
+
+#: core/ui/ui_map.c
+msgid "0 picks a station to follow"
+msgstr "0 takip edilecek istasyonu seçer"
 
 #: core/ui/ui_map.c
 msgid "Hold 7 to clear the track"
@@ -2901,10 +3041,6 @@ msgid "Position "
 msgstr "Sıra "
 
 #: core/ui/ui_menus.c
-msgid "Zone full"
-msgstr "Bölge dolu"
-
-#: core/ui/ui_menus.c
 msgid "Removed from "
 msgstr "Çıkarıldı: "
 
@@ -2955,10 +3091,6 @@ msgstr "Ad değişti"
 #: core/ui/ui_menus.c
 msgid "Added "
 msgstr "Eklendi "
-
-#: core/ui/ui_menus.c core/ui/ui_svc_storage.c core/ui/ui_svc_zone.c
-msgid "No room for another zone"
-msgstr "Başka bölgeye yer yok"
 
 #: core/ui/ui_menus.c
 msgid "Copied as "
@@ -3599,6 +3731,10 @@ msgstr "Röleler"
 #: core/ui/ui_menus.c
 msgid "Auto repeater"
 msgstr "Otomatik röle"
+
+#: core/ui/ui_menus.c
+msgid "SOS key"
+msgstr "SOS tuşu"
 
 #: core/ui/ui_menus.c
 msgid "Zones/Chs Received"
@@ -4292,6 +4428,10 @@ msgstr "P25 "
 msgid "No P25 found yet"
 msgstr "Henüz P25 bulunmadı"
 
+#: core/ui/ui_p25search.c
+msgid "{OK save this one  ^v pick|OK save  ^v pick}"
+msgstr "{OK bunu kaydet  ^v seç|OK kaydet  ^v seç}"
+
 #: core/ui/ui_p25trunk.c
 msgid "Select a P25 channel first"
 msgstr "Önce bir P25 kanalı seçin"
@@ -4909,10 +5049,6 @@ msgid "0-9 freq  * Quick  Up/Dn"
 msgstr "0-9 frek  * Hızlı  Yuk/Aşa"
 
 #: core/ui/ui_screens.c
-msgid "Heard "
-msgstr "Duyulan "
-
-#: core/ui/ui_screens.c
 msgid "Busy"
 msgstr "Meşgul"
 
@@ -5099,6 +5235,114 @@ msgstr "0 Tüm ayarlar  OK tut kaydet"
 #: core/ui/ui_screens.c
 msgid "* more  Back"
 msgstr "* diğer  Geri"
+
+#: core/ui/ui_sos.c
+msgid "CW SOS (once)"
+msgstr "CW SOS (bir kez)"
+
+#: core/ui/ui_sos.c
+msgid "waits for the CW"
+msgstr "CW bekleniyor"
+
+#: core/ui/ui_sos.c
+msgid "sending"
+msgstr "gönderiliyor"
+
+#: core/ui/ui_sos.c
+msgid "sent"
+msgstr "gönderildi"
+
+#: core/ui/ui_sos.c
+msgid "needs a DMR channel"
+msgstr "DMR kanalı gerek"
+
+#: core/ui/ui_sos.c
+msgid "no position"
+msgstr "konum yok"
+
+#: core/ui/ui_sos.c
+msgid "APRS not ready"
+msgstr "APRS hazır değil"
+
+#: core/ui/ui_sos.c
+msgid "can't transmit here"
+msgstr "burada yayın yapılamaz"
+
+#: core/ui/ui_sos.c
+msgid "stopped"
+msgstr "durduruldu"
+
+#: core/ui/ui_sos.c
+msgid "off"
+msgstr "kapalı"
+
+#: core/ui/ui_sos.c
+msgid "No SOS actions chosen: Tools > SOS key"
+msgstr "SOS eylemi seçilmedi: Araçlar > SOS tuşu"
+
+#: core/ui/ui_sos.c
+msgid "SOS started"
+msgstr "SOS başladı"
+
+#: core/ui/ui_sos.c
+msgid "SOS stopped"
+msgstr "SOS durduruldu"
+
+#: core/ui/ui_sos.c
+msgid "CW SOS sent"
+msgstr "CW SOS gönderildi"
+
+#: core/ui/ui_sos.c
+msgid "CW SOS not sent: can't transmit here"
+msgstr "CW SOS gitmedi: burada yayın yapılamaz"
+
+#: core/ui/ui_sos.c
+msgid "No SOS actions chosen"
+msgstr "SOS eylemi seçilmedi"
+
+#: core/ui/ui_sos.c
+msgid "Tools > SOS key picks them"
+msgstr "Araçlar > SOS tuşu ile seçilir"
+
+#: core/ui/ui_sos.c
+msgid "Send SOS now?"
+msgstr "SOS şimdi gönderilsin mi?"
+
+#: core/ui/ui_sos.c
+msgid "It TRANSMITS"
+msgstr "YAYIN yapar"
+
+#: core/ui/ui_sos.c
+msgid "{OK send  hold SOS key  Back no|OK send  Back no}"
+msgstr "{OK gönder  SOS tuşunu tut  Geri hayır|OK gönder  Geri hayır}"
+
+#: core/ui/ui_sos.c
+msgid "Stop SOS?"
+msgstr "SOS durdurulsun mu?"
+
+#: core/ui/ui_sos.c
+msgid "SOS is on"
+msgstr "SOS açık"
+
+#: core/ui/ui_sos.c
+msgid "SOS ended"
+msgstr "SOS bitti"
+
+#: core/ui/ui_sos.c
+msgid "{OK stop SOS  Back|OK stop  Back}"
+msgstr "{OK SOS durdur  Geri|OK durdur  Geri}"
+
+#: core/ui/ui_sos.c
+msgid "{Back  SOS key: stop|Back}"
+msgstr "{Geri  SOS tuşu: durdur|Geri}"
+
+#: core/ui/ui_sos.c
+msgid "The SOS key (Settings > Keys) sends these after OK. Off at power on."
+msgstr "SOS tuşu (Ayarlar > Tuşlar) bunları OK sonrası gönderir. Açılışta kapalı."
+
+#: core/ui/ui_sos.c
+msgid "OK on/off  Back"
+msgstr "OK aç/kapat  Geri"
 
 #: core/ui/ui_spectrum.c
 msgid "Sweeping..."
