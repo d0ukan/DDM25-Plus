@@ -65,6 +65,23 @@ public sealed class AppPaths
         return found;
     }
 
+    /// <summary>parent/name, or name-b, name-c ... the first that does not exist (the tools refuse an existing --out).</summary>
+    public static string UniqueFolder(string parent, string name)
+    {
+        var first = Path.Combine(parent, name);
+        if (!Path.Exists(first))
+            return first;
+        foreach (var c in "bcdefghijklmnopqrstuvwxyz")
+        {
+            var p = Path.Combine(parent, $"{name}-{c}");
+            if (!Path.Exists(p))
+                return p;
+        }
+        return Path.Combine(parent, $"{name}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}");
+    }
+
+    public static string Today() => DateTime.Now.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>(backup folders, verified ones): folders with a backup-manifest.json, verified when it says so.</summary>
     public static (int All, int Verified) CountBackups(string backups)
     {

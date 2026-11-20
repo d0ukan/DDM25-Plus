@@ -3,17 +3,30 @@
 The Python-free Windows programmer for DDM32 Plus, replacing the PyQt5 program in `pc/` step by step. Same pages,
 same wizard (Hazırlık, Yedek, Kontrol, Yükle, Bitti), Turkish and English.
 
-**Stage 1 (this one): no radio access at all.** The program never opens a serial port. It has the window and all
-pages, the first-start language question, the disclaimer, the signed release list from GitHub (Ed25519, checked
-against the Python code's results), firmware download with hash checks, and the program's self-update logic. The
-radio steps come next, one tool at a time: see [docs/porting-plan.md](docs/porting-plan.md).
+**Stage 2 (this one): the radio tools are ported, radio access is off.** The backup, install, first install from
+stock and restore tools of `pc/radiotools` are ported to C# with every guard and are held to the Python tools byte for
+byte on 27 recorded runs (see [docs/porting-plan.md](docs/porting-plan.md)). The wizard and the "Geri dön" page run
+them, but the serial port is behind `RadioAccess` and **off in every build**: "Yedek al", "Yükle" and "Geri yükle"
+stop before any port is opened and say so. The first real run comes with the owner's approval, one step at a time.
+Working without a radio: the CH340 cable and driver check (Windows' device list, no port), a verified backup on disk,
+its detection and the write plan, the signed release list, download with hash checks, the program's self-update.
 
 | Language dialog | Main window (Türkçe) | Main window (English) |
 |---|---|---|
 | ![](docs/screenshots/language-dialog.png) | ![](docs/screenshots/main-tr.png) | ![](docs/screenshots/main-en.png) |
 
-More: [Sürümler](docs/screenshots/versions-tr.png), [Versions](docs/screenshots/versions-en.png),
-[Telsizi güncelle](docs/screenshots/update-tr.png).
+| Step | Türkçe | English |
+|---|---|---|
+| 1 Hazırlık / Preparation | ![](docs/screenshots/wizard-1-prep-tr.png) | ![](docs/screenshots/wizard-1-prep-en.png) |
+| 2 Yedek / Backup | ![](docs/screenshots/wizard-2-backup-tr.png) | ![](docs/screenshots/wizard-2-backup-en.png) |
+| 3 Kontrol / Check | ![](docs/screenshots/wizard-3-check-tr.png) | ![](docs/screenshots/wizard-3-check-en.png) |
+| 4 Yükle / Install | ![](docs/screenshots/wizard-4-install-tr.png) | ![](docs/screenshots/wizard-4-install-en.png) |
+| 5 Bitti / Done | ![](docs/screenshots/wizard-5-done-tr.png) | ![](docs/screenshots/wizard-5-done-en.png) |
+| Geri dön / Go back | ![](docs/screenshots/restore-tr.png) | ![](docs/screenshots/restore-en.png) |
+| Telsizin durumu / Radio health | ![](docs/screenshots/health-tr.png) | ![](docs/screenshots/health-en.png) |
+
+More: [Sürümler](docs/screenshots/versions-tr.png), [Versions](docs/screenshots/versions-en.png). The check step in
+the screenshots shows a synthetic backup chosen as "Mevcut yedeği seç..." does.
 
 ## Layout
 
@@ -21,10 +34,15 @@ More: [Sürümler](docs/screenshots/versions-tr.png), [Versions](docs/screenshot
 win/
   DDM32Plus.sln
   Directory.Build.props          version (one place, also AppInfo.Version), warnings are errors
-  src/DDM32Plus.Core/            no UI, no radio: Ed25519, signed manifest, versions, release list, downloads,
-                                 channel labels, self-update swap, paths, settings
+  src/DDM32Plus.Core/            no UI: Ed25519, signed manifest, versions, release list, downloads, channel
+                                 labels, self-update swap, paths, settings
+  src/DDM32Plus.Core/Radio/      the radio tools (ports of pc/radiotools), their guards, the install / restore
+                                 flows' rules, the CH340 check; Data/ = the pinned RAM monitor image and the DM32
+                                 codec tables (RadioFoundry, MIT, LICENSES/RadioFoundry-MIT.txt)
   src/DDM32Plus/                 the WPF program; Resources/Strings.resx (English) + Strings.tr.resx (Turkish)
-  tests/DDM32Plus.Core.Tests/    xUnit; Fixtures/python-results.json = results of the Python code (make_fixtures.py)
+  tests/DDM32Plus.Core.Tests/    xUnit; Fixtures/python-results.json = results of the Python code (make_fixtures.py),
+                                 Fixtures/radio/ = recorded runs of the Python radio tools (make_radio_fixtures.py)
+  tools/make_icon.py             the icon (Assets/ddm32plus.ico) from the owner's drawing art/mark-src.png
   installer/DDM32Plus.iss        Inno Setup script (per-user setup)
   docs/                          porting plan, screenshots
 ```
@@ -48,6 +66,30 @@ python win/tests/DDM32Plus.Core.Tests/Fixtures/make_fixtures.py
 
 Run it again when `pc/radiotools/signed_manifest.py`, `ed25519.py` or `pc/ddm32_app/releases.py` change; the C# tests
 then show any difference.
+
+The radio tools' recordings (on Windows; needs the pinned RadioFoundry tree):
+
+```
+set DDM32_UPSTREAM=E:\GIT-REPO\open25-dm32\research\upstream\radiofoundry
+python win/tests/DDM32Plus.Core.Tests/Fixtures/make_radio_fixtures.py
+```
+
+It also writes `src/DDM32Plus.Core/Radio/Data/` (the RAM monitor image and the codec tables). Run it again when a
+radio tool in `pc/radiotools` changes; the replay tests then show where the C# port differs.
+
+## Radio access (developer flag)
+
+`RadioAccess.Enabled` is a compile-time constant, false in every normal build. Only
+
+```
+dotnet build -p:RadioAccess=true
+```
+
+compiles the serial port in. Never publish or install such a build without the owner's approval for that specific
+step (AGENTS.md hard safety rules); the tests check that the normal build refuses to open a port.
+
+`DDM32Plus.exe --show PAGE[:STEP[:BACKUP]]` opens a page (a wizard step, and a verified backup as "Mevcut yedeği
+seç..." takes it) for screenshots and demos; it only navigates and reads files.
 
 ## Publish (one exe, nothing to install)
 

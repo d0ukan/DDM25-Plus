@@ -2,11 +2,22 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:DDM32Plus.Localization">
-    <!-- health_tab.py: one read of the radio's health per click, a traffic light (next stage) -->
+    <!-- health_tab.py: the cable (CH340 driver) check works now; the radio's own health read comes later -->
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Health}" />
             <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Health_Text}" />
+            <Border Style="{StaticResource Card}">
+                <DockPanel>
+                    <Ellipse x:Name="CableLight" DockPanel.Dock="Left" Width="56" Height="56" Fill="#8a8a8a" Margin="0,0,14,0" VerticalAlignment="Top" />
+                    <StackPanel>
+                        <TextBlock Text="{l:Tr Cable_Title}" FontSize="{StaticResource Size9}" FontWeight="Bold" />
+                        <TextBlock x:Name="CableText" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}" />
+                        <Button Style="{StaticResource IconButton}" Tag="&#xE72C;" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                Content="{l:Tr Health_CableCheck}" ToolTip="{l:Tr Health_CableCheckTip}" Click="OnCheckCable" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
             <DockPanel Margin="0,4">
                 <CheckBox DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" Content="{l:Tr Health_Auto}" IsEnabled="False" />
                 <Button Style="{StaticResource BigButton}" Tag="&#xE946;" Content="{l:Tr Health_Read}"
@@ -15,12 +26,9 @@
             <Border Style="{StaticResource Card}">
                 <DockPanel>
                     <Ellipse DockPanel.Dock="Left" Width="56" Height="56" Fill="#8a8a8a" Margin="0,0,14,0" VerticalAlignment="Top" />
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{l:Tr Health_NotRead}" FontSize="{StaticResource Size9}" FontWeight="Bold" />
-                    </StackPanel>
+                    <TextBlock Text="{l:Tr Health_NotRead}" FontSize="{StaticResource Size9}" FontWeight="Bold" VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
-            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Health_Driver}" />
             <Border Style="{StaticResource NextStage}">
                 <StackPanel>
                     <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />

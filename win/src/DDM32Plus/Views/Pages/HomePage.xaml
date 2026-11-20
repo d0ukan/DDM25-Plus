@@ -16,7 +16,7 @@
                     <TextBlock x:Name="StateLabel" FontSize="{StaticResource Size9}" FontWeight="Bold" TextWrapping="Wrap" />
                     <TextBlock x:Name="NotesLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}" FontStyle="Italic" />
                     <TextBlock x:Name="VersionLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}" />
-                    <TextBlock x:Name="CableLabel" Style="{StaticResource Plain}" Text="{l:Tr Home_CableNextStage}" />
+                    <TextBlock x:Name="CableLabel" Style="{StaticResource Plain}" />
                     <TextBlock x:Name="BackupsLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}" />
                     <TextBlock x:Name="PythonDataLabel" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}"
                                Foreground="{StaticResource Info}" />

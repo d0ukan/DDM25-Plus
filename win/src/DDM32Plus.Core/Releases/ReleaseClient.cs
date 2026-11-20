@@ -25,7 +25,7 @@ public sealed class VerifyException(VerifyFailure kind, string message) : Except
 /// A downloaded release folder (releases.Package): rfoundry_dm32.bin/.json/.map with the signed manifest that lists
 /// the application. Installable only when the gate passes and all three files are there.
 /// </summary>
-public sealed class Package
+public sealed class Package : Radio.IInstallable
 {
     public string Folder { get; }
     public string Image => Path.Combine(Folder, "rfoundry_dm32.bin");

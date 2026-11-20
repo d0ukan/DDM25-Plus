@@ -65,9 +65,6 @@
   <data name="Status_Cable" xml:space="preserve">
     <value>Kablo: {0}</value>
   </data>
-  <data name="Status_CableNextStage" xml:space="preserve">
-    <value>sonraki aşamada</value>
-  </data>
   <data name="Status_Installed" xml:space="preserve">
     <value>Telsizdeki sürüm: {0}</value>
   </data>
@@ -185,9 +182,6 @@ You can change it later in the "Language" menu.</value>
   </data>
   <data name="Home_Installed" xml:space="preserve">
     <value>Telsizdeki sürüm: {0}</value>
-  </data>
-  <data name="Home_CableNextStage" xml:space="preserve">
-    <value>Kablo ve CH340 sürücü denetimi bir sonraki aşamada gelecek (bu sürüm seri port açmaz).</value>
   </data>
   <data name="Home_AppUpdate" xml:space="preserve">
     <value>Yeni program sürümü var: {0} ("Sürümler" sayfası).</value>
@@ -629,5 +623,185 @@ Program sürümü {1}</value>
   </data>
   <data name="About_Footer" xml:space="preserve">
     <value>Baofeng, RadioFoundry veya Open25-DM32 ile bağlantılı değildir. Telsizin kendi DMR codec'i ve stok yazılım bu programla dağıtılmaz.</value>
+  </data>
+  <data name="Wiz_BackupRunning" xml:space="preserve">
+    <value>Yedek alınıyor: araç portu açınca telsizi açın.</value>
+  </data>
+  <data name="Wiz_BackupVerified" xml:space="preserve">
+    <value>Yedek doğrulandı (VERIFIED).</value>
+  </data>
+  <data name="Wiz_BackupTimeout" xml:space="preserve">
+    <value>Telsiz zamanında açılmadı. Telsizi kapatın, "Yedek al"a yeniden basın, sonra açın.</value>
+  </data>
+  <data name="Wiz_BackupFailed" xml:space="preserve">
+    <value>Yedek alınamadı: {0}</value>
+  </data>
+  <data name="Wiz_ExistingBackup" xml:space="preserve">
+    <value>Mevcut yedek seçildi.</value>
+  </data>
+  <data name="Wiz_Unsupported" xml:space="preserve">
+    <value>Desteklenmiyor: {0}</value>
+  </data>
+  <data name="Wiz_DetectFailed" xml:space="preserve">
+    <value>Telsizdeki yazılım anlaşılamadı: {0}</value>
+  </data>
+  <data name="Wiz_Planning" xml:space="preserve">
+    <value>Plan hesaplanıyor (port açılmaz).</value>
+  </data>
+  <data name="Wiz_PlanReady" xml:space="preserve">
+    <value>Plan hazır.</value>
+  </data>
+  <data name="Wiz_PlanFailed" xml:space="preserve">
+    <value>Plan yapılamadı: {0}</value>
+  </data>
+  <data name="Wiz_Installing" xml:space="preserve">
+    <value>Kurulum sürüyor: bitene kadar kabloyu çekmeyin, telsizi kapatmayın, pencereyi kapatmayın.</value>
+  </data>
+  <data name="Wiz_InstallPassed" xml:space="preserve">
+    <value>Kurulum tamam: VERIFIED, PASS.</value>
+  </data>
+  <data name="Wiz_InstallStoppedAfterWrites" xml:space="preserve">
+    <value>Kurulum yazma başladıktan sonra durdu: otomatik tekrar yok. "Geri dön" sayfasından yedeğinizle geri yükleyebilirsiniz. ({0})</value>
+  </data>
+  <data name="Wiz_InstallNotStarted" xml:space="preserve">
+    <value>Kurulum başlamadı, hiçbir şey yazılmadı. İsterseniz Kontrol ve Yükle adımlarını elle yeniden yapın. ({0})</value>
+  </data>
+  <data name="Wiz_InstallNotStartedTimeout" xml:space="preserve">
+    <value>Kurulum başlamadı, hiçbir şey yazılmadı (telsiz zamanında açılmadı). İsterseniz Kontrol ve Yükle adımlarını elle yeniden yapın. ({0})</value>
+  </data>
+  <data name="Res_DetectFailed" xml:space="preserve">
+    <value>Yedekteki yazılım anlaşılamadı: {0}</value>
+  </data>
+  <data name="Res_NotStock" xml:space="preserve">
+    <value>Bu yedek stok yazılım değil: "Stok yazılıma dön" yalnızca stok yazılımın yedeğiyle yapılır.</value>
+  </data>
+  <data name="Res_CannotRestore" xml:space="preserve">
+    <value>Bu yedek geri yüklenemez: {0}</value>
+  </data>
+  <data name="Res_Passed" xml:space="preserve">
+    <value>Geri yükleme tamam: VERIFIED, PASS.</value>
+  </data>
+  <data name="Res_StoppedAfterWrites" xml:space="preserve">
+    <value>Geri yükleme yazma başladıktan sonra durdu: otomatik tekrar yok. Telsizi kapatmayın; aynı yedekle geri yüklemeyi yeniden başlatabilirsiniz (her şeyi yedekten yazar). ({0})</value>
+  </data>
+  <data name="Res_NoBackup" xml:space="preserve">
+    <value>Uygun yedek bulunamadı.</value>
+  </data>
+  <data name="Res_NoPrevious" xml:space="preserve">
+    <value>Bu programla yapılmış bir yükleme yok.</value>
+  </data>
+  <data name="Res_NoStock" xml:space="preserve">
+    <value>Stok yazılımdayken alınmış bir yedek kayıtlı değil. "Başka bir yedek klasörü seç..." ile kendi yedeğinizi gösterin.</value>
+  </data>
+  <data name="Res_Chosen" xml:space="preserve">
+    <value>Seçilen yedek: {0}</value>
+  </data>
+  <data name="Res_ConfirmTitle" xml:space="preserve">
+    <value>Geri yükleme onayı</value>
+  </data>
+  <data name="Res_Confirm" xml:space="preserve">
+    <value>Telsiz bu yedekten geri yüklensin mi?
+
+{0}
+{1}
+
+⚠ {2}</value>
+  </data>
+  <data name="Radio_Disabled" xml:space="preserve">
+    <value>Telsiz erişimi bu sürümde kapalı (RadioAccess.Enabled = false): hiçbir port açılmadı, telsize hiçbir şey gönderilmedi. Telsiz araçları hazır ve Python araçlarıyla bayt bayt aynı; ilk gerçek deneme sahibin onayıyla, ayrı bir derlemeyle yapılacak.</value>
+  </data>
+  <data name="Radio_DisabledTitle" xml:space="preserve">
+    <value>Telsiz erişimi kapalı</value>
+  </data>
+  <data name="Upd_ExistingBackup" xml:space="preserve">
+    <value>Mevcut yedeği seç...</value>
+  </data>
+  <data name="Upd_ExistingBackupTip" xml:space="preserve">
+    <value>Bu telsizin daha önce doğrulanmış bir yedeği (telsiz o yedekten beri değişmediyse). Kontrol adımı yalnızca dosyaları okur.</value>
+  </data>
+  <data name="Upd_NotVerifiedBackup" xml:space="preserve">
+    <value>Bu klasör doğrulanmış bir yedek değil.</value>
+  </data>
+  <data name="Upd_InstalledNote" xml:space="preserve">
+    <value>Kurulu firmware notu:</value>
+  </data>
+  <data name="Upd_DetectStock" xml:space="preserve">
+    <value>Telsizde stok yazılım var: .{0}{1}.</value>
+  </data>
+  <data name="Upd_DetectStockUntested" xml:space="preserve">
+    <value> (DDM32 Plus bu stok sürümde denenmedi)</value>
+  </data>
+  <data name="Upd_DetectClassic" xml:space="preserve">
+    <value>Telsizde {0} var (codec bölümü hazır).</value>
+  </data>
+  <data name="Upd_DetectClassicLayout" xml:space="preserve">
+    <value>Classic düzeninde bir yazılım</value>
+  </data>
+  <data name="Upd_DetectUnsupported" xml:space="preserve">
+    <value>Desteklenmeyen yazılım: {0}</value>
+  </data>
+  <data name="Upd_DetectUnknown" xml:space="preserve">
+    <value>Telsizdeki yazılım bilinmiyor.</value>
+  </data>
+  <data name="Upd_PlanSummary" xml:space="preserve">
+    <value>{0} sektör yazılacak ({1} - {2}). Bootloader ve veri çipi (kalibrasyon, kanallar) yazılmaz.</value>
+  </data>
+  <data name="Upd_PlanSlot" xml:space="preserve">
+    <value>Codec bölümü yedekteki telsizin kendi codec'inden hazırlanır ({0} sektör).</value>
+  </data>
+  <data name="Upd_ConfirmTitle" xml:space="preserve">
+    <value>Yükleme onayı</value>
+  </data>
+  <data name="Upd_Confirm" xml:space="preserve">
+    <value>DDM32 Plus {0} telsize yüklensin mi?
+
+{1}
+
+Yedek: {2}
+Port: {3}
+
+⚠ {4}</value>
+  </data>
+  <data name="Upd_NoCable" xml:space="preserve">
+    <value>Önce telsiz kablosunu takın ve Hazırlık adımında "Yenile"ye basın.</value>
+  </data>
+  <data name="Upd_DownloadFirst" xml:space="preserve">
+    <value>Önce sürümü indirip doğrulayın (Hazırlık adımı).</value>
+  </data>
+  <data name="Cable_Title" xml:space="preserve">
+    <value>Programlama kablosu</value>
+  </data>
+  <data name="Cable_Ok" xml:space="preserve">
+    <value>Telsiz kablosu bulundu ({0}).</value>
+  </data>
+  <data name="Cable_None" xml:space="preserve">
+    <value>Kablo bulunamadı. Kabloyu takın ve "Yenile"ye basın (gerekirse CH340 sürücüsünü kurun).</value>
+  </data>
+  <data name="Cable_NoDriver" xml:space="preserve">
+    <value>Kablo takılı ama CH340 sürücüsü yok (Windows kodu {0}). Aygıt Yöneticisi'nde sarı ünlemli bir "USB2.0-Serial" ya da "Bilinmeyen aygıt" görünür. Sürücüyü kablonun üreticisinden ya da WCH'nin sitesinden (CH341SER) indirip kurun, kabloyu çıkarıp yeniden takın ve "Yenile"ye basın.</value>
+  </data>
+  <data name="Cable_Problem" xml:space="preserve">
+    <value>Kablonun sürücüsü bir sorun bildiriyor (Windows kodu {0}). Kabloyu çıkarıp takın; düzelmezse sürücüyü yeniden kurun.</value>
+  </data>
+  <data name="Cable_NoPort" xml:space="preserve">
+    <value>Kablo görünüyor ama COM portu yok. Kabloyu çıkarıp takın; düzelmezse CH340 sürücüsünü yeniden kurun.</value>
+  </data>
+  <data name="Cable_StatusNone" xml:space="preserve">
+    <value>bulunamadı</value>
+  </data>
+  <data name="Cable_StatusNoDriver" xml:space="preserve">
+    <value>sürücü yok</value>
+  </data>
+  <data name="Cable_Port" xml:space="preserve">
+    <value>Port:</value>
+  </data>
+  <data name="Health_CableCheck" xml:space="preserve">
+    <value>Kabloyu denetle</value>
+  </data>
+  <data name="Health_CableCheckTip" xml:space="preserve">
+    <value>Windows'un aygıt listesine bakar (port açılmaz).</value>
+  </data>
+  <data name="Main_BusyClose" xml:space="preserve">
+    <value>Bir adım sürüyor. Bitmeden pencere kapatılamaz (kapatmak işlemi yarıda keser).</value>
   </data>
 </root>

@@ -24,6 +24,10 @@ public partial class App : Application
             Shutdown(SelfUpdate.HelperMain(args.Skip(1).ToList()));
             return;
         }
+        string? show = null;
+        var si = args.IndexOf("--show");
+        if (si >= 0 && si + 1 < args.Count)
+            show = args[si + 1];
         string? marker = null;
         var i = args.IndexOf(SelfUpdate.CheckArg);
         if (i >= 0 && i + 1 < args.Count)
@@ -60,6 +64,8 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         window.Show();
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, window.FirstStart);
+        if (show is not null)
+            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => window.ShowFromArgs(show));
         if (marker is not null)
         {
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };

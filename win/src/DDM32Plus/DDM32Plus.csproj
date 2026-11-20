@@ -2,6 +2,10 @@
 
   <!-- The DDM32 Plus Windows program (WPF). Published self-contained as one DDM32Plus.exe (see
        Properties/PublishProfiles/win-x64.pubxml and win/README.md). -->
+  <PropertyGroup Condition="'$(RadioAccess)' == 'true'">
+    <DefineConstants>$(DefineConstants);DDM32_RADIO_ACCESS</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -14,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DDM32Plus.Core\DDM32Plus.Core.csproj" />
+    <!-- Windows' device list for the CH340 cable check (no port is opened) -->
+    <PackageReference Include="System.Management" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>

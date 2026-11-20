@@ -43,7 +43,7 @@ public partial class MainWindow : Window
         Title = $"{AppInfo.Name} {AppState.ProgramVersion}";
         MenuTr.IsChecked = Loc.Instance.Language == "tr";
         MenuEn.IsChecked = Loc.Instance.Language == "en";
-        StatusCable.Text = Loc.F("Status_Cable", Loc.T("Status_CableNextStage"));
+        StatusCable.Text = Loc.F("Status_Cable", CableScanner.Short(state.Cable, state.Port));
         StatusInstalled.Text = Loc.F("Status_Installed",
             state.Installed()?.Version ?? state.Settings.GetString("installed_firmware") ?? Loc.T("Common_Unknown"));
         StatusData.Text = Loc.F("Status_Data", state.Paths.Root);
@@ -55,6 +55,7 @@ public partial class MainWindow : Window
     /// start-up check (unless switched off).</summary>
     public async void FirstStart()
     {
+        state.RefreshCable();
         if (!state.DisclaimerAccepted)
             ShowDisclaimer();
         var result = SelfUpdate.ReadResult(state.Paths.Updates);
@@ -72,6 +73,18 @@ public partial class MainWindow : Window
             SelfUpdate.Cleanup(state.Paths.Updates, Path.GetDirectoryName(Environment.ProcessPath));
         if (state.Settings.AutoCheck)
             await state.CheckAsync();
+    }
+
+    /// <summary>--show PAGE[:STEP[:BACKUP]] (screenshots, demos): open a page, a wizard step, and a verified backup as
+    /// "Mevcut yedeği seç..." does. Navigation and file reads only; a radio step still needs its own button.</summary>
+    public void ShowFromArgs(string spec)
+    {
+        var parts = spec.Split(':', 3);
+        OpenPage(parts[0]);
+        if (parts[0] == "update" && parts.Length > 1 && int.TryParse(parts[1], out var step))
+            Update.ShowStep(step);
+        if (parts[0] == "update" && parts.Length > 2)
+            Update.UseBackup(parts[2]);                 // as "Mevcut yedeği seç...": files only
     }
 
     public void OpenPage(string key)
@@ -148,6 +161,13 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        if (Update.Busy || Restore.Busy)
+        {
+            // closing would end a running tool half way (main_window.busy_text)
+            MessageBox.Show(this, Loc.T("Main_BusyClose"), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+            e.Cancel = true;
+            return;
+        }
         var r = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
         state.Settings.Save("window", new System.Text.Json.Nodes.JsonObject
         {

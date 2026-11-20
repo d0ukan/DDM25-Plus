@@ -28,6 +28,42 @@ public sealed class AppState
 
     public event Action? Changed;
 
+    /// <summary>The CH340 cable as Windows lists it (no port is opened to look).</summary>
+    public Core.Radio.CableStatus Cable { get; private set; } = new(Core.Radio.CableState.NoCable, null, 0, []);
+
+    /// <summary>The chosen cable port: the last used one when it is there, else the first CH340 port.</summary>
+    public string? Port { get; private set; }
+
+    public void RefreshCable()
+    {
+        Cable = CableScanner.Scan();
+        var last = Settings.GetString("port");
+        Port = last is not null && Cable.Ports.Contains(last) ? last : Cable.Port;
+        Changed?.Invoke();
+    }
+
+    public void SetPort(string? port)
+    {
+        Port = port;
+        if (port is not null)
+            Settings.Save("port", port);
+        Changed?.Invoke();
+    }
+
+    /// <summary>A backup taken while the radio ran stock firmware: kept for "Stok yazılıma dön".</summary>
+    public void RememberStockBackup(string folder)
+    {
+        var list = (Settings.Load()["stock_backups"] as System.Text.Json.Nodes.JsonArray)?.Select(x => x?.ToString() ?? "")
+            .Where(x => x.Length > 0).ToList() ?? [];
+        if (!list.Contains(folder))
+            list.Add(folder);
+        Settings.Save("stock_backups", new System.Text.Json.Nodes.JsonArray([.. list.Select(x => (System.Text.Json.Nodes.JsonNode?)x)]));
+    }
+
+    public List<string> StockBackups() =>
+        (Settings.Load()["stock_backups"] as System.Text.Json.Nodes.JsonArray)?.Select(x => x?.ToString() ?? "")
+        .Where(x => x.Length > 0).ToList() ?? [];
+
     public AppState(AppPaths paths, IReleaseNet net)
     {
         Paths = paths.Ensure();

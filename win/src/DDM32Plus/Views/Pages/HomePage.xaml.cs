@@ -57,6 +57,7 @@ public partial class HomePage : UserControl, IPage
         VersionLabel.Inlines.Add(new System.Windows.Documents.Bold(new System.Windows.Documents.Run(installed is not null
             ? $"DDM32 Plus {installed.Version}"
             : state.Settings.GetString("installed_firmware") ?? Loc.T("Common_Unknown"))));
+        CableLabel.Text = CableScanner.Text(state.Cable);
         BackupsLabel.Text = Loc.F("Home_Backups", state.Paths.Backups);
         PythonDataLabel.Text = string.Join("\n", state.PythonData.Select(d =>
             Loc.F("Home_PythonData", d.Backups, d.BackupFolders, d.VerifiedBackups)));

@@ -10,25 +10,101 @@
                     ToolTip="{l:Tr Common_BackTip}" HorizontalAlignment="Left" Click="OnBack" />
         </DockPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <!-- 1. Hazırlık -->
-                <StackPanel x:Name="PagePrep">
-                    <TextBlock x:Name="TitlePrep" Style="{StaticResource PageTitle}" />
-                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_PrepText}" />
-                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Home_CableNextStage}" Foreground="{StaticResource Grey}" />
-                    <DockPanel Margin="0,8">
-                        <TextBlock DockPanel.Dock="Left" Text="{l:Tr Upd_Version}" FontSize="{StaticResource Size2}"
-                                   VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <Button x:Name="DownloadButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Tag="&#xE896;"
-                                Content="{l:Tr Upd_Download}" ToolTip="{l:Tr Upd_DownloadTip}" Margin="8,0,0,0" Click="OnDownload" />
-                        <ComboBox x:Name="VersionCombo" FontSize="{StaticResource Size2}" ToolTip="{l:Tr Upd_VersionTip}"
-                                  SelectionChanged="OnVersionChanged" />
-                    </DockPanel>
-                    <ProgressBar x:Name="DownloadProgress" Height="14" Maximum="100" Visibility="Collapsed" />
-                    <TextBlock x:Name="VersionLabel" Style="{StaticResource Plain}" />
-                    <Button x:Name="PrepContinue" Style="{StaticResource BigButton}" Tag="&#xE72A;" Content="{l:Tr Common_Continue}"
-                            ToolTip="{l:Tr Upd_PrepContinueTip}" Click="OnPrepContinue" />
-                    <Expander Header="{l:Tr Common_Details}">
+            <StackPanel>
+                <!-- the yellow "switch the radio off and on now", while a tool waits for the radio -->
+                <Border x:Name="Banner" Style="{StaticResource Banner}" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock Text="{l:Tr Banner_Title}" FontSize="{StaticResource Size12}" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="BannerCount" FontSize="{StaticResource Size6}" HorizontalAlignment="Center" />
+                        <TextBlock Text="{l:Tr Banner_Hint}" TextWrapping="Wrap" TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Grid>
+                    <!-- 1. Hazırlık -->
+                    <StackPanel x:Name="PagePrep">
+                        <TextBlock x:Name="TitlePrep" Style="{StaticResource PageTitle}" />
+                        <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_PrepText}" />
+                        <DockPanel Margin="0,4">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Tag="&#xE72C;" Content="{l:Tr Common_Refresh}"
+                                    Click="OnRefreshCable" Margin="8,0,0,0" />
+                            <ComboBox x:Name="PortCombo" DockPanel.Dock="Right" MinWidth="90" Margin="8,0,0,0" Visibility="Collapsed"
+                                      SelectionChanged="OnPortChanged" />
+                            <TextBlock x:Name="CableText" Style="{StaticResource Plain}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <DockPanel Margin="0,8">
+                            <TextBlock DockPanel.Dock="Left" Text="{l:Tr Upd_Version}" FontSize="{StaticResource Size2}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <Button x:Name="DownloadButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Tag="&#xE896;"
+                                    Content="{l:Tr Upd_Download}" ToolTip="{l:Tr Upd_DownloadTip}" Margin="8,0,0,0" Click="OnDownload" />
+                            <ComboBox x:Name="VersionCombo" FontSize="{StaticResource Size2}" ToolTip="{l:Tr Upd_VersionTip}"
+                                      SelectionChanged="OnVersionChanged" />
+                        </DockPanel>
+                        <ProgressBar x:Name="DownloadProgress" Height="14" Maximum="100" Visibility="Collapsed" />
+                        <TextBlock x:Name="VersionLabel" Style="{StaticResource Plain}" />
+                        <Button x:Name="PrepContinue" Style="{StaticResource BigButton}" Tag="&#xE72A;" Content="{l:Tr Common_Continue}"
+                                ToolTip="{l:Tr Upd_PrepContinueTip}" Click="OnPrepContinue" />
+                    </StackPanel>
+
+                    <!-- 2. Yedek -->
+                    <StackPanel x:Name="PageBackup" Visibility="Collapsed">
+                        <TextBlock x:Name="TitleBackup" Style="{StaticResource PageTitle}" />
+                        <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_BackupText}" />
+                        <DockPanel Margin="0,4">
+                            <TextBlock DockPanel.Dock="Left" Text="{l:Tr Upd_InstalledNote}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBox x:Name="FirmwareNote" />
+                        </DockPanel>
+                        <Button x:Name="BackupButton" Style="{StaticResource BigButton}" Tag="&#xE74E;" Content="{l:Tr Upd_BackupButton}"
+                                ToolTip="{l:Tr Upd_BackupButtonTip}" Click="OnBackup" />
+                        <Button x:Name="ExistingButton" Style="{StaticResource IconButton}" Tag="&#xE8B7;" HorizontalAlignment="Left"
+                                Content="{l:Tr Upd_ExistingBackup}" ToolTip="{l:Tr Upd_ExistingBackupTip}" Click="OnExistingBackup" />
+                        <ProgressBar x:Name="BackupProgress" Height="14" Maximum="100" Margin="0,6" />
+                        <TextBlock x:Name="BackupStatus" Style="{StaticResource Plain}" />
+                    </StackPanel>
+
+                    <!-- 3. Kontrol -->
+                    <StackPanel x:Name="PageCheck" Visibility="Collapsed">
+                        <TextBlock x:Name="TitleCheck" Style="{StaticResource PageTitle}" />
+                        <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Upd_CheckText}" />
+                        <TextBlock x:Name="DetectStatus" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}" />
+                        <TextBlock x:Name="CheckStatus" Style="{StaticResource Plain}" />
+                        <Button x:Name="RecheckButton" Style="{StaticResource IconButton}" Tag="&#xE72C;" Content="{l:Tr Upd_Recheck}"
+                                HorizontalAlignment="Left" Click="OnRecheck" />
+                        <Button x:Name="CheckContinue" Style="{StaticResource BigButton}" Tag="&#xE72A;" Content="{l:Tr Common_Continue}"
+                                Click="OnCheckContinue" />
+                    </StackPanel>
+
+                    <!-- 4. Yükle -->
+                    <StackPanel x:Name="PageInstall" Visibility="Collapsed">
+                        <TextBlock x:Name="TitleInstall" Style="{StaticResource PageTitle}" />
+                        <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_InstallText}" />
+                        <TextBlock x:Name="WarnText" Style="{StaticResource Plain}" Foreground="{StaticResource AmberDark}" />
+                        <Button x:Name="InstallButton" Style="{StaticResource BigButton}" Tag="&#xE74A;" Content="{l:Tr Upd_InstallButton}"
+                                ToolTip="{l:Tr Upd_InstallButtonTip}" Click="OnInstall" />
+                        <ProgressBar x:Name="InstallProgress" Height="14" Maximum="100" Margin="0,6" />
+                        <TextBlock x:Name="InstallStatus" Style="{StaticResource Plain}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="ToCheckButton" Content="{l:Tr Step_Check}" Margin="0,0,8,0" Click="OnToCheck" Visibility="Collapsed" />
+                            <Button x:Name="ToRestoreButton" Content="{l:Tr Tab_Restore}" Click="OnToRestore" Visibility="Collapsed" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 5. Bitti -->
+                    <StackPanel x:Name="PageDone" Visibility="Collapsed">
+                        <TextBlock x:Name="TitleDone" Style="{StaticResource PageTitle}" />
+                        <TextBlock Text="{l:Tr Upd_DoneTitle}" FontSize="{StaticResource Size14}" FontWeight="Bold" Foreground="{StaticResource Green}" />
+                        <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_DoneText}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- this build: no port is ever opened -->
+                <Border x:Name="AccessNote" Style="{StaticResource NextStage}">
+                    <StackPanel>
+                        <TextBlock Text="{l:Tr Radio_DisabledTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                        <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Radio_Disabled}" />
+                    </StackPanel>
+                </Border>
+                <Expander Header="{l:Tr Common_Details}">
+                    <StackPanel Margin="16,4,0,0">
                         <Grid Margin="16,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -43,60 +119,14 @@
                             <TextBlock Grid.Row="1" Text="{l:Tr Upd_Signature}" Margin="0,2,8,2" />
                             <TextBlock x:Name="SignatureText" Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Margin="0,2" />
                         </Grid>
-                    </Expander>
-                </StackPanel>
-
-                <!-- 2. Yedek -->
-                <StackPanel x:Name="PageBackup" Visibility="Collapsed">
-                    <TextBlock x:Name="TitleBackup" Style="{StaticResource PageTitle}" />
-                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_BackupText}" />
-                    <Button Style="{StaticResource BigButton}" Tag="&#xE74E;" Content="{l:Tr Upd_BackupButton}"
-                            ToolTip="{l:Tr Upd_BackupButtonTip}" IsEnabled="False" />
-                    <Border Style="{StaticResource NextStage}">
-                        <StackPanel>
-                            <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
-                            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
-                        </StackPanel>
-                    </Border>
-                    <!-- RadioOnBanner: shown while a tool waits for the radio (next stage) -->
-                    <Border x:Name="BackupBanner" Style="{StaticResource Banner}" Visibility="Collapsed">
-                        <StackPanel>
-                            <TextBlock Text="{l:Tr Banner_Title}" FontSize="{StaticResource Size12}" FontWeight="Bold" HorizontalAlignment="Center" />
-                            <TextBlock x:Name="BannerCount" FontSize="{StaticResource Size6}" HorizontalAlignment="Center" />
-                            <TextBlock Text="{l:Tr Banner_Hint}" TextWrapping="Wrap" TextAlignment="Center" />
-                        </StackPanel>
-                    </Border>
-                    <Expander Header="{l:Tr Common_Details}">
-                        <StackPanel Orientation="Horizontal" Margin="16,4,0,0">
-                            <TextBlock Text="{l:Tr Upd_BackupFolder}" Margin="0,0,8,0" />
-                            <TextBlock x:Name="BackupFolder" />
-                        </StackPanel>
-                    </Expander>
-                </StackPanel>
-
-                <!-- 3. Kontrol -->
-                <StackPanel x:Name="PageCheck" Visibility="Collapsed">
-                    <TextBlock x:Name="TitleCheck" Style="{StaticResource PageTitle}" />
-                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Upd_CheckText}" />
-                    <Button Style="{StaticResource IconButton}" Tag="&#xE72C;" Content="{l:Tr Upd_Recheck}" HorizontalAlignment="Left" IsEnabled="False" />
-                    <Button Style="{StaticResource BigButton}" Tag="&#xE72A;" Content="{l:Tr Common_Continue}" IsEnabled="False" />
-                </StackPanel>
-
-                <!-- 4. Yükle -->
-                <StackPanel x:Name="PageInstall" Visibility="Collapsed">
-                    <TextBlock x:Name="TitleInstall" Style="{StaticResource PageTitle}" />
-                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_InstallText}" />
-                    <Button Style="{StaticResource BigButton}" Tag="&#xE74A;" Content="{l:Tr Upd_InstallButton}"
-                            ToolTip="{l:Tr Upd_InstallButtonTip}" IsEnabled="False" />
-                </StackPanel>
-
-                <!-- 5. Bitti -->
-                <StackPanel x:Name="PageDone" Visibility="Collapsed">
-                    <TextBlock x:Name="TitleDone" Style="{StaticResource PageTitle}" />
-                    <TextBlock Text="{l:Tr Upd_DoneTitle}" FontSize="{StaticResource Size14}" FontWeight="Bold" Foreground="{StaticResource Green}" />
-                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Upd_DoneText}" />
-                </StackPanel>
-            </Grid>
+                        <TextBlock x:Name="FolderText" TextWrapping="Wrap" Margin="0,2" />
+                        <TextBox x:Name="DetailText" IsReadOnly="True" FontFamily="Consolas" TextWrapping="NoWrap"
+                                 HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="260" />
+                        <TextBox x:Name="LogText" IsReadOnly="True" FontFamily="Consolas" TextWrapping="NoWrap" Margin="0,6,0,0"
+                                 HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="260" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
         </ScrollViewer>
     </DockPanel>
 </UserControl>

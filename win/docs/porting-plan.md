@@ -1,8 +1,30 @@
 # Porting the radio tools to C#
 
-Status: plan only. The Windows program in `win/` has no radio code yet: it never opens a serial port. This page says
-how each radio tool of the Python program (`pc/radiotools/`) is ported, which guards it must keep, and how the C# port
-is proven equal to the Python tool **before** it is ever pointed at a radio.
+This page says how each radio tool of the Python program (`pc/radiotools/`) is ported, which guards it must keep, and
+how the C# port is proven equal to the Python tool **before** it is ever pointed at a radio.
+
+## Status (stage 2, 2026-11-20)
+
+| Tool | C# (`src/DDM32Plus.Core/Radio/`) | Verified against Python |
+|---|---|---|
+| radio_detect, prepare_unit_image, the DM-32UV codec slot writer | `Detect`, `UnitImage`, `Codec` | layer 1: 10 programs + the composed first-install image, same JSON / same SHA-256 |
+| dm32_readonly_backup (+ the pinned monitor host, `ReadOnlyPort`) | `BackupTool`, `MonitorRadio`, `Guards` | layer 2: 6 recorded runs (ok, radio not switched on, ROM NAK, wrong chip, damaged frames, refused argument) |
+| install_plus over Classic, from stock, restore (`InstallPort`) | `InstallTool`, `InstallPlan` | layer 2: 17 recorded runs (ok, plans, changed radio or data chip, corrupted readback, slot changed, wrong chip, refusals) |
+| install_firstboot --restore-stock | `RestoreStockTool` | layer 2: 4 recorded runs |
+| the guards' frame rules | `ReadOnlyPort`, `InstallPort` | layer 3: 89 frames + 5 step sequences, same verdicts and messages |
+| health / live panel (plus_live) | not yet | |
+
+Layer 2 means: `tests/DDM32Plus.Core.Tests/Fixtures/make_radio_fixtures.py` runs the Python tool against the pinned
+monitor's FakeRadio under a virtual clock and records every port event; the C# tool replays it and must write the same
+bytes in the same order, print the same lines, raise the same error and write the same files (receipts and backup
+manifests byte for byte, Windows line endings as Python writes them; only `write_seconds` is left out). 27 runs, all
+equal. The recording is made on Windows (Python's text files have CRLF there).
+
+The serial port is behind `RadioAccess` (`Ports.cs`): off in every build. A developer build with
+`dotnet build -p:RadioAccess=true` compiles the port in; nothing at run time can turn it on. The pages run the tools
+through it, so in the normal build "Yedek al", "Yükle" and "Geri yükle" stop before any port is opened and say so.
+What works without a radio: the CH340 cable/driver check (Windows' device list), choosing a verified backup on disk,
+its detection and the write plan (the tools' own plan, checked equal to `--plan-only`).
 
 ## Rules that do not change
 
