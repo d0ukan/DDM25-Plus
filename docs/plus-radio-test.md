@@ -460,6 +460,7 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | A49-2 | On the page: OK, then Back | Go-To following that station (as I28), Back returns to the page |
 | A49-3 | On the page: 0 | the map centred on the station, picked, its details under the map; Back x3: the page |
 | A49-4 | On the page: #, Canned text QSL, Send; Back to the page; the other station acks | "> QSL (sending)", then "(delivered)"; a message it sends us appears as "< text" (newest first) |
+| A48-S | SK1 = SOS, every action Off (Settings > Keys > SOS key); press SK1, then OK | "No SOS actions" and "Pick: Settings > Keys", nothing cut at the right edge (Turkish too); OK: toast "No SOS actions: Settings > Keys", nothing keyed |
 | A49-5 | Up / Down on the page | the previous / next heard station; turn the other radio off and wait until it drops out of the list (12 stations): "Not heard any more" |
 
 ## 7. Not testable here

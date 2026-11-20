@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM32 Plus one-key SOS (sos.h), the UI: the SOS key's page and Tools > SOS. Installed as core/ui/ui_sos.c.
+/* DDM32 Plus one-key SOS (sos.h), the UI: the SOS key's page and its actions. Installed as core/ui/ui_sos.c.
  *   SCR_SOS, arg SOS_PAGE_ASK: "Send SOS now?" with the actions chosen and "it transmits"; OK (or the SOS key held)
  *     starts them and the page shows how each goes; Back cancels. With nothing chosen it says so and sends nothing.
  *   SCR_SOS, arg SOS_PAGE_STOP (the SOS key while one runs): each action's state, OK (or the key held) stops it.
- *   SCR_SOS_SET (Tools > SOS): APRS SOS, DMR emergency, CW SOS on / off (what the build has; RAM only, all off at
- *     power on).
+ *   SCR_SOS_SET (Settings > Keys > SOS key): APRS SOS, DMR emergency, CW SOS on / off (what the build has; RAM
+ *     only, all off at power on).
  * Toasts on any screen say what was sent or why not (sos_tick's events). RAM: 2 B. */
 #include "config.h"
 #if CONFIG_SOS_KEY
@@ -46,7 +46,7 @@ static void confirm(void)
 	ui_frame_t *f = ui_frame();
 	if (f->arg == SOS_PAGE_ASK) {
 		if (sos_start(ui_st.now_ms) == 0) {
-			ui_toast(TR("No SOS actions chosen: Tools > SOS key"));
+			ui_toast(TR("No SOS actions: Settings > Keys"));
 			return;
 		}
 		f->arg = SOS_PAGE_STATUS;
@@ -112,9 +112,9 @@ static void sos_draw(void)
 	shown = signature();
 	if (page == SOS_PAGE_ASK) {
 		if (m == 0) {
-			gfx_text(md, 0, y, TR("No SOS actions chosen"), ui_col.warn);
+			gfx_text(md, 0, y, TR("No SOS actions"), ui_col.warn);
 			y += md->h + 4;
-			gfx_text(s, 0, y, TR("Tools > SOS key picks them"), ui_col.dim);
+			gfx_text(s, 0, y, TR("Pick: Settings > Keys"), ui_col.dim);
 		} else {
 			gfx_text(md, 0, y, TR("Send SOS now?"), ui_col.warn);
 			y += md->h + 6;
@@ -171,7 +171,7 @@ const ui_scr_def_t ui_sos_screen = {
 	.name = "sos", .flags = SF_FIELD, .key = sos_page_key, .draw = sos_draw, .enter = sos_enter,
 };
 
-/* --- Tools > SOS: the actions the SOS key starts --- */
+/* --- Settings > Keys > SOS key: the actions the SOS key starts --- */
 
 static uint8_t set_action(uint16_t i)
 {

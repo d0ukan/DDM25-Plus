@@ -9,7 +9,9 @@
  *     from the inbox and not another's); Up / Down step through the list; no GPS fix says so; OK opens Go-To
  *     following it (Back returns); 0 opens the map centred on it with its details (Back returns), not without a
  *     position; # writes a message (the one sent shows on the page, sending then delivered); a station that drops
- *     out of the list says so and its keys do nothing. */
+ *     out of the list says so and its keys do nothing;
+ *   - the SOS key's page with no action chosen: it fits the screen and points to Settings > Keys (where item 48
+ *     moved the actions); OK there sends nothing. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +22,7 @@
 #include "ui/ui_nav.h"
 #include "ui/i18n.h"
 #include "ui/ui_svc.h"
+#include "ui/sos.h"
 #include "ui_sim_aprsx.h"
 
 static int fails;
@@ -73,6 +76,13 @@ static void layout(void)
 	for (int k = 0; k < n; k++)
 		printf("FAIL %s (%s): layout: %s\n", name, turkish ? "tr" : "en", issues[k]);
 	fails += n != 0;
+}
+
+static void key(uint8_t action, uint8_t gesture)
+{
+	input_event_t ev = { action, gesture, 0 };
+	ui_app_key(&ev);
+	ok_run("wait:100");
 }
 
 static void start(void)
@@ -261,9 +271,24 @@ static void page_gone(void)
 	expect("screen=aprs-station");
 }
 
+/* --- the SOS key's page with nothing chosen --- */
+
+static void sos_empty(void)
+{
+	name = "SOS page, nothing chosen";
+	key(ACT_SOS, GESTURE_PRESS);
+	expect(T("screen=sos shows=No_SOS_actions shows=Pick:_Settings_>_Keys",
+		 "screen=sos shows=SOS_eylemi_yok shows=Ayarlar_>"));
+	layout();
+	ok_run("shot:sos-empty");
+	ok_run("ok");
+	expect(T("screen=sos toast=No_SOS_actions:_Settings_>_Keys", "screen=sos toast=SOS_eylemi_yok:_Ayarlar_>"));
+	check(ax_sim.aprs_on == 0 && ax_sim.emerg_on == 0, "nothing sent");
+}
+
 typedef void (*case_fn)(void);
 static const case_fn all[] = {
-	aprs_settings, page_details, page_goto, page_map, page_message, page_gone,
+	aprs_settings, page_details, page_goto, page_map, page_message, page_gone, sos_empty,
 };
 
 int main(void)

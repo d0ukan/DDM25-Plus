@@ -2240,3 +2240,16 @@ its texts and the 23 symbol names in two languages, the map's centring; above th
 RAM; stacks unchanged (UI 196 B free). The map also keeps other labels off the picked station's name now (the layout
 check found a district name under it at zoom 6). Not done from the design: the
 "how often" figure (the list keeps only the packet count) and the station's own Mic-E status (not kept in the list).
+
+**The empty SOS page (after item 48).** With no action chosen, the SOS key's page read "No SOS actions chosen" in the
+medium font (252 px, wider than the 240 px screen; Turkish 240 px) over "Tools > SOS key picks them", stale since the
+actions moved to Settings > Keys > SOS key. Now "No SOS actions" / "SOS eylemi yok" over "Pick: Settings > Keys" /
+"Seç: Ayarlar > Tuşlar", and the toast on OK "No SOS actions: Settings > Keys"; `test_ui_aprsx` (English and Turkish)
+and the round 13 flow check its layout.
+
+**Found, not fixed (upstream).** A host test that feeds the same `$GPRMC...\r\n` sentence through
+`aprs_host_feed` (the KISS / NMEA host port) every few seconds sees the host position go stale after a few
+sentences: later lines are no longer taken as NMEA. Likely the `\n` after the `\r` that ended a sentence goes to the
+KISS decoder, which then holds a byte, and a `$` is only taken as NMEA while that decoder is empty
+(`aprs_host.c`, `aprs_host_feed`); not confirmed. A host program that sends CR LF NMEA through the KISS
+port (APRS position from the PC) may be hit. `tests/plus/test_aprs_mice.c` feeds `aprs_nmea` directly instead.

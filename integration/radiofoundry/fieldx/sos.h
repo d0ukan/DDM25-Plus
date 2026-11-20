@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* DDM32 Plus one-key SOS (CONFIG_SOS_KEY, docs/plus.md): a side key set to "SOS" (Settings > Keys; not assigned by
- * default) opens a confirmation page listing the actions chosen in Tools > SOS; OK there (or a long press of the SOS
- * key) starts them, Back cancels. Nothing transmits before that confirmation, and nothing at all while no action is
- * chosen. The choice is RAM only: every action is off after power on (no settings bit is taken).
+ * default) opens a confirmation page listing the actions chosen in Settings > Keys > SOS key; OK there (or a long
+ * press of the SOS key) starts them, Back cancels. Nothing transmits before that confirmation, and nothing at all
+ * while no action is chosen. The choice is RAM only: every action is off after power on (no settings bit is taken).
  *
  * The actions are the existing ones, each with all its own gates (as the lone worker's):
  *   - CW SOS: the CW beacon's "SOS SOS SOS DE <call>" keyed once on the channel (radio_req_cw_beacon: TX inhibit,

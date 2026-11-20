@@ -18,6 +18,8 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   heading, comment, when it was heard (direct or through a digipeater) and how many packets, and the last messages
   from it and the one we sent it. OK: Go-To follows it; 0: the map centred on it with its details; #: a message to
   it; Up / Down: the previous / next station.
+- The SOS key's page with no action chosen fits the screen ("No SOS actions") and points to Settings > Keys, where the
+  actions are picked now (it still said Tools > SOS key).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

@@ -5401,10 +5401,6 @@ msgid "off"
 msgstr "kapalı"
 
 #: core/ui/ui_sos.c
-msgid "No SOS actions chosen: Tools > SOS key"
-msgstr "SOS eylemi seçilmedi: Araçlar > SOS tuşu"
-
-#: core/ui/ui_sos.c
 msgid "SOS started"
 msgstr "SOS başladı"
 
@@ -5419,14 +5415,6 @@ msgstr "CW SOS gönderildi"
 #: core/ui/ui_sos.c
 msgid "CW SOS not sent: can't transmit here"
 msgstr "CW SOS gitmedi: burada yayın yapılamaz"
-
-#: core/ui/ui_sos.c
-msgid "No SOS actions chosen"
-msgstr "SOS eylemi seçilmedi"
-
-#: core/ui/ui_sos.c
-msgid "Tools > SOS key picks them"
-msgstr "Araçlar > SOS tuşu ile seçilir"
 
 #: core/ui/ui_sos.c
 msgid "Send SOS now?"
@@ -5796,7 +5784,19 @@ msgstr "Son kullanılan"
 msgid "Manual"
 msgstr "Elle gir"
 
-# DDM32 Plus round 14 APRS job (branch r14-aprs): Mic-E beacons, the APRS station page
+# DDM32 Plus round 14 APRS job (branch r14-aprs): Mic-E beacons, the APRS station page, the empty SOS page
+#: core/ui/ui_sos.c
+msgid "No SOS actions"
+msgstr "SOS eylemi yok"
+
+#: core/ui/ui_sos.c
+msgid "Pick: Settings > Keys"
+msgstr "Seç: Ayarlar > Tuşlar"
+
+#: core/ui/ui_sos.c
+msgid "No SOS actions: Settings > Keys"
+msgstr "SOS eylemi yok: Ayarlar > Tuşlar"
+
 #: core/ui/ui_menus.c
 msgid "Standard"
 msgstr "Standart"
