@@ -485,3 +485,5 @@ __pycache__/
 !/tests/plus/ui_sim_toolbox.c
 !/tests/plus/ui_sim_toolbox.h
 !/CHANGELOG.md
+# DDM32 Plus DOTA Transfer: radio-to-radio channel and zone transfer (design, docs/dota.md)
+!/docs/dota.md
