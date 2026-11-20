@@ -2539,6 +2539,30 @@ Owner build (`--plus`): FLASH 891,192 -> 898,804 B (+7,612; **2,316 B free: belo
 docs/r14.md foresaw without a reclaim), RAM 209,792 -> 209,952 B (1,504 B free). Both zero warnings, forced rebuild
 identical. Round 14 xband in all (items 43 and 46): public +9,808 B flash / +296 B RAM, owner +9,808 B / +296 B.
 
+Rebased onto `ddm25` da7577c (DOTA pairing without typing: base public 810,388 B / 209,616 B, owner 889,160 B /
+209,664 B); `radio_dota.inc`'s take is unchanged there, so the guard that keeps DOTA off a cross-band session stands
+as it was. 8 B more of static RAM taken back for the owner build (the radio core's time is `hal_millis()`, the session
+counters 8-bit). Now: public FLASH 820,184 B, RAM 209,904 B (**1,552 B free**); owner FLASH 898,960 B (2,160 B free;
+the owner build's flash is not a blocker any more: the owner's radio runs the public build and the ID database moves
+to a data pack), RAM 209,952 B (1,504 B free). Round 14 xband over the new base: public +9,796 B flash / +288 B RAM,
+owner +9,800 B / +288 B. Both zero warnings, forced rebuild identical, stacks unchanged.
+
+Rebased again onto `ddm25` 42a0ff4 (round 14 APRS job: items 48, 47, 49; the shared tool-screen buffer now also holds
+the APRS station page's copy, the cross-band picker's zone and channel beside it). Public build: the base with last
+calls and cross-band compiled out (`--feature LAST_CALLS=n --feature XBAND=n`) 814,976 B / 209,640 B; with them
+**824,132 B flash, 209,928 B static RAM: 1,528 B free** (round 14 xband +9,156 B / +288 B); zero warnings, forced
+rebuild identical, stacks unchanged (UI 200 B, radio 760 B free). **The owner build (`--plus`, with the ID database) no
+longer links: FLASH overflows by 1,784 B** with the APRS job and this one together; it waits for the ID database's
+move to a data pack (coordinator, 2026-11-20).
+
+Rebased onto `ddm25` 8242a43 (round 14 air items and the user data packs: the built-in ID database gone, so `--plus`
+and `--plus --public` build the same image; About's text buffer on the heap; DOTA can send a data pack). The data
+pack sessions are DOTA sessions taken through the same `dota_take`, so `radio_dota.inc`'s guard (no DOTA while a
+cross-band session runs) covers them, and Tools > Cross-band refuses to start while any DOTA session runs
+(`dota_on()`). The last calls' hook into `ui_dual.c` now anchors right after multi-watch's part (air watch's follows
+it). Both builds: **830,568 B flash, 209,368 B static RAM: 2,088 B free** (the base with both compiled out 821,412 B / 209,072 B: round 14 xband +9,156 B / +296 B);
+zero warnings, forced rebuild identical, stacks unchanged (UI 184 B, radio 760 B, start 348 B free: as the base).
+
 Tests: `tests/plus/test_xband.c` (the rules at every segment's edge; an over recorded and sent in order; B to A, a
 private call; the dwell, held by bursts; a key-up and an encrypted call not relayed; a recording whose end never comes;
 the cut at the memory and at 3 minutes, one beep; a refused transmission; one cut short on the air; the CW ID's first

@@ -162,7 +162,7 @@ def prepare_crossband(transform, install):
          '#include "radio/radio_sm.h"\n' + XB_ON +
          '#include "radio/xband.h"\t\t// DDM32 Plus cross-band store and forward (radio_xband.inc)\n'
          'static bool xb_cw_on;\t\t\t// its CW ID keys now (cw_restore brings its channel back)\n'
-         'static uint32_t xb_now;\t\t\t// the last poll (the io calls take no time)\n'
+         '#include "hal_time.h"\n#define xb_now hal_millis()\t\t// the io calls take no time: now\n'
          '#if !RADIO_SM_CW\n#error "XBAND needs the CW keyer (SFR_CWID)"\n#endif\n'
          '#else\n#define xband_on() false\n#endif\n'),
         ('#if CONFIG_DOTA\n#include "radio/radio_dota.inc"\t// DDM32 Plus DOTA Transfer: the radio core\'s side\n#endif\n',

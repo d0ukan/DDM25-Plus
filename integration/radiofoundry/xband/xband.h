@@ -80,7 +80,7 @@ typedef struct {
 	bool cut;			/* the over being recorded was cut */
 	uint16_t frames;		/* recorded, or left to send */
 	uint16_t capacity;		/* frames the memory holds */
-	uint16_t relayed, ids;		/* overs sent, CW IDs sent */
+	uint8_t relayed, ids;		/* overs sent, CW IDs sent (past 255: from 0 again) */
 	uint16_t serial;		/* bumped on every change worth a redraw */
 } xband_view_t;
 

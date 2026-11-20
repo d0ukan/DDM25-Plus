@@ -141,7 +141,6 @@ static void xb_take(radio_sm_t *sm, uint32_t now_ms)
 		return;
 	const xband_req_t *r = xband_req();
 	xb_sm = sm;
-	xb_now = now_ms;
 	aprs_rf_abort(sm, now_ms);
 	roam_cancel(sm, now_ms);
 #if CONFIG_SCAN
@@ -234,7 +233,6 @@ static bool xb_request(radio_sm_t *sm, const radio_req_t *req, uint32_t now_ms)
 static void xb_rf_poll(radio_sm_t *sm, uint32_t now_ms)
 {
 	xb_sm = sm;
-	xb_now = now_ms;
 	if (!xb.owned) {
 		if (!xband_on())
 			return;
