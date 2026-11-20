@@ -37,7 +37,9 @@ cd pc
 python -m ddm25_app
 ```
 
-Needs Python 3.10, PyQt5, pyserial. `DDM25_UPSTREAM` may point at another RadioFoundry checkout of the pin (every
+Needs Python 3.10, PyQt5, pyserial, and certifi (optional; the program bundles its Mozilla root list, MPL-2.0, beside
+the Windows certificate store so that GitHub downloads work on PCs whose store lacks a root, see
+`ddm25_app/tls.py`). `DDM25_UPSTREAM` may point at another RadioFoundry checkout of the pin (every
 pinned file is still hash-checked). User data: `%LOCALAPPDATA%\DDM25Plus` (`DDM25_DATA` overrides it).
 
 The **Verileri güncelle** page (RadioID / repeater lists, TLE into the WSL build copy `~/ddm25-plus`, public WSL build

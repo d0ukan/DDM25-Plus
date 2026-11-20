@@ -53,6 +53,8 @@ FORBIDDEN_NAMES = {'user.csv', 'rptrs.json', 'repeaters.csv', 'settings.json', '
                    'release-signing-key', 'ddm25-manifest.json', 'ddm25-manifest.json.sig'}
 FORBIDDEN_SUFFIXES = {'.bin', '.csv', '.map', '.elf', '.hex', '.img', '.raw', '.log', '.partial', '.download',
                       '.dfu', '.srec', '.pem', '.key', '.sig'}
+# certifi's public Mozilla root list (MPL-2.0), the one .pem the program may carry (ddm25_app/tls.py)
+CA_BUNDLE_FILES = {'certifi/cacert.pem', '_internal/certifi/cacert.pem'}
 TEXT_SUFFIXES = {'.txt', '.py', '.json', '.md', '.csv', '.cfg', '.ini', '.toml'}
 TEXT_MARKERS = (b'RADIO_ID,CALLSIGN', b'"rptrs"', b'"backup_verified"', b'"writes_started"')
 
@@ -109,7 +111,7 @@ def hidden_imports():
     """Every importable stdlib / pyserial module the bundled tools may import (PyInstaller does not analyse data
     files), plus pyserial's Windows backend"""
     found = {'serial', 'serial.serialwin32', 'serial.win32', 'serial.tools.list_ports',
-             'serial.tools.list_ports_windows', 'runpy', 'ctypes', 'ctypes.wintypes'}
+             'serial.tools.list_ports_windows', 'runpy', 'ctypes', 'ctypes.wintypes', 'certifi'}
     for src, _ in bundled_files():
         if src.suffix != '.py':
             continue
@@ -154,6 +156,8 @@ def scan(folder):
                 problems.append((rel, 'forbidden folder'))
             continue
         name = parts[-1].lower()
+        if rel in CA_BUNDLE_FILES:
+            continue
         if name in FORBIDDEN_NAMES:
             problems.append((rel, 'private data file'))
         elif p.suffix.lower() in FORBIDDEN_SUFFIXES:
@@ -209,7 +213,8 @@ def package(folder=DIST / NAME, out=None):
     os.replace(tmp, out)
     names = zipfile.ZipFile(out).namelist()
     bad = [n for n in names if any(re.search(r'(^|/)%s(/|$)' % re.escape(d), n.lower()) for d in FORBIDDEN_DIRS)
-           or Path(n).suffix.lower() in FORBIDDEN_SUFFIXES or not n.startswith(NAME + '/')]
+           or (Path(n).suffix.lower() in FORBIDDEN_SUFFIXES and n[len(NAME) + 1:] not in CA_BUNDLE_FILES)
+           or not n.startswith(NAME + '/')]
     if bad:
         out.unlink()
         raise SystemExit('Zip check failed: ' + ', '.join(bad))

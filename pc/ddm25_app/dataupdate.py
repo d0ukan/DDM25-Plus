@@ -20,6 +20,8 @@ from pathlib import Path
 import time
 import urllib.request
 
+from . import tls
+
 USER_CSV_URL = 'https://radioid.net/static/user.csv'
 RPTRS_URL = 'https://radioid.net/static/rptrs.json'
 AMATEUR_URL = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle'
@@ -35,7 +37,7 @@ class DataError(ValueError):
 
 def http_fetch(url, timeout=60):
     req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout, context=tls.context()) as r:
         return r.read()
 
 

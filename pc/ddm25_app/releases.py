@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 
-from . import __version__, paths, rt
+from . import __version__, paths, rt, tls
 
 START, SLOT = 0xC000, 0xE8000
 API_URL = 'https://api.github.com/repos/d0ukan/DDM25-Plus/releases?per_page=100'
@@ -67,7 +67,7 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
 
 def _open(url, timeout):
     _check_url(url)
-    opener = urllib.request.build_opener(_Redirects)
+    opener = urllib.request.build_opener(_Redirects, urllib.request.HTTPSHandler(context=tls.context()))
     req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT, 'Accept': 'application/octet-stream, */*'})
     if 'api.github.com' in url:
         req.add_header('Accept', 'application/vnd.github+json')

@@ -92,6 +92,15 @@ class ScanTest(unittest.TestCase):
     def test_clean(self):
         self.assertEqual(bundle.scan(self.dir), [])
 
+    def test_ca_bundle_is_the_only_pem_allowed(self):
+        self.put('_internal/certifi/cacert.pem', b'-----BEGIN CERTIFICATE-----')
+        self.put('certifi/cacert.pem', b'-----BEGIN CERTIFICATE-----')
+        self.assertEqual(bundle.scan(self.dir), [])
+        self.put('_internal/certifi/signing.pem')
+        self.put('_internal/keys/cacert.pem')
+        self.assertEqual({rel for rel, _ in bundle.scan(self.dir)},
+                         {'_internal/certifi/signing.pem', '_internal/keys/cacert.pem'})
+
     def test_private_things_found(self):
         cases = ('backups/dm32/q128-pass1.bin', 'yedekler/dm32-20261119/backup-manifest.json',
                  'surumler/1.0.0/rfoundry_dm32.bin', 'research-data/user.csv', 'firmware/rptrs.json',
