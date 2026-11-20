@@ -378,7 +378,7 @@ def mock_splash(mark, word, fonts, theme):
     for line in lines:
         lf.text(cv, (240 - lf.width(line)) // 2, ly, line, t['fg'])
         ly += lf.h
-    foot = 'DM-32UV  plus-r7'
+    foot = 'DM-32UV  v1.0.0'	# board and release, as ui_draw_splash gets them
     tiny.text(cv, (240 - tiny.width(foot)) // 2, foot_y, foot, t['dim'])
     call = 'TA2DOU'	# art.h ART_CALLSIGN
     tiny.text(cv, (240 - tiny.width(call)) // 2, call_y, call, accent)
