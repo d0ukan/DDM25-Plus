@@ -21,6 +21,29 @@ def main(ROOT, APP, OUT, flags, host):
          '-o', OUT / 'test_datapack'], cwd=ROOT)
     images = builder_tests(ROOT, OUT)
     run([OUT / 'test_datapack', *images], cwd=ROOT)
+    ui_tests(ROOT, APP, OUT, host)
+
+
+def ui_tests(ROOT, APP, OUT, host):
+    """Settings > About and Tools > Airfields (with the air watch) with packs in force, through upstream's UI simulator
+    (tests/plus/ui_sim_dpk.c over the air items' ui_sim_air.c), English and Turkish"""
+    import shlex
+    tp = ROOT / 'tests/plus'
+    core = APP / 'core'
+    run(['make', 'out/gen/lang_tables.h'], cwd=host, stdout=subprocess.DEVNULL)
+    command = run(['make', '-Bn', 'uiFlowTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout
+    argv = shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))
+    argv[argv.index('uiFlowTest.c')] = str(tp / 'test_ui_datapack.c')
+    argv[argv.index('sim/ui_sim.c')] = str(tp / 'ui_sim_dpk.c')
+    argv[argv.index('-o') + 1] = str(OUT / 'test_ui_datapack')
+    run([*argv, '-I' + str(host), '-I' + str(tp), '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_AM_RX=1', '-DCONFIG_APRS=1',
+         '-DCONFIG_VFO=1', '-DCONFIG_AIRFIELDS=1', '-DCONFIG_LANG_TR=1', '-DCONFIG_LARGE_SCALE=1',
+         '-DCONFIG_HOME_FREQ=1', '-DCONFIG_MULTI_WATCH=1', '-DCONFIG_VFO_MODES=1', '-DCONFIG_AIR_WATCH=1',
+         '-DCONFIG_DATAPACK=1',
+         *(str(core / 'ui' / f) for f in ('airfield.c', 'airfield_data.c', 'ui_airfield.c', 'air_pack.c')),
+         str(core / 'storage/datapack.c'), str(core / 'storage/storage.c'), str(host / 'sim/sim_flash.c'),
+         str(core / 'aprs/aprs_fmt.c'), str(core / 'radio/vfox.c'), '-lm'], cwd=host)
+    run([OUT / 'test_ui_datapack'], cwd=host)
 
 
 CSV = '''RADIO_ID,CALLSIGN,FIRST_NAME,LAST_NAME,CITY,STATE,COUNTRY
