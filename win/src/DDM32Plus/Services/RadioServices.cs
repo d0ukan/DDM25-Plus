@@ -136,11 +136,4 @@ public sealed class ToolRunner(Dispatcher dispatcher)
         var b = (int.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture) - 1) * (p + q) + (m.Groups[1].Value == "q128" ? p : 0);
         return (int)Math.Min(100, (b + long.Parse(m.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture)) * 100 / (2 * (p + q)));
     }
-
-    /// <summary>Install progress from "...: N% (n/total)" lines, or null.</summary>
-    public static int? StepProgress(string line)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(line, @"checked: (\d+)% \(");
-        return m.Success ? int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : null;
-    }
 }

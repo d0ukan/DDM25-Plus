@@ -901,4 +901,16 @@ There is no backup. If the write stops part way there is no backup to go back to
   <data name="Dev_NoteWrite" xml:space="preserve">
     <value>In this build backup, quick update, install without backup, normal install and restore reach the radio. Every check is the same. Every radio step needs the owner's approval for that step.</value>
   </data>
+  <data name="Prog_Compare" xml:space="preserve">
+    <value>Comparing the radio with the backup: {0}%</value>
+  </data>
+  <data name="Prog_Read" xml:space="preserve">
+    <value>Reading the radio's program once (not saved): {0}%</value>
+  </data>
+  <data name="Prog_Write" xml:space="preserve">
+    <value>Writing, each sector read back: {0}%</value>
+  </data>
+  <data name="Prog_Verify" xml:space="preserve">
+    <value>Reading back and verifying: {0}%</value>
+  </data>
 </root>

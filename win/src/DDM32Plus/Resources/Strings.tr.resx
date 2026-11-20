@@ -901,4 +901,16 @@ Yedek yok. Yazma yarıda kalırsa geri dönülecek yedek olmaz.
   <data name="Dev_NoteWrite" xml:space="preserve">
     <value>Bu derlemede yedek, hızlı güncelleme, yedeksiz yükleme, normal yükleme ve geri yükleme telsize ulaşır. Bütün denetimler aynıdır. Her telsiz adımı sahibin o adım için onayını ister.</value>
   </data>
+  <data name="Prog_Compare" xml:space="preserve">
+    <value>Telsiz yedekle karşılaştırılıyor: %{0}</value>
+  </data>
+  <data name="Prog_Read" xml:space="preserve">
+    <value>Telsizdeki program bir kez okunuyor (kaydedilmez): %{0}</value>
+  </data>
+  <data name="Prog_Write" xml:space="preserve">
+    <value>Yazılıyor, her sektör geri okunuyor: %{0}</value>
+  </data>
+  <data name="Prog_Verify" xml:space="preserve">
+    <value>Yazılan program okunup doğrulanıyor: %{0}</value>
+  </data>
 </root>

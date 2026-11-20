@@ -33,6 +33,7 @@ public partial class UpdatePage : UserControl, IPage
     private List<FirmwareVersion> choices = [];
     private readonly DispatcherTimer countdown = new() { Interval = TimeSpan.FromSeconds(1) };
     private int remaining;
+    private ProgressTracker progress = new();
     private string? lastBackup;
     private DateTime lastBackupDate;
     private bool lookedForLast, lookingForLast;
@@ -238,8 +239,13 @@ public partial class UpdatePage : UserControl, IPage
         }
         if (ToolRunner.BackupProgress(line) is { } b)
             BackupProgress.Value = b;
-        if (ToolRunner.StepProgress(line) is { } s)
-            InstallProgress.Value = s;
+        // the install's phases: comparing with the backup (or the single live read), writing, reading back
+        if (progress.Feed(line) is { } s)
+        {
+            InstallProgress.Value = s.Percent;
+            stepMessage = Loc.F(s.Key, s.Percent);
+            InstallStatus.Text = stepMessage;
+        }
     }
 
     private void EndBanner()
@@ -436,12 +442,14 @@ public partial class UpdatePage : UserControl, IPage
         var path = wizard.Path;
         wizard.StartInstall();
         stepMessage = null;
+        progress = new ProgressTracker();
         LogText.Clear();
         InstallProgress.Value = 0;
         Refresh();
         Action<IReadOnlyList<string>, ToolContext> tool = toolName == "fast_install" ? FastInstallTool.Run : InstallTool.Run;
         var end = await runner.RunAsync(tool, argv, installDir + ".log", OnLine, writes: true);
         EndBanner();
+        stepMessage = null;
         if (end.AccessOff)
         {
             wizard.InstallFinished(new StepResult(false, false, false, Loc.T("Radio_DisabledTitle")));

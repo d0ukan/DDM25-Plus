@@ -23,6 +23,7 @@ public partial class RestorePage : UserControl, IPage
     private readonly DispatcherTimer countdown = new() { Interval = TimeSpan.FromSeconds(1) };
     private int remaining;
     private string? note;
+    private ProgressTracker progress = new();
 
     public RestorePage()
     {
@@ -158,8 +159,11 @@ public partial class RestorePage : UserControl, IPage
             countdown.Stop();
             Banner.Visibility = Visibility.Collapsed;
         }
-        if (ToolRunner.StepProgress(line) is { } s)
-            Progress.Value = s;
+        if (progress.Feed(line) is { } s)
+        {
+            Progress.Value = s.Percent;
+            Result.Text = Loc.F(s.Key, s.Percent);
+        }
     }
 
     private async void OnRestore(object sender, RoutedEventArgs e)
@@ -172,6 +176,8 @@ public partial class RestorePage : UserControl, IPage
             return;
         var outDir = AppPaths.UniqueFolder(state.Paths.Backups, $"restore-{AppPaths.Today()}");
         flow.StartRestore();
+        progress = new ProgressTracker();
+        Progress.Value = 0;
         LogText.Clear();
         Refresh();
         List<string> argv = ["--port", flow.Port!, "--backup", flow.BackupDir!, "--out", outDir, "--wait", "600", .. tool.Args];
