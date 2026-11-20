@@ -531,6 +531,11 @@ def main():
     run([OUT/'test_audio_mux'],cwd=ROOT)
     run(['clang',*mux_flags,*mux,APP/'core/usbaudio/pcm_slip.c','-o',OUT/'test_audio_mux_upstream'],cwd=ROOT)
     run([OUT/'test_audio_mux_upstream'],cwd=ROOT)
+    # DDM32 Plus (docs/dota.md step 0): and without its APRS ring (the DM-32 has its own AFSK receive path)
+    run(['clang',*mux_flags,'-DCONFIG_DMR_IP_GATEWAY=0',f'-DPLUS_AUDIO_MUX_NO_HOST={trim["PLUS_AUDIO_MUX_NO_HOST"]}',
+         f'-DPLUS_AUDIO_MUX_NO_APRS={trim["PLUS_AUDIO_MUX_NO_APRS"]}',ROOT/'tests/plus/test_audio_mux_noaprs.c',
+         APP/'core/usbaudio/audio_mux.c','-o',OUT/'test_audio_mux_noaprs'],cwd=ROOT)
+    run([OUT/'test_audio_mux_noaprs'],cwd=ROOT)
     usrp=subprocess.run(['clang',*mux_flags,'-DCONFIG_DMR_IP_GATEWAY=1','-DPLUS_AUDIO_MUX_NO_HOST=1','-c',
                          APP/'core/usbaudio/audio_mux.c','-o',OUT/'audio_mux_usrp.o'],cwd=ROOT,capture_output=True,text=True)
     if usrp.returncode==0 or 'USRP needs the host audio side' not in usrp.stderr:

@@ -1820,6 +1820,7 @@ PLUS_RAM_TRIM = {
     'PLUS_VIEW_NONE_CONST': 1,	# ui_app.c view_none (720 B) in flash
     'PLUS_STARTUP_STACK_IN_HEAP': 2048,	# bytes main() may use at the top of the heap (was the 2 KB .stack section)
     'PLUS_AUDIO_MUX_NO_HOST': 1,	# audio_mux.c without its host audio side (4.4 KB; only USRP uses it: prepare_audio_mux)
+    'PLUS_AUDIO_MUX_NO_APRS': 1,	# ... and without its APRS ring (2 KB; the DM-32 has its own AFSK receive path)
     # +2,048 B back (2026-11-18): the radio read heap_min_free 1,640 B with FM caller ID's 2 KB ring running, and the
     # SSTV screen takes 1,472 B more while it is open (docs/plus-radio-test.md RR1, SV7)
     'PLUS_HEAP_BYTES': 36 * 1024 + 512 - 3840 - (731 - PLUS_HOST_TASK_WORDS) * 4 + 2048,
@@ -1915,6 +1916,35 @@ def prepare_audio_mux(transform):
          '#if MUX_HOST\n\tpcm_slip_pull(&slip, pcm, n);\n#else\n\tmemset(pcm, 0, n * sizeof *pcm);\n#endif\n\tst.fm_pulls += n;\n'),
         ('\t*out = slip.stats;\n', '#if MUX_HOST\n\t*out = slip.stats;\n#else\n\tmemset(out, 0, sizeof *out);\n#endif\n'),
     ])
+    prepare_audio_mux_no_aprs(transform)
+
+
+def prepare_audio_mux_no_aprs(transform):
+    """DDM32 Plus (docs/dota.md, phase 2 step 0): APRS receive reads the board's own AFSK receive path when the board
+    has one (aprs.c rx_service: own = rx_by_board()); the shared stream's APRS ring (2,048 B) is read only on boards
+    without one (rx_by_stream: an audio tap with AUDIO_TAP_FM_RX). The DM-32 has its own path (hrc_afsk rx_*) and no
+    audio tap, so the ring is never written or read there. With PLUS_AUDIO_MUX_NO_APRS it goes: the API stays (the
+    stream carries nothing for APRS), and aprs.c no longer offers the stream as a receive path, so a board without its
+    own path built this way has no APRS receive instead of a silent one. Without the macro the file is as before."""
+    transform('core/usbaudio/audio_mux.c', [
+        ('#define MUX_HOST\t1\n#endif\n',
+         '#define MUX_HOST\t1\n#endif\n'
+         '// DDM32 Plus: no APRS ring where the board has its own AFSK receive path (docs/dota.md step 0)\n'
+         '#if CONFIG_APRS_RX && !defined(PLUS_AUDIO_MUX_NO_APRS)\n#define MUX_APRS\t1\n#else\n#define MUX_APRS\t0\n#endif\n'),
+        ('#if CONFIG_APRS_RX\n// --- APRS (radio task) ---\n', '#if MUX_APRS\n// --- APRS (radio task) ---\n'),
+        ('\taprs_rd = r + n;\n\treturn n;\n}\n#endif\n',
+         '\taprs_rd = r + n;\n\treturn n;\n}\n'
+         '#elif CONFIG_APRS_RX\t// PLUS_AUDIO_MUX_NO_APRS: the board has its own path; the stream carries nothing for APRS\n'
+         'void audio_mux_aprs_rx(bool on)\n{\n\t(void)on;\n}\n\n'
+         'uint32_t audio_mux_aprs_read(int16_t *pcm, uint32_t n)\n{\n\t(void)pcm;\n\t(void)n;\n\treturn 0;\n}\n#endif\n'),
+        ('#if CONFIG_APRS_RX\n', '#if MUX_APRS\n', 3),
+    ])
+    transform('core/aprs/aprs.c', [
+        ('static bool rx_by_stream(void)\n{\n\treturn board.audio != NULL',
+         'static bool rx_by_stream(void)\n{\n'
+         '#ifdef PLUS_AUDIO_MUX_NO_APRS\n\treturn false;\t// DDM32 Plus: the shared stream has no APRS ring (audio_mux.c)\n#endif\n'
+         '\treturn board.audio != NULL'),
+    ])
 
 
 def prepare_startup_stack(transform):
@@ -2002,6 +2032,8 @@ def ram_reclaim_audit(nm_text, size_text):
     view = sym.get('view_none', (0, 0, ''))
     if PLUS_RAM_TRIM.get('PLUS_VIEW_NONE_CONST') and not (view[2] in ('r', 'R') and view[0] >= 0x03000000):
         problems.append('view_none is not in flash')
+    if PLUS_RAM_TRIM.get('PLUS_AUDIO_MUX_NO_APRS') and 'aprs_ring' in sym:
+        problems.append('audio_mux.c still holds its APRS ring')	# docs/dota.md step 0
     if problems:
         raise SystemExit('Plus RAM reclaim audit: ' + '; '.join(problems))
     return {'plus_startup_stack_in_heap': True, 'plus_startup_stack_top': hex(top), 'plus_heap': [hex(heap), heap_size]}

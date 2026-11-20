@@ -2114,6 +2114,21 @@ plus-radio-test.md):
   209,672 B (+504 of the 600 B budget), **1,784 B free**; every task's deepest stack path unchanged (UI 268 B free,
   radio 760, p25-lab 328). The whole job: FLASH 852,472 -> 862,860 B, RAM 210,688 -> 209,672 B (768 -> 1,784 B free).
 
+## DOTA Transfer (`CONFIG_DOTA`, ours; branch `dota`)
+
+Radio-to-radio transfer of channels, zones, contacts and RX group lists over FM (AFSK 1200, CTCSS) or DMR (data
+service). Design, owner's decisions and test plan: [dota.md](dota.md). Code in `integration/radiofoundry/dota/`,
+hooks in `tools/plus_dota.py`, host tests in `tools/test_dota.py` (run from `tools/test_classic.py`).
+
+Budget, measured after each phase 2 step (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild
+identical, every task inside its stack). Limits for the job: FLASH headroom >= 12 KB (<= 889,088 B), static RAM free
+>= 1,500 B (<= 209,956 B).
+
+| Step | What | FLASH B | RAM B | RAM free | Stacks: UI / radio free |
+|---|---|---:|---:|---:|---|
+| base | ddm25 at 1c391c7 | 864,036 | 209,672 | 1,784 | 268 / 760 |
+| 0 | `audio_mux.c`'s APRS ring compiled out (`PLUS_AUDIO_MUX_NO_APRS`; the DM-32 reads APRS audio from its own AFSK receive path) | 863,704 (-332) | 207,616 (-2,056) | 3,840 | 268 / 760 |
+
 ## Name and public build
 
 The product's name on the radio is **DDM32 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file
