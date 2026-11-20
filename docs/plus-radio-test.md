@@ -462,6 +462,7 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | A49-4 | On the page: #, Canned text QSL, Send; Back to the page; the other station acks | "> QSL (sending)", then "(delivered)"; a message it sends us appears as "< text" (newest first) |
 | A48-S | SK1 = SOS, every action Off (Settings > Keys > SOS key); press SK1, then OK | "No SOS actions" and "Pick: Settings > Keys", nothing cut at the right edge (Turkish too); OK: toast "No SOS actions: Settings > Keys", nothing keyed |
 | A49-5 | Up / Down on the page | the previous / next heard station; turn the other radio off and wait until it drops out of the list (12 stations): "Not heard any more" |
+
 ### User data packs (branch `datapack`; the data chip is written only by the firmware, in 0xE70000-0xEFFFFF)
 
 | # | Do | Expect |
@@ -471,6 +472,11 @@ otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c)
 | DP3 | Load a second RadioID pack; power off in the middle of the transfer, power on, look at About; load it again completely | after the cut the first pack is still in force; after the full load the second |
 | DP4 | Load an air band pack built from the AD 2.18 pages the owner downloaded | Tools > Airfields: the listed airfields show the pack's frequencies, the others the built-in ones; About shows the pack |
 | DP5 | A read-only backup of the data chip before and after DP2-DP4 (the existing backup tool), compared outside the region | identical outside 0xE70000-0xEFFFFF |
+| DP6 | Tools > Airfields with the air band pack of DP4 in force: OK on an airfield the pack names, then # | its line shows the pack's tower ("+N" when the pack has more than one); the page lists the pack's frequencies; # puts them (not the ATIS) on the air watch ring, Back twice ends it as before |
+| DP7 | DOTA (each step transmits: approval, an authorised frequency, low power): radio A sends its air band pack (What "Air band pack") over FM to radio B (Role Receive, Import "Current zone", Ready) | B asks "Data pack: <name>, <date>, <size> KB. Accept?" (Turkish "Veri paketi: ..., Kabul?"); OK: A "Sent data pack", B "Imported data pack", B's About shows A's pack at once, B's airfields use it |
+| DP8 | As DP7 over DMR (A types B's ID); then the RadioID pack (long: ~18 min FM / ~14 min DMR for ~100 KB; once is enough) | as DP7; B names DMR callers from the new RadioID pack |
+| DP9 | As DP7, B answers Back (No); again, B answers nothing | A "Not accepted" both times (the second after ~20 s); B's About unchanged; B's question gone ~10 s after A stopped asking |
+| DP10 | As DP8 with the RadioID pack: stop A part way (Back, OK); again, power B off part way and on | B's About shows its old pack (or "none") both times, the DMR names as before; a full transfer afterwards works |
 
 ### Round 14 air band and spectrum (docs/plus.md "Round 14: air band and spectrum", branch `r14-air`)
 

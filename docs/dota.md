@@ -5,6 +5,7 @@
 Status: **phase 2 built** (2026-11-20, branch `dota`): steps 0-7 of section 18 are in, host-tested, not yet tried on
 a radio (step 8, the rows D-* of `docs/plus-radio-test.md`). Sections 1-16 are the phase 1 design; the owner's
 answers are section 17 and **what was built differs from the design where section 19 says so** (section 19 wins).
+Section 20: the content type "data pack" (round 14, branch `datapack`).
 
 DOTA Transfer sends channels, zones and the DMR contacts they use from one DM-32UV running DDM32 Plus to another one
 running the same firmware, over the air, on FM (AFSK 1200, the APRS modem) or DMR (the DMR data service). One
@@ -830,3 +831,41 @@ now reports no unresolved DOTA call.
 In `test_dota_fm.c` a zone of 16 takes 12.9 s in real time, not section 8.2's 7 s: the key-ups, the 400 ms
 preamble, the turnarounds and the answers cost more than the estimate counted (64 channels: 20.3 s). The radio rows
 take the measured figures.
+
+## 20. Content type "data pack" (round 14, branch `datapack`, `CONFIG_DATAPACK`)
+
+A radio sends the RadioID pack or the air band pack in force (`docs/plus.md` "User data packs", `docs/r14.md` 7.6) to
+another radio. The session, pairing, code, ARQ, frame CRC-16, the order-free CRC-32 and the receiver's atomic end are
+the channels' (sections 6-10); only what travels, the receiver's question and where it is written differ.
+
+| Topic | Built |
+|---|---|
+| Kind | `DOTA_KIND_PACK` (4) in the manifest; `dota_req_t.pack` names the type (RadioID / air band). The manifest's modes are 0 (a pack uses none) |
+| HELLO | the 21-byte manifest **and the pack's 64-byte header** (`dpk_hdr_t`: type, format, sequence, length, payload CRC-32, date, name, tag, header CRC): 85 bytes, inside FM's 128 and DMR's 192. `dota_manifest_t.pack` points at it; `dota_manifest_put` / `_get` take 21 or 85 bytes. The sender's first window holds the HELLO alone (the receiver's user answers first) |
+| Older builds | **fail safe, nothing committed**: builds from before this type take a manifest of exactly 21 bytes (`dota_manifest_get`), so they drop the 85-byte HELLO without an answer and the sender ends with "No answer"; a build without `CONFIG_DATAPACK` answers "Other version" (`rx_hello`) |
+| Data | the payload in **120-byte chunks**, each a record of the channels section, one a DATA frame (record index = offset / 120, the last one shorter); records = frames = ceil(length / 120). The sender reads them from the pack in force (`dpk_read`) as it fills each frame; nothing is copied to RAM but the header (`txs_t.ph`, 64 B inside the session buffer) |
+| Frames | up to `DOTA_FRAMES_MAX` = 2,240 (a 256 KB RadioID slot is 2,185 frames). The receiver no longer keeps a bit per frame (64 B for 512): it keeps a **32-frame window** from its base (4 B, `dota_rx_t.got`), which is all the ACK carries anyway; the sender never has new frames beyond `DOTA_SPAN` of the lowest one not acknowledged |
+| The receiver's question | on a pack's HELLO the receiver checks the header (magic, type, format, length within the type's slot, header CRC) and the counts, then answers **"wait"** (`DOTA_T_REFUSE` with status `DOTA_R_WAIT` = 9: not a refusal) and its screen asks **"Data pack: RadioID TR, 2026-11-17, 98 KB. Accept?"** (Turkish "Veri paketi: RadioID TR, 2026-11-17, 98 KB. Kabul?"), OK yes / Back no. The sender takes "wait" as an answer that came: it sends the HELLO again after its answer wait (2.5 s FM, 3.5 s DMR), as when no answer came, at most `polls` (4) times, so the user has **~20 s** (host model with air time: FM 20.0 s, DMR 22.2 s). The next HELLO of the same pack (header equal byte for byte) after **Yes** is accepted (ACK: the transfer runs); after **No** it is refused (status `DOTA_R_DECLINED` = 10). No answer in time: the sender ends with "Not accepted" (status `DOTA_R_WAIT` kept), and the receiver's question goes 10 s after the last HELLO of that pack |
+| Writing | as the channels' staging, in storage jobs on the start-up task: **`dpk_begin`** on the first job after Yes (the slot not in force erased, up to 64 sectors of 4 KB for RadioID: frames wait in the 2-frame queue meanwhile and are resent), **`dpk_put`** per frame at its offset (a frame that is not exactly its chunk is never taken), **`dpk_commit`** at END once every frame is in and the transfer CRC-32 matches: the payload read back against the header's CRC-32, then the header programmed with the receiver's next sequence; the new pack is in force at once (no restart). Undo: nothing to take back |
+| Failures | any failure, a stop (either side), the link going silent (the receiver's 30 s idle), a power cut: **the old pack stays in force** (the header of the slot being written is never programmed; the next boot's scan ignores it) |
+| Sender's screen | What: "RadioID pack" / "Air band pack" after the channel kinds; the row under it names the pack in force ("RadioID TR", "2026-11-17, 98 KB", the date or the size alone where the row is short), greyed "none" without one (Send: "Nothing to send"); the estimate from its length at the steady rates of section 8 |
+| Progress, results | "49/98 KB"; "Sent data pack" / "veri paketi gönderildi", "Imported data pack" / "veri paketi içe aktarıldı", "Not accepted" / "Kabul edilmedi" (No, or no answer); the other results as for channels |
+| Time | the steady rates of section 8 (FM ~93 B/s, DMR ~124 B/s): an air band pack of a few KB well under a minute; a RadioID pack of ~100 KB ~15-20 min on FM, ~11-14 min on DMR (`docs/r14.md` 7.6; the PC path is the better one for it) |
+
+**Fixed on the way** (all kinds): a DMR receiver's refusal went to DMR ID 0. The receiver forgot the asking station
+(`peer_dmr`) as soon as it built the refusal, before the data service sent it; it now forgets it once the answer went
+(`finish_send`).
+
+**Cost** (public build, `--stack-check --verify-rebuild`): FLASH +2,296 B (estimate 2.5-3.5 KB in `docs/r14.md` 7.7),
+static RAM -24 B (the receiver's bitmap went; the pack's state sits in the session buffer, which shrank from 1,676 to
+1,640 B); the UI task's stack 184 B free (was 200: the run page's text buffer holds the question).
+
+**Tests** (`tools/test_dota.py`): `test_dota_proto.c` (the 85-byte manifest and its refusals, the 21-byte rule older
+builds apply, 629 frames over FM with 10 % loss through the receiver's window, a pack's HELLO alone, "wait" answered
+twice then Yes, never answered: given up after ~20 s, No: refused); `test_dota_pack.c` (two whole sessions with
+`CONFIG_DATAPACK` on the real pack store over a simulated 16 MiB data chip: an air band and a RadioID pack over FM and
+DMR, with loss, a 64 KB pack of 547 frames over DMR; No; no answer; the sender's stop, a silent link, power cuts at
+four points of the receiver's writing: the old pack in force byte for byte each time; a receiver built without data
+packs: "Other version"); `test_ui_dota.c` (the What choice and the pack row, greyed "none", "Nothing to send", the
+request, "49/98 KB", the question with Yes and No, the results, English and Turkish, every page inside the screen).
+Radio rows DP6-DP10 in `docs/plus-radio-test.md`.

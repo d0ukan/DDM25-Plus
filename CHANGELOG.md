@@ -34,6 +34,12 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   RadioID pack, the airfield screens their frequencies from the air band pack; Settings > About shows which pack is in
   force. Loaded through the programming cable with the CPS protocol (tools/datapack.py builds the pack). Without a
   pack nothing changes.
+- Data packs from radio to radio: Tools > DOTA Transfer can send the RadioID pack or the air band pack in force
+  (What: "RadioID pack" / "Air band pack") to another radio over FM or DMR. The receiver is asked "Data pack: <name>,
+  <date>, <size>. Accept?" and keeps its old pack until the new one has arrived whole and checked; a stop, a lost link
+  or a power cut leaves the old one. Radios with older firmware simply don't answer (nothing changes on them).
+- DOTA over DMR: a receiver's refusal ("Codeplug full", "Other version") now reaches the sender (it was sent to no
+  one, so the sender only saw "No answer").
 
 ## v1.0.0-beta.3 (2026-11-20)
 
