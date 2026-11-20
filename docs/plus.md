@@ -2133,6 +2133,7 @@ static RAM free >= 1,500 B (<= 209,956 B).
 | 3 | The import (`dota_import.c`, `codeplug_dota.inc`: staging without in-use bits, one commit, undo); `codeplug_set_channel` gains a staging twin. Import not linked yet (object: 2,404 B text) | 863,760 (+56) | 207,616 (0) | 3,840 | 268 / 760 |
 | 4-5 | The session (`dota.c`: preparation, windows, answers, FM over AX.25 and the AFSK path with `tx_more`, DMR over chained UDP, sounds), the radio core's side (`radio_dota.inc`: the session channel, PTT refused, requests held, keying), hooks in `aprs.c`, `dmrDataService.c`, `hrc_afsk.c`, `radio_dm32.c`, `beep.c`. `dota_buf` 1,740 B | 878,356 (+14,596) | 209,632 (+2,016) | 1,824 | 268 / 760 |
 | 6 | Tools > DOTA Transfer and its picker (`ui_dota.c`: the form, questions, run page and PTT prompt as `ui_draw_list` pages), 43 Turkish entries, the PTT prompt's path. First measured at 892,012 B (over the limit); trimmed to fit: shorter texts and reused catalog strings, table-driven results, the power as a class, list pages instead of hand drawing. Flash headroom left: 12,580 B (292 B above the job's limit) | 888,540 (+10,184) | 209,648 (+16) | 1,808 | 216 / 760 |
+| 7 | Docs: `dota.md` sections 13.1 (sound paths), 17 (the owner's answers), 19 (as built); radio rows D-* in `plus-radio-test.md` | 888,540 (0) | 209,648 (0) | 1,808 | 216 / 760 |
 
 ## Name and public build
 

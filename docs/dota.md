@@ -2,8 +2,9 @@
 
 # DOTA Transfer: channels and zones from radio to radio (design, phase 1)
 
-Status: **design and feasibility study only** (2026-11-20, branch `dota`). Nothing here is built. Phase 2 starts after
-the owner reviews this document and answers the open questions (section 17).
+Status: **phase 2 built** (2026-11-20, branch `dota`): steps 0-7 of section 18 are in, host-tested, not yet tried on
+a radio (step 8, the rows D-* of `docs/plus-radio-test.md`). Sections 1-16 are the phase 1 design; the owner's
+answers are section 17 and **what was built differs from the design where section 19 says so** (section 19 wins).
 
 DOTA Transfer sends channels, zones and the DMR contacts they use from one DM-32UV running DDM32 Plus to another one
 running the same firmware, over the air, on FM (AFSK 1200, the APRS modem) or DMR (the DMR data service). One
@@ -581,6 +582,27 @@ the prompt FIFO is the AFSK's (`hrc_audio_pcm_hold`), so tones are played before
 new patterns are table entries in `core/radio/beep.c:24-60` (BEEP_SEGS_MAX 6 holds both) and enum values before
 `BEEP_COUNT` (`beep.h:20-37`); ~120 B.
 
+### 13.1 Sound on the keyed DMR sender: other paths (owner answer 5, phase 2)
+
+Every way this radio makes sound, checked against "audible locally, never on the air, while the DMR engine
+transmits". References are to the pinned upstream specs (`docs/spec/`) and the patched Plus tree.
+
+| Path | Evidence | Usable while DMR keyed? |
+|---|---|---|
+| Prompt / beep FIFO (0x16000980, AUDIO_CONTROL b7): every beep and all speaker PCM today | `modem-hrc7000.md` 8.4: "The prompt path also feeds the TX modulator"; a beep during DMR TX rode on the 4FSK and broke the voice LC headers (measured upstream); `platform/hrc7000/audio_pcm.c:14-17`, `:61` (`tx_gated`) keeps b7 clear and drops queued blocks while `hrc_dmr_tx_active()` | **no**: it would go on air and corrupt our own bursts |
+| CPU speaker buffer 0x180000A0 (AUDIO_CONTROL b5), the DMR receive PCM path | `hardware-dm32.md:112`, `:902`; `modem-hrc7000.md` 8.4: "gave rough, choppy beeps on one board with every sample layout tried"; whether it also reaches the modulator while keyed is not documented anywhere | **unknown**, never measured during TX; a candidate for a later bench test with the SDR watching the 4FSK (not built: a wrong guess puts audio on the air) |
+| C7000 DTMF / single tone generator (FM_TONE1-4, SUBVOICE_COEF) | `modem-hrc7000.md` 8.3: it is a transmit modulation source (deviation measured on air) | **no**: modulates the carrier |
+| FD6818 tone generator 1 (register 0x71, 1750 Hz burst) | `hardware-dm32.md:755` (FD6818 table, section 8.4 of that file): the RF chip's own tone for repeater access | **no**: modulates the carrier |
+| Codec digital mixer (CR_MIX / DR_MIX, MIX_2 b0 mix_rec) | `modem-hrc7000.md` 8.4 (last paragraph): it carries the DAC into the ADC record path, "which is the FM transmit input" | **no**: the opposite direction (DAC to transmit) |
+| A beeper, buzzer or vibration motor | `hardware-dm32.md:599-605` (6.6): vibration motor unverified, no drive pin known; the pin map (`hardware-dm32.md:440-500`) has no beeper; PWM0 is the LCD backlight (`:241-246`, `:460`) | **none found** |
+| The audio amplifier's enable (its switch-on pop) | `boards/dm32/radio_dm32.c` `amp()` (patched tree `:540`): the speaker amplifier is a GPIO; switching it on makes a click that never touches the modulator | **yes**: the only local-only sound found; built as `speaker_click` (`radio_dm32.c:626`, `AMP_DOTA`), a click every 50-140 ms while our DMR transmitter is on (`sounds()`, `dota.c`). Loudness and whether the pop is audible at all: unverified (row D-S2) |
+
+So, plainly: **no clean tone path exists on the DMR sender while it transmits.** What is built is the closest to
+continuous sound the hardware allows: the amplifier clicks while keyed (if they turn out inaudible on the radio, the
+keyed parts are silent, about 1 s per transmission, estimated), and `BEEP_DOTA_DATA`'s crackle in every gap (while data
+comes in, and while the sender waits for the answer), plus the start and end tones. The FM sender keeps its real AFSK
+through the amplifier (row D-S1).
+
 ## 14. RAM and flash
 
 ### 14.1 Where the buffers come from
@@ -681,25 +703,22 @@ housekeeping task with its state in `dota_buf`. `--stack-check` decides in phase
 | D-R2 | Receiver refusals: wrong code (no answer), full codeplug (no room), other firmware | the texts of section 12 |
 | D-R3 | DOTA Clone of the owner's full codeplug over DMR, then over FM | about 3 min 40 s / 4 min 45 s; every zone and channel equal (compare in the PC app); battery and case temperature noted |
 
-## 17. Open questions for the owner
+## 17. The owner's answers (2026-11-20) and where they are built
 
-1. Firmware check: refuse when the firmware strings differ (your rule as stated), or only when the DOTA protocol /
-   record versions differ (two Plus builds of different dates could then still exchange)?
-2. "All zones" (DOTA Clone): create every zone under the sender's name (" 2" when taken)? The RX choice "add to the
-   current zone / new zone (name)" would then apply to one channel, selected channels and one zone only.
-3. DMR RX group lists are not sent in v1: an imported DMR channel hears its talk group only (or every talkgroup when
-   the sender's channel had "any"). Acceptable, or send the lists too (+~1 KB flash)?
-4. PTT during a transfer: refuse with the deny tone (proposed), or stop the transfer?
-5. DMR sender: no sound while it transmits (hardware: the speaker shares the modulator's FIFO), only the crackle while
-   it waits for the answer. Acceptable?
-6. FM sender monitor: if the radio test shows the speaker can't play while keyed, is a silent FM sender acceptable?
-7. Long FM transfers key ~87 % of the time: add a 5 s rest after each minute of key time (+~5 % time)?
-8. Power: Low / Mid / High on the TX screen with Low as default (proposed), or Low only?
-9. FM bandwidth: 12.5 kHz only (proposed) or a 25 kHz choice?
-10. The receiver transmits its answers, so it needs a callsign too (the radio name). OK?
-11. A wrong pairing code gets no answer at all (the sender sees "No answer"), so a radio never answers strangers. OK?
-12. Channel extras sent: DMO, TOT, SFR role, talker alias bits, scan skip, VOX, no-beep, no-eco; never: per-channel
-    DMR ID, P25 unit ID, APRS index, location. Agree?
+| # | Question (phase 1) | Answer | Built |
+|---|---|---|---|
+| 1 | Refuse on different firmware strings, or only on different DOTA versions? | only when the DOTA protocol / record versions differ | no firmware string is exchanged; HELLO is refused with "Other version" when the frame version, the record version or the record layout differ (`rx_hello`, `dota.c`; `DOTA_R_VERSION`) |
+| 2 | DOTA Clone: every zone under the sender's name, " 2" when taken? | yes; the RX import choice applies to one channel, selected channels and one zone | `dota_import.c` (`unique_name` with `zone_copy_name`); the receiver's Import / Zone name rows apply to the other kinds |
+| 3 | Send DMR RX group lists? | yes, matched like contacts | section `DOTA_SEC_LISTS` before the channels; a list equal by name and members is reused, else added; channels point at the receiver's index (`dota_rec_put_list`, `take_list`) |
+| 4 | PTT during a transfer? | deny tone **and** the prompt "Stop the transfer?" (Yes / No); the transfer keeps running; Yes cancels cleanly | the radio core refuses PTT with `BEEP_TX_DENY` and calls `dota_ptt()` (`radio_dota.inc`); the run page asks; No (`dota_ptt_prompt_clear`) goes on, Yes (`dota_stop`) sends one ABORT and ends with nothing changed on the receiver |
+| 5 | Silent DMR sender acceptable? | no: look for other sound paths with evidence; if none, crackle / tones in every gap, near-continuous, and say so | section 13.1: no other path found that is safe; built: the amplifier's click while keyed (unverified, D-S2) and the crackle in every gap |
+| 6 | Silent FM sender acceptable if the speaker can't play while keyed? | only if the radio test shows it can't: try first | built: the amplifier stays on during AFSK transmit (`afsk_monitor`, `radio_dm32.c`); D-S1 decides |
+| 7 | 5 s rest after each minute of FM key time? | yes | `fm_link.rest_after_ms = 60000`, `.rest_ms = 5000` (`dota.c`) |
+| 8 | Power choice? | Low / Mid / High, default Low | the Power row (sender); the radio core maps it to the board's lowest / middle / highest level |
+| 9 | FM bandwidth? | 12.5 kHz only | the session channel is 12.5 kHz (`radio_dota.inc`) |
+| 10 | Receiver's answers carry its callsign? | yes | every frame from either side carries the AX.25 source (FM) / the callsign field (DMR); Ready needs a valid callsign |
+| 11 | Wrong pairing code: no answer? | yes | `dota_rx_heard` drops a HELLO with another code without answering |
+| 12 | Channel extras sent / never sent | agreed | `dota_rec_put_channel` (section 9.1 flags A / B, extras byte); per-channel DMR ID, P25 unit ID, APRS index and location are not in the record |
 
 ## 18. Phase 2: order of work
 
@@ -717,3 +736,54 @@ on its own. Flash / RAM are the estimates of section 14.2.
 | 6 | Screens, texts, Turkish, sounds | +7,600 | +56 | `test_ui_dota.c` |
 | 7 | `docs/plus.md` section, radio rows D-* in `docs/plus-radio-test.md`, the build measured against this plan | 0 | 0 | |
 | 8 | Two-radio tests with the owner (each transmitting step approved separately) | | | rows D-* |
+
+## 19. As built (phase 2, 2026-11-20)
+
+Where the code differs from sections 1-16. Code: `integration/radiofoundry/dota/`, installed by `tools/plus_dota.py`
+into `core/radio/` (`dota_proto.c`, `dota_rec.c`, `dota_import.c`, `dota.c`, `radio_dota.inc`), `core/codeplug/`
+(`codeplug_dota.inc`) and `core/ui/` (`ui_dota.c`). `CONFIG_DOTA` is on in the Plus build and needs `APRS`, `APRS_RX`,
+`APRS_MSG` (the text entry), `DMR` and `ZONE_EDIT` (else forced off for that board).
+
+| Topic | Design | Built |
+|---|---|---|
+| Layout | `core/dota/`, `dota_fm.c`, `dota_dmr.c` | `core/radio/`; both transports in `dota.c` (one session, one role at a time) |
+| What is sent | channels, zones, contacts | four sections in order: contacts, RX group lists (owner answer 3), channels, zones; a barrier between sections |
+| Compatibility | firmware strings | protocol version in every frame header; HELLO's manifest (21 B, fixed): record version, record layout, the modes used, the kind, the zone count, records and frames per section. Refusal "Other version" only when versions differ (answer 1). No firmware string on the air |
+| HELLO_ACK | free channels, zones, room, firmware string | free channels, free zone slots, room in the current zone |
+| Windows | section 7 | FM: 7 frames of up to 128 B payload, at most 1,100 B a window, AX.25 UI to "DOTA", 60-flag preamble (400 ms), each frame in its own half of the tone buffer, appended with `tx_more` (`hrc_afsk.c`); DMR: 6 frames of up to 192 B, up to 3 chained UDP datagrams (port 4101) a transmission, private to the peer's ID. 5 s rest after each keyed minute on FM (answer 7) |
+| Endings | Done / Failed | also "No final answer" (sender: every frame acknowledged, the END_ACK never came; the receiver may have written it all) and "No answer" when nothing was ever heard back; the receiver stays 8 s after Done to answer a repeated END |
+| Session memory | `dota_buf` 1,280 B + `ui_scratch` | one static union `b` in `dota.c`, 1,676 B (sender: selection, contact / list maps, zone parts, the transport buffers; receiver: protocol state, import state, a 2-frame queue for the storage job, answer buffers). While no session runs, the UI borrows the sender's transport area for its zone and channel copies (`dota_scratch()`) |
+| Import | section 10 | channels staged into free slots without their in-use bit (`codeplug_stage_channel`, a twin of `codeplug_set_channel`), zones staged raw into free zone slots; one commit sets the bank bitmaps, then the zone bitmap or the current zone's record; contacts and RX group lists are added visibly and taken away again by the undo (a snapshot of the free slots). Writes run as storage jobs on the start-up task, posted from the UI tick |
+| Screens | five screens (`SCR_DOTA`, `_TX`, `_RX`, `_RUN`, `_PICK`) | two: `SCR_DOTA` (the form with Role and Method on top and the role's rows below, its questions, the run page) and `SCR_DOTA_PICK` (`dota-pick`: a channel of a zone, channels ticked in any zone with Left / Right for the zone, a zone). Every page is a `ui_draw_list` list (scrolls, wraps the long texts) |
+| Texts | section 12 | shorter, to fit the flash budget: "Sent 12 channels, 1 zones", "Imported ...", "No answer", "Other version", "Not ready", "Codeplug full", "Receiver stopped", "Nothing changed", "No final answer", "Channel busy", "Battery low. Sure?", "Receiver ready?", "Not amateur band: send?"; reused where the catalog had them ("Color code", "Can't transmit there", "Sent ", "Imported ", "Codeplug full", "Back"). 43 new Turkish entries in `integration/radiofoundry/lang/tr.po` |
+| Sound | section 13 | as section 13 with 13.1: the DMR sender's amplifier click while keyed; FM sender's monitor through the amplifier (unverified) |
+| PTT | refused | refused with the deny tone and the prompt "Stop the transfer?" (answer 4) |
+| Power | Low / Mid / High | stored as a class 0-2, mapped by `dota_power_level` to the board's levels |
+
+### 19.1 Measured (`--plus --stack-check --verify-rebuild`)
+
+| | FLASH B | RAM B (free) | Stacks free: UI / radio / start |
+|---|---:|---:|---|
+| Base (`ddm25` 1c391c7) | 864,036 | 209,672 (1,784) | 268 / 760 / 348 |
+| DOTA, steps 0-6 | 888,540 (+24,504) | 209,648 (1,808) | 216 / 760 / 348 |
+
+The limits of the job were FLASH headroom >= 12 KB (<= 888,832 B) and static RAM free >= 1,500 B: both held, with
+292 B of flash to spare. The estimate of section 14.2 was ~19.8 K (16-24 K); the result is at its top end, and step 6
+needed trimming (shorter texts, table-driven results, list pages) to stay inside. The storage jobs' depth on the
+start-up task is not covered by `--stack-check` (jobs are called through a pointer); `dota_job` keeps its buffers in
+`b` for that reason.
+
+### 19.2 Host tests (`tools/test_dota.py`, from `tools/test_classic.py`)
+
+| Test | What |
+|---|---|
+| `test_dota_proto.c` | frames, CRCs, manifest; both state machines against each other at 0 / 1 / 10 % loss with duplicates and swaps, and 30 %, FM and DMR links; every run ends done with identical data or failed with nothing committed |
+| `test_dota_rec.c` | every mode and field through encoder and decoder, refusals, 200,000 fuzzed records |
+| `test_dota_import.c` | the real `codeplug.c` on the simulated flash: staging unseen, power cuts at every flash write during staging and commit, the undo, names, contacts and lists matched |
+| `test_dota_session.c` | two whole sessions (`dota.c` twice): FM tone buffers decoded bit by bit by the HDLC decoder, CTCSS required; DMR chained datagrams; zones, DOTA Clone, loss, a wrong code, stops, the PTT prompt |
+| `test_ui_dota.c` | the screens in upstream's UI simulator (engine faked), English and Turkish: rows per role and method, scrolling, digits, the steps, the checks and questions in order, the request, the picker, progress, Back and the PTT prompt (No goes on, Yes stops), writing can't be stopped, every result text, every page inside the screen |
+
+Not built from section 16.1: `test_dota_fm.c` (the half-buffer encoder against the APRS host modem with noise and a
+CTCSS tone added) and `test_dota_radio.inc` (the radio core block in upstream's radio state machine test). The radio
+core block (`radio_dota.inc`) is compiled only in the firmware; its behaviour (session channel, PTT refusal, held
+requests, restore) waits for the radio rows.
