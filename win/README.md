@@ -60,13 +60,13 @@ compressed, x64. It runs on a stock Windows 10 (1809 or newer) or 11 with nothin
 
 ## Setup (Inno Setup)
 
-Install [Inno Setup 6](https://jrsoftware.org/isinfo.php) (6.3 or newer), publish as above, then:
+Install [Inno Setup](https://jrsoftware.org/isinfo.php) 6.3 or newer (7.1 builds it; checked 2026-11-20), publish as above, then:
 
 ```
-"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" installer\DDM32Plus.iss
+"C:\Program Files\Inno Setup 7\ISCC.exe" installer\DDM32Plus.iss
 ```
 
-(or `"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"` for an all-users Inno install). Output:
+(Inno Setup 6: `"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"`, or under `%LOCALAPPDATA%\Programs` for a per-user Inno install). Output:
 `win/publish/installer/DDM32Plus-Setup.exe`.
 
 The setup installs **per user** to `%LOCALAPPDATA%\Programs\DDM32 Plus` without an administrator prompt, adds a Start

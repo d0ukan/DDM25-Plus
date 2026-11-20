@@ -2,8 +2,8 @@
 ; DDM32Plus-Setup.exe: per-user install of DDM32 Plus (no administrator prompt).
 ;
 ; Saved as UTF-8 with BOM (LF): Inno Setup reads the Turkish texts correctly only with the BOM.
-; Build (Inno Setup 6.3 or newer, https://jrsoftware.org/isinfo.php), after the publish step in win/README.md:
-;   "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" win\installer\DDM32Plus.iss
+; Build (Inno Setup 6.3 or newer; 7.1 checked, https://jrsoftware.org/isinfo.php), after the publish step in win/README.md:
+;   "C:\Program Files\Inno Setup 7\ISCC.exe" win\installer\DDM32Plus.iss
 ; Output: win\publish\installer\DDM32Plus-Setup.exe
 ;
 ; Where things go:
