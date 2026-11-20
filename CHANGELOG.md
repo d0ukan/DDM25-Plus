@@ -3,7 +3,9 @@
 DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
 [README.md](README.md) before installing anything.
 
-## Unreleased
+## v1.0.0-beta.3 (2026-11-20)
+
+Installed and checked on the author's radio with the new Windows programmer (C#), the first install it did.
 
 - Frequency on Home: a channel's receive frequency on a row of its own ("RX 438.5000  TX 430.9000", or one
   frequency when both are the same); Large text shows it as a third line (TX in red while transmitting). Not in the
