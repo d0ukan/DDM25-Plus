@@ -29,3 +29,17 @@ def main(ROOT, APP, OUT, flags, host):
          core / 'codeplug/zone_settle.c', core / 'settings/settings.c', core / 'storage/storage.c',
          host / 'sim/sim_flash.c', '-o', OUT / 'test_dota_import'], cwd=ROOT)
     run([OUT / 'test_dota_import'], cwd=ROOT)
+    # Two whole sessions talking (dota.c twice: a_* sends, b_* receives) over fake FM and DMR transports
+    api = ('dota_selection', 'dota_on', 'dota_start', 'dota_stop', 'dota_view', 'dota_ptt_prompt_clear',
+           'dota_job_wanted', 'dota_job', 'dota_estimate_s', 'dota_estimate_bytes', 'dota_begin', 'dota_owns_radio',
+           'dota_ptt', 'dota_fm_listening', 'dota_fm_frame', 'dota_dmr_rx', 'dota_poll')
+    for side in ('a', 'b'):
+        run(['clang', *flags, *dota, '-DCONFIG_APRS=1', '-DCONFIG_DMR_DATA_CORE=1', '-I' + str(host),
+             *(f'-D{f}={side}_{f}' for f in api), '-c', core / 'radio/dota.c', '-o', OUT / f'dota_{side}.o'], cwd=ROOT)
+    run(['clang', *flags, *dota, '-DCONFIG_APRS=1', '-DCONFIG_DMR_DATA_CORE=1', '-I' + str(host),
+         tp / 'test_dota_session.c', OUT / 'dota_a.o', OUT / 'dota_b.o', core / 'radio/dota_proto.c',
+         core / 'radio/dota_rec.c', core / 'radio/dota_import.c', *codeplug, core / 'codeplug/zone_edit.c',
+         core / 'codeplug/zone_shift.c', core / 'codeplug/zone_settle.c', core / 'settings/settings.c',
+         core / 'storage/storage.c', host / 'sim/sim_flash.c', core / 'aprs/ax25.c', core / 'aprs/hdlc.c',
+         '-o', OUT / 'test_dota_session'], cwd=ROOT)
+    run([OUT / 'test_dota_session'], cwd=ROOT)

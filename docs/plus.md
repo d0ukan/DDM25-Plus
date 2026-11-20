@@ -2131,6 +2131,7 @@ identical, every task inside its stack). Limits for the job: FLASH headroom >= 1
 | 1 | `CONFIG_DOTA`, the protocol (`dota_proto.c`: frames, manifest, both ends' ARQ). Built, not linked until the radio core calls it (object: 4,487 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
 | 2 | The records, format version 1 (`dota_rec.c`). Not linked yet (object: 2,560 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
 | 3 | The import (`dota_import.c`, `codeplug_dota.inc`: staging without in-use bits, one commit, undo); `codeplug_set_channel` gains a staging twin. Import not linked yet (object: 2,404 B text) | 863,760 (+56) | 207,616 (0) | 3,840 | 268 / 760 |
+| 4-5 | The session (`dota.c`: preparation, windows, answers, FM over AX.25 and the AFSK path with `tx_more`, DMR over chained UDP, sounds), the radio core's side (`radio_dota.inc`: the session channel, PTT refused, requests held, keying), hooks in `aprs.c`, `dmrDataService.c`, `hrc_afsk.c`, `radio_dm32.c`, `beep.c`. `dota_buf` 1,740 B | 878,356 (+14,596) | 209,632 (+2,016) | 1,824 | 268 / 760 |
 
 ## Name and public build
 

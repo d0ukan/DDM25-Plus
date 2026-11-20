@@ -294,7 +294,7 @@ uint8_t dota_tx_window(dota_tx_t *s, uint32_t now, uint8_t *scratch)
 
 size_t dota_tx_frame(dota_tx_t *s, uint8_t i, uint8_t *out, size_t max)
 {
-	if (i >= s->nwin || max < DOTA_FRAME_MAX)
+	if (i >= s->nwin || max < DOTA_HDR + (s->link->call ? DOTA_CALL : 0u) + s->link->payload_max + 2u)
 		return 0;
 	dota_frame_t f;
 	memset(&f, 0, sizeof f);
