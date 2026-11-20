@@ -1,7 +1,7 @@
 import unittest
 
 import fixtures as fx
-from ddm25_app import parsers
+from ddm32_app import parsers
 
 
 class BackupParserTest(unittest.TestCase):

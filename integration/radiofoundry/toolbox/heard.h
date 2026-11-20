@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus heard list (CONFIG_HEARD, docs/plus.md "Heard list"): every station heard on P25, DMR, YSF, NXDN and
+/* DDM32 Plus heard list (CONFIG_HEARD, docs/plus.md "Heard list"): every station heard on P25, DMR, YSF, NXDN and
  * dPMR, one entry per (mode, source, destination), newest first, with how many calls and when the last one was.
  * Fed where Recent (the call history) is fed (ui_app.c recent_add, and while a DMR / P25 call goes on); unlike
  * Recent it keeps a station once, counts its calls and keeps the frequency it was heard on. RAM only, gone at power

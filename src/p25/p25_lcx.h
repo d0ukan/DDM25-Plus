@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus P25 extras (docs/plus.md "P25 emergency and unit-to-unit calls"): the link control formats the Classic
+/* DDM32 Plus P25 extras (docs/plus.md "P25 emergency and unit-to-unit calls"): the link control formats the Classic
  * binding (src/p25/p25.c, a locked copy of the CAI library's caller binding) leaves undecoded. That binding takes only
  * the group voice LC (LCF 0x00); here the unit-to-unit voice LC (LCF 0x03, TIA-102.AABF: octets 3-5 the called unit,
  * 6-8 the source) is decoded too, through the library's own p25cai_lc_decode, and an LC of another format that passed

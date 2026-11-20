@@ -38,7 +38,7 @@ void p25_voice_set_tsdu(p25_voice *v, p25cai_control_receiver *rx,
     v->tsdu_ctx = ctx;
 }
 
-/* DDM25 Plus trunk following: the same dibits through the library's control channel receiver. A TSDU (one to three
+/* DDM32 Plus trunk following: the same dibits through the library's control channel receiver. A TSDU (one to three
  * TSBKs, each CRC-checked) goes to the hook and counts its blocks in rx_frames; a TSDU dropped after its NID on a
  * block that failed goes to the hook as NULL */
 static void tsdu_dibit(p25_voice *v, uint8_t dibit)

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""DDM25 Plus: extras on top of Classic r13's separate RX and TX NAC (CONFIG_P25_TXNAC, docs/plus.md "Separate RX NAC
+"""DDM32 Plus: extras on top of Classic r13's separate RX and TX NAC (CONFIG_P25_TXNAC, docs/plus.md "Separate RX NAC
 and TX NAC"; owner's item 38). Called last from plus_features.prepare(); its own module so the shared prepare list gains
 one line.
 

@@ -9,7 +9,7 @@ reserved codec slot. Never opens a port and never writes a file.
 - backup_jedec(folder): the flash chip IDs the backup tool recorded for this radio.
 - load_codec(): the pinned RadioFoundry codec slot writer (tools/hrc7000_codec.py) and the files it reads (board
   registry, codec maps), loaded only after each matched its SHA-256 (radiotools/upstream.py), and only when the
-  board's codec windows equal the Classic / DDM25 Plus linker layout.
+  board's codec windows equal the Classic / DDM32 Plus linker layout.
 - stock_profile(codec, program): the stock firmware a program flash image holds (found by the codec's content, as
   RadioFoundry identifies a program flash dump), or None.
 - compose_from_stock(program, application): the full 1 MiB target image for a first install from stock: the
@@ -33,13 +33,13 @@ from radiotools import upstream  # noqa: E402
 START, SIZE, SECTOR = 0xC000, 0x100000, 4096
 SLOT = 0xE8000
 PROGMEM_BASE = 0x03000000
-# The Classic / DDM25 Plus codec windows (install_plus.CODEC_SYMBOLS): slot, the codec's run window, the modem table
+# The Classic / DDM32 Plus codec windows (install_plus.CODEC_SYMBOLS): slot, the codec's run window, the modem table
 # window the firmware accepts
 SLOT_WINDOW = (0x030E8000, 0x03100000)
 RUN_WINDOW = (0x43A00, 0x58000)
 TABLES_LO, TABLES_HI = 0x18000E48, 0x18003E38
 APP_BASE = 0x0300C000
-# Stock versions DDM25 Plus has been installed over (the author's radio). Every other known profile goes through the
+# Stock versions DDM32 Plus has been installed over (the author's radio). Every other known profile goes through the
 # same code path but is untried.
 TESTED_STOCK = {'DM32.01.01.047.bin'}
 
@@ -99,16 +99,16 @@ class CodecError(ValueError):
 def load_codec():
     """The pinned codec slot writer, after the hash check of everything it reads and a check of its DM32 windows"""
     root = upstream.verify(upstream.CODEC_INPUTS)
-    codec = load('ddm25_unit_codec', root / upstream.CODEC)
+    codec = load('ddm32_unit_codec', root / upstream.CODEC)
     lay = codec.BOARDS.get('dm32')
     if (not lay or tuple(lay['slot']) != SLOT_WINDOW or tuple(lay['run']) != RUN_WINDOW or
             lay['app_base'] != APP_BASE or lay['tables'][0] != TABLES_LO or lay['tables'][1] > TABLES_HI):
-        raise CodecError('The codec tool\'s DM32 windows differ from the DDM25 Plus layout')
+        raise CodecError('The codec tool\'s DM32 windows differ from the DDM32 Plus layout')
     return codec
 
 
 def has_slot(codec, program):
-    """True when a valid version 2 codec slot is at 0xE8000 (the Classic / DDM25 Plus layout)"""
+    """True when a valid version 2 codec slot is at 0xE8000 (the Classic / DDM32 Plus layout)"""
     return codec.parse_slot(program[SLOT:SIZE]) is not None
 
 

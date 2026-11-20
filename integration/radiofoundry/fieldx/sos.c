@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus one-key SOS (sos.h): the actions' state machine on the UI task. It only calls what the lone worker,
+/* DDM32 Plus one-key SOS (sos.h): the actions' state machine on the UI task. It only calls what the lone worker,
  * Tools > APRS > SOS, Tools > CW beacon and the emergency key call; every gate is theirs. Installed as core/ui/sos.c.
  * RAM: 16 B. */
 #include "config.h"

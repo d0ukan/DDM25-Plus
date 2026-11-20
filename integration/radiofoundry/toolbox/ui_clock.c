@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Tools > Clock (clockx.h, docs/plus.md "Clock tools"): four rows, Up / Down pick one.
+/* DDM32 Plus Tools > Clock (clockx.h, docs/plus.md "Clock tools"): four rows, Up / Down pick one.
  *   Stopwatch   OK starts / stops, # takes a lap while it runs (the newest three under it with their own times) and
  *               resets it while stopped.
  *   Countdown   Left / Right (or the knob) set the time while stopped (a minute a step, 10 s under a minute; held:

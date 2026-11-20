@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The DDM25 Plus boot screen (CONFIG_PLUS_ART): the mark and the wordmark (art.c), a rule, the owner's two boot text
+// The DDM32 Plus boot screen (CONFIG_PLUS_ART): the mark and the wordmark (art.c), a rule, the owner's two boot text
 // lines (the CPS boot text, left out when empty), board and version small and dim, and under them, on the bottom
 // line, the author's callsign (ART_CALLSIGN) small and centred. Called first thing in ui_draw_splash
 // (tools/plus_features.py), so the boot path and the stub entry screen both get it.

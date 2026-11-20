@@ -1,4 +1,4 @@
-"""python -m ddm25_app (from pc/); --run-tool NAME ARGS runs one radio tool; --self-update is the update helper;
+"""python -m ddm32_app (from pc/); --run-tool NAME ARGS runs one radio tool; --self-update is the update helper;
 --update-check MARKER is how the self-update helper starts a new program (the marker proves it came up)."""
 import sys
 

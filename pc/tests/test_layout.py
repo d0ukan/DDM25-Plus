@@ -10,7 +10,7 @@ from unittest import mock
 
 import fixtures  # noqa: F401
 import rtfixtures as rt
-from ddm25_app import paths, toolhost
+from ddm32_app import paths, toolhost
 
 
 class LayoutTest(unittest.TestCase):
@@ -29,20 +29,25 @@ class LayoutTest(unittest.TestCase):
         self.assertFalse(lay.can_self_update)
 
     def test_frozen_command(self):
-        lay = paths.Layout.frozen_app(bundle=self.top / 'app', data=self.top / 'data', runner_exe='C:/x/DDM25Plus.exe')
+        lay = paths.Layout.frozen_app(bundle=self.top / 'app', data=self.top / 'data', runner_exe='C:/x/DDM32Plus.exe')
         program, argv, shown = lay.tool_command('dm32_readonly_backup', ['--port', 'COM7'])
-        self.assertEqual(program, 'C:/x/DDM25Plus.exe')
+        self.assertEqual(program, 'C:/x/DDM32Plus.exe')
         self.assertEqual(argv, ['--run-tool', 'dm32_readonly_backup', '--port', 'COM7'])
         self.assertTrue(lay.can_self_update)
         self.assertFalse(lay.can_build)
 
     def test_user_data_outside_the_program_folder(self):
         with mock.patch.dict(os.environ, {'LOCALAPPDATA': str(self.top / 'local')}):
-            os.environ.pop('DDM25_DATA', None)
+            os.environ.pop('DDM32_DATA', None)
             try:
+                self.assertEqual(paths.data_dir(), self.top / 'local' / 'DDM32Plus')
+                # A data folder from before the rename (DDM25Plus) is used while there is no DDM32Plus one
+                (self.top / 'local' / 'DDM25Plus').mkdir(parents=True)
                 self.assertEqual(paths.data_dir(), self.top / 'local' / 'DDM25Plus')
+                (self.top / 'local' / 'DDM32Plus').mkdir()
+                self.assertEqual(paths.data_dir(), self.top / 'local' / 'DDM32Plus')
             finally:
-                os.environ['DDM25_DATA'] = fixtures.DATA_DIR
+                os.environ['DDM32_DATA'] = fixtures.DATA_DIR
         lay = paths.Layout.frozen_app(bundle=self.top / 'app', data=self.top / 'data').ensure()
         for d in (lay.backups, lay.releases, lay.updates):
             self.assertTrue(d.is_dir())
@@ -72,7 +77,7 @@ class ToolHostTest(unittest.TestCase):
         return code, out.getvalue(), err.getvalue()
 
     def test_not_a_tool_request(self):
-        self.assertIsNone(toolhost.main_from_argv(['DDM25Plus.exe']))
+        self.assertIsNone(toolhost.main_from_argv(['DDM32Plus.exe']))
 
     def test_unknown_tool_refused(self):
         code, _, err = self.run_host(['x', '--run-tool', 'install_firstboot_lab'])
@@ -101,7 +106,9 @@ class ToolHostTest(unittest.TestCase):
         code, out, _ = self.run_host(['x', '--run-tool', '_selfcheck'])
         self.assertIn('SELF-CHECK PASS', out, out)
         self.assertEqual(code, 0)
-        self.assertIn('release public key: NOT EMBEDDED', out)
+        from radiotools import signed_manifest as sm  # the release key is embedded since v1.0.0-beta.1
+        self.assertIn(f'release public key: {sm.key_id(sm.public_key())} (embedded)' if sm.PUBLIC_KEY_HEX else
+                      'release public key: NOT EMBEDDED', out)
         self.assertIn('stock profiles', out)
 
 

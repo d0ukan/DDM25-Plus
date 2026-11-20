@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus find my friend (core/ui/follow.c): one station followed by callsign; a newer position taken, another
+/* DDM32 Plus find my friend (core/ui/follow.c): one station followed by callsign; a newer position taken, another
  * station's ignored, the last one kept when the station is not heard; its age and the 10 minute stale mark. Built with
  * -DCONFIG_NAV_FOLLOW=1. */
 #include <stdio.h>

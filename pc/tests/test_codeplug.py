@@ -4,7 +4,7 @@ import json
 import unittest
 
 import fixtures as fx
-from ddm25_app import codeplug as cp
+from ddm32_app import codeplug as cp
 
 
 class CodeplugDecodeTest(unittest.TestCase):
@@ -286,7 +286,7 @@ class ExportTest(unittest.TestCase):
     def test_change_list(self):
         doc = json.loads(cp.change_list('dm32-x', [{'table': 'channels', 'key': '1', 'field': 'name',
                                                     'old': 'A', 'new': 'B'}]))
-        self.assertEqual(doc['kind'], 'ddm25-codeplug-change-list')
+        self.assertEqual(doc['kind'], 'ddm32-codeplug-change-list')
         self.assertIn('Telsize yazmaz', doc['note'])
         self.assertEqual(doc['changes'][0]['new'], 'B')
 

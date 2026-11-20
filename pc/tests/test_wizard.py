@@ -2,13 +2,13 @@
 import unittest
 
 import fixtures as fx
-from ddm25_app import parsers
-from ddm25_app.wizard import FAILED, IDLE, OK, RestoreFlow, Wizard
+from ddm32_app import parsers
+from ddm32_app.wizard import FAILED, IDLE, OK, RestoreFlow, Wizard
 
 
 class Pkg:
     def __init__(self, sha='a' * 64, installable=True):
-        self.sha256, self.installable, self.name, self.version = sha, installable, 'DDM25 Plus 1.0.0', '1.0.0'
+        self.sha256, self.installable, self.name, self.version = sha, installable, 'DDM32 Plus 1.0.0', '1.0.0'
 
 
 def backup_ok():

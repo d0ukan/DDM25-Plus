@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Tools > Heard list (heard.h, docs/plus.md "Heard list"): every station heard, newest first, one row each:
+/* DDM32 Plus Tools > Heard list (heard.h, docs/plus.md "Heard list"): every station heard, newest first, one row each:
  * "P25 77285" and "TG101 $659 x12 3m" (the talkgroup, NAC, calls, how long ago; the NAC, then the talkgroup left out
  * where they do not fit on the row). OK on a
  * row opens it: the mode, destination, source, NAC / colour code and slot / RAN, the frequency, the calls and when;

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""DDM25 Plus: the product name and the author's signature on the radio, and the public build profile
+"""DDM32 Plus: the product name and the author's signature on the radio, and the public build profile
 (docs/plus.md "Name and public build"; owner's request 2026-11-19). Called last from plus_features.prepare(); its own
 module so the shared prepare list gains one line.
 
-Name: the splash wordmark reads "DDM25 Plus" (art/wordmark.txt) with the callsign TA2DOU small at the bottom centre
-(integration/radiofoundry/art/splash_plus.c); About opens with "DDM25 Plus . d0ukan . TA2DOU" (art.h ART_PRODUCT,
+Name: the splash wordmark reads "DDM32 Plus" (art/wordmark.txt) with the callsign TA2DOU small at the bottom centre
+(integration/radiofoundry/art/splash_plus.c); About opens with "DDM32 Plus . d0ukan . TA2DOU" (art.h ART_PRODUCT,
 ART_AUTHOR, ART_CALLSIGN; names, never translated), then "Based on Open25-DM32 Classic" in place of Classic r13's
 "Firmware: Open25-DM32 Classic" and its issue tracker (a Plus image is not Classic). Upstream's credits stay:
 "License: MIT, (c) 2026 Open25-DM32 contributors", "Based on RadioFoundry" and its MIT line, authors, third party;
-"DDM25 Plus: GPL-3.0-or-later" goes right above them (LICENSING.md) and, with the repeater list, its sources
+"DDM32 Plus: GPL-3.0-or-later" goes right above them (LICENSING.md) and, with the repeater list, its sources
 ("Repeater data: RadioID.net, TRAC") at the end. Internal names (CONFIG_*, files, --plus, prepare_*) do not change.
 
 Public build (`build_radiofoundry.py --plus --public`, build/dm32-p25-plus-public/): the same firmware without the
@@ -37,7 +37,7 @@ def prepare_brand(transform):
         ('\tsb_str(&b, TR("Firmware: "));\n\tsb_str(&b, "Open25-DM32 Classic\\n");\n'
          '\tsb_str(&b, "Issues:\\ngithub.com/tylerwatt12/\\nOpen25-DM32/issues\\n");\n',
          '#if CONFIG_PLUS_ART\n'
-         '\t// DDM25 Plus: the product, its author and his callsign first (names, not translated), then what it is\n'
+         '\t// DDM32 Plus: the product, its author and his callsign first (names, not translated), then what it is\n'
          '\t// built on; upstream\'s issue tracker is for Classic builds only\n'
          '\tsb_str(&b, ART_PRODUCT " " GLYPH_DOT " " ART_AUTHOR " " GLYPH_DOT " " ART_CALLSIGN "\\n");\n'
          '\tsb_str(&b, "Based on Open25-DM32 Classic\\n");\n'
@@ -52,7 +52,7 @@ def prepare_brand(transform):
          '\tsb_str(&b, TR("License: "));\n\tsb_str(&b, "MIT, (c) 2026 Open25-DM32 contributors\\n");\n'),
         ('\treturn t;\n}\n\nstatic void about_enter(void)\n',
          '#if CONFIG_REPEATERS\n'
-         '\t// DDM25 Plus: where the built-in repeater list comes from (tools/rpt_list.py: "own" = the TRAC list)\n'
+         '\t// DDM32 Plus: where the built-in repeater list comes from (tools/rpt_list.py: "own" = the TRAC list)\n'
          '\tsb_chr(&b, \'\\n\');\n'
          '\tsb_str(&b, TR("Repeater data: "));\n'
          '\tbool rid = strstr(rpt_info.source, "RadioID") != NULL, own = strncmp(rpt_info.source, "own", 3) == 0;\n'

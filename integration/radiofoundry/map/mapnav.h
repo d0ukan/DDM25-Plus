@@ -86,7 +86,7 @@ static inline uint8_t track_slot(const track_t *t, uint8_t i)
 }
 
 #if CONFIG_MAP_COVERAGE
-/* --- Coverage (DDM25 Plus, CONFIG_MAP_COVERAGE): a byte beside each track point (the same ring slot: the track's
+/* --- Coverage (DDM32 Plus, CONFIG_MAP_COVERAGE): a byte beside each track point (the same ring slot: the track's
  * head and n), the signal strength of the channel or VFO in use when the point was taken; Tools > Map draws the
  * points coloured by it. The S-meter scale of VHF / UHF: S9 = -93 dBm, 6 dB a unit.
  * The byte: dBm + 141, 1 .. 140 (-140 .. -1 dBm, clamped); 0 = not known (the receiver gave no reading) */

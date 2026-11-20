@@ -1,4 +1,4 @@
-"""The DDM25 Plus main window: home page, the task pages, help / disclaimer / about, status bar.
+"""The DDM32 Plus main window: home page, the task pages, help / disclaimer / about, status bar.
 
 At the first start (and after a changed disclaimer text) the disclaimer dialog comes first; until it is accepted the
 RadioLock refuses every radio step, so no radio button works.
@@ -20,7 +20,7 @@ from .update_tab import PREP, UpdateTab
 from .versions_tab import VersionsTab
 from .widgets import bigger, icon, show_about, show_help
 
-TITLE = 'DDM25 Plus'
+TITLE = 'DDM32 Plus'
 
 
 class MainWindow(QMainWindow):
@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
         for text, ic, tip, fn in (('Yardım', 'SP_DialogHelpButton', 'Sık karşılaşılan durumlar', self.help),
                                   ('Sorumluluk reddi', 'SP_MessageBoxWarning', 'Sorumluluk reddini göster',
                                    self.show_disclaimer),
-                                  ('Hakkında', 'SP_MessageBoxInformation', 'DDM25 Plus · d0ukan · TA2DOU',
+                                  ('Hakkında', 'SP_MessageBoxInformation', 'DDM32 Plus · d0ukan · TA2DOU',
                                    lambda: show_about(self))):
             act = bar.addAction(icon(self, ic), text)
             act.setToolTip(tip)

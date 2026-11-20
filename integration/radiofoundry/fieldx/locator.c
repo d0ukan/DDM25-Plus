@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Maidenhead locators (locator.h): pure, integer. In 1e-7 degree a field is 20 x 10 degrees, a square 2 x 1,
+/* DDM32 Plus Maidenhead locators (locator.h): pure, integer. In 1e-7 degree a field is 20 x 10 degrees, a square 2 x 1,
  * a subsquare 1/12 x 1/24 degree; the centre adds half of the last unit. Longitudes are counted from 180 W and
  * latitudes from 90 S, in unsigned 32 bits (360e7 does not fit an int32). */
 #include "config.h"

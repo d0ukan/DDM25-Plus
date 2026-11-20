@@ -102,7 +102,7 @@ static void test_vfox_p25(void)
     CHECK(radio_sm_tx_check(&sm) == TXDENY_NONE);
     vx_apply(145575000, RADIO_MODE_P25, 0xF7E, 99, 3101234);
     vx_pump(6);
-    /* NAC Any: Classic r13's TX NAC Same as RX is then $293, so it may talk (DDM25 Plus on the r13 base) */
+    /* NAC Any: Classic r13's TX NAC Same as RX is then $293, so it may talk (DDM32 Plus on the r13 base) */
     CHECK(classic_set_nac == 0xF7E && !sm.view.ch.rx_only && radio_sm_tx_check(&sm) == TXDENY_NONE);
     vx_apply(145575000, RADIO_MODE_P25, 0x456, 0, 3101234);
     vx_pump(6);

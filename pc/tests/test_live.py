@@ -16,7 +16,7 @@ PC = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PC))
 from radiotools import native_modem, plus_live, plus_txdiag  # noqa: E402
 
-from ddm25_app import parsers  # noqa: E402
+from ddm32_app import parsers  # noqa: E402
 
 CORE = ('section=core\nview=5\nstate=rx\ntx_deny=none\nmode=fm\nvfo=0\nzone_index=0\nzone_pos=2\nzone_name=Zone A\n'
         'channel_number=4\nchannel_name=P25 659\nrx_hz=434250000\ntx_hz=434250000\nsquelch=3\nmonitor=0\n'

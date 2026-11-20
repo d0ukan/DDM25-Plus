@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus one-key SOS (sos.h), the UI: the SOS key's page and Tools > SOS. Installed as core/ui/ui_sos.c.
+/* DDM32 Plus one-key SOS (sos.h), the UI: the SOS key's page and Tools > SOS. Installed as core/ui/ui_sos.c.
  *   SCR_SOS, arg SOS_PAGE_ASK: "Send SOS now?" with the actions chosen and "it transmits"; OK (or the SOS key held)
  *     starts them and the page shows how each goes; Back cancels. With nothing chosen it says so and sends nothing.
  *   SCR_SOS, arg SOS_PAGE_STOP (the SOS key while one runs): each action's state, OK (or the key held) stops it.

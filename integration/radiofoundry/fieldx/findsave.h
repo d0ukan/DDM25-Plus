@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus: P25 / DMR search finds saved as codeplug channels (CONFIG_FIND_SAVE, docs/plus.md "Save search finds").
+/* DDM32 Plus: P25 / DMR search finds saved as codeplug channels (CONFIG_FIND_SAVE, docs/plus.md "Save search finds").
  * The portable part (no RTOS, no codeplug access): what a find becomes as a channel, its name, the zone name
  * "Bulunanlar N" and the duplicate rule. Installed as core/ui/findsave.{c,h}; the sequencer that writes them through
  * the zone editor's own storage path is ui_findsave.c.

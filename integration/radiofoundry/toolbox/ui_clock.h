@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Tools > Clock, the UI task's side (ui_clock.c, clockx.h). Installed as core/ui/ui_clock.h. */
+/* DDM32 Plus Tools > Clock, the UI task's side (ui_clock.c, clockx.h). Installed as core/ui/ui_clock.h. */
 #ifndef PLUS_UI_CLOCK_H
 #define PLUS_UI_CLOCK_H
 

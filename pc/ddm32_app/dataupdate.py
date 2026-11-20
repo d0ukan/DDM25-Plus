@@ -3,11 +3,11 @@
 Every network call goes through a fetch(url) -> bytes function the caller passes in (tests pass a fake). A download
 is checked before it replaces anything: written to a temporary file beside the target, then os.replace.
 
-Developer page only (a source checkout of the DDM25 Plus repository with WSL); the frozen program hides it.
+Developer page only (a source checkout of the DDM32 Plus repository with WSL); the frozen program hides it.
 
 TLE (docs/tle-update.md, option A): CelesTrak's amateur element sets are fetched (at most every two hours, the last
 good answer is kept), compared with the repository's tle.txt and, on the developer's click, written into the WSL build
-copy only (~/ddm25-plus/integration/radiofoundry/sat/tle.txt, checked there by tools/sat_tle.py). The Windows checkout
+copy only (~/ddm32-plus/integration/radiofoundry/sat/tle.txt, checked there by tools/sat_tle.py). The Windows checkout
 is never written. The build's rsync keeps the WSL copy while it is the newer one. The resulting build is a new image:
 the program installs it only after it is published as a signed release (pc/release/make_release.py).
 """
@@ -26,9 +26,9 @@ USER_CSV_URL = 'https://radioid.net/static/user.csv'
 RPTRS_URL = 'https://radioid.net/static/rptrs.json'
 AMATEUR_URL = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle'
 TLE_CACHE_SECONDS = 2 * 3600         # CelesTrak updates the GP data every two hours; never ask more often
-WSL_COPY = '~/ddm25-plus'
+WSL_COPY = '~/ddm32-plus'
 TLE_REL = 'integration/radiofoundry/sat/tle.txt'
-USER_AGENT = 'DDM25Plus-data-update/1'
+USER_AGENT = 'DDM32Plus-data-update/1'
 
 
 class DataError(ValueError):
@@ -408,7 +408,7 @@ def wsl_path(windows_path):
 
 
 def build_script(root):
-    """The bash script the Derle button runs in WSL: sync the repository to ~/ddm25-plus, build the public profile,
+    """The bash script the Derle button runs in WSL: sync the repository to ~/ddm32-plus, build the public profile,
     print hash/flags"""
     src = wsl_path(Path(root)).rstrip('/') + '/'
     return ' && '.join([

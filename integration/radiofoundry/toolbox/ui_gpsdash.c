@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Tools > GPS (tripm.h, docs/plus.md "GPS dashboard"): the speed large, the heading as a compass point and
+/* DDM32 Plus Tools > GPS (tripm.h, docs/plus.md "GPS dashboard"): the speed large, the heading as a compass point and
  * degrees (while moving), the altitude, the trip distance and the top speed since the reset, the fix and the
  * satellites used. OK held resets the trip and the top speed. The trip counts whatever screen is open: the GPS is
  * read once a second (ui_gpsdash_tick, from ui_app.c). RAM only (the trip meter's 20 bytes and the poll time).

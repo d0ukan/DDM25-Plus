@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus one-key SOS (core/ui/sos.c) against recording fakes of what it calls: the emergency key's
+/* DDM32 Plus one-key SOS (core/ui/sos.c) against recording fakes of what it calls: the emergency key's
  * ui_svc_emergency, the APRS engine's aprs_sos_set / aprs_plus_state, the CW beacon's request and view. Proves that
  * nothing is asked to transmit before sos_start (the confirmation) nor with every action off; the order (CW first,
  * APRS once it is on air, DMR once it has ended); each action asked once; the refusals and their events; Stop; an

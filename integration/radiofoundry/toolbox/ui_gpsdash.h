@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Tools > GPS, the UI task's side (ui_gpsdash.c, tripm.h). Installed as core/ui/ui_gpsdash.h. */
+/* DDM32 Plus Tools > GPS, the UI task's side (ui_gpsdash.c, tripm.h). Installed as core/ui/ui_gpsdash.h. */
 #ifndef PLUS_UI_GPSDASH_H
 #define PLUS_UI_GPSDASH_H
 

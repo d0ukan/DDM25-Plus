@@ -2126,7 +2126,7 @@ def prepare_art(transform, install):
     transform('core/ui/ui.c', [
         ('\t\tui_layout_init();\n\t\tchar line1[17], line2[17];\n',
          '\t\tui_layout_init();\n#if CONFIG_PLUS_ART\n'
-         '\t\tui_theme_set((uint8_t)ui_svc_setting_get(UI_SET_THEME));\t// DDM25 Plus: the splash in the saved theme\n'
+         '\t\tui_theme_set((uint8_t)ui_svc_setting_get(UI_SET_THEME));\t// DDM32 Plus: the splash in the saved theme\n'
          '#endif\n\t\tchar line1[17], line2[17];\n'),
     ])
     transform('core/ui/ui_screens.h', [
@@ -2480,7 +2480,7 @@ def prepare_p25_search(transform, install):
 
 
 def prepare_p25_records(transform):
-    """DDM25 Plus on Classic r13's channel store (RFKV mode records, third_party/rf_codeplug, tools/classic_standard.py).
+    """DDM32 Plus on Classic r13's channel store (RFKV mode records, third_party/rf_codeplug, tools/classic_standard.py).
     Classic r13 stores a P25 channel as a DMR base record (receive only, "safe shape") plus an RFKV tag of kind P25
     with the P25 parameter block (RX NAC, TX NAC with its "Same as RX" presence, squelch, talkgroup), and refuses every
     other mode byte: a codeplug holding one needs the explicit Start new. Plus keeps that format for its P25 channels
@@ -2505,7 +2505,7 @@ def prepare_p25_records(transform):
         ('\tout->alias_tx = (uint8_t)(((r[CH_FLAG1]',
          '#if CONFIG_P25_CHANNELS\n'
          '\tif (CONFIG_P25_MODE2 && r[CH_MODE] == 0xA5u) {\n'
-         '\t\t// DDM25 Plus: a P25 record of Classic r4-r7 / the r7-based Plus, read as it read there (no tag)\n'
+         '\t\t// DDM32 Plus: a P25 record of Classic r4-r7 / the r7-based Plus, read as it read there (no tag)\n'
          '\t\tout->mode = RADIO_MODE_P25;\n'
          '\t\tout->p25_nac = (uint16_t)(((r[CH_CC] & 15u) << 8) | r[CH_RX_GROUP]);\n'
          '\t\tout->p25_tg = out->contact;\t// the contact word (a union with it there)\n'
@@ -2518,10 +2518,10 @@ def prepare_p25_records(transform):
          '#endif\n'
          '\tout->alias_tx = (uint8_t)(((r[CH_FLAG1]'),
         ('    if(codeplug_mode_p25(ch->mode)) {\n        base.mode=RADIO_MODE_DMR;',
-         '    if(ch->mode==RADIO_MODE_P25) {\t/* DDM25 Plus: standard P25 only (not YSF) */\n        base.mode=RADIO_MODE_DMR;'),
+         '    if(ch->mode==RADIO_MODE_P25) {\t/* DDM32 Plus: standard P25 only (not YSF) */\n        base.mode=RADIO_MODE_DMR;'),
         ('\tr[CH_RX_GROUP] = (uint8_t)(ch->listen_list <= 0xFFu ? ch->listen_list : 0);\n',
          '\tr[CH_RX_GROUP] = (uint8_t)(ch->listen_list <= 0xFFu ? ch->listen_list : 0);\n'
-         '#if CONFIG_P25_CHANNELS\n\t// DDM25 Plus native modes (YSF; standard P25 is a DMR base record here)\n'
+         '#if CONFIG_P25_CHANNELS\n\t// DDM32 Plus native modes (YSF; standard P25 is a DMR base record here)\n'
          '\tif (codeplug_mode_p25(ch->mode)) r[CH_RX_GROUP] = (uint8_t)ch->p25_nac;\n'
          '#endif\n'),
         ('        if(codeplug_mode_p25(ch->mode)) tagged.kind=CODEPLUG_KIND_P25;',
@@ -2532,7 +2532,7 @@ def prepare_p25_records(transform):
          '                if(r[CH_MODE]!=0u && r[CH_MODE]!=1u &&\n'
          '                   !(CONFIG_P25_MODE2 && (r[CH_MODE]==0xA5u || r[CH_MODE]==2u)) && !(CONFIG_YSF && r[CH_MODE]==0xA6u) &&\n'
          '                   !(CONFIG_NXDN && r[CH_MODE]==0xA7u) && !(CONFIG_DPMR && r[CH_MODE]==0xA8u))\n'
-         '                    incompatible_mode_records=true;\t/* DDM25 Plus: its own mode bytes are not foreign */'),
+         '                    incompatible_mode_records=true;\t/* DDM32 Plus: its own mode bytes are not foreign */'),
     ])
     # The UI simulator (host tests): the editor's P25 ID row calls classic_standard.inc's unit ID, which the UI tests
     # don't link; Classic's own test_ui.c defines it, so here a weak one (as test_ui.c's: the channel's, else the DMR ID)

@@ -1,13 +1,13 @@
 # First install from stock firmware
 
-How the programmer puts DDM25 Plus on a DM-32UV that still runs Baofeng's stock firmware, and why each step is safe.
+How the programmer puts DDM32 Plus on a DM-32UV that still runs Baofeng's stock firmware, and why each step is safe.
 Implemented in `pc/radiotools/install_plus.py --from-stock` and `pc/radiotools/prepare_unit_image.py`; tested on the
 pinned monitor's simulated radio (`pc/tests/test_install_plus.py`, `FromStockTests`). **Not yet run on a real radio
 through this program** (see "Evidence" for what has run on hardware).
 
 ## The problem
 
-DDM25 Plus uses the Classic flash layout: the application from `0xC000` to `0xE8000` and the radio's own DMR (AMBE)
+DDM32 Plus uses the Classic flash layout: the application from `0xC000` to `0xE8000` and the radio's own DMR (AMBE)
 codec in a reserved slot `0xE8000..0x100000` (a 128-byte header, the code, the tables and a relocation list; format
 v2, `codec_slot_t`). The codec belongs to DVSI / Baofeng and is never shipped. On a stock radio the slot is empty and
 the codec sits inside the stock application, at an address that depends on the stock version. `install_plus.py`'s
@@ -22,9 +22,9 @@ step: prepare the slot from the radio's own flash.
 2. **Detect** (`radio_detect.py`, no port): no valid slot at `0xE8000`, and the pinned RadioFoundry codec tool
    (`tools/hrc7000_codec.py` at `dfbaf20c`) finds the codec by content where a known stock build keeps it
    (`identify` / `locate`: code signature words, code SHA-256, table head CRC and table SHA-256). Known DM-32UV
-   profiles: .032, .037, .039, .040, .046 (three builds), .047, L01.048, .049 (three builds). .047 is the one DDM25
+   profiles: .032, .037, .039, .040, .046 (three builds), .047, L01.048, .049 (three builds). .047 is the one DDM32
    Plus has been installed over; the others get a warning. Anything else (for example NRFB .050, which the pinned
-   tool does not know) is refused: install Classic with the upstream Flasher first, then DDM25 Plus over it.
+   tool does not know) is refused: install Classic with the upstream Flasher first, then DDM32 Plus over it.
 3. **Compose** (`prepare_unit_image.compose_from_stock`, in memory, no port): exactly what the lab's
    `tools/prepare_unit_image.py` did for its unit images — `codec.extract(program, board='dm32')` then
    `codec.merge(application, profile, code, tables)` — with the same checks: the slot parses back
@@ -57,7 +57,7 @@ embedded key (`signed_manifest.release_gate`).
 - **Same restore, on hardware.** Stock restore from the saved backup (`--restore-stock`, all 244 application sectors)
   was proven on that radio (byte-exact read-back, normal stock boot), so a failed or unwanted install can be undone
   from the user's own backup ("Stok yazılıma dön").
-- **Same slot format as the firmware reads.** DDM25 Plus is built from RadioFoundry `dfbaf20c`, the same pin as the
+- **Same slot format as the firmware reads.** DDM32 Plus is built from RadioFoundry `dfbaf20c`, the same pin as the
   codec tool; its slot reader (`platform/hrc7000/codec_slot.h`, Classic's `tests/codec/test_slot.c`) checks the same
   header, version 2, the relocation list and the CRC. Classic only widened the table window end to `0x18003E38` (for
   NRFB .050); every profile the pinned tool accepts ends at or below `0x18003E28`.
@@ -76,9 +76,9 @@ embedded key (`signed_manifest.release_gate`).
 
 ## Known limits
 
-- First boot of DDM25 Plus on a stock data chip: like Classic (r5+), the firmware asks "Start new" before it writes
+- First boot of DDM32 Plus on a stock data chip: like Classic (r5+), the firmware asks "Start new" before it writes
   its own settings over the stock codeplug area. The installer never writes the data chip; the backup holds it.
-- "Stok yazılıma dön" restores program flash only. Channels saved under DDM25 Plus stay on the data chip (the tools
+- "Stok yazılıma dön" restores program flash only. Channels saved under DDM32 Plus stay on the data chip (the tools
   never write it); the stock firmware may show them differently. Use the stock CPS to rewrite them if needed.
 - A backup is bound to its radio by the chip IDs only; the program keeps its own backups per radio in
-  `%LOCALAPPDATA%\DDM25Plus\yedekler` and tells the user to restore only that radio's backup.
+  `%LOCALAPPDATA%\DDM32Plus\yedekler` and tells the user to restore only that radio's backup.

@@ -1,4 +1,4 @@
-"""Sürümler: every signed DDM25 Plus release (beta and stable marked), the update check, "Bu sürüme geç" for any
+"""Sürümler: every signed DDM32 Plus release (beta and stable marked), the update check, "Bu sürüme geç" for any
 listed version (it goes through the normal backup -> check -> install flow, with the compatibility warnings from the
 manifests), and the program's own update.
 
@@ -42,7 +42,7 @@ class VersionsTab(QWidget):
         outer.addWidget(self.banner)
         row = QHBoxLayout()
         self.check_btn = big_button('Güncellemeleri denetle', 'SP_BrowserReload',
-                                    'GitHub\'daki imzalı DDM25 Plus sürümlerini listeler (internet, telsize bir şey '
+                                    'GitHub\'daki imzalı DDM32 Plus sürümlerini listeler (internet, telsize bir şey '
                                     'yapılmaz).')
         self.check_btn.clicked.connect(self.check)
         row.addWidget(self.check_btn)
@@ -76,7 +76,7 @@ class VersionsTab(QWidget):
         outer.addWidget(self.switch_btn)
         g = QGroupBox('Program')
         gl = QVBoxLayout(g)
-        self.app_label = plain_label(f'Bu program: DDM25 Plus {__version__}')
+        self.app_label = plain_label(f'Bu program: DDM32 Plus {__version__}')
         gl.addWidget(self.app_label)
         self.app_btn = QPushButton('Programı güncelle')
         self.app_btn.setToolTip('Yeni programı indirir, imzasını ve özetini denetler, programı kapatıp yenisiyle '
@@ -144,7 +144,7 @@ class VersionsTab(QWidget):
                 self.table.selectRow(i)
         new = self.rel.update_available()
         if new is not None:
-            self.banner.setText(colored(f'Yeni sürüm var: DDM25 Plus {new.version}', AMBER) +
+            self.banner.setText(colored(f'Yeni sürüm var: DDM32 Plus {new.version}', AMBER) +
                                 f'<br><i>{_esc(new.notes("tr"))}</i>')
         elif not self.rows:
             key = releases.rt.signed_manifest().PUBLIC_KEY_HEX
@@ -159,11 +159,11 @@ class VersionsTab(QWidget):
         if self.app_entry is not None:
             entry = self.app_entry[0]
             notes = (entry.get('notes') or {}).get('tr', '')
-            self.app_label.setText(f'Bu program: DDM25 Plus {__version__}<br>' +
+            self.app_label.setText(f'Bu program: DDM32 Plus {__version__}<br>' +
                                    colored(f'Yeni program sürümü var: {entry["version"]}', AMBER) +
                                    (f'<br><i>{_esc(notes)}</i>' if notes else ''))
         else:
-            self.app_label.setText(f'Bu program: DDM25 Plus {__version__}' +
+            self.app_label.setText(f'Bu program: DDM32 Plus {__version__}' +
                                    ('' if self.layout_.can_self_update else
                                     '<br>(Kaynak koddan çalışıyor: güncellemek için depoyu güncelleyin.)'))
         self.refresh_buttons()
@@ -186,7 +186,7 @@ class VersionsTab(QWidget):
             return False
         entry = self.app_entry[0]
         if not self.confirm('Programı güncelle',
-                            f'DDM25 Plus programı {__version__} → {entry["version"]} güncellensin mi?\n\n'
+                            f'DDM32 Plus programı {__version__} → {entry["version"]} güncellensin mi?\n\n'
                             'Yeni program indirilir, imzası ve SHA-256 özeti denetlenir. Bu pencere kapanır; yeni '
                             'program açılmazsa eskisi geri gelir. Yedekleriniz ve ayarlarınız program klasöründe '
                             f'değildir, etkilenmez.\n\n⚠ {disclaimer.SHORT}', 'Evet, güncelle'):

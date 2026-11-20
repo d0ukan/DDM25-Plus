@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus one-key SOS in the side key assignment (core/input/keyassign.c): KEYFN_SOS is appended (stored values
+/* DDM32 Plus one-key SOS in the side key assignment (core/input/keyassign.c): KEYFN_SOS is appended (stored values
  * never move), may go on a press and a long press, sends ACT_SOS; set on the press with the long press left at
  * Default, the long press sends ACT_SOS too (holding the key confirms its page); a long press of its own stays. Not
  * assigned by default. Without CONFIG_SOS_KEY a stored SOS reads as Default. Built with -DCONFIG_KEY_ASSIGN=1 and

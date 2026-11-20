@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Make a signed DDM25 Plus release: the firmware zip, optionally the program zip, ddm25-manifest.json and its
+"""Make a signed DDM32 Plus release: the firmware zip, optionally the program zip, ddm32-manifest.json and its
 Ed25519 signature. Uploads NOTHING: the files land in --out; publishing them on GitHub is a separate, approved step.
 
   --keygen [--key PATH]
-      Creates the release signing key (32 random bytes, hex) at %USERPROFILE%\\.ddm25\\release-signing-key (or PATH,
+      Creates the release signing key (32 random bytes, hex) at %USERPROFILE%\\.ddm32\\release-signing-key (or PATH,
       never inside the repository), restricts it to the current user (icacls on Windows, mode 600 elsewhere) and
       prints the public key. Paste that into pc/radiotools/signed_manifest.py PUBLIC_KEY_HEX and build the program
       again: only then can the program verify (and so install) anything. Refuses to overwrite an existing key.
@@ -12,14 +12,14 @@ Ed25519 signature. Uploads NOTHING: the files land in --out; publishing them on 
   build --version V --channel beta|stable --build-dir DIR --settings-format N --codeplug-format N
         --min-compatible V --notes-tr TEXT --notes-en TEXT [--app-zip ZIP --app-version V
         [--app-notes-tr TEXT --app-notes-en TEXT]] [--tag TAG] --out NEWDIR [--key PATH]
-      DIR is a public DDM25 Plus build (tools/build_radiofoundry.py --plus --public: rfoundry_dm32.bin/.json/.map).
+      DIR is a public DDM32 Plus build (tools/build_radiofoundry.py --plus --public: rfoundry_dm32.bin/.json/.map).
       Checks it like the installer does (reproducible Plus build, hashes, codec layout, size) and requires
       public_enabled. The release zip carries the application, a reduced linker map (the __codec_* symbol lines the
       installer checks) and a reduced build manifest (no build-machine paths). Signs the manifest and verifies the
       signature with the key's public half before it finishes.
 
   verify DIR [--public-key HEX]
-      Verifies DIR/ddm25-manifest.json(.sig) and every asset in DIR against the manifest's sizes and hashes.
+      Verifies DIR/ddm32-manifest.json(.sig) and every asset in DIR against the manifest's sizes and hashes.
 
 settings_format / codeplug_format: integers that change when the firmware's stored settings / channel layout changes;
 min_compatible_version: the oldest firmware version that reads what this version saves. The program warns (and asks
@@ -43,10 +43,14 @@ from radiotools import ed25519  # noqa: E402
 from radiotools import install_plus  # noqa: E402
 from radiotools import signed_manifest as sm  # noqa: E402
 
-DEFAULT_KEY = Path.home() / '.ddm25' / 'release-signing-key'
+DEFAULT_KEY = Path.home() / '.ddm32' / 'release-signing-key'
+# The key created before the rename to DDM32 Plus (2026-11-20) is in .ddm25: used when there is none at the new place
+LEGACY_KEY = Path.home() / '.ddm25' / 'release-signing-key'
+if not DEFAULT_KEY.exists() and LEGACY_KEY.exists():
+    DEFAULT_KEY = LEGACY_KEY
 FIRMWARE_FILES = ('rfoundry_dm32.bin', 'rfoundry_dm32.json', 'rfoundry_dm32.map')
 ZIP_TIME = (2026, 1, 1, 0, 0, 0)
-EXE = 'DDM25Plus'
+EXE = 'DDM32Plus'
 
 
 def sha256(data):
@@ -121,10 +125,10 @@ def firmware_package(build_dir, version):
     full_map = (build_dir / 'rfoundry_dm32.map').read_bytes()
     lines = [m.group(0).strip() for m in
              re.finditer(r'^\s*0x[0-9a-fA-F]+\s+__codec_\w+\s*=.*$', full_map.decode('utf-8', 'replace'), re.M)]
-    reduced_map = ('# DDM25 Plus %s: codec layout symbols from the linker map (full map: source build)\n' % version +
+    reduced_map = ('# DDM32 Plus %s: codec layout symbols from the linker map (full map: source build)\n' % version +
                    '\n'.join('                ' + l for l in lines) + '\n').encode()
     release_build = {
-        'kind': 'DDM25 Plus release', 'version': version, 'plus_enabled': True, 'public_enabled': True,
+        'kind': 'DDM32 Plus release', 'version': version, 'plus_enabled': True, 'public_enabled': True,
         'forced_rebuild_identical': True, 'upstream_commit': build.get('upstream_commit'),
         'outputs': {'rfoundry_dm32.bin': sha256(app), 'rfoundry_dm32.map': sha256(reduced_map)},
         'source_build_manifest_sha256': sha256((build_dir / 'rfoundry_dm32.json').read_bytes()),
@@ -173,7 +177,7 @@ def build(args, secret):
     sm.parse_version(args.min_compatible)
     tag = args.tag or f'v{args.version}'
     fw_zip, app, _ = firmware_package(args.build_dir, args.version)
-    fw_name = f'ddm25-plus-{args.version}.zip'
+    fw_name = f'ddm32-plus-{args.version}.zip'
     entry = {'version': args.version, 'channel': args.channel, 'file': fw_name,
              'url': f'{sm.URL_PREFIX}{tag}/{fw_name}', 'sha256': sha256(fw_zip), 'size': len(fw_zip),
              'application_sha256': sha256(app), 'application_size': len(app),

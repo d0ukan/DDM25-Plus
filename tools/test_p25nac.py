@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""DDM25 Plus separate RX and TX NAC (CONFIG_P25_TXNAC; Classic r13 stores the TX NAC, docs/plus.md "Separate RX NAC and TX NAC"): host tests, run by
+"""DDM32 Plus separate RX and TX NAC (CONFIG_P25_TXNAC; Classic r13 stores the TX NAC, docs/plus.md "Separate RX NAC and TX NAC"): host tests, run by
 tools/test_classic.py (make test). Its own module so the shared test runner gains a few call lines only."""
 import subprocess
 from pathlib import Path

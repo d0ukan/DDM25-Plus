@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus round 13 ideas 2, the portable parts (tools/test_toolbox.py builds this with -DCONFIG_HEARD=1
+/* DDM32 Plus round 13 ideas 2, the portable parts (tools/test_toolbox.py builds this with -DCONFIG_HEARD=1
  * -DCONFIG_SPECTRUM_WF=1 -DCONFIG_MAP=1 -DCONFIG_MAP_COVERAGE=1 -DCONFIG_GPS_DASH=1 -DCONFIG_CLOCK_TOOLS=1):
  *   - the heard list: merge by (mode, source, destination), newest first, the call count (a new call, or heard again
  *     after HEARD_GAP_S of quiet; at most 255), the oldest dropped when full, old entries expire, YSF callsigns packed;

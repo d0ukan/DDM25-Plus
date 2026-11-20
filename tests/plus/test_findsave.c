@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus search finds as channels (core/ui/findsave.c): names, the P25 and DMR channel rules (the TX rule above
+/* DDM32 Plus search finds as channels (core/ui/findsave.c): names, the P25 and DMR channel rules (the TX rule above
  * all: RX only unless a talkgroup was heard, our own unit ID is known, the frequency is amateur and in the TX bands),
  * the duplicate rule and the zone name. Built with -DCONFIG_FIND_SAVE=1 -DCONFIG_DMR_ANY=1 (and once without
  * CONFIG_DMR_ANY: plain colour code 1 / slot 1). */

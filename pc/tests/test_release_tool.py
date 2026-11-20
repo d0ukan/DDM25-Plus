@@ -15,7 +15,7 @@ import rtfixtures as rt
 sys.path.insert(0, str(rt.PC / 'release'))
 import make_release as mr  # noqa: E402
 
-from ddm25_app import releases  # noqa: E402
+from ddm32_app import releases  # noqa: E402
 from radiotools import ed25519, install_plus  # noqa: E402
 
 
@@ -27,7 +27,7 @@ class ReleaseToolTest(unittest.TestCase):
         self.restricted = []
         self.public, ok = mr.keygen(self.key, restrict_fn=self.restricted.append)
         self.assertTrue(ok)
-        self.build = rt.write_plus(self.top / 'build', fx.release_app('1.0.0') + b'DDM25 Plus', signed_for=False)
+        self.build = rt.write_plus(self.top / 'build', fx.release_app('1.0.0') + b'DDM32 Plus', signed_for=False)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -52,23 +52,27 @@ class ReleaseToolTest(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, 'outside the repository'):
             mr.keygen(rt.PC / 'release-signing-key', restrict_fn=lambda p: None)
         self.assertFalse((rt.PC / 'release-signing-key').exists())
-        self.assertEqual(mr.DEFAULT_KEY, Path.home() / '.ddm25' / 'release-signing-key')
+        # The new place, or the key made before the rename when only that one exists (never in the repository)
+        self.assertIn(mr.DEFAULT_KEY, (Path.home() / '.ddm32' / 'release-signing-key',
+                                       Path.home() / '.ddm25' / 'release-signing-key'))
+        if mr.DEFAULT_KEY == mr.LEGACY_KEY:
+            self.assertFalse((Path.home() / '.ddm32' / 'release-signing-key').exists())
 
     def test_build_signs_and_verifies(self):
         code, out, text = self.run_build()
         self.assertEqual(code, 0)
         self.assertIn('Nothing was uploaded', text)
         names = sorted(p.name for p in out.iterdir())
-        self.assertEqual(names, ['ddm25-manifest.json', 'ddm25-manifest.json.sig', 'ddm25-plus-1.0.0-beta.1.zip'])
+        self.assertEqual(names, ['ddm32-manifest.json', 'ddm32-manifest.json.sig', 'ddm32-plus-1.0.0-beta.1.zip'])
         m = mr.verify(out, self.public)
         e = m['firmware'][0]
         self.assertEqual((e['channel'], e['settings_format'], e['codeplug_format']), ('beta', 1, 2))
-        self.assertEqual(e['url'], 'https://github.com/d0ukan/DDM25-Plus/releases/download/v1.0.0-beta.1/'
-                                   'ddm25-plus-1.0.0-beta.1.zip')
+        self.assertEqual(e['url'], 'https://github.com/d0ukan/DDM32-Plus/releases/download/v1.0.0-beta.1/'
+                                   'ddm32-plus-1.0.0-beta.1.zip')
         self.assertEqual(e['notes'], {'tr': 'İlk beta', 'en': 'First beta'})
         with self.assertRaises(rt.sm.ManifestError):
             mr.verify(out, rt.TEST_PUBLIC_HEX)                       # another key does not verify it
-        with zipfile.ZipFile(out / 'ddm25-plus-1.0.0-beta.1.zip') as z:
+        with zipfile.ZipFile(out / 'ddm32-plus-1.0.0-beta.1.zip') as z:
             self.assertEqual(sorted(z.namelist()), sorted(releases.PACKAGE_FILES))
             build = json.loads(z.read('rfoundry_dm32.json'))
             self.assertTrue(build['public_enabled'])
@@ -88,7 +92,7 @@ class ReleaseToolTest(unittest.TestCase):
                 files[rt.url(tag, p.name)] = p.read_bytes()
             files[releases.API_URL] = json.dumps([{'tag_name': tag, 'assets': [
                 {'name': n, 'browser_download_url': rt.url(tag, n)}
-                for n in ('ddm25-manifest.json', 'ddm25-manifest.json.sig')]}]).encode()
+                for n in ('ddm32-manifest.json', 'ddm32-manifest.json.sig')]}]).encode()
             root = self.top / 'surumler'
             cat = releases.load_catalog(root, lambda url, limit=None: files[url])
             fv = cat.find('1.0.0-beta.1')
@@ -99,24 +103,24 @@ class ReleaseToolTest(unittest.TestCase):
             self.assertEqual(install_plus.plus_application(folder), (self.build / 'rfoundry_dm32.bin').read_bytes())
 
     def test_program_zip(self):
-        appzip = self.top / 'DDM25Plus-1.0.0-beta.2.zip'
+        appzip = self.top / 'DDM32Plus-1.0.0-beta.2.zip'
         with zipfile.ZipFile(appzip, 'w') as z:
-            z.writestr('DDM25Plus/DDM25Plus.exe', b'MZ')
-            z.writestr('DDM25Plus/radiotools/dm32_readonly_backup.py', b'# the backup tool is public source')
+            z.writestr('DDM32Plus/DDM32Plus.exe', b'MZ')
+            z.writestr('DDM32Plus/radiotools/dm32_readonly_backup.py', b'# the backup tool is public source')
         code, out, _ = self.run_build('--app-zip', str(appzip), '--app-version', '1.0.0-beta.2')
         m = mr.verify(out, self.public)
         self.assertEqual(m['app']['version'], '1.0.0-beta.2')
-        self.assertTrue((out / 'DDM25Plus-1.0.0-beta.2.zip').is_file())
+        self.assertTrue((out / 'DDM32Plus-1.0.0-beta.2.zip').is_file())
         bad = self.top / 'bad.zip'
         with zipfile.ZipFile(bad, 'w') as z:
-            z.writestr('DDM25Plus/DDM25Plus.exe', b'MZ')
-            z.writestr('DDM25Plus/yedekler/progmem-pass1.bin', b'private')
+            z.writestr('DDM32Plus/DDM32Plus.exe', b'MZ')
+            z.writestr('DDM32Plus/yedekler/progmem-pass1.bin', b'private')
         with self.assertRaisesRegex(SystemExit, 'must not be published'):
             self.run_build('--app-zip', str(bad), '--app-version', '1.0.0-beta.2', out=self.top / 'out2')
-        for i, private in enumerate(('DDM25Plus/Backups/notes.txt', 'DDM25Plus/x/backup-manifest.json')):
+        for i, private in enumerate(('DDM32Plus/Backups/notes.txt', 'DDM32Plus/x/backup-manifest.json')):
             bad = self.top / f'bad{i}.zip'
             with zipfile.ZipFile(bad, 'w') as z:
-                z.writestr('DDM25Plus/DDM25Plus.exe', b'MZ')
+                z.writestr('DDM32Plus/DDM32Plus.exe', b'MZ')
                 z.writestr(private, b'private')
             with self.subTest(private=private), self.assertRaisesRegex(SystemExit, 'must not be published'):
                 self.run_build('--app-zip', str(bad), '--app-version', '1.0.0-beta.2', out=self.top / f'o{i}')

@@ -45,7 +45,7 @@ typedef struct {
     uint32_t (*micros)(void); /* optional task-level profiling, no clock assumption */
     uint32_t fec_max_us, imbe_max_us;
 #if defined(CONFIG_CALL_REPLAY) && CONFIG_CALL_REPLAY
-    /* Optional: every admitted IMBE frame that decoded (DDM25 Plus call replay keeps the last call) */
+    /* Optional: every admitted IMBE frame that decoded (DDM32 Plus call replay keeps the last call) */
     void (*tap)(void *ctx, const uint16_t u[8]);
     void *tap_ctx;
 #endif
@@ -55,7 +55,7 @@ typedef struct {
     uint32_t rx_fec_frames, rx_fec_bits, rx_fec_lost;
 #endif
 #if defined(CONFIG_P25_TRUNK) && CONFIG_P25_TRUNK
-    /* DDM25 Plus trunk following: the received dibits also go through the CAI library's control channel receiver
+    /* DDM32 Plus trunk following: the received dibits also go through the CAI library's control channel receiver
      * tsdu_rx (the caller's storage); each TSDU it completes goes to tsdu (its TSBKs counted in rx_frames), and a TSDU
      * dropped on a failed block goes there as NULL. NULL: no TSDUs framed */
     p25cai_control_receiver *tsdu_rx;

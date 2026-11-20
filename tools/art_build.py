@@ -5,7 +5,7 @@
 Sources (plain text, one character a pixel):
   art/icons.txt     16x16 icons, 1 bit a pixel ('#' ink, '.' none), each after a line "icon <name>"
   art/mark.txt      the splash mark, 2 bits a pixel ('.' none, 'a' 'b' 'c' its three colors)
-  art/wordmark.txt  "DDM25 Plus" in a pixel face, 1 bit a pixel; columns from "split" on take the accent color
+  art/wordmark.txt  "DDM32 Plus" in a pixel face, 1 bit a pixel; columns from "split" on take the accent color
 Lines starting with ';' are comments.
 
   python3 tools/art_build.py                 write integration/radiofoundry/art/art_data.[ch]

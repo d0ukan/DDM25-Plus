@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus round 13 ideas 2 UI flows: upstream's UI simulator (tests/host/sim/ui_sim.c) as it is, built in place of
+/* DDM32 Plus round 13 ideas 2 UI flows: upstream's UI simulator (tests/host/sim/ui_sim.c) as it is, built in place of
  * it, with the services the tool screens use taken over for the test (ui_sim_toolbox.h): the GPS (position, speed,
  * course, altitude, a running UTC time), the P25 / DMR search lists, the trunk followers' views, the pager's
  * messages, the beeps, and the heap the waterfall takes (counted, can be made to fail). The spectrum sweep is the

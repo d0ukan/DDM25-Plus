@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus round 13 ideas 1 UI flows: upstream's UI simulator (tests/host/sim/ui_sim.c) as it is, built in place of
+/* DDM32 Plus round 13 ideas 1 UI flows: upstream's UI simulator (tests/host/sim/ui_sim.c) as it is, built in place of
  * it, with a few of its services taken over for the test (ui_sim_fieldx.h): the GPS position and the APRS stations,
  * the P25 / DMR searches' lists, a zone's capacity, and the SOS actions recorded (the emergency key's call, then the
  * simulator's own; the APRS engine's SOS). Also the stand-ins for the APRS engine that the map's composer, Tools >

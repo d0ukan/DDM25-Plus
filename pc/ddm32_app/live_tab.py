@@ -263,7 +263,7 @@ class LiveTab(QWidget):
         else:
             err = parsers.error_text(self.lines) or next(
                 (l for l in reversed(self.lines) if l.startswith('No answer')), '') or f'exit code {code}'
-            self.status.setText(_color('Bağlantı kesildi.', RED) + ' Telsiz açık mı, kablo takılı mı, DDM25 Plus '
+            self.status.setText(_color('Bağlantı kesildi.', RED) + ' Telsiz açık mı, kablo takılı mı, DDM32 Plus '
                                 'çalışıyor mu?<br><small>' + _esc(err) + '</small>')
         self.stopping = False
         self.refresh()

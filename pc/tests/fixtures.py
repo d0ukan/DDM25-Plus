@@ -9,11 +9,11 @@ import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 # Tests never touch the user's data folder (settings, backups, releases)
-DATA_DIR = tempfile.mkdtemp(prefix='ddm25-test-')
-os.environ['DDM25_DATA'] = DATA_DIR
+DATA_DIR = tempfile.mkdtemp(prefix='ddm32-test-')
+os.environ['DDM32_DATA'] = DATA_DIR
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
-from ddm25_app import codeplug as cp  # noqa: E402
+from ddm32_app import codeplug as cp  # noqa: E402
 
 
 def to_bcd(v, digits):
@@ -163,7 +163,7 @@ def write_backup(folder, image, verified=True):
 
 def release_app(version):
     """A made-up application for a version (never a real build)"""
-    return (b'DDM25 Plus test ' + version.encode()) * 64
+    return (b'DDM32 Plus test ' + version.encode()) * 64
 
 
 def publish(releases_root, versions, download=True, channel=None, formats=None, min_compatible=None,
@@ -242,7 +242,7 @@ RESTORE_PLAN = {"mode": "restore_stock", "changed_sectors": 244, "first": "0xc00
                 "target_application_sha256": "ef" * 32, "boot_area_unchanged": True, "codec_slot_unchanged": False,
                 "codec_slot_rewritten_from_backup": True, "data_chip_written": False}
 
-DETECT_CLASSIC = {"layout": "classic", "firmware": "ddm25", "codec_tag": 47, "stock_profile": None,
+DETECT_CLASSIC = {"layout": "classic", "firmware": "ddm32", "codec_tag": 47, "stock_profile": None,
                   "stock_version": None, "stock_tested": False, "install_mode": "over_classic", "supported": True,
                   "reason": "", "application_end": "0xd0000"}
 DETECT_STOCK = {"layout": "stock", "firmware": "stock", "codec_tag": 47, "stock_profile": "DM32.01.01.047.bin",
@@ -257,7 +257,7 @@ DETECT_UNKNOWN = {"layout": "unknown", "firmware": "unknown", "codec_tag": None,
 PLAN_UNSIGNED = """Traceback (most recent call last):
   File "radiotools/install_plus.py", line 96, in plus_application
     signed_manifest.release_gate(app, folder)
-radiotools.signed_manifest.ManifestError: This application is not listed in the signed DDM25 Plus release manifest"""
+radiotools.signed_manifest.ManifestError: This application is not listed in the signed DDM32 Plus release manifest"""
 
 INSTALL_OK = """{plan}
 READY on COM7: turn the radio OFF, then ON normally, no buttons held. Waiting 600s.
@@ -271,7 +271,7 @@ Written and sector-readback checked: 100% (179/179)
 Read complete installed program chip: 100%
 Recheck untouched settings chip: 100%
 VERIFIED: application, untouched boot area, codec slot and settings chip all read back. Restarting.
-PASS: DDM25 Plus installed and verified. Check the boot screen on the radio. No RF command was sent."""
+PASS: DDM32 Plus installed and verified. Check the boot screen on the radio. No RF command was sent."""
 
 INSTALL_TIMEOUT = """{plan}
 READY on COM7: turn the radio OFF, then ON normally, no buttons held. Waiting 600s.
@@ -302,10 +302,10 @@ reset.flags=0x00000001
 reset.uptime_ms=0
 reset.warm=0"""
 
-BUILD_OUT = """== rsync repository -> ~/ddm25-plus
+BUILD_OUT = """== rsync repository -> ~/ddm32-plus
 == build
 Codec cache: verified reuse
-/home/u/ddm25-plus/build/radiofoundry-p25/build/dm32-p25-plus-public/rfoundry_dm32.elf
+/home/u/ddm32-plus/build/radiofoundry-p25/build/dm32-p25-plus-public/rfoundry_dm32.elf
 Memory region         Used Size  Region Size  %age Used
            FLASH:      730864 B       896 KB     79.65%
              RAM:      207424 B     211456 B     98.09%
@@ -338,7 +338,7 @@ PASS: stock application restored and verified byte for byte. Confirm the normal 
 
 def tle_set(name, catalog, l1_tail_epoch='26321.33455779'):
     """A valid three-line set (checksums computed)"""
-    from ddm25_app.dataupdate import tle_checksum
+    from ddm32_app.dataupdate import tle_checksum
     l1 = '1 %05dU 98067A   %s  .00009779  00000+0  18259-3 0  999' % (catalog, l1_tail_epoch)
     l2 = '2 %05d  51.6318 262.2236 0007381  35.3953 324.7525 15.4943095059549' % catalog
     l1 = l1[:68].ljust(68)
@@ -380,7 +380,7 @@ except ImportError:  # pragma: no cover
 
 
 def fake_ports():
-    from ddm25_app.ports import PortInfo
+    from ddm32_app.ports import PortInfo
     return [PortInfo('COM3', 'com0com - serial port emulator', hwid='COM0COM\\PORT'),
             PortInfo('COM4', 'Standard Serial over Bluetooth link', hwid='BTHENUM\\{0000}'),
             PortInfo('COM7', 'USB-SERIAL CH340', 0x1A86, 0x7523, 'USB VID:PID=1A86:7523')]

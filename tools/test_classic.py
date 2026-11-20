@@ -15,7 +15,7 @@ OUT=ROOT/'build/classic-host'
 # Classic r13's channel store: the codeplug and its RFKV mode records (tools/classic_standard.py)
 CODEPLUG=[APP/'core/codeplug/codeplug.c',APP/'core/codeplug/codeplug_kv.c',APP/'core/codeplug/codeplug_tag.c',
           APP/'core/codeplug/codeplug_records.c',APP/'core/p25/p25_codeplug.c',APP/'core/codeplug/codeplug_talk.c']
-# The conventional P25 binding and the pinned CAI library under it (Classic r8+); DDM25 Plus's LC extras
+# The conventional P25 binding and the pinned CAI library under it (Classic r8+); DDM32 Plus's LC extras
 CAI=sorted((ROOT/'third_party/p25cai/src').glob('*.c'))
 P25SRC=[ROOT/'src/p25/p25.c',ROOT/'src/p25/p25_lcx.c',*CAI]
 def obj_name(source):
@@ -286,7 +286,7 @@ def main():
              '-I'+str(APP/'core'),'-I'+str(APP/'drivers'),'-I'+str(APP/'hal'),
              ROOT/'tests/classic/test_version.c',APP/'core/hostlink/build_info.c',
              APP/'core/debuglink/dl_fmt.c',
-             # Linux (DDM25 Plus host): the GNU linker keeps every ASan-instrumented global's section, so the unused
+             # Linux (DDM32 Plus host): the GNU linker keeps every ASan-instrumented global's section, so the unused
              # radio commands stay and their callees are unresolved; LLD with dead-strippable globals discards them
              *(['-Wl,-dead_strip'] if sys.platform=='darwin' else
                ['-fuse-ld=lld','-fsanitize-address-globals-dead-stripping','-Wl,--gc-sections']),
@@ -505,7 +505,7 @@ def main():
     run(['clang',*flags,'-DART_HOST_TEST','-I'+str(ROOT/'integration/radiofoundry/art'),'-I'+str(ROOT/'tests/plus'),
          ROOT/'tests/plus/test_art.c',ROOT/'integration/radiofoundry/art/art.c',ROOT/'integration/radiofoundry/art/art_data.c',
          ROOT/'integration/radiofoundry/art/splash_plus.c','-o',OUT/'test_art'],cwd=ROOT)
-    # DDM25 Plus public build profile (tools/plus_brand.py): no ID database, the check that refuses one
+    # DDM32 Plus public build profile (tools/plus_brand.py): no ID database, the check that refuses one
     run(['python3',ROOT/'tools/plus_brand.py','--self-test'],cwd=ROOT)
     run([OUT/'test_art',ROOT/'art'],cwd=ROOT)
     iddb_tests(flags)
@@ -846,10 +846,10 @@ def main():
     # DM32 Plus Tools > Repeaters by province (tools/test_rptprov.py): rpt_list.py provinces, the screen's flows
     import test_rptprov
     test_rptprov.main(ROOT,APP,OUT,flags,host)
-    # DDM25 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/test_fieldx.py)
+    # DDM32 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/test_fieldx.py)
     import test_fieldx
     test_fieldx.main(ROOT,APP,OUT,flags,host)
-    # DDM25 Plus round 13 ideas 2: shared screen buffer, heard list, waterfall, coverage, GPS, clock (tools/test_toolbox.py)
+    # DDM32 Plus round 13 ideas 2: shared screen buffer, heard list, waterfall, coverage, GPS, clock (tools/test_toolbox.py)
     import test_toolbox
     test_toolbox.main(ROOT,APP,OUT,flags,host)
 

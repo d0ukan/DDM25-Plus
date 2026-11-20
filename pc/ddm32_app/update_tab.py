@@ -49,10 +49,10 @@ def detection_text(d):
         return 'Telsizdeki yazılım bilinmiyor.'
     if d.get('layout') == 'stock':
         v = d.get('stock_version') or '?'
-        tested = '' if d.get('stock_tested') else ' (DDM25 Plus bu stok sürümde denenmedi)'
+        tested = '' if d.get('stock_tested') else ' (DDM32 Plus bu stok sürümde denenmedi)'
         return f'Telsizde stok yazılım var: .{v}{tested}.'
     if d.get('layout') == 'classic':
-        name = {'ddm25': 'DDM25 Plus', 'classic': 'Open25-DM32 Classic'}.get(d.get('firmware'),
+        name = {'ddm32': 'DDM32 Plus', 'classic': 'Open25-DM32 Classic'}.get(d.get('firmware'),
                                                                          'Classic düzeninde bir yazılım')
         return f'Telsizde {name} var (codec bölümü hazır).'
     return 'Desteklenmeyen yazılım: ' + (d.get('reason') or 'tanınmadı')
@@ -134,7 +134,7 @@ class UpdateTab(QWidget):
         row.addWidget(plain_label('Sürüm:', 2, False))
         self.package_combo = QComboBox()
         bigger(self.package_combo, 2)
-        self.package_combo.setToolTip('İmzalı DDM25 Plus sürümleri (beta ve kararlı).')
+        self.package_combo.setToolTip('İmzalı DDM32 Plus sürümleri (beta ve kararlı).')
         self.package_combo.currentIndexChanged.connect(self._package_changed)
         row.addWidget(self.package_combo, 1)
         self.download_btn = QPushButton('İndir ve doğrula')
@@ -230,7 +230,7 @@ class UpdateTab(QWidget):
                                     'istenir.'))
         self.warn_label = plain_label()
         p.lay.addWidget(self.warn_label)
-        self.install_btn = big_button('Yükle', 'SP_ArrowUp', 'DDM25 Plus\'ı telsize yükler (onay sorulur).')
+        self.install_btn = big_button('Yükle', 'SP_ArrowUp', 'DDM32 Plus\'ı telsize yükler (onay sorulur).')
         self.install_btn.clicked.connect(self.start_install)
         p.lay.addWidget(self.install_btn)
         self.install_banner = RadioOnBanner()
@@ -269,7 +269,7 @@ class UpdateTab(QWidget):
         bigger(done, 16, True)
         done.setStyleSheet(f'color: {GREEN};')
         p.lay.addWidget(done)
-        p.lay.addWidget(plain_label('DDM25 Plus yüklendi ve doğrulandı (VERIFIED, PASS).<br><br>'
+        p.lay.addWidget(plain_label('DDM32 Plus yüklendi ve doğrulandı (VERIFIED, PASS).<br><br>'
                                     'Telsizde kontrol edin:<br>'
                                     '• Açılış ekranı, ardından ana ekran geliyor mu?<br>'
                                     '• Stoktan ilk kurulumda telsiz kanallar için "Yeni başlat" (Start new) '
@@ -335,7 +335,7 @@ class UpdateTab(QWidget):
             mark = 'beta' if fv and fv.is_beta else 'kararlı'
             state = 'indirildi' if pkg else 'indirilmedi'
             here = ', telsizde' if installed and fv and installed.version == version else ''
-            self.package_combo.addItem(f'DDM25 Plus {version}  ({mark}, {state}{here})', version)
+            self.package_combo.addItem(f'DDM32 Plus {version}  ({mark}, {state}{here})', version)
         self.package_combo.blockSignals(False)
         index = self.package_combo.findData(current) if current else -1
         if index < 0:
@@ -382,7 +382,7 @@ class UpdateTab(QWidget):
                                         '"Sürümler" sayfasından güncellemeleri denetleyin.'))
         elif pkg is None:
             self.review_label.setText('İmzalı listede; henüz indirilmedi.')
-            text = (f'Seçilen sürüm: <b>DDM25 Plus {version}</b>' + (' (beta)' if fv and fv.is_beta else '') +
+            text = (f'Seçilen sürüm: <b>DDM32 Plus {version}</b>' + (' (beta)' if fv and fv.is_beta else '') +
                     '<br>Önce "İndir ve doğrula"ya basın.')
             if self.download_error and self.download_error[0] == version:
                 text = (colored('İndirme başarısız; hiçbir şey değişmedi.', RED) + '<br>' +
@@ -410,7 +410,7 @@ class UpdateTab(QWidget):
         self.download_error = None
         self.download_progress.setValue(0)
         self.download_progress.show()
-        self.version_label.setText(f'İndiriliyor: DDM25 Plus {version}...')
+        self.version_label.setText(f'İndiriliyor: DDM32 Plus {version}...')
         self.rel.download(version)
 
     def _download_progress(self, done, total):
@@ -518,7 +518,7 @@ class UpdateTab(QWidget):
             except (OSError, ValueError):
                 current = None
         if current is None and w.detection and w.detection.get('layout') == 'classic':
-            current = self.rel.installed() if w.detection.get('firmware') == 'ddm25' else None
+            current = self.rel.installed() if w.detection.get('firmware') == 'ddm32' else None
         return releases.change_warnings(current, target, w.detection)
 
     def _show_warnings(self):
@@ -680,7 +680,7 @@ class UpdateTab(QWidget):
         remember_backup(w.backup_dir, d)
         text = detection_text(d)
         if not d.get('supported'):
-            self.detect_status.setText(colored(text, RED) + '<br>Bu telsize bu programla DDM25 Plus kurulamaz.')
+            self.detect_status.setText(colored(text, RED) + '<br>Bu telsize bu programla DDM32 Plus kurulamaz.')
             return
         color = GREEN if d.get('layout') == 'classic' or d.get('stock_tested') else AMBER
         self.detect_status.setText(colored(text, color))

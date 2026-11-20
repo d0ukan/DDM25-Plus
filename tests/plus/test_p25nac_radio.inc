@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus separate RX and TX NAC (Classic r13's split NAC, CONFIG_P25_TXNAC extras; docs/plus.md "Separate RX
+/* DDM32 Plus separate RX and TX NAC (Classic r13's split NAC, CONFIG_P25_TXNAC extras; docs/plus.md "Separate RX
  * NAC and TX NAC") in the real radio core and native controller, after the Classic suite, the multi-watch ring and
  * the VFO's own suite (tests/classic/test_radio.inc, tests/plus/test_mwatch_radio.inc, test_vfox_radio.inc) run again
  * with it built in. The worker and RF are the suite's fixtures: nothing transmits. Checked: the worker is armed with

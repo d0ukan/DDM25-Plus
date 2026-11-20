@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 import fixtures as fx
-from ddm25_app import dataupdate as du
+from ddm32_app import dataupdate as du
 
 SAT_FREQ = """# comment
 #
@@ -14,7 +14,7 @@ SAT_FREQ = """# comment
 27607      SO-50   436.795   145.850   67.0   74.4
 """
 OLD_TLE = """# CelesTrak elements, epoch 01.01.2026 (fetched 02.01.2026): refresh before a release
-# DDM25 Plus Tools > Satellites (kept comment)
+# DDM32 Plus Tools > Satellites (kept comment)
 ISS (ZARYA)
 """
 
@@ -95,7 +95,7 @@ class DataUpdateTest(unittest.TestCase):
         self.assertEqual(sets[0]['epoch'], datetime.date(2026, 11, 18))
         lines = c.text.splitlines()
         self.assertTrue(lines[0].startswith('# CelesTrak elements, epoch 14.11.2026 (fetched 19.11.2026)'))
-        self.assertEqual(lines[1], '# DDM25 Plus Tools > Satellites (kept comment)')
+        self.assertEqual(lines[1], '# DDM32 Plus Tools > Satellites (kept comment)')
         self.assertEqual(lines[2], 'ISS (ZARYA)')
 
     def test_tle_older_or_missing_keeps_current(self):
@@ -156,7 +156,7 @@ class DataUpdateTest(unittest.TestCase):
         program, args = du.tle_write_command(c.text)
         self.assertEqual((program, args[:5]), ('wsl.exe', ['-d', 'Ubuntu', '-e', 'bash', '-lc']))
         script = args[5]
-        self.assertIn('cd ~/ddm25-plus', script)
+        self.assertIn('cd ~/ddm32-plus', script)
         self.assertIn('python3 tools/sat_tle.py --tle integration/radiofoundry/sat/tle.txt.download', script)
         self.assertIn('mv integration/radiofoundry/sat/tle.txt.download integration/radiofoundry/sat/tle.txt',
                       script)
@@ -197,18 +197,18 @@ class DataUpdateTest(unittest.TestCase):
         self.assertIsNone(info['rptrs_json']['count'])
 
     def test_build_command(self):
-        program, args = du.build_command(Path('E:/GIT-REPO/DDM25-Plus'))
+        program, args = du.build_command(Path('E:/GIT-REPO/DDM32-Plus'))
         self.assertEqual(program, 'wsl.exe')
         self.assertEqual(args[:5], ['-d', 'Ubuntu', '-e', 'bash', '-lc'])
         script = args[5]
-        self.assertIn("'/mnt/e/GIT-REPO/DDM25-Plus/' ~/ddm25-plus/", script)
+        self.assertIn("'/mnt/e/GIT-REPO/DDM32-Plus/' ~/ddm32-plus/", script)
         for ex in ('/research', '/toolchain', '/build/', '/logs/', '/artifacts/', '__pycache__/'):
             self.assertIn('--exclude ' + ex, script)
         self.assertIn('build_radiofoundry.py --plus --public --stack-check --verify-rebuild', script)
         self.assertNotIn('--tx-bench', script)
         self.assertIn('--exclude /integration/radiofoundry/sat/tle.txt', script)
-        self.assertIn("rsync -a --update '/mnt/e/GIT-REPO/DDM25-Plus/integration/radiofoundry/sat/tle.txt' "
-                      '~/ddm25-plus/integration/radiofoundry/sat/tle.txt', script)
+        self.assertIn("rsync -a --update '/mnt/e/GIT-REPO/DDM32-Plus/integration/radiofoundry/sat/tle.txt' "
+                      '~/ddm32-plus/integration/radiofoundry/sat/tle.txt', script)
 
 
 if __name__ == '__main__':

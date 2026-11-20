@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus Tools > Heard list, the UI task's side (ui_heard.c, heard.h). Installed as core/ui/ui_heard.h. */
+/* DDM32 Plus Tools > Heard list, the UI task's side (ui_heard.c, heard.h). Installed as core/ui/ui_heard.h. */
 #ifndef PLUS_UI_HEARD_H
 #define PLUS_UI_HEARD_H
 

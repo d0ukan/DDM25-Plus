@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus locator calculator maths (core/ui/locator.c): published centres of known locators, 4 and 6 characters,
+/* DDM32 Plus locator calculator maths (core/ui/locator.c): published centres of known locators, 4 and 6 characters,
  * case, refusals, the encoder against a double precision reference over a grid of the whole world (and the parse of
  * what it writes back to the same subsquare), and the distance / bearing Go-To's nav_way gives between locator
  * centres against a double precision great circle. Built with -DCONFIG_LOCATOR=1 -DCONFIG_NAV=1 -DCONFIG_APRS=1

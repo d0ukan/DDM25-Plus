@@ -13,10 +13,10 @@ def update_state(installed, newest):
     if newest is None:
         return 'none', 'Henüz imzalı sürüm listesi yok: "Sürümler" sayfasından denetleyin.'
     if installed is None:
-        return 'unknown', f'Telsizdeki sürüm bilinmiyor. En yeni sürüm: DDM25 Plus {newest.version}.'
+        return 'unknown', f'Telsizdeki sürüm bilinmiyor. En yeni sürüm: DDM32 Plus {newest.version}.'
     if newest.key() <= installed.key():
         return 'current', 'Telsiz güncel ✓'
-    return 'update', f'Yeni sürüm var: DDM25 Plus {newest.version}'
+    return 'update', f'Yeni sürüm var: DDM32 Plus {newest.version}'
 
 
 class HomeTab(QWidget):
@@ -30,10 +30,10 @@ class HomeTab(QWidget):
         self.port_state = port_state
         self.gate = gate
         lay = QVBoxLayout(self)
-        title = QLabel('DDM25 Plus')
+        title = QLabel('DDM32 Plus')
         bigger(title, 14, True)
         lay.addWidget(title)
-        lay.addWidget(plain_label(f'Baofeng DM-32UV için DDM25 Plus programlayıcı {__version__} · {AUTHOR}', 1))
+        lay.addWidget(plain_label(f'Baofeng DM-32UV için DDM32 Plus programlayıcı {__version__} · {AUTHOR}', 1))
         self.gate_label = plain_label('', 3)
         self.gate_btn = QPushButton('Sorumluluk reddini oku ve kabul et')
         self.gate_btn.clicked.connect(self.disclaimer_requested.emit)
@@ -52,7 +52,7 @@ class HomeTab(QWidget):
             cl.addWidget(w)
         lay.addWidget(card)
         grid = QGridLayout()
-        specs = [('update', 'Telsizi güncelle', 'SP_ArrowUp', 'Yedek alıp seçilen DDM25 Plus sürümünü yükler '
+        specs = [('update', 'Telsizi güncelle', 'SP_ArrowUp', 'Yedek alıp seçilen DDM32 Plus sürümünü yükler '
                   '(stoktan ilk kurulum dahil).'),
                  ('versions', 'Sürümler', 'SP_FileDialogListView', 'İmzalı sürümler, güncelleme, eski sürüme geçiş.'),
                  ('restore', 'Geri dön', 'SP_ArrowBack', 'Önceki sürüme ya da kendi yedeğinizle stok yazılıma dön.'),
@@ -95,7 +95,7 @@ class HomeTab(QWidget):
         self.notes_label.setText(f'<i>{newest.notes("tr")}</i>' if state == 'update' and newest else '')
         s = paths.load_settings()
         if installed:
-            self.version_label.setText(f'Telsizdeki sürüm: <b>DDM25 Plus {installed.version}</b>')
+            self.version_label.setText(f'Telsizdeki sürüm: <b>DDM32 Plus {installed.version}</b>')
         else:
             self.version_label.setText('Telsizdeki sürüm: ' + (s.get('installed_firmware') or 'bilinmiyor'))
         self.cable_label.setText(self.port_state.status_text())

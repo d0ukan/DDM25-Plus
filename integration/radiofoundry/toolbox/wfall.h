@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus spectrum waterfall (CONFIG_SPECTRUM_WF, docs/plus.md "Spectrum waterfall"): the last WF_ROWS sweeps of
+/* DDM32 Plus spectrum waterfall (CONFIG_SPECTRUM_WF, docs/plus.md "Spectrum waterfall"): the last WF_ROWS sweeps of
  * Tools > Spectrum, a row each, 4 bits a point (a level above the sweep's floor). The portable part: the ring, the
  * levels and their colour slots; installed as core/ui/wfall.{c,h}. The buffer (WF_BYTES) is the screen's: taken from
  * the RTOS heap when the screen opens with the waterfall on and given back when it closes (ui_spectrum.c); without it

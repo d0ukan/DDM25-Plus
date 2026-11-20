@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""DDM25 Plus round 13 "ideas 2" job (docs/plus.md): a static RAM reclaim, then five tools, each behind its own switch.
+"""DDM32 Plus round 13 "ideas 2" job (docs/plus.md): a static RAM reclaim, then five tools, each behind its own switch.
 Called last from plus_features.prepare(); a module of its own so the shared prepare list gains one line. Our code is in
 integration/radiofoundry/common/ (the shared screen buffer) and integration/radiofoundry/toolbox/ (installed into
 core/ui/), plus changes to our own screens (spectrum/ui_spectrum.c, map/ui_map.c, map/ui_mapnav.c, map/mapnav.*);
@@ -57,17 +57,17 @@ def prepare_toolbox(transform, install):
     # --- The screens (appended), their table entries, the Tools entries after SOS key ---
     transform('core/ui/ui_nav.h', [
         ('\tSCR_COUNT\n} ui_scr_t;',
-         '\tSCR_HEARD, SCR_HEARD_ONE,\t// DDM25 Plus: Tools > Heard list, one station (CONFIG_HEARD)\n'
-         '\tSCR_GPSDASH,\t\t\t// DDM25 Plus: Tools > GPS (CONFIG_GPS_DASH)\n'
-         '\tSCR_CLOCK,\t\t\t// DDM25 Plus: Tools > Clock (CONFIG_CLOCK_TOOLS)\n'
+         '\tSCR_HEARD, SCR_HEARD_ONE,\t// DDM32 Plus: Tools > Heard list, one station (CONFIG_HEARD)\n'
+         '\tSCR_GPSDASH,\t\t\t// DDM32 Plus: Tools > GPS (CONFIG_GPS_DASH)\n'
+         '\tSCR_CLOCK,\t\t\t// DDM32 Plus: Tools > Clock (CONFIG_CLOCK_TOOLS)\n'
          '\tSCR_COUNT\n} ui_scr_t;'),
     ])
     transform('core/ui/ui_menus.c', [
-        ('extern const ui_scr_def_t ui_locator_screen;\t// ui_locator.c (DDM25 Plus)',
-         'extern const ui_scr_def_t ui_locator_screen;\t// ui_locator.c (DDM25 Plus)\n'
-         'extern const ui_scr_def_t ui_heard_screen, ui_heard_one_screen;\t// ui_heard.c (DDM25 Plus)\n'
-         'extern const ui_scr_def_t ui_gpsdash_screen;\t// ui_gpsdash.c (DDM25 Plus)\n'
-         'extern const ui_scr_def_t ui_clock_screen;\t// ui_clock.c (DDM25 Plus)'),
+        ('extern const ui_scr_def_t ui_locator_screen;\t// ui_locator.c (DDM32 Plus)',
+         'extern const ui_scr_def_t ui_locator_screen;\t// ui_locator.c (DDM32 Plus)\n'
+         'extern const ui_scr_def_t ui_heard_screen, ui_heard_one_screen;\t// ui_heard.c (DDM32 Plus)\n'
+         'extern const ui_scr_def_t ui_gpsdash_screen;\t// ui_gpsdash.c (DDM32 Plus)\n'
+         'extern const ui_scr_def_t ui_clock_screen;\t// ui_clock.c (DDM32 Plus)'),
         ('#if CONFIG_LOCATOR\n\t[SCR_LOCATOR] = &ui_locator_screen,\n#endif\n',
          '#if CONFIG_LOCATOR\n\t[SCR_LOCATOR] = &ui_locator_screen,\n#endif\n'
          '#if CONFIG_HEARD\n\t[SCR_HEARD] = &ui_heard_screen,\n\t[SCR_HEARD_ONE] = &ui_heard_one_screen,\n#endif\n'
@@ -100,7 +100,7 @@ def prepare_toolbox(transform, install):
         # Heard list: every call Recent takes in, and a DMR / P25 call going on (heard again)
         ('\trecent[0] = *r;\n#if CONFIG_QSO_LOG\n\tqso_log_shift(i, qso_dup);\n#endif\n',
          '\trecent[0] = *r;\n#if CONFIG_QSO_LOG\n\tqso_log_shift(i, qso_dup);\n#endif\n'
-         '#if CONFIG_HEARD\n\tui_heard_recent(r, true);\t// DDM25 Plus heard list (ui_heard.c)\n#endif\n'),
+         '#if CONFIG_HEARD\n\tui_heard_recent(r, true);\t// DDM32 Plus heard list (ui_heard.c)\n#endif\n'),
         ('\t\t} else {\n\t\t\trecent[0].ms = d->last_ms;\n\t\t\trecent_gps(&recent[0], &d->last);\n\t\t}\n',
          '\t\t} else {\n\t\t\trecent[0].ms = d->last_ms;\n\t\t\trecent_gps(&recent[0], &d->last);\n'
          '#if CONFIG_HEARD\n\t\t\tui_heard_recent(&recent[0], false);\t// the same station\'s call goes on\n#endif\n'
@@ -110,23 +110,23 @@ def prepare_toolbox(transform, install):
          '#if CONFIG_HEARD\n\t\t\t\t\tui_heard_recent(&recent[i], false);\t// the P25 call goes on\n#endif\n'
          '\t\t\t\t\tbreak;\n'),
         ('\trecent_update(v);\n',
-         '#if CONFIG_HEARD\n\tui_heard_view(v);\t// DDM25 Plus: what the calls below are heard on\n#endif\n'
+         '#if CONFIG_HEARD\n\tui_heard_view(v);\t// DDM32 Plus: what the calls below are heard on\n#endif\n'
          '\trecent_update(v);\n'),
         ('#if CONFIG_QSO_LOG\n\tqso_log_reset();\n#endif\n',
          '#if CONFIG_QSO_LOG\n\tqso_log_reset();\n#endif\n#if CONFIG_HEARD\n\tui_heard_reset();\n#endif\n'),
         # The ticks: the waterfall's buffer back once its screen is left, the trip meter and the clock's GPS time
         ('\tif (ui_sos_tick(now))\n\t\tdirty = true;\n#endif\n',
          '\tif (ui_sos_tick(now))\n\t\tdirty = true;\n#endif\n'
-         '#if CONFIG_SPECTRUM_WF\n\tui_spectrum_wf_tick(stack[sp].scr);\t// DDM25 Plus: the waterfall\'s heap buffer\n'
+         '#if CONFIG_SPECTRUM_WF\n\tui_spectrum_wf_tick(stack[sp].scr);\t// DDM32 Plus: the waterfall\'s heap buffer\n'
          '#endif\n'
-         '#if CONFIG_GPS_DASH\n\t// DDM25 Plus Tools > GPS: the trip meter, once a second whatever is open (ui_gpsdash.c)\n'
+         '#if CONFIG_GPS_DASH\n\t// DDM32 Plus Tools > GPS: the trip meter, once a second whatever is open (ui_gpsdash.c)\n'
          '\tif (ui_gpsdash_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'
-         '#if CONFIG_CLOCK_TOOLS\n\t// DDM25 Plus Tools > Clock: the GPS time once a second, the running stopwatch shown\n'
+         '#if CONFIG_CLOCK_TOOLS\n\t// DDM32 Plus Tools > Clock: the GPS time once a second, the running stopwatch shown\n'
          '\tif (ui_clock_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'),
         # The countdown's end and the alarm: a tone and a banner on any screen, as the satellite pass alarm
         ('\tif (ui_st.toast != NULL && (int32_t)(now - toast_until) >= 0) {\n',
          '#if CONFIG_CLOCK_TOOLS\n'
-         '\t// DDM25 Plus Tools > Clock: the countdown\'s end or the alarm (ui_clock.c) has sounded; its text on any screen\n'
+         '\t// DDM32 Plus Tools > Clock: the countdown\'s end or the alarm (ui_clock.c) has sounded; its text on any screen\n'
          '\tconst char *clock_alarm = ui_clock_alarm(now);\n'
          '\tif (clock_alarm != NULL) {\n'
          '\t\tif (ui_st.banner.hold)\n'

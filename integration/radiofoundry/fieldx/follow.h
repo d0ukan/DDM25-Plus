@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus "find my friend" (CONFIG_NAV_FOLLOW, docs/plus.md): Go-To follows one APRS station. Its callsign and
+/* DDM32 Plus "find my friend" (CONFIG_NAV_FOLLOW, docs/plus.md): Go-To follows one APRS station. Its callsign and
  * last position are kept here (one target, 24 B of RAM); every second the UI looks the station up in the APRS
  * engine's heard list (upstream's, no copy) and takes a newer position when one was heard. The position stays when
  * the station drops out of the list; its age keeps counting, and from FOLLOW_STALE_MS it is marked stale. Started

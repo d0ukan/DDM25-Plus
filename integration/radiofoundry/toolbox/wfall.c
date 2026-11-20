@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus spectrum waterfall (wfall.h): the portable part. Installed as core/ui/wfall.c. */
+/* DDM32 Plus spectrum waterfall (wfall.h): the portable part. Installed as core/ui/wfall.c. */
 #include "config.h"
 #if CONFIG_SPECTRUM_WF
 #include <string.h>

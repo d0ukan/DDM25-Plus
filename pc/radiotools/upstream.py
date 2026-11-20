@@ -7,10 +7,10 @@ codec slot writer with the stock codec profiles (tools/hrc7000_codec.py, tools/r
 checked against its SHA-256 below before it is loaded; a different file is never imported.
 
 Where the tree is looked for, first hit wins:
-  1. DDM25_UPSTREAM (a RadioFoundry checkout at PIN; hashes still apply)
+  1. DDM32_UPSTREAM (a RadioFoundry checkout at PIN; hashes still apply)
   2. <root>/research/upstream/radiofoundry, root = the folder above radiotools/ (pc/ from source, the program folder
      of the frozen app, where pc/bundle.py copies exactly the files below)
-  3. <repository>/research/upstream/radiofoundry (the DDM25 Plus firmware build clones it there:
+  3. <repository>/research/upstream/radiofoundry (the DDM32 Plus firmware build clones it there:
      tools/build_radiofoundry.py, or python pc/fetch_upstream.py)
 No stock firmware and no codec byte is part of these files.
 """
@@ -58,7 +58,7 @@ def sha256(data):
 
 def candidates():
     out = []
-    env = os.environ.get('DDM25_UPSTREAM')
+    env = os.environ.get('DDM32_UPSTREAM')
     if env:
         out.append(Path(env))
     out.append(ROOT / 'research' / 'upstream' / 'radiofoundry')

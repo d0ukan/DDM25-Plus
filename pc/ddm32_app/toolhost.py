@@ -1,5 +1,5 @@
-"""Runs one bundled radio tool inside the frozen program: DDM25Plus.exe --run-tool NAME ARGS; and the self-update
-helper: DDM25Plus.exe --self-update ... (selfupdate.py).
+"""Runs one bundled radio tool inside the frozen program: DDM32Plus.exe --run-tool NAME ARGS; and the self-update
+helper: DDM32Plus.exe --self-update ... (selfupdate.py).
 
 The GUI starts a tool as its own child process (QProcess), exactly as it starts `python -u radiotools/NAME.py ARGS`
 from source, so a crash or a hang of a tool never blocks the window and the output parsers stay the same. The tool is
@@ -125,7 +125,7 @@ def main_from_argv(argv):
     if len(argv) >= 3 and argv[1] == '--run-tool':
         return run_tool(argv[2], argv[3:])
     if len(argv) == 2 and argv[1] == '--run-tool':
-        print('usage: DDM25Plus --run-tool NAME [ARGS]  (NAME: %s)' % ', '.join(TOOLS))
+        print('usage: DDM32Plus --run-tool NAME [ARGS]  (NAME: %s)' % ', '.join(TOOLS))
         return 2
     if len(argv) >= 2 and argv[1] == '--self-update':
         from .selfupdate import helper_main

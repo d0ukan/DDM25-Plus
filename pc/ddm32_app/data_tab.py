@@ -120,7 +120,7 @@ class DataTab(QWidget):
         outer.addWidget(box)
 
         self.build_btn = big_button('Yeni sürüm derle', 'SP_ComputerIcon',
-                                    'WSL içinde DDM25 Plus firmware\'ini (genel profil) yeni verilerle derler (birkaç dakika).')
+                                    'WSL içinde DDM32 Plus firmware\'ini (genel profil) yeni verilerle derler (birkaç dakika).')
         self.build_btn.clicked.connect(self.start_build)
         outer.addWidget(self.build_btn)
         self.build_msg = plain_label()

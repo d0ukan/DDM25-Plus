@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The signed DDM25 Plus release manifest: format, signature check, and the public firmware gate.
+"""The signed DDM32 Plus release manifest: format, signature check, and the public firmware gate.
 
-A GitHub release of d0ukan/DDM25-Plus carries ddm25-manifest.json and ddm25-manifest.json.sig. The .sig file is the
+A GitHub release of d0ukan/DDM32-Plus carries ddm32-manifest.json and ddm32-manifest.json.sig. The .sig file is the
 Ed25519 signature (RFC 8032, radiotools/ed25519.py) of the manifest file's exact bytes, written as 128 hex digits. Only
 the release tool (pc/release/make_release.py) signs, with the maintainer's private key kept outside the repository
-(%USERPROFILE%\\.ddm25\\release-signing-key). The app and the installer verify with PUBLIC_KEY_HEX below.
+(%USERPROFILE%\\.ddm32\\release-signing-key). The app and the installer verify with PUBLIC_KEY_HEX below.
 
-The public firmware gate (what PLUS_REVIEWED is in the lab): a DDM25 Plus application may be installed by this program
+The public firmware gate (what PLUS_REVIEWED is in the lab): a DDM32 Plus application may be installed by this program
 only when its raw SHA-256 (rfoundry_dm32.bin) is the application_sha256 of a firmware entry in a manifest whose
 signature verifies with PUBLIC_KEY_HEX. The installer (install_plus.py) checks this itself, from the manifest and
 signature files beside the package, every time it runs; the app's own check only decides which buttons are enabled.
 While PUBLIC_KEY_HEX is empty (no key embedded yet), nothing verifies and nothing can be installed.
 
-Manifest (format ddm25-manifest/1), all fields required unless marked optional:
-  format, repo ("d0ukan/DDM25-Plus"), release (the tag), created_utc
+Manifest (format ddm32-manifest/1), all fields required unless marked optional:
+  format, repo ("d0ukan/DDM32-Plus"), release (the tag), created_utc
   firmware: [ {version, channel ("beta" | "stable"), file, url, sha256, size (the release zip),
                application_sha256, application_size (rfoundry_dm32.bin inside it),
                settings_format, codeplug_format (integers: the storage formats this version writes),
@@ -36,9 +36,9 @@ from radiotools import ed25519  # noqa: E402
 # (see pc/README.en.md, "Release signing"). Key created by d0ukan on 2026-11-20.
 PUBLIC_KEY_HEX = '70fce9e822ac07f0787a991795b27ab7650f35dfc83bcd7ef0ad550fa675b411'
 
-FORMAT = 'ddm25-manifest/1'
-REPO = 'd0ukan/DDM25-Plus'
-MANIFEST_NAME = 'ddm25-manifest.json'
+FORMAT = 'ddm32-manifest/1'
+REPO = 'd0ukan/DDM32-Plus'
+MANIFEST_NAME = 'ddm32-manifest.json'
 SIG_NAME = MANIFEST_NAME + '.sig'
 CHANNELS = ('beta', 'stable')
 URL_PREFIX = f'https://github.com/{REPO}/releases/download/'
@@ -160,7 +160,7 @@ def verify_bytes(data, sig_text, hex_key=None):
 
 
 def verify_files(folder, hex_key=None):
-    """The manifest in folder (ddm25-manifest.json + .sig), verified"""
+    """The manifest in folder (ddm32-manifest.json + .sig), verified"""
     folder = Path(folder)
     try:
         data = (folder / MANIFEST_NAME).read_bytes()
@@ -184,7 +184,7 @@ def release_gate(application, folder, hex_key=None):
     m = verify_files(folder, hex_key)
     entry = firmware_for(m, sha256(application))
     if entry is None or entry['application_size'] != len(application):
-        raise ManifestError('This application is not listed in the signed DDM25 Plus release manifest')
+        raise ManifestError('This application is not listed in the signed DDM32 Plus release manifest')
     return entry
 
 

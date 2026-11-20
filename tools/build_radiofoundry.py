@@ -45,12 +45,12 @@ def write_owned(path, content, original=None):
     if not path.exists() or path.read_bytes() != content:
         path.write_bytes(content)
     OWNED[key] = hashlib.sha256(content).hexdigest()
-    # DDM25 Plus: a later transform of the same file builds on what was written (classic_standard writes directly)
+    # DDM32 Plus: a later transform of the same file builds on what was written (classic_standard writes directly)
     PATCHED[key] = content.decode(errors='surrogateescape')
 
 
 PATCHED = {}   # files already written in this run: a later transform of the same file builds on them
-PLUS_FILES = True   # DDM25 Plus: install its own files into the build tree (main: --plus only)
+PLUS_FILES = True   # DDM32 Plus: install its own files into the build tree (main: --plus only)
 
 
 def transform(relative, replacements):
@@ -454,7 +454,7 @@ def prepare():
     ])
     classic_channels.prepare(transform)
     classic_standard.prepare(DEST,write_owned)
-    # DDM25 Plus: its transforms always (every change sits under its CONFIG_ switch, off outside --plus), and its
+    # DDM32 Plus: its transforms always (every change sits under its CONFIG_ switch, off outside --plus), and its
     # headers; its own .c files only in a --plus tree: the stack check reads every source file in the tree, and Plus
     # .c files in a Classic tree gave it pointer stores Classic never makes (removed again below when left over)
     plus_features.prepare(transform, lambda rel, src: (PLUS_FILES or not rel.endswith('.c')) and
@@ -536,7 +536,7 @@ def prepare():
         "See COPYING-OPEN25, COPYING-P25-CAI, COPYING-P25-IMBE and the source manifest.\n"
         "Classic supports saved conventional P25 channels; final RF qualification is incomplete.\n"
     ).encode())
-    # DDM25 Plus: a file this run did not write that an earlier run added (not in the pinned tree), unchanged since:
+    # DDM32 Plus: a file this run did not write that an earlier run added (not in the pinned tree), unchanged since:
     # gone, as the retired inputs above (a Plus file left in a Classic tree)
     for key in sorted(set(OWNED) - set(PATCHED)):
         path = DEST / key
@@ -581,7 +581,7 @@ def main():
     ap.add_argument('--feature', action='append', default=[], metavar='NAME=y|n',
                     help='override one CONFIG_ switch on top of the preset (RAM/flash experiments)')
     ap.add_argument('--public', action='store_true',
-                    help='with --plus: the shareable DDM25 Plus build, no RadioID user/ID database (tools/plus_brand.py)')
+                    help='with --plus: the shareable DDM32 Plus build, no RadioID user/ID database (tools/plus_brand.py)')
     args = ap.parse_args()
     if args.public and not args.plus:
         ap.error('--public goes with --plus')
@@ -732,7 +732,7 @@ def main():
     if args.first_boot:
         command += ["CONFIG_STUB_ENTRY="+("y" if args.dev_update else "n"), "CONFIG_CPS_OPENFW=n", "CONFIG_CPS_FAST=n", "CONFIG_AUDIO_PROBE=n"]
     if args.public:
-        plus_brand.public_command(command)  # DDM25 Plus public: refuses a command with the ID database on
+        plus_brand.public_command(command)  # DDM32 Plus public: refuses a command with the ID database on
     log = ROOT / f"logs/radiofoundry-p25-{suffix}.log"
     log.parent.mkdir(exist_ok=True)
     with log.open("w") as f:
@@ -797,7 +797,7 @@ def main():
             subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),"-S",str(prefix.with_suffix(".elf"))],text=True),
             subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-size"),"-A",str(prefix.with_suffix(".elf"))],text=True)))
     if args.public:
-        # DDM25 Plus public: no ID database table or code in the image (research-data/user.csv never ships)
+        # DDM32 Plus public: no ID database table or code in the image (research-data/user.csv never ships)
         firstboot_audits.update(plus_brand.public_audit(
             subprocess.check_output([str(ROOT/"toolchain/bin/csky-elf-nm"),str(prefix.with_suffix(".elf"))],text=True)))
     if args.first_boot:
@@ -833,11 +833,11 @@ def main():
                ROOT / "third_party/p25cai", ROOT / "third_party/imbe")
               for p in folder.rglob("*") if p.is_file() and "__pycache__" not in p.parts]
     if args.plus:
-        # DDM25 Plus: its own transforms and sources too
+        # DDM32 Plus: its own transforms and sources too
         inputs += sorted(p for p in (ROOT / "tools").glob("plus_*.py")) + [ROOT / "tools/turkish_ui.py",
                   ROOT / "LICENSES/GPL-3.0.txt", ROOT / "LICENSING.md"] + [p for folder in
                   (ROOT / "src/ysf", ROOT / "src/nxdn", ROOT / "src/dpmr") for p in folder.rglob("*") if p.is_file()]
-    manifest = {"kind": (("DDM25 Plus public build (Classic r13 base, no ID database)" if args.public else "DDM25 Plus development build (Classic r13 base)") + "; hardware qualification required" if args.plus else "Open25-DM32 Classic release candidate; hardware qualification required") if args.classic else "RadioFoundry P25 laboratory image",
+    manifest = {"kind": (("DDM32 Plus public build (Classic r13 base, no ID database)" if args.public else "DDM32 Plus development build (Classic r13 base)") + "; hardware qualification required" if args.plus else "Open25-DM32 Classic release candidate; hardware qualification required") if args.classic else "RadioFoundry P25 laboratory image",
         "upstream_commit": PIN, "freertos_commit": git(DEST / "third_party/FreeRTOS-Kernel", "rev-parse", "HEAD"),
         "command": [str(x) for x in command], "p25_enabled": not args.disable, "native_interface_enabled":native,
         "firstboot_restrictions_enabled": args.first_boot,

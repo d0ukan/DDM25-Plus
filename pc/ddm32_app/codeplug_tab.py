@@ -253,14 +253,14 @@ class CodeplugTab(QWidget):
         if self.cp is None:
             return
         t = self.current_table()
-        path, _ = QFileDialog.getSaveFileName(self, 'CSV kaydet', f'ddm25-{t}.csv', 'CSV (*.csv)')
+        path, _ = QFileDialog.getSaveFileName(self, 'CSV kaydet', f'ddm32-{t}.csv', 'CSV (*.csv)')
         if path:
             self.export_csv(t, path)
 
     def export_changes_dialog(self):
         if self.cp is None:
             return
-        path, _ = QFileDialog.getSaveFileName(self, 'Değişiklik listesi', 'ddm25-degisiklikler.json',
+        path, _ = QFileDialog.getSaveFileName(self, 'Değişiklik listesi', 'ddm32-degisiklikler.json',
                                               'JSON (*.json)')
         if path:
             self.export_changes(path)

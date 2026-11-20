@@ -12,8 +12,8 @@
 !/README.md
 !/README.tr.md
 !/docs/UPSTREAM-README.md
-!/images/ddm25/
-!/images/ddm25/*.png
+!/images/ddm32/
+!/images/ddm32/*.png
 !/THIRD_PARTY.md
 !/experiments/codec/build.py
 !/experiments/codec/harness.cc
@@ -199,7 +199,7 @@ __pycache__/
 !/third_party/rf_codeplug/core/codeplug/codeplug_tag.h
 !/third_party/rf_codeplug/core/p25/p25_codeplug.c
 !/third_party/rf_codeplug/core/p25/p25_codeplug.h
-# DDM25 Plus additions (GPL-3.0-or-later; see LICENSING.md)
+# DDM32 Plus additions (GPL-3.0-or-later; see LICENSING.md)
 !/tools/turkish_ui.py
 !/docs/plus.md
 !/tools/plus_features.py
@@ -422,23 +422,23 @@ __pycache__/
 !/LICENSING.md
 !/src/p25/p25_lcx.c
 !/src/p25/p25_lcx.h
-# DDM25 Plus name, signature and public build (tools/plus_brand.py)
+# DDM32 Plus name, signature and public build (tools/plus_brand.py)
 !/tools/plus_brand.py
 !/tests/plus/art_host_ui.h
-# DDM25 Plus PC programmer (pc/README.en.md): sources, tests and docs only; never backups, builds or binaries
+# DDM32 Plus PC programmer (pc/README.en.md): sources, tests and docs only; never backups, builds or binaries
 !/pc/*.py
 !/pc/*.ps1
 !/pc/README.md
 !/pc/README.en.md
 !/pc/docs/*.md
-!/pc/ddm25_app/*.py
+!/pc/ddm32_app/*.py
 !/pc/radiotools/*.py
 !/pc/release/*.py
 !/pc/tests/*.py
 /pc/build/
 /pc/dist/
 /pc/research/
-# DDM25 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/plus_fieldx.py)
+# DDM32 Plus round 13 ideas 1: find saves, find my friend, locator, one-key SOS (tools/plus_fieldx.py)
 !/tools/plus_fieldx.py
 !/integration/radiofoundry/fieldx/findsave.c
 !/integration/radiofoundry/fieldx/findsave.h
@@ -460,7 +460,7 @@ __pycache__/
 !/tests/plus/test_ui_fieldx.c
 !/tests/plus/ui_sim_fieldx.c
 !/tests/plus/ui_sim_fieldx.h
-# DDM25 Plus round 13 ideas 2: RAM reclaim, heard list, waterfall, coverage, GPS dashboard, clock (tools/plus_toolbox.py)
+# DDM32 Plus round 13 ideas 2: RAM reclaim, heard list, waterfall, coverage, GPS dashboard, clock (tools/plus_toolbox.py)
 !/tools/plus_toolbox.py
 !/tools/test_toolbox.py
 !/integration/radiofoundry/common/ui_scratch.c

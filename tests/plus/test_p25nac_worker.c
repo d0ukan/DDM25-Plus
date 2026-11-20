@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus separate RX and TX NAC (Classic r13 split NAC, CONFIG_P25_TXNAC, docs/plus.md "Separate RX NAC and TX NAC"), end to end through
+/* DDM32 Plus separate RX and TX NAC (Classic r13 split NAC, CONFIG_P25_TXNAC, docs/plus.md "Separate RX NAC and TX NAC"), end to end through
  * the actual P25 channel worker. Host only: every RF edge is a fake, nothing transmits.
  *
  * The real p25_lab.c is #included (as tests/plus/test_ysf_tx_worker.c does) and its worker task body run() is driven

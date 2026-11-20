@@ -21,7 +21,7 @@ from radiotools import radio_detect
 from radiotools import signed_manifest as sm
 
 TAG = 47
-PLUS_APP = fx.pattern(0x7000, 9) + b'DDM25 Plus test build'
+PLUS_APP = fx.pattern(0x7000, 9) + b'DDM32 Plus test build'
 
 
 @fx.need_upstream
@@ -102,8 +102,8 @@ class PlusInstallTests(unittest.TestCase):
 
     def test_build_refusals(self):
         cases = [
-            ('reproducible DDM25 Plus build manifest', dict(plus=False)),
-            ('reproducible DDM25 Plus build manifest', dict(identical=False)),
+            ('reproducible DDM32 Plus build manifest', dict(plus=False)),
+            ('reproducible DDM32 Plus build manifest', dict(identical=False)),
             ('Application differs', dict(app_digest='0' * 64)),
             ('Linker map differs', dict(map_digest='0' * 64)),
             ('Linker layout differs', dict(symbols={'__codec_run_lo': 0x43a04})),
@@ -203,7 +203,7 @@ class PlusInstallTests(unittest.TestCase):
         radio = self.radio(self.program)
         out = self.new_out()
         self.run_main('--backup', self.backup, '--plus', self.plus, '--out', out, '--wait', 5, radio=radio)
-        self.assertIn('PASS: DDM25 Plus installed and verified', self.output)
+        self.assertIn('PASS: DDM32 Plus installed and verified', self.output)
         self.assertTrue(radio.opened and radio.closed)
         self.check_untouched(radio)
         self.assertEqual(radio.images['progmem'], self.target)
@@ -373,7 +373,7 @@ class FromStockTests(unittest.TestCase):
         out = self.root / f'install{self.runs}'
         self.run_main('--backup', self.backup, '--plus', self.plus, '--from-stock', '--out', out, '--wait', 5,
                       radio=radio)
-        self.assertIn('PASS: DDM25 Plus installed and verified', self.output)
+        self.assertIn('PASS: DDM32 Plus installed and verified', self.output)
         self.assertEqual(radio.images['progmem'], target)
         self.assertEqual(radio.images['progmem'][:START], self.program[:START])
         self.assertEqual(radio.images['q128'], self.data)
@@ -402,9 +402,12 @@ class FromStockTests(unittest.TestCase):
 @fx.need_upstream
 class DetectTests(unittest.TestCase):
     def test_classic_layouts(self):
-        d = radio_detect.detect(fx.make_program(app=fx.pattern(0x9000, 3) + b'DDM25 Plus'))
+        d = radio_detect.detect(fx.make_program(app=fx.pattern(0x9000, 3) + b'DDM32 Plus'))
         self.assertEqual((d['layout'], d['firmware'], d['install_mode'], d['codec_tag']),
-                         ('classic', 'ddm25', 'over_classic', 47))
+                         ('classic', 'ddm32', 'over_classic', 47))
+        # A build from before the rename to DDM32 Plus (v1.0.0-beta.1) is still ours
+        d = radio_detect.detect(fx.make_program(app=fx.pattern(0x9000, 3) + b'DDM25 Plus'))
+        self.assertEqual(d['firmware'], 'ddm32')
         d = radio_detect.detect(fx.make_program(app=b'open25-classic-r13' + fx.pattern(0x9000, 3)))
         self.assertEqual(d['firmware'], 'classic')
         d = radio_detect.detect(fx.make_program(slot=b'\xff' * 4096))

@@ -13,11 +13,11 @@ import fixtures as fx  # noqa: E402
 import rtfixtures as rt  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
-from ddm25_app import dataupdate, disclaimer, parsers, paths  # noqa: E402
-from ddm25_app.health_tab import plain_lines, verdict  # noqa: E402
-from ddm25_app.main_window import MainWindow  # noqa: E402
-from ddm25_app.ports import PortInfo  # noqa: E402
-from ddm25_app.update_tab import BACKUP, CHECK, DONE, INSTALL, PREP  # noqa: E402
+from ddm32_app import dataupdate, disclaimer, parsers, paths  # noqa: E402
+from ddm32_app.health_tab import plain_lines, verdict  # noqa: E402
+from ddm32_app.main_window import MainWindow  # noqa: E402
+from ddm32_app.ports import PortInfo  # noqa: E402
+from ddm32_app.update_tab import BACKUP, CHECK, DONE, INSTALL, PREP  # noqa: E402
 
 APP = QApplication.instance() or QApplication([])
 
@@ -36,14 +36,14 @@ class UiBase(unittest.TestCase):
         self.data = self.top / 'data'
         self.repo = self.top / 'repo'
         self.repo.mkdir()
-        old = os.environ.get('DDM25_DATA')
-        os.environ['DDM25_DATA'] = str(self.data)
-        self.addCleanup(lambda: os.environ.__setitem__('DDM25_DATA', old) if old else None)
+        old = os.environ.get('DDM32_DATA')
+        os.environ['DDM32_DATA'] = str(self.data)
+        self.addCleanup(lambda: os.environ.__setitem__('DDM32_DATA', old) if old else None)
         rt.use_test_key(self)
         self.layout = paths.Layout.source(data=self.data, python=sys.executable, repo=self.repo)
         self.layout.force_build = True
         if self.frozen:
-            self.layout.mode, self.layout.runner_exe = 'frozen', str(self.top / 'DDM25Plus.exe')
+            self.layout.mode, self.layout.runner_exe = 'frozen', str(self.top / 'DDM32Plus.exe')
         self.layout.ensure()
         self.root = self.layout.root
         self.pub = fx.publish(self.layout.releases, list(self.versions), formats=self.formats,
@@ -161,7 +161,7 @@ class UpdateFlowTest(FlowSteps):
         self.assertTrue((self.layout.backups / f'backup-{out.name.split("-")[-1]}.log').is_file())
         self.assertEqual(len(fx.FakeRunner.instances), 2)        # detection follows by itself (no port)
         self.detect()
-        self.assertIn('DDM25 Plus var', self.u.detect_status.text())
+        self.assertIn('DDM32 Plus var', self.u.detect_status.text())
         self.assertEqual(len(fx.FakeRunner.instances), 3)        # then the plan (no port)
         plan_args = self.plan()
         self.assertNotIn('--from-stock', plan_args)
@@ -367,7 +367,7 @@ class NotDownloadedTest(UiBase):
             if e['version'] == fv.version:
                 e['sha256'], e['size'] = rt.sm.sha256(zip_bytes), len(zip_bytes)
         rt.write_signed(fv.manifest_dir, m)
-        self.w.rel.catalog = __import__('ddm25_app.releases', fromlist=['x']).cached_catalog(self.layout.releases)
+        self.w.rel.catalog = __import__('ddm32_app.releases', fromlist=['x']).cached_catalog(self.layout.releases)
         self.w.rel.reload_packages()
 
 
@@ -443,14 +443,14 @@ class VersionsTest(UiBase):
         files = {}
 
         def release(tag, data, sig):
-            files[rt.url(tag, 'ddm25-manifest.json')] = data
-            files[rt.url(tag, 'ddm25-manifest.json.sig')] = sig.encode()
+            files[rt.url(tag, 'ddm32-manifest.json')] = data
+            files[rt.url(tag, 'ddm32-manifest.json.sig')] = sig.encode()
             return {'tag_name': tag, 'draft': False, 'prerelease': False, 'assets': [
-                {'name': 'ddm25-manifest.json', 'browser_download_url': rt.url(tag, 'ddm25-manifest.json')},
-                {'name': 'ddm25-manifest.json.sig', 'browser_download_url': rt.url(tag, 'ddm25-manifest.json.sig')}]}
+                {'name': 'ddm32-manifest.json', 'browser_download_url': rt.url(tag, 'ddm32-manifest.json')},
+                {'name': 'ddm32-manifest.json.sig', 'browser_download_url': rt.url(tag, 'ddm32-manifest.json.sig')}]}
         listing = [release('v2.0.0', good, good_sig), release('v2.1.0', bad, bad_sig),
                    {'tag_name': 'v0.1.0', 'assets': []}, {'tag_name': 'draft', 'draft': True}]
-        from ddm25_app import releases
+        from ddm32_app import releases
         files[releases.API_URL] = self.api(listing)
         self.w.rel.fetch = lambda url, limit=None: files[url]
         self.w.versions.check_btn.click()
@@ -462,12 +462,12 @@ class VersionsTest(UiBase):
         self.assertIn('no signed manifest', rejected['v0.1.0'])
         self.assertIn('v2.1.0', self.w.versions.rejected_label.text())
         self.assertEqual([r[0] for r in self.w.versions.rows][0], '2.0.0')
-        self.assertTrue((self.layout.releases / 'manifests' / 'v2.0.0' / 'ddm25-manifest.json').is_file())
+        self.assertTrue((self.layout.releases / 'manifests' / 'v2.0.0' / 'ddm32-manifest.json').is_file())
         self.assertFalse((self.layout.releases / 'manifests' / 'v2.1.0').exists())
 
     def test_check_failure_keeps_cache(self):
         def offline(url, limit=None):
-            from ddm25_app.releases import NetError
+            from ddm32_app.releases import NetError
             raise NetError('offline')
         self.w.rel.fetch = offline
         self.w.versions.check()
@@ -477,7 +477,7 @@ class VersionsTest(UiBase):
     def test_update_banner_and_auto_check_setting(self):
         paths.save_setting('installed_sha256', rt.sm.sha256(fx.release_app('1.0.0')))
         self.w.rel.changed.emit()
-        self.assertIn('Yeni sürüm var: DDM25 Plus 1.1.0-beta.1', self.w.versions.banner.text())
+        self.assertIn('Yeni sürüm var: DDM32 Plus 1.1.0-beta.1', self.w.versions.banner.text())
         self.assertEqual(self.w.home.state, 'update')
         self.w.versions.beta_box.setChecked(False)          # stable only: 1.0.0 is the newest stable
         self.w.home.refresh()
@@ -494,11 +494,11 @@ class SelfUpdateUiTest(UiBase):
         import zipfile
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, 'w') as z:
-            z.writestr('DDM25Plus/DDM25Plus.exe', b'MZ new')
+            z.writestr('DDM32Plus/DDM32Plus.exe', b'MZ new')
         zbytes = buf.getvalue()
         m = rt.manifest([], app=rt.app_entry('9.0.0', zbytes, 'v9.0.0'), release='v9.0.0')
         rt.write_signed(self.layout.releases / 'manifests' / 'v9.0.0', m)
-        from ddm25_app import releases
+        from ddm32_app import releases
         self.w.rel.catalog = releases.cached_catalog(self.layout.releases)
         self.w.rel.download_fn = lambda url, dest, size, progress=None: Path(dest).write_bytes(zbytes)
         self.w.rel.changed.emit()
@@ -512,9 +512,9 @@ class SelfUpdateUiTest(UiBase):
         v.app_btn.click()
         self.assertEqual(len(self.helper_calls), 1)
         program, args = self.helper_calls[0]
-        self.assertTrue(program.endswith('DDM25Plus.exe'))
+        self.assertTrue(program.endswith('DDM32Plus.exe'))
         self.assertIn('--self-update', args)
-        self.assertTrue(Path(self.arg(args, '--staging')).joinpath('DDM25Plus.exe').is_file())
+        self.assertTrue(Path(self.arg(args, '--staging')).joinpath('DDM32Plus.exe').is_file())
         self.assertEqual(closed, [1])
         self.assertIn(disclaimer.SHORT, self.asked[-1][1])
 
@@ -530,7 +530,7 @@ class SelfUpdateUiTest(UiBase):
     def test_tampered_program_zip_is_refused(self):
         m = rt.manifest([], app=rt.app_entry('9.0.0', b'expected', 'v9.0.0'), release='v9.0.0')
         rt.write_signed(self.layout.releases / 'manifests' / 'v9.0.0', m)
-        from ddm25_app import releases
+        from ddm32_app import releases
         self.w.rel.catalog = releases.cached_catalog(self.layout.releases)
         self.w.rel.download_fn = lambda url, dest, size, progress=None: Path(dest).write_bytes(b'tampered')
         self.w.rel.changed.emit()
@@ -638,7 +638,7 @@ class NoReleasesTest(UiBase):
 
 class PagesTest(UiBase):
     def test_home_and_identity(self):
-        self.assertEqual(self.w.windowTitle()[:10], 'DDM25 Plus')
+        self.assertEqual(self.w.windowTitle()[:10], 'DDM32 Plus')
         titles = [self.w.tabs.tabText(i) for i in range(self.w.tabs.count())]
         self.assertEqual(titles, ['Ana sayfa', 'Telsizi güncelle', 'Sürümler', 'Geri dön', 'Telsizin durumu',
                                   'Canlı panel', 'Kanallarım', 'Verileri güncelle'])
@@ -647,9 +647,9 @@ class PagesTest(UiBase):
         self.assertIs(self.w.tabs.currentWidget(), self.w.codeplug)
         self.w.home.buttons['restore'].click()
         self.assertIs(self.w.tabs.currentWidget(), self.w.restore)
-        from ddm25_app.widgets import about_html
+        from ddm32_app.widgets import about_html
         html = about_html()
-        for part in ('DDM25 Plus · d0ukan · TA2DOU', 'github.com/d0ukan/DDM25-Plus', 'RadioFoundry',
+        for part in ('DDM32 Plus · d0ukan · TA2DOU', 'github.com/d0ukan/DDM32-Plus', 'RadioFoundry',
                      'Open25-DM32'):
             self.assertIn(part, html)
 
@@ -665,7 +665,7 @@ class PagesTest(UiBase):
     def test_help(self):
         self.w.help()
         self.assertEqual(len(self.helps), 1)
-        from ddm25_app.widgets import HELP_HTML
+        from ddm32_app.widgets import HELP_HTML
         for topic in ('yakalanamadı', 'Kablo bulunamadı', 'Yedek eski', 'imzalı', 'Stok yazılımdan ilk kurulum',
                       'yarıda kaldı', 'LOCALAPPDATA'):
             self.assertIn(topic, HELP_HTML)
@@ -696,7 +696,7 @@ class PagesTest(UiBase):
         c = self.w.codeplug
         self.assertTrue(c.reload_backups())
         self.assertEqual(c.models['channels'].rowCount(), 9)
-        from ddm25_app import codeplug as cp
+        from ddm32_app import codeplug as cp
         keys = [k for k, _ in cp.CHANNEL_COLUMNS]
         row = {k: c.models['channels'].item(3, i).text() for i, k in enumerate(keys)}
         self.assertEqual(row['summary'], 'NAC $293 = 659 · TG 101')
@@ -722,7 +722,7 @@ class PagesTest(UiBase):
         d.tle_write_btn.click()
         program, args, _ = self.runner().calls[0]
         self.assertEqual(program, 'wsl.exe')
-        self.assertIn('cd ~/ddm25-plus', args[-1])
+        self.assertIn('cd ~/ddm32-plus', args[-1])
 
     def test_build_plain_result(self):
         d = self.w.data

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus locator calculator (CONFIG_LOCATOR, docs/plus.md): Maidenhead locators, 4 characters (a square, 2 x 1
+/* DDM32 Plus locator calculator (CONFIG_LOCATOR, docs/plus.md): Maidenhead locators, 4 characters (a square, 2 x 1
  * degree) or 6 (a subsquare, 5 x 2.5 minutes), to the centre's latitude / longitude and back. Integer only (1e-7
  * degree), the same grid as Tools > Repeaters' locator (rpt_locator) and Tools > Position's. Installed as
  * core/ui/locator.{c,h}; pure (the host tests run it as is). */

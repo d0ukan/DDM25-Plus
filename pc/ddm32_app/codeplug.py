@@ -1,7 +1,7 @@
-"""Read-only decoder of the DDM25 Plus codeplug in a data-flash (q128, 16 MiB) backup image.
+"""Read-only decoder of the DDM32 Plus codeplug in a data-flash (q128, 16 MiB) backup image.
 
 Layout: the open-firmware codeplug RadioFoundry/Classic/Plus keep in the data flash (upstream
-core/codeplug/codeplug.c, boards/dm32/board.c flash map), plus the DDM25 Plus channel modes
+core/codeplug/codeplug.c, boards/dm32/board.c flash map), plus the DDM32 Plus channel modes
 (tools/classic_channels.py, plus_features.py):
 
   EEPROM image at 0x700000, flash image at 0x720000
@@ -14,7 +14,7 @@ Channel modes (CH_MODE, record offset 0x18): 0 FM, 1 DMR (CH_CC high bits 0x80 a
 0xA6 YSF (DG-ID in CH_RX_GROUP, 0 any), 0xA7 NXDN (RAN in CH_RX_GROUP & 0x3F, 0 any), 0xA8 dPMR (CH_RX_GROUP: 0 any,
 else colour code + 1).
 
-P25 (DDM25 Plus on Classic r13, tools/classic_standard.py, third_party/rf_codeplug): a DMR base record
+P25 (DDM32 Plus on Classic r13, tools/classic_standard.py, third_party/rf_codeplug): a DMR base record
 (mode 1, receive only) plus an RFKV tag of kind 2 (P25) in the codeplug settings area. The area starts at EE+0xE000
 (16-byte header: "RFKV", version 1, header length, data length u16, CRC-32 u32, the next page u32; entries key u16,
 length u16, value); further pages at combined-image offsets 0xAF000-0xCEFFF = FL + offset - 0x20000. A channel's tag
@@ -532,7 +532,7 @@ def to_csv(columns, rows):
 def change_list(source, changes):
     """The JSON 'change list' the user keeps for planning (never written to a radio)"""
     return json.dumps({
-        'kind': 'ddm25-codeplug-change-list',
+        'kind': 'ddm32-codeplug-change-list',
         'note': 'Telsize yazmaz - yazmak için upstream CPS kullanın',
         'source_backup': str(source),
         'created': time.strftime('%Y-%m-%dT%H:%M:%S'),

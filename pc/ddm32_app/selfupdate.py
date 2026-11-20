@@ -1,10 +1,10 @@
 """Self-update of the frozen program: swap the program folder for a verified new one, roll back if it does not start.
 
 1. The app downloads the new program zip named in a signed manifest and checks its size and SHA-256
-   (releases.download_app), then extracts it safely into %LOCALAPPDATA%\\DDM25Plus\\guncelleme\\app-<version>\\
+   (releases.download_app), then extracts it safely into %LOCALAPPDATA%\\DDM32Plus\\guncelleme\\app-<version>\\
    (stage()). Nothing in the program folder changes yet.
 2. The app starts the NEW program's .exe from that staging folder as the helper:
-       DDM25Plus.exe --self-update --pid <old pid> --app-dir <program folder> --staging <staging> --marker <file>
+       DDM32Plus.exe --self-update --pid <old pid> --app-dir <program folder> --staging <staging> --marker <file>
    and closes itself.
 3. The helper (swap()) waits for the old program to exit, renames the program folder to <folder>.old (kept for a
    manual rollback), copies the staging folder into the program folder's place, and starts it with
@@ -37,8 +37,8 @@ class UpdateError(Exception):
 
 
 def safe_extract(zip_path, dest):
-    """Extract a program zip whose members all sit under DDM25Plus/ (no absolute paths, no '..'); returns the
-    extracted DDM25Plus folder"""
+    """Extract a program zip whose members all sit under DDM32Plus/ (no absolute paths, no '..'); returns the
+    extracted DDM32Plus folder"""
     dest = Path(dest)
     with zipfile.ZipFile(zip_path) as z:
         for info in z.infolist():
@@ -55,7 +55,7 @@ def safe_extract(zip_path, dest):
 
 
 def stage(zip_path, updates_dir, version):
-    """The new program, extracted into updates_dir/app-<version>/DDM25Plus"""
+    """The new program, extracted into updates_dir/app-<version>/DDM32Plus"""
     target = Path(updates_dir) / f'app-{version}'
     if target.exists():
         shutil.rmtree(target)
@@ -171,7 +171,7 @@ def _stop(handle):
 
 
 def helper_main(argv):
-    """DDM25Plus.exe --self-update ...: exit code 0 when the new program runs"""
+    """DDM32Plus.exe --self-update ...: exit code 0 when the new program runs"""
     import argparse
     ap = argparse.ArgumentParser(prog=f'{EXE_NAME} {HELPER_ARG}')
     ap.add_argument('--pid', type=int, required=True)

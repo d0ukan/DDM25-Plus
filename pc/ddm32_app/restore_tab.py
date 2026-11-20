@@ -1,13 +1,13 @@
 """Geri dön: put the radio back from the user's OWN backup.
 
 - "Önceki sürüme dön": the backup taken right before the last install (whatever the radio ran then: stock, Classic or
-  an earlier DDM25 Plus).
+  an earlier DDM32 Plus).
 - "Stok yazılıma dön": a backup of this radio while it still ran the stock firmware (kept when a backup is detected as
   stock; another folder may be chosen). Stock firmware is never shipped or downloaded: the backup is the only source.
 The tool follows the backup's layout (radio_detect.py, no port): stock -> install_firstboot.py --restore-stock
 --use-saved-backup (the restore proven on hardware), Classic layout -> install_plus.py --restore. Both rewrite every
 application and codec slot sector from the backup and read the application back before the restart. The bootloader
-and the data chip (calibration, channels, settings) are never written: channels saved by DDM25 Plus stay as they are.
+and the data chip (calibration, channels, settings) are never written: channels saved by DDM32 Plus stay as they are.
 """
 import json
 from pathlib import Path
@@ -159,7 +159,7 @@ class RestoreTab(QWidget):
             f'Değişecek: uygulama ve codec bölümü, {p["changed_sectors"]} sektör ({p["first"]} - {p["last"]})',
             f'Port: {f.port}', '',
             'Yalnızca bu telsizin kendi yedeğini kullanın.',
-            'Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz: DDM25 Plus\'ta kaydedilen kanallar '
+            'Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz: DDM32 Plus\'ta kaydedilen kanallar '
             'olduğu gibi kalır; stok yazılım bunları farklı gösterebilir (gerekirse CPS ile yeniden yazın).',
             'Hata olursa kendiliğinden tekrar denenmez.', '', '⚠ ' + disclaimer.SHORT])
 

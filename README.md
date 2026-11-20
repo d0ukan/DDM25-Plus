@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="images/ddm25/splash.png" alt="DDM25 Plus boot screen, dark and light theme" width="480">
+<img src="images/ddm32/splash.png" alt="DDM32 Plus boot screen, dark and light theme" width="480">
 
-# DDM25 Plus
+# DDM32 Plus
 
 **Turkish-first open firmware for the Baofeng DM-32UV — P25, DMR, YSF, NXDN, dPMR, APRS, maps and much more.**
 
@@ -19,7 +19,7 @@ by **d0ukan · TA2DOU**
 > [!CAUTION]
 > ## ⚠️ DISCLAIMER — READ BEFORE USING
 >
-> DDM25 Plus is **unofficial, experimental** firmware and programming software. It is not affiliated with or
+> DDM32 Plus is **unofficial, experimental** firmware and programming software. It is not affiliated with or
 > endorsed by Baofeng, RadioFoundry or Open25-DM32.
 >
 > - Flashing firmware **can permanently brick your radio**, erase calibration and channel data, and void your warranty.
@@ -37,19 +37,19 @@ by **d0ukan · TA2DOU**
 
 ## Status
 
-DDM25 Plus is in **beta**. Every feature below is built and covered by host tests (a simulator of the radio's
+DDM32 Plus is in **beta**. Every feature below is built and covered by host tests (a simulator of the radio's
 screens, radio core and modems), but **most of it has not yet been tried on a real radio**. The first public
 release will be marked as a pre-release. Radio test notes live in [`docs/plus-radio-test.md`](docs/plus-radio-test.md).
 
 ## Where it comes from
 
 ```
-RadioFoundry (MIT)  ──►  Open25-DM32 Classic r13 (MIT)  ──►  DDM25 Plus (GPL-3.0-or-later)
+RadioFoundry (MIT)  ──►  Open25-DM32 Classic r13 (MIT)  ──►  DDM32 Plus (GPL-3.0-or-later)
 open firmware base        P25, IMBE, native modem, CPS        this fork: everything below
 ```
 
-DDM25 Plus is an independent fork. It is **not** an official RadioFoundry or Open25-DM32 release. Please report
-DDM25 Plus problems [here](https://github.com/d0ukan/DDM25-Plus/issues), not to the upstream projects. The upstream
+DDM32 Plus is an independent fork. It is **not** an official RadioFoundry or Open25-DM32 release. Please report
+DDM32 Plus problems [here](https://github.com/d0ukan/DDM32-Plus/issues), not to the upstream projects. The upstream
 README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
 
 ## Features
@@ -75,7 +75,7 @@ README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
 
 | Multi-watch | A call on C |
 | :---: | :---: |
-| ![Multi-watch with four rows](images/ddm25/multiwatch.png) | ![Multi-watch, a call on row C](images/ddm25/multiwatch-call.png) |
+| ![Multi-watch with four rows](images/ddm32/multiwatch.png) | ![Multi-watch, a call on row C](images/ddm32/multiwatch-call.png) |
 
 ### Maps and position
 
@@ -88,7 +88,7 @@ README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
 
 | APRS on the map | Track | Repeater pick |
 | :---: | :---: | :---: |
-| ![APRS station on the map](images/ddm25/map-aprs.png) | ![Track on the map](images/ddm25/map-track.png) | ![A repeater picked on the map](images/ddm25/map-repeater.png) |
+| ![APRS station on the map](images/ddm32/map-aprs.png) | ![Track on the map](images/ddm32/map-track.png) | ![A repeater picked on the map](images/ddm32/map-repeater.png) |
 
 ### Tools
 
@@ -98,7 +98,7 @@ left, MMDVM hotspot over the programming cable, FM caller ID, signal quality.
 
 | Tools | Airfields | Marine VHF | Battery |
 | :---: | :---: | :---: | :---: |
-| ![Tools menu icons](images/ddm25/tools.png) | ![Airfields list](images/ddm25/airfields.png) | ![Marine VHF table](images/ddm25/marine.png) | ![Battery graph](images/ddm25/battery.png) |
+| ![Tools menu icons](images/ddm32/tools.png) | ![Airfields list](images/ddm32/airfields.png) | ![Marine VHF table](images/ddm32/marine.png) | ![Battery graph](images/ddm32/battery.png) |
 
 *Screenshots come from the firmware's own screen simulator (English UI; the radio runs Turkish by default). Photos
 from a real radio will follow.*
@@ -110,8 +110,8 @@ The whole interface is translated to Turkish (and remains available in English).
 
 ## Installing
 
-Use the **DDM25 Plus programmer** for Windows (no Python needed): download it from
-[Releases](https://github.com/d0ukan/DDM25-Plus/releases) once the first release is out. It backs the radio up,
+Use the **DDM32 Plus programmer** for Windows (no Python needed): download it from
+[Releases](https://github.com/d0ukan/DDM32-Plus/releases) once the first release is out. It backs the radio up,
 shows exactly what will change, installs (also from the radio's stock firmware, using the radio's own codec), goes
 back to the previous version or to stock from your own backup, checks signed updates and lists every version.
 Guide: [`pc/README.en.md`](pc/README.en.md) · source: [`pc/`](pc/). Everything **at your own risk** (see the
@@ -119,10 +119,10 @@ disclaimer above).
 
 ## Building
 
-The build follows upstream's [`BUILD.md`](BUILD.md) (csky-elf toolchain, pinned sources). DDM25 Plus adds:
+The build follows upstream's [`BUILD.md`](BUILD.md) (csky-elf toolchain, pinned sources). DDM32 Plus adds:
 
 ```sh
-python3 tools/build_radiofoundry.py --plus --stack-check --verify-rebuild           # full DDM25 Plus
+python3 tools/build_radiofoundry.py --plus --stack-check --verify-rebuild           # full DDM32 Plus
 python3 tools/build_radiofoundry.py --plus --public --stack-check --verify-rebuild  # public profile (no ID database)
 make test
 ```
@@ -131,7 +131,7 @@ Feature notes, RAM budget and design decisions: [`docs/plus.md`](docs/plus.md).
 
 ## Licence and credits
 
-- Upstream files (RadioFoundry, Open25-DM32) are **MIT**; DDM25 Plus additions are **GPL-3.0-or-later**; a DDM25
+- Upstream files (RadioFoundry, Open25-DM32) are **MIT**; DDM32 Plus additions are **GPL-3.0-or-later**; a DDM32
   Plus firmware image is distributed under GPL-3.0-or-later. Details: [`LICENSING.md`](LICENSING.md).
 - Third-party code and data, with their terms: [`THIRD_PARTY.md`](THIRD_PARTY.md) — RadioFoundry, Open25-DM32,
   FreeRTOS, DM32-nxdn-p25, MMDVMHost, dsdcc, Natural Earth, GeoNames (CC BY 4.0), OurAirports, RadioID.net, TRAC,

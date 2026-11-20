@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus: one static buffer shared by the tool screens' copies of what they draw (docs/plus.md "RAM reclaim, round
+/* DDM32 Plus: one static buffer shared by the tool screens' copies of what they draw (docs/plus.md "RAM reclaim, round
  * 13"). Installed as core/ui/ui_scratch.{c,h}.
  *
  * Each of these screens refills its copy at the start of its own draw (the radio task's snapshot, or the message page

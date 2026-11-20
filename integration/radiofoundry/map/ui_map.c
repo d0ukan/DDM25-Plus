@@ -11,7 +11,7 @@
  *      Back again drops the pick. # / 0 switch between repeaters and stations.
  *   9: Back to start: the track's first point saved as a waypoint and Tools > Go-To opened on it. 7 held: the track
  *      cleared (7 alone says so).
- *   *: Coverage (DDM25 Plus, CONFIG_MAP_COVERAGE) on / off: the track's points coloured by the signal of the channel
+ *   *: Coverage (DDM32 Plus, CONFIG_MAP_COVERAGE) on / off: the track's points coloured by the signal of the channel
  *      or VFO in use when each was taken (mapnav.h: green S7 and up, yellow S5 / S6, red weaker, grey no reading),
  *      the legend under the map beside the scale. RAM only, off at power on.
  * The stations are upstream's heard list (no copy): a dot each, the callsign from zoom 3 (no two labels overlap).

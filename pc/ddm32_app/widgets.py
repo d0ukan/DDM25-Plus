@@ -175,28 +175,28 @@ Tuşlara basmayın.</p>
 <p>Yükleme, telsizin <b>şu anki</b> yedeğiyle yapılmalı. Telsiz o yedekten sonra değiştiyse (başka bir yükleme,
 CPS ile yazma) yükleme aracı bunu fark eder ve hiçbir şey yazmadan durur. Yeni bir yedek alın.</p>
 <h3>4. Sürüm kurulamıyor</h3>
-<p>Program yalnızca <b>imzalı</b> DDM25 Plus sürümlerini kurar: sürüm listesinin imzası programdaki anahtarla
+<p>Program yalnızca <b>imzalı</b> DDM32 Plus sürümlerini kurar: sürüm listesinin imzası programdaki anahtarla
 doğrulanmalı ve indirilen dosyanın SHA-256 özeti listedekiyle aynı olmalı. İmzası geçmeyen sürümler listede görünmez
 ("Sürümler" sayfasında Ayrıntılar).</p>
 <h3>5. Stok yazılımdan ilk kurulum</h3>
 <p>Telsizde stok yazılım varsa program bunu yedekten anlar ve telsizin kendi DMR codec'ini yedeğinizden alıp ayrılmış
-codec bölümüne hazırlar. DDM25 Plus yalnızca stok .047 üzerinde denendi; diğer desteklenen stok sürümlerde (.032 -
+codec bölümüne hazırlar. DDM32 Plus yalnızca stok .047 üzerinde denendi; diğer desteklenen stok sürümlerde (.032 -
 .049) uyarı gösterilir. Tanınmayan sürümlerde (örneğin .050) önce Open25-DM32 Classic'i kendi Flasher'ıyla kurun,
-sonra DDM25 Plus'ı onun üzerine kurun.</p>
+sonra DDM32 Plus'ı onun üzerine kurun.</p>
 <h3>6. Kurulum yarıda kaldı</h3>
 <p>Program asla kendiliğinden tekrar denemez. "Hiçbir şey yazılmadı" yazıyorsa telsiz zamanında açılmamıştır:
 Kontrol ve Yükle adımlarını yeniden yapabilirsiniz. "Yazma başladıktan sonra durdu" yazıyorsa telsizi kapatmayın,
 kabloyu çekmeyin ve <b>Geri dön</b> sayfasından yüklemeden önce alınan yedekle geri yükleyin. Bootloader hiç
 yazılmadığı için telsiz yeniden yüklenebilir durumda kalır.</p>
 <h3>7. Yedekler nerede?</h3>
-<p>%LOCALAPPDATA%\\DDM25Plus\\yedekler klasöründe. Bu klasörü <b>silmeyin ve kimseyle paylaşmayın</b>: telsizinizin
+<p>%LOCALAPPDATA%\\DDM32Plus\\yedekler klasöründe. Bu klasörü <b>silmeyin ve kimseyle paylaşmayın</b>: telsizinizin
 kalibrasyonu ve kanalları içindedir. Program güncellemeleri bu klasöre dokunmaz.</p>
 """
 
 
 def show_help(parent):
     d = QDialog(parent)
-    d.setWindowTitle('DDM25 Plus - Yardım')
+    d.setWindowTitle('DDM32 Plus - Yardım')
     lay = QVBoxLayout(d)
     t = QTextBrowser()
     t.setHtml(HELP_HTML)
@@ -213,8 +213,8 @@ def show_help(parent):
 def about_html():
     from . import AUTHOR, REPO_URL, __version__
     return f"""
-<h2>DDM25 Plus</h2>
-<p><b>DDM25 Plus · {AUTHOR}</b><br>Program sürümü {__version__}<br>
+<h2>DDM32 Plus</h2>
+<p><b>DDM32 Plus · {AUTHOR}</b><br>Program sürümü {__version__}<br>
 <a href="{REPO_URL}">{REPO_URL}</a></p>
 <p>Baofeng DM-32UV için resmî olmayan, deneysel firmware ve programlayıcı. Lisans: GPL-3.0-or-later.</p>
 <h3>Teşekkürler / Credits</h3>
@@ -233,7 +233,7 @@ programla dağıtılmaz.</p>
 
 def show_about(parent):
     d = QDialog(parent)
-    d.setWindowTitle('DDM25 Plus - Hakkında')
+    d.setWindowTitle('DDM32 Plus - Hakkında')
     lay = QVBoxLayout(d)
     t = QTextBrowser()
     t.setOpenExternalLinks(True)

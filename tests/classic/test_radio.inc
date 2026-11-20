@@ -16,7 +16,7 @@ static unsigned classic_sets;
 int p25_lab_set_channel(uint16_t n,uint16_t tx,uint16_t t,uint32_t i,int selective)
 {
     (void)selective;
-    /* Classic: the channel, RX and TX NAC the same. DDM25 Plus: the channel edited to NAC/talkgroup Any (TX NAC
+    /* Classic: the channel, RX and TX NAC the same. DDM32 Plus: the channel edited to NAC/talkgroup Any (TX NAC
      * inherited from Any: $293, Classic r13), the P25 search's any/any, trunk following, a TX NAC of its own */
     CHECK((n==0x293 && tx==0x293 && t==42 && i==3101234) ||
           (n==0xF7E && (tx==0x293 || tx==0xF7E) && t==0 && (i==0 || i==3101234)) ||

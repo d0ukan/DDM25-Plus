@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="images/ddm25/splash.png" alt="DDM25 Plus açılış ekranı, koyu ve açık tema" width="480">
+<img src="images/ddm32/splash.png" alt="DDM32 Plus açılış ekranı, koyu ve açık tema" width="480">
 
-# DDM25 Plus
+# DDM32 Plus
 
 **Baofeng DM-32UV için Türkçe öncelikli açık firmware — P25, DMR, YSF, NXDN, dPMR, APRS, harita ve çok daha fazlası.**
 
@@ -19,7 +19,7 @@
 > [!CAUTION]
 > ## ⚠️ SORUMLULUK REDDİ — OKUMADAN KULLANMAYIN
 >
-> DDM25 Plus **resmî olmayan, deneysel** bir firmware ve programlama aracıdır. Baofeng, RadioFoundry veya Open25-DM32
+> DDM32 Plus **resmî olmayan, deneysel** bir firmware ve programlama aracıdır. Baofeng, RadioFoundry veya Open25-DM32
 > ile bağlantılı değildir ve onlar tarafından onaylanmamıştır.
 >
 > - Telsizinize firmware yüklemek (flashlamak) **telsizinizi kalıcı olarak kullanılamaz hâle getirebilir**,
@@ -39,19 +39,19 @@
 
 ## Durum
 
-DDM25 Plus **beta** aşamasındadır. Aşağıdaki her özellik yazıldı ve bilgisayarda testlerden geçti (telsizin ekran,
+DDM32 Plus **beta** aşamasındadır. Aşağıdaki her özellik yazıldı ve bilgisayarda testlerden geçti (telsizin ekran,
 radyo çekirdeği ve modemlerinin simülatörü), ama **çoğu henüz gerçek bir telsizde denenmedi**. İlk herkese açık
 sürüm "ön sürüm" (pre-release) olarak işaretlenecek. Telsiz test notları: [`docs/plus-radio-test.md`](docs/plus-radio-test.md).
 
 ## Nereden geliyor
 
 ```
-RadioFoundry (MIT)  ──►  Open25-DM32 Classic r13 (MIT)  ──►  DDM25 Plus (GPL-3.0-or-later)
+RadioFoundry (MIT)  ──►  Open25-DM32 Classic r13 (MIT)  ──►  DDM32 Plus (GPL-3.0-or-later)
 açık firmware temeli      P25, IMBE, native modem, CPS        bu fork: aşağıdaki her şey
 ```
 
-DDM25 Plus bağımsız bir fork'tur; RadioFoundry'nin veya Open25-DM32'nin resmî bir sürümü **değildir**. DDM25 Plus
-ile ilgili sorunları upstream projelere değil, [buraya](https://github.com/d0ukan/DDM25-Plus/issues) bildirin.
+DDM32 Plus bağımsız bir fork'tur; RadioFoundry'nin veya Open25-DM32'nin resmî bir sürümü **değildir**. DDM32 Plus
+ile ilgili sorunları upstream projelere değil, [buraya](https://github.com/d0ukan/DDM32-Plus/issues) bildirin.
 Upstream'in README'si [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md) içinde duruyor.
 
 ## Özellikler
@@ -76,7 +76,7 @@ Upstream'in README'si [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md) için
 
 | Çoklu izleme | C'de bir çağrı |
 | :---: | :---: |
-| ![Dört satırlı çoklu izleme](images/ddm25/multiwatch.png) | ![Çoklu izleme, C satırında çağrı](images/ddm25/multiwatch-call.png) |
+| ![Dört satırlı çoklu izleme](images/ddm32/multiwatch.png) | ![Çoklu izleme, C satırında çağrı](images/ddm32/multiwatch-call.png) |
 
 ### Harita ve konum
 
@@ -89,7 +89,7 @@ Upstream'in README'si [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md) için
 
 | Haritada APRS | İz | Röle seçimi |
 | :---: | :---: | :---: |
-| ![Haritada APRS istasyonu](images/ddm25/map-aprs.png) | ![Haritada iz](images/ddm25/map-track.png) | ![Haritada seçilen röle](images/ddm25/map-repeater.png) |
+| ![Haritada APRS istasyonu](images/ddm32/map-aprs.png) | ![Haritada iz](images/ddm32/map-track.png) | ![Haritada seçilen röle](images/ddm32/map-repeater.png) |
 
 ### Araçlar
 
@@ -99,7 +99,7 @@ lone worker (ses, DMR acil veya APRS SOS), QSO işaretli çağrı geçmişi, kal
 
 | Araçlar | Havalimanları | Deniz VHF | Pil |
 | :---: | :---: | :---: | :---: |
-| ![Araçlar menüsü simgeleri](images/ddm25/tools.png) | ![Havalimanı listesi](images/ddm25/airfields.png) | ![Deniz VHF tablosu](images/ddm25/marine.png) | ![Pil grafiği](images/ddm25/battery.png) |
+| ![Araçlar menüsü simgeleri](images/ddm32/tools.png) | ![Havalimanı listesi](images/ddm32/airfields.png) | ![Deniz VHF tablosu](images/ddm32/marine.png) | ![Pil grafiği](images/ddm32/battery.png) |
 
 *Ekran görüntüleri firmware'in kendi ekran simülatöründen alındı (İngilizce arayüz; telsiz varsayılan olarak
 Türkçe). Gerçek telsiz fotoğrafları eklenecek.*
@@ -110,8 +110,8 @@ Arayüzün tamamı Türkçeye çevrildi (İngilizce de seçilebilir). Teknik adl
 
 ## Kurulum
 
-Windows için **DDM25 Plus programlayıcı**yı kullanın (Python gerekmez): ilk sürüm çıkınca
-[Releases](https://github.com/d0ukan/DDM25-Plus/releases) sayfasından indirin. Telsizin yedeğini alır, neyin
+Windows için **DDM32 Plus programlayıcı**yı kullanın (Python gerekmez): ilk sürüm çıkınca
+[Releases](https://github.com/d0ukan/DDM32-Plus/releases) sayfasından indirin. Telsizin yedeğini alır, neyin
 değişeceğini tam olarak gösterir, yükler (telsizin kendi codec'iyle stok yazılımdan da), kendi yedeğinizden önceki
 sürüme veya stok yazılıma geri döner, imzalı güncellemeleri denetler ve tüm sürümleri listeler.
 Rehber: [`pc/README.md`](pc/README.md) · kaynak: [`pc/`](pc/). Her şey **sizin sorumluluğunuzdadır** (yukarıdaki
@@ -120,10 +120,10 @@ sorumluluk reddine bakın).
 ## Derleme
 
 Derleme upstream'in [`BUILD.md`](BUILD.md) dosyasını izler (csky-elf araç zinciri, sabitlenmiş kaynaklar).
-DDM25 Plus şunları ekler:
+DDM32 Plus şunları ekler:
 
 ```sh
-python3 tools/build_radiofoundry.py --plus --stack-check --verify-rebuild           # tam DDM25 Plus
+python3 tools/build_radiofoundry.py --plus --stack-check --verify-rebuild           # tam DDM32 Plus
 python3 tools/build_radiofoundry.py --plus --public --stack-check --verify-rebuild  # herkese açık profil (ID veritabanı yok)
 make test
 ```
@@ -132,7 +132,7 @@ make test
 
 ## Lisans ve teşekkür
 
-- Upstream dosyaları (RadioFoundry, Open25-DM32) **MIT**; DDM25 Plus eklemeleri **GPL-3.0-or-later**; bir DDM25 Plus
+- Upstream dosyaları (RadioFoundry, Open25-DM32) **MIT**; DDM32 Plus eklemeleri **GPL-3.0-or-later**; bir DDM32 Plus
   firmware imajı GPL-3.0-or-later altında dağıtılır. Ayrıntılar: [`LICENSING.md`](LICENSING.md).
 - Üçüncü taraf kod ve veriler, koşullarıyla: [`THIRD_PARTY.md`](THIRD_PARTY.md) — RadioFoundry, Open25-DM32,
   FreeRTOS, DM32-nxdn-p25, MMDVMHost, dsdcc, Natural Earth, GeoNames (CC BY 4.0), OurAirports, RadioID.net, TRAC,

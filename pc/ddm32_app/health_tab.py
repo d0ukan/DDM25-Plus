@@ -183,7 +183,7 @@ class HealthTab(QWidget):
         if code != 0 or not s['ok']:
             self._set_light('grey')
             self.verdict_label.setText('Okunamadı')
-            self.summary.setText('Telsiz açık mı, kablo takılı mı? DDM25 Plus çalışırken tekrar deneyin.')
+            self.summary.setText('Telsiz açık mı, kablo takılı mı? DDM32 Plus çalışırken tekrar deneyin.')
             err = parsers.error_text(self.lines) or f'exit code {code}'
             self.when.setText(f'{stamp}: {err}')
         else:

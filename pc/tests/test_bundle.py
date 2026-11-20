@@ -1,5 +1,5 @@
 """The stand-alone program's contents: every file the bundled tools read is listed, the pinned upstream files match
-their hashes, and no private data can reach a program folder or its zip. The scan also runs on pc/dist/DDM25Plus
+their hashes, and no private data can reach a program folder or its zip. The scan also runs on pc/dist/DDM32Plus
 when a build is there."""
 import contextlib
 import hashlib
@@ -42,7 +42,7 @@ class BundleInputsTest(unittest.TestCase):
         self.assertEqual(on_disk, set(bundle.TOOLS))
 
     def test_app_tools_bundled(self):
-        from ddm25_app import toolhost
+        from ddm32_app import toolhost
         self.assertTrue(set(toolhost.TOOLS) <= set(bundle.TOOLS))
 
     def test_hidden_imports_cover_serial(self):
@@ -61,7 +61,7 @@ class BundleInputsTest(unittest.TestCase):
     def test_args(self):
         args = bundle.pyinstaller_args()
         self.assertIn('--windowed', args)
-        self.assertEqual(args[-1], str(HERE / 'run_ddm25.py'))
+        self.assertEqual(args[-1], str(HERE / 'run_ddm32.py'))
         self.assertIn('radiotools', [args[i + 1] for i, a in enumerate(args) if a == '--exclude-module'])
         datas = [args[i + 1] for i, a in enumerate(args) if a == '--add-data']
         self.assertEqual(len(datas), len(bundle.bundled_files()))
@@ -72,7 +72,7 @@ class ScanTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name) / bundle.NAME
         self.dir.mkdir()
-        (self.dir / 'DDM25Plus.exe').write_bytes(b'MZ')
+        (self.dir / 'DDM32Plus.exe').write_bytes(b'MZ')
         (self.dir / 'radiotools').mkdir()
         (self.dir / 'radiotools' / 'install_plus.py').write_text('x = 1\n')
         reg = self.dir / bundle.UPSTREAM_DEST / 'tools/rfoundry/rfoundry/registry.json'
@@ -106,7 +106,7 @@ class ScanTest(unittest.TestCase):
                  'surumler/1.0.0/rfoundry_dm32.bin', 'research-data/user.csv', 'firmware/rptrs.json',
                  'artifacts/plus-x/rfoundry_dm32.map', 'research/originals/DM32.01.01.047.bin', 'codec/slot.raw',
                  'settings.json', 'logs/build.log', 'lists/x.txt', 'radiotools/__pycache__/a.pyc',
-                 'release-signing-key', 'keys/signing.pem', 'ddm25-manifest.json.sig', 'guncelleme/app.zip')
+                 'release-signing-key', 'keys/signing.pem', 'ddm32-manifest.json.sig', 'guncelleme/app.zip')
         for rel in cases:
             self.put(rel, b'RADIO_ID,CALLSIGN,FIRST\n' if rel.endswith('.txt') else b'x')
         flagged = {rel for rel, _ in bundle.scan(self.dir)}
@@ -120,8 +120,8 @@ class ScanTest(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             z = bundle.package(self.dir, out)
         names = zipfile.ZipFile(z).namelist()
-        self.assertIn('DDM25Plus/DDM25Plus.exe', names)
-        self.assertTrue(all(n.startswith('DDM25Plus/') for n in names))   # the self-update helper expects this
+        self.assertIn('DDM32Plus/DDM32Plus.exe', names)
+        self.assertTrue(all(n.startswith('DDM32Plus/') for n in names))   # the self-update helper expects this
         self.put('yedekler/dm32/q128-pass1.bin')
         out.unlink()
         with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
@@ -129,7 +129,7 @@ class ScanTest(unittest.TestCase):
         self.assertFalse(out.exists())
 
 
-@unittest.skipUnless((DIST / 'DDM25Plus.exe').is_file(), 'no build in pc/dist/DDM25Plus')
+@unittest.skipUnless((DIST / 'DDM32Plus.exe').is_file(), 'no build in pc/dist/DDM32Plus')
 class BuiltProgramTest(unittest.TestCase):
     def test_dist_has_no_private_data(self):
         self.assertEqual(bundle.scan(DIST), [])

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus search finds as channels (findsave.h): pure, the host tests run it as is. */
+/* DDM32 Plus search finds as channels (findsave.h): pure, the host tests run it as is. */
 #include "config.h"
 #if CONFIG_FIND_SAVE
 #include <string.h>

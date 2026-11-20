@@ -9,7 +9,7 @@ TITLE_TR = 'SORUMLULUK REDDİ — OKUMADAN KULLANMAYIN'
 TITLE_EN = 'DISCLAIMER — READ BEFORE USING'
 
 TEXT_TR = """
-<p><b>DDM25 Plus</b> <b>resmî olmayan, deneysel</b> bir firmware ve programlama aracıdır. Baofeng, RadioFoundry veya
+<p><b>DDM32 Plus</b> <b>resmî olmayan, deneysel</b> bir firmware ve programlama aracıdır. Baofeng, RadioFoundry veya
 Open25-DM32 ile bağlantılı değildir ve onlar tarafından onaylanmamıştır.</p>
 <ul>
 <li>Telsizinize firmware yüklemek (flashlamak) <b>telsizinizi kalıcı olarak kullanılamaz hâle getirebilir</b>,
@@ -29,7 +29,7 @@ beyan etmiş olursunuz. Kabul etmiyorsanız kullanmayın.</b></p>
 """
 
 TEXT_EN = """
-<p><b>DDM25 Plus</b> is <b>unofficial, experimental</b> firmware and programming software. It is not affiliated with
+<p><b>DDM32 Plus</b> is <b>unofficial, experimental</b> firmware and programming software. It is not affiliated with
 or endorsed by Baofeng, RadioFoundry or Open25-DM32.</p>
 <ul>
 <li>Flashing firmware <b>can permanently brick your radio</b>, erase calibration and channel data, and void your
@@ -82,7 +82,7 @@ def make_dialog(parent=None):
     class DisclaimerDialog(QDialog):
         def __init__(self, parent=None):
             super().__init__(parent)
-            self.setWindowTitle('DDM25 Plus - Sorumluluk reddi / Disclaimer')
+            self.setWindowTitle('DDM32 Plus - Sorumluluk reddi / Disclaimer')
             self.lang = 'tr'
             lay = QVBoxLayout(self)
             top = QHBoxLayout()

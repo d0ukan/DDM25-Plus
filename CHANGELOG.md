@@ -1,15 +1,26 @@
 # Changelog
 
-DDM25 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
+DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
 [README.md](README.md) before installing anything.
 
-## v1.0.0-beta.1 (unreleased)
+## Unreleased
+
+- Renamed from DDM25 Plus to DDM32 Plus (repository d0ukan/DDM32-Plus). v1.0.0-beta.1 was published as DDM25 Plus;
+  its program cannot update itself to a later release (new file names): download the next program zip by hand once.
+  Radios running a DDM25 Plus build are still recognized, and an existing `%LOCALAPPDATA%\DDM25Plus` data folder
+  (backups, downloads, settings) keeps being used.
+- Tools > Marine: duplex channels (18 on) no longer overlap the channel number.
+- Boot screen in the saved theme (dark stayed light before).
+- Map: APRS stations and repeaters larger, in their own colours; two closer zoom steps (~80 m and ~40 m a pixel).
+- Large text: Home's two lines drawn up to twice as large on the DM-32UV's screen.
+
+## v1.0.0-beta.1 (2026-11-20, published as DDM25 Plus)
 
 First public pre-release. **Beta:** everything below is built and covered by host tests, but most of it has not been
 field-tested on a radio yet.
 
 ### Base
-- Classic r13 (Open25-DM32), split RX / TX NAC (upstream RFKV format), Turkish-first UI, DDM25 Plus name and boot
+- Classic r13 (Open25-DM32), split RX / TX NAC (upstream RFKV format), Turkish-first UI, DDM32 Plus name and boot
   screen, public build profile without the RadioID ID database.
 
 ### Modes

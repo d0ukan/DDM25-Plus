@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus "find my friend" (follow.h): pure. */
+/* DDM32 Plus "find my friend" (follow.h): pure. */
 #include "config.h"
 #if CONFIG_NAV_FOLLOW
 #include <string.h>

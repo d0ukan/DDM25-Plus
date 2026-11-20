@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus round 13 ideas 1 through the real UI in upstream's simulator (tests/plus/ui_sim_fieldx.c wraps it), on
+/* DDM32 Plus round 13 ideas 1 through the real UI in upstream's simulator (tests/plus/ui_sim_fieldx.c wraps it), on
  * the DM-32UV's display class (240 x 320, insets 10 x 5). Built with -DCONFIG_FIND_SAVE=1 -DCONFIG_NAV_FOLLOW=1
  * -DCONFIG_LOCATOR=1 -DCONFIG_SOS_KEY=1 and the screens they touch (P25 / DMR search, Go-To, map, APRS composer).
  * Each case runs in a child process (the screens' static state starts over). Covers:

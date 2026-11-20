@@ -39,9 +39,9 @@ Its `UPSTREAM.json` records the original files. Local extensions implement the
 specified continuation chain and preserve explicit TX NAC presence; MIT
 copyright notices remain with the imported source.
 
-## DDM25 Plus additions
+## DDM32 Plus additions
 
-DDM25 Plus code is GPL-3.0-or-later (`LICENSES/GPL-3.0.txt`, `LICENSING.md`);
+DDM32 Plus code is GPL-3.0-or-later (`LICENSES/GPL-3.0.txt`, `LICENSING.md`);
 a Plus firmware image is distributed under GPL-3.0-or-later. The sources and
 data below are used by its own files and generators only, never by `--classic`.
 

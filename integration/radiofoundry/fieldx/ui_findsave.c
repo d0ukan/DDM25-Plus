@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus: P25 / DMR search finds saved as channels (findsave.h), the UI task's sequencer. Installed as
+/* DDM32 Plus: P25 / DMR search finds saved as channels (findsave.h), the UI task's sequencer. Installed as
  * core/ui/ui_findsave.c.
  *
  * Every write goes through the zone editor's queue (ui_svc_zone_edit, run as a storage job by ui_svc_storage.c, the

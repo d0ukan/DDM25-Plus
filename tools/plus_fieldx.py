@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""DDM25 Plus round 13 "ideas 1" job (docs/plus.md): four field tools, each behind its own switch. Called last from
+"""DDM32 Plus round 13 "ideas 1" job (docs/plus.md): four field tools, each behind its own switch. Called last from
 plus_features.prepare(); a module of its own so the shared prepare list gains one line. Our code is in
 integration/radiofoundry/fieldx/ (installed into core/ui/), plus small additions to our own screens (spectrum/
 ui_p25search.c, ui_dmrsearch.c, ui_goto.c, map/ui_map.c); upstream files change only through the hunks below.
@@ -49,12 +49,12 @@ def prepare_fieldx(transform, install):
     # --- SOS key: a key function and its input action (appended: stored values are never renumbered) ---
     transform('hal/hal_input.h', [
         ('\tACT_COUNT\n} input_action_t;',
-         '\tACT_SOS,\t\t// DDM25 Plus: the one-key SOS (CONFIG_SOS_KEY, core/ui/sos.h); its long press confirms\n'
+         '\tACT_SOS,\t\t// DDM32 Plus: the one-key SOS (CONFIG_SOS_KEY, core/ui/sos.h); its long press confirms\n'
          '\tACT_COUNT\n} input_action_t;'),
     ])
     transform('core/input/keyassign.h', [
         ('\tKEYFN_COUNT\n} keyfn_t;',
-         '\tKEYFN_SOS,\t\t// DDM25 Plus: the SOS page (CONFIG_SOS_KEY): press or long press; set to the press, its\n'
+         '\tKEYFN_SOS,\t\t// DDM32 Plus: the SOS page (CONFIG_SOS_KEY): press or long press; set to the press, its\n'
          '\t\t\t// long press (unless set) confirms that page\n\tKEYFN_COUNT\n} keyfn_t;'),
     ])
     transform('core/input/keyassign.c', [
@@ -62,25 +62,25 @@ def prepare_fieldx(transform, install):
          '[KEYFN_AB] = ACT_AB,\n#if CONFIG_SOS_KEY\n\t[KEYFN_SOS] = ACT_SOS,\n#endif\n};'),
         ('\t\treturn false;\t// retired\n\t}\n',
          '\t\treturn false;\t// retired\n\t}\n#if !CONFIG_SOS_KEY\n\tif (fn == KEYFN_SOS) {\n\t\treturn false;\t'
-         '// DDM25 Plus: not in this build\n\t}\n#endif\n'),
+         '// DDM32 Plus: not in this build\n\t}\n#endif\n'),
         ('\t\t\tif (hold != KEYFN_DEFAULT) {\n\t\t\t\tm->long_action = fn_action[hold];\n\t\t\t}\n',
          '\t\t\tif (hold != KEYFN_DEFAULT) {\n\t\t\t\tm->long_action = fn_action[hold];\n\t\t\t}\n'
          '#if CONFIG_SOS_KEY\n\t\t\telse if (press == KEYFN_SOS) {\n'
-         '\t\t\t\tm->long_action = ACT_SOS;\t// DDM25 Plus: the SOS key held confirms its page\n\t\t\t}\n#endif\n'),
+         '\t\t\t\tm->long_action = ACT_SOS;\t// DDM32 Plus: the SOS key held confirms its page\n\t\t\t}\n#endif\n'),
     ])
 
     # --- The screens (appended), their table entries, Tools > SOS key, the key function in Settings > Keys ---
     transform('core/ui/ui_nav.h', [
         ('\tSCR_COUNT\n} ui_scr_t;',
-         '\tSCR_SOS, SCR_SOS_SET,\t\t// DDM25 Plus: the SOS key\'s page, Tools > SOS key (CONFIG_SOS_KEY)\n'
-         '\tSCR_LOCATOR,\t\t\t// DDM25 Plus: Go-To\'s locator calculator (CONFIG_LOCATOR)\n'
+         '\tSCR_SOS, SCR_SOS_SET,\t\t// DDM32 Plus: the SOS key\'s page, Tools > SOS key (CONFIG_SOS_KEY)\n'
+         '\tSCR_LOCATOR,\t\t\t// DDM32 Plus: Go-To\'s locator calculator (CONFIG_LOCATOR)\n'
          '\tSCR_COUNT\n} ui_scr_t;'),
     ])
     transform('core/ui/ui_menus.c', [
         ('extern const ui_scr_def_t ui_cw_screen, ui_cwtrain_screen;\t// ui_cw.c (DM32 Plus)',
          'extern const ui_scr_def_t ui_cw_screen, ui_cwtrain_screen;\t// ui_cw.c (DM32 Plus)\n'
-         'extern const ui_scr_def_t ui_sos_screen, ui_sos_set_screen;\t// ui_sos.c (DDM25 Plus)\n'
-         'extern const ui_scr_def_t ui_locator_screen;\t// ui_locator.c (DDM25 Plus)'),
+         'extern const ui_scr_def_t ui_sos_screen, ui_sos_set_screen;\t// ui_sos.c (DDM32 Plus)\n'
+         'extern const ui_scr_def_t ui_locator_screen;\t// ui_locator.c (DDM32 Plus)'),
         ('#if CONFIG_CW_RX\n\t[SCR_CW] = &ui_cw_screen,\n\t[SCR_CW_TRAIN] = &ui_cwtrain_screen,\n#endif\n',
          '#if CONFIG_CW_RX\n\t[SCR_CW] = &ui_cw_screen,\n\t[SCR_CW_TRAIN] = &ui_cwtrain_screen,\n#endif\n'
          '#if CONFIG_SOS_KEY\n\t[SCR_SOS] = &ui_sos_screen,\n\t[SCR_SOS_SET] = &ui_sos_set_screen,\n#endif\n'
@@ -121,15 +121,15 @@ def prepare_fieldx(transform, install):
          '#if CONFIG_SOS_KEY\n#include "ui/sos.h"\n#endif\n'),
         ('\tif (emergency_key(ev))\n\t\treturn;\n',
          '\tif (emergency_key(ev))\n\t\treturn;\n'
-         '#if CONFIG_SOS_KEY\n\t// DDM25 Plus one-key SOS (ui/sos.h): its page, and the key held there confirms; like the emergency key it\n'
+         '#if CONFIG_SOS_KEY\n\t// DDM32 Plus one-key SOS (ui/sos.h): its page, and the key held there confirms; like the emergency key it\n'
          '\t// works with the keys locked\n\tif (ui_sos_key(ev))\n\t\treturn;\n#endif\n'),
         ('\tif (ui_mapnav_tick(now))\n\t\tdirty = true;\n#endif\n',
          '\tif (ui_mapnav_tick(now))\n\t\tdirty = true;\n#endif\n'
-         '#if CONFIG_FIND_SAVE\n\t// DDM25 Plus: search finds being saved, one zone editor write at a time (ui_findsave.c)\n'
+         '#if CONFIG_FIND_SAVE\n\t// DDM32 Plus: search finds being saved, one zone editor write at a time (ui_findsave.c)\n'
          '\tif (ui_findsave_tick())\n\t\tdirty = true;\n#endif\n'
-         '#if CONFIG_NAV_FOLLOW\n\t// DDM25 Plus: the APRS station Go-To follows, looked up once a second (ui_goto.c)\n'
+         '#if CONFIG_NAV_FOLLOW\n\t// DDM32 Plus: the APRS station Go-To follows, looked up once a second (ui_goto.c)\n'
          '\tif (ui_follow_tick(stack[sp].scr, now))\n\t\tdirty = true;\n#endif\n'
-         '#if CONFIG_SOS_KEY\n\t// DDM25 Plus one-key SOS: its actions\' progress and toasts (ui_sos.c)\n'
+         '#if CONFIG_SOS_KEY\n\t// DDM32 Plus one-key SOS: its actions\' progress and toasts (ui_sos.c)\n'
          '\tif (ui_sos_tick(now))\n\t\tdirty = true;\n#endif\n'),
     ])
 
@@ -138,7 +138,7 @@ def prepare_fieldx(transform, install):
         ('const ui_scr_def_t ui_aprs_heard_screen = {\n'
          '\t.name = "aprs-heard", .flags = SF_LIST | SF_FIELD, .prefix = TRN("Heard"), .hint = TRN("Back"),\n',
          '#if CONFIG_NAV_FOLLOW\n#include "ui/follow.h"\n'
-         '// DDM25 Plus find my friend (ui/follow.h): OK follows the station in Tools > Go-To\n'
+         '// DDM32 Plus find my friend (ui/follow.h): OK follows the station in Tools > Go-To\n'
          'static void heard_select(uint16_t i, bool hold)\n{\n\t(void)hold;\n\taprs_station_t s;\n'
          '\tif (ui_svc_aprs_station((uint8_t)i, &s)) {\n\t\tui_follow_start(s.call);\n\t}\n}\n#endif\n\n'
          'const ui_scr_def_t ui_aprs_heard_screen = {\n'

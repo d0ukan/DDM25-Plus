@@ -5,17 +5,17 @@
   --backup <folder>   a verified two-pass backup (dm32_readonly_backup.py)
 
 Prints one JSON object:
-  layout          'classic' (a valid codec slot v2 at 0xE8000: Classic, DDM25 Plus or another Classic-layout build),
+  layout          'classic' (a valid codec slot v2 at 0xE8000: Classic, DDM32 Plus or another Classic-layout build),
                   'stock' (no slot; the radio's codec found where a known stock build keeps it), or 'unknown'
-  firmware        'ddm25' | 'classic' | 'stock' | 'unknown' (from the layout and the application's own strings)
+  firmware        'ddm32' | 'classic' | 'stock' | 'unknown' (from the layout and the application's own strings)
   codec_tag       the stock tag in the slot (classic layout) or of the stock profile
   stock_profile, stock_version, stock_tested   for a stock radio (profiles of the pinned RadioFoundry codec tool:
                   DM32 .032, .037, .039, .040, .046 (three builds), .047, L01.048, .049 (three builds); .047 is the
-                  version DDM25 Plus has been installed over)
-  install_mode    'over_classic' | 'from_stock' | null: how install_plus.py would install DDM25 Plus on this radio
-  supported       whether this program can install DDM25 Plus on it
+                  version DDM32 Plus has been installed over)
+  install_mode    'over_classic' | 'from_stock' | null: how install_plus.py would install DDM32 Plus on this radio
+  supported       whether this program can install DDM32 Plus on it
   reason          why not, when not supported
-The app matches the installed DDM25 Plus version itself (application hash against the signed manifests).
+The app matches the installed DDM32 Plus version itself (application hash against the signed manifests).
 """
 import argparse
 import json
@@ -27,7 +27,9 @@ sys.path.insert(0, str(ROOT))
 from radiotools import prepare_unit_image as unit  # noqa: E402
 
 START, SIZE, SLOT = unit.START, unit.SIZE, unit.SLOT
-MARKERS = {'ddm25': (b'DDM25 Plus', b'DDM25'), 'classic': (b'open25-classic', b'Open25', b'open25-')}
+# Builds before the rename to DDM32 Plus (2026-11-20, v1.0.0-beta.1) carry "DDM25 Plus": still ours
+MARKERS = {'ddm32': (b'DDM32 Plus', b'DDM32', b'DDM25 Plus', b'DDM25'),
+           'classic': (b'open25-classic', b'Open25', b'open25-')}
 
 
 def application_end(program):
@@ -47,8 +49,8 @@ def detect(program, codec=None):
     slot = codec.parse_slot(program[SLOT:SIZE])
     if slot is not None:
         out.update(layout='classic', codec_tag=slot['tag'], install_mode='over_classic', supported=True)
-        if any(m in app for m in MARKERS['ddm25']):
-            out['firmware'] = 'ddm25'
+        if any(m in app for m in MARKERS['ddm32']):
+            out['firmware'] = 'ddm32'
         elif any(m in app for m in MARKERS['classic']):
             out['firmware'] = 'classic'
         else:
@@ -60,11 +62,11 @@ def detect(program, codec=None):
                    stock_version=unit.stock_version(prof), stock_tested=prof['name'] in unit.TESTED_STOCK,
                    install_mode='from_stock', supported=True)
         return out
-    if any(m in app for m in MARKERS['ddm25'] + MARKERS['classic']):
+    if any(m in app for m in MARKERS['ddm32'] + MARKERS['classic']):
         out.update(firmware='classic', reason='Classic-type firmware without a valid codec slot (damaged slot?)')
     else:
         out['reason'] = ('Unknown firmware: no codec slot and no known stock codec layout (for example stock .050 '
-                         'or newer). Install Classic with the upstream Open25-DM32 Flasher first, then DDM25 Plus '
+                         'or newer). Install Classic with the upstream Open25-DM32 Flasher first, then DDM32 Plus '
                          'over it.')
     return out
 

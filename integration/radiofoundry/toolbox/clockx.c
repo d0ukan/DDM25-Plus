@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus clock tools (clockx.h): the portable part. Installed as core/ui/clockx.c. */
+/* DDM32 Plus clock tools (clockx.h): the portable part. Installed as core/ui/clockx.c. */
 #include "config.h"
 #if CONFIG_CLOCK_TOOLS
 #include <string.h>

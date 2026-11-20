@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Install a DDM25 Plus release on a Baofeng DM-32UV, or put the radio back from its backup.
+"""Install a DDM32 Plus release on a Baofeng DM-32UV, or put the radio back from its backup.
 
-DDM25 Plus uses the Classic flash layout: the application from 0xC000 up to the reserved codec slot at 0xE8000, and
+DDM32 Plus uses the Classic flash layout: the application from 0xC000 up to the reserved codec slot at 0xE8000, and
 the radio's own DMR (AMBE) codec in the slot 0xE8000..0x100000. The codec is never shipped: it comes from the radio.
 
-  over Classic / DDM25 Plus:  --backup <backup of the radio now> --plus <release folder> --out <new dir>
+  over Classic / DDM32 Plus:  --backup <backup of the radio now> --plus <release folder> --out <new dir>
       only application sectors below the slot are written; boot area (< 0xC000), codec slot and the whole data chip
       must read back byte for byte as before, or the restart stays disabled.
   first install from stock:   ... --plus <release folder> --from-stock
@@ -17,7 +17,7 @@ the radio's own DMR (AMBE) codec in the slot 0xE8000..0x100000. The codec is nev
       every application and slot sector back from a Classic-layout backup (a stock backup: install_firstboot.py
       --restore-stock --use-saved-backup).
 
-Gate: the release folder must hold the release's signed manifest (ddm25-manifest.json + .sig) and the application's
+Gate: the release folder must hold the release's signed manifest (ddm32-manifest.json + .sig) and the application's
 SHA-256 must be listed in it (radiotools/signed_manifest.py). The lab's PLUS_REVIEWED list is not used here.
 
 Same pinned RAM monitor, bounded write plan (install_firstboot.InstallPort) and full readback as the lab tools. Needs
@@ -74,14 +74,14 @@ def slot_check(program):
 
 
 def build_application(folder):
-    """The application of a DDM25 Plus build folder after checking its build manifest and map (no release gate: the
+    """The application of a DDM32 Plus build folder after checking its build manifest and map (no release gate: the
     release tool uses this before it signs; installs go through plus_application)"""
     folder = Path(folder)
     image = folder / 'rfoundry_dm32.bin'
     app = image.read_bytes()
     manifest = json.loads(image.with_suffix('.json').read_text())
     if not manifest.get('plus_enabled') or not manifest.get('forced_rebuild_identical'):
-        raise ValueError('Expected a reproducible DDM25 Plus build manifest')
+        raise ValueError('Expected a reproducible DDM32 Plus build manifest')
     outputs = {Path(k).name: v for k, v in manifest.get('outputs', {}).items()}
     if outputs.get('rfoundry_dm32.bin') != backup.sha(app):
         raise ValueError('Application differs from its build manifest')
@@ -278,7 +278,7 @@ def main():
         radio.reset_chip()
         report['restart_sent'] = True
         receipt()
-        print('PASS: DDM25 Plus installed and verified. Check the boot screen on the radio. No RF command was sent.',
+        print('PASS: DDM32 Plus installed and verified. Check the boot screen on the radio. No RF command was sent.',
               flush=True)
     except BaseException as exc:
         report['error'] = f'{type(exc).__name__}: {exc}'

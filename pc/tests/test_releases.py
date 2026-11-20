@@ -9,11 +9,11 @@ import zipfile
 
 import fixtures as fx
 import rtfixtures as rt
-from ddm25_app import releases
+from ddm32_app import releases
 
 
 def release_zip(app):
-    src = Path(tempfile.mkdtemp(prefix='ddm25-zip-'))
+    src = Path(tempfile.mkdtemp(prefix='ddm32-zip-'))
     rt.write_plus(src, app, signed_for=False)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, 'w') as z:
@@ -41,11 +41,11 @@ class ReleasesTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def add_release(self, tag, data, sig):
-        self.files[rt.url(tag, 'ddm25-manifest.json')] = data
-        self.files[rt.url(tag, 'ddm25-manifest.json.sig')] = sig.encode() if isinstance(sig, str) else sig
+        self.files[rt.url(tag, 'ddm32-manifest.json')] = data
+        self.files[rt.url(tag, 'ddm32-manifest.json.sig')] = sig.encode() if isinstance(sig, str) else sig
         self._l.append({'tag_name': tag, 'assets': [
-            {'name': 'ddm25-manifest.json', 'browser_download_url': rt.url(tag, 'ddm25-manifest.json')},
-            {'name': 'ddm25-manifest.json.sig', 'browser_download_url': rt.url(tag, 'ddm25-manifest.json.sig')}]})
+            {'name': 'ddm32-manifest.json', 'browser_download_url': rt.url(tag, 'ddm32-manifest.json')},
+            {'name': 'ddm32-manifest.json.sig', 'browser_download_url': rt.url(tag, 'ddm32-manifest.json.sig')}]})
 
     def fetch(self, url, limit=None):
         return self.files[url]
@@ -97,7 +97,7 @@ class ReleasesTest(unittest.TestCase):
 
     def test_cache_tampering_is_caught(self):
         self.catalog()
-        p = self.root / 'manifests' / 'v1.2.0' / 'ddm25-manifest.json'
+        p = self.root / 'manifests' / 'v1.2.0' / 'ddm32-manifest.json'
         p.write_bytes(p.read_bytes().replace(b'"stable"', b'"beta"  '))
         cat = releases.cached_catalog(self.root)
         self.assertEqual(cat.firmware, [])
@@ -111,7 +111,7 @@ class ReleasesTest(unittest.TestCase):
         self.assertTrue(p.installable)
         self.assertEqual(p.sha256, rt.sm.sha256(self.app))
         self.assertEqual(sorted(x.name for x in folder.iterdir()),
-                         sorted(releases.PACKAGE_FILES + ('ddm25-manifest.json', 'ddm25-manifest.json.sig')))
+                         sorted(releases.PACKAGE_FILES + ('ddm32-manifest.json', 'ddm32-manifest.json.sig')))
         # the installer's own gate accepts the folder
         from radiotools import install_plus
         self.assertEqual(install_plus.plus_application(folder), self.app)
@@ -145,7 +145,7 @@ class ReleasesTest(unittest.TestCase):
     def test_package_with_tampered_manifest_is_not_installable(self):
         fv = self.catalog().find('1.2.0')
         folder = releases.download_firmware(fv, self.root, self.download_bytes(self.zip))
-        (folder / 'ddm25-manifest.json.sig').write_text(rt.signed(self.m, rt.OTHER_SECRET)[1])
+        (folder / 'ddm32-manifest.json.sig').write_text(rt.signed(self.m, rt.OTHER_SECRET)[1])
         p = releases.Package(folder)
         self.assertFalse(p.installable)
         self.assertIn('imza', p.status_text())

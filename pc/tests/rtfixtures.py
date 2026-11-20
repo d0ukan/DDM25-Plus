@@ -26,7 +26,7 @@ TEST_SECRET = bytes(range(32))
 TEST_PUBLIC_HEX = ed25519.secret_to_public(TEST_SECRET).hex()
 OTHER_SECRET = bytes(range(1, 33))
 
-need_upstream = unittest.skipUnless(upstream.available(), 'pinned RadioFoundry files not found (set DDM25_UPSTREAM)')
+need_upstream = unittest.skipUnless(upstream.available(), 'pinned RadioFoundry files not found (set DDM32_UPSTREAM)')
 
 
 def use_test_key(case, key=TEST_PUBLIC_HEX):
@@ -47,7 +47,7 @@ def url(release, name):
 def firmware_entry(app, version='1.0.0', channel='stable', settings_format=1, codeplug_format=1,
                    min_compatible=None, release=None, zip_bytes=None, notes=None):
     release = release or f'v{version}'
-    name = f'ddm25-plus-{version}.zip'
+    name = f'ddm32-plus-{version}.zip'
     z = zip_bytes if zip_bytes is not None else b'zip:' + app[:16]
     return {'version': version, 'channel': channel, 'file': name, 'url': url(release, name),
             'sha256': sm.sha256(z), 'size': len(z), 'application_sha256': sm.sha256(app),
@@ -58,7 +58,7 @@ def firmware_entry(app, version='1.0.0', channel='stable', settings_format=1, co
 
 def app_entry(version, zip_bytes, release=None):
     release = release or f'v{version}'
-    name = f'DDM25Plus-{version}.zip'
+    name = f'DDM32Plus-{version}.zip'
     return {'version': version, 'file': name, 'url': url(release, name), 'sha256': sm.sha256(zip_bytes),
             'size': len(zip_bytes), 'notes': {'tr': 'Program', 'en': 'Program'}}
 

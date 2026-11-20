@@ -3,7 +3,7 @@ import ssl
 import unittest
 from unittest.mock import patch
 
-from ddm25_app import tls
+from ddm32_app import tls
 
 
 class TlsContextTest(unittest.TestCase):

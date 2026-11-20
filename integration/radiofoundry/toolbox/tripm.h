@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus GPS dashboard's trip meter (CONFIG_GPS_DASH, docs/plus.md "GPS dashboard"): the distance travelled from
+/* DDM32 Plus GPS dashboard's trip meter (CONFIG_GPS_DASH, docs/plus.md "GPS dashboard"): the distance travelled from
  * the GPS fixes and the top speed since the last reset. The portable part (no RTOS, no float); installed as
  * core/ui/tripm.{c,h}; the screen and the once-a-second feed are ui_gpsdash.c.
  *

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus round 13 ideas 2 UI flows (tests/plus/test_ui_toolbox.c): what the test sets in the simulator
+/* DDM32 Plus round 13 ideas 2 UI flows (tests/plus/test_ui_toolbox.c): what the test sets in the simulator
  * (tests/plus/ui_sim_toolbox.c wraps upstream's tests/host/sim/ui_sim.c) and what it records. */
 #ifndef UI_SIM_TOOLBOX_H
 #define UI_SIM_TOOLBOX_H

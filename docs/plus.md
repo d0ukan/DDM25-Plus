@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# DDM25 Plus (working name until 2026-11-19: DM32 Plus)
+# DDM32 Plus (working name until 2026-11-19: DM32 Plus)
 
 Our own build on top of upstream Classic `0.1.0-rc1-r13` (`a13e27d`; until 2026-11-20 Classic r7, `19420686`).
-Branch `ddm25` (the r7-based work: branch `plus`), remote `upstream` = `tylerwatt12/Open25-DM32`. Not published under
+Branch `ddm32` (the r7-based work: branch `plus`), remote `upstream` = `tylerwatt12/Open25-DM32`. Not published under
 the Open25-DM32 Classic/Next names; runtime version string `dm32-plus-…`. Licensing: `LICENSING.md` (upstream files
 MIT, Plus additions GPL-3.0-or-later, a Plus image GPL-3.0-or-later).
 
@@ -2116,13 +2116,13 @@ plus-radio-test.md):
 
 ## Name and public build
 
-The product's name on the radio is **DDM25 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file
+The product's name on the radio is **DDM32 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file
 names, `dm32-plus-…` version string, `docs/plus*.md`).
 
 | Where | What |
 |---|---|
-| Splash (`CONFIG_PLUS_ART`) | wordmark "DDM25 Plus" (`art/wordmark.txt`, 79x12, 158 px wide at 2x); under board and version, on the bottom line, **TA2DOU** in the tiny font, centred, in the mark's teal (mono: fg) |
-| Settings > About | first line "DDM25 Plus · d0ukan · TA2DOU", then "Based on Open25-DM32 Classic" in place of Classic r13's "Firmware: Open25-DM32 Classic" and its issue tracker lines (a Plus image is not Classic; its bugs are not upstream's); "DDM25 Plus: GPL-3.0-or-later" right above upstream's "License: MIT, (c) 2026 Open25-DM32 contributors"; upstream's other lines unchanged ("Based on RadioFoundry", its MIT line, its authors and third-party list); with the repeater list, "Repeater data: RadioID.net, TRAC" ("sample" without a download) at the end |
+| Splash (`CONFIG_PLUS_ART`) | wordmark "DDM32 Plus" (`art/wordmark.txt`, 79x12, 158 px wide at 2x); under board and version, on the bottom line, **TA2DOU** in the tiny font, centred, in the mark's teal (mono: fg) |
+| Settings > About | first line "DDM32 Plus · d0ukan · TA2DOU", then "Based on Open25-DM32 Classic" in place of Classic r13's "Firmware: Open25-DM32 Classic" and its issue tracker lines (a Plus image is not Classic; its bugs are not upstream's); "DDM32 Plus: GPL-3.0-or-later" right above upstream's "License: MIT, (c) 2026 Open25-DM32 contributors"; upstream's other lines unchanged ("Based on RadioFoundry", its MIT line, its authors and third-party list); with the repeater list, "Repeater data: RadioID.net, TRAC" ("sample" without a download) at the end |
 
 Names and callsign live in `art.h` (`ART_PRODUCT`, `ART_AUTHOR`, `ART_CALLSIGN`) and are not translated; "Repeater
 data: " is (Turkish "Röle verisi: "). Cost on the r13 base: +276 B flash, 0 B RAM (About's buffer is Classic r13's

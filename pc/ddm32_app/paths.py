@@ -1,6 +1,6 @@
 """Where things are: the program, its radio tools, and the user's data (outside the program folder).
 
-User data lives in %LOCALAPPDATA%\\DDM25Plus (DDM25_DATA overrides it), never in the program folder, so an update of
+User data lives in %LOCALAPPDATA%\\DDM32Plus (DDM32_DATA overrides it), never in the program folder, so an update of
 the program never touches it:
   settings.json     settings, the disclaimer acceptance, what was installed, which backups to restore from
   yedekler/         the radio's backups and every install / restore log and receipt (private: calibration, channels)
@@ -8,9 +8,9 @@ the program never touches it:
   guncelleme/       downloaded program updates and the self-update helper's staging folders
 
 Two ways the program runs:
-- source: python -m ddm25_app (pc/ of the repository). The radio tools are pc/radiotools/*.py, run with this Python.
-- frozen: DDM25Plus.exe (PyInstaller one-folder build, no Python needed). The radio tools are bundled beside the
-  .exe and run in a child process of the same .exe: DDM25Plus.exe --run-tool NAME ARGS (toolhost.py).
+- source: python -m ddm32_app (pc/ of the repository). The radio tools are pc/radiotools/*.py, run with this Python.
+- frozen: DDM32Plus.exe (PyInstaller one-folder build, no Python needed). The radio tools are bundled beside the
+  .exe and run in a child process of the same .exe: DDM32Plus.exe --run-tool NAME ARGS (toolhost.py).
 Either way every radio step is a separate process of an unchanged guarded tool.
 """
 import json
@@ -21,7 +21,7 @@ import shutil
 import sys
 import time
 
-from . import APP_NAME, EXE_NAME  # noqa: F401
+from . import APP_NAME, EXE_NAME, LEGACY_DATA_NAME  # noqa: F401
 
 BACKUPS = 'yedekler'
 RELEASES = 'surumler'
@@ -45,11 +45,15 @@ def bundle_root():
 
 
 def data_dir():
-    env = os.environ.get('DDM25_DATA')
+    env = os.environ.get('DDM32_DATA')
     if env:
         return Path(env)
     base = os.environ.get('LOCALAPPDATA') or os.environ.get('APPDATA') or str(Path.home())
-    return Path(base) / EXE_NAME
+    here = Path(base) / EXE_NAME
+    # Before the rename to DDM32 Plus (2026-11-20) the folder was DDM25Plus: keep using it (backups, downloads,
+    # settings) when it is there and the new one is not, rather than starting empty or moving the user's data
+    legacy = Path(base) / LEGACY_DATA_NAME
+    return legacy if not here.exists() and legacy.is_dir() else here
 
 
 def settings_path():
@@ -74,7 +78,7 @@ def save_setting(key, value):
 
 
 def repo_root():
-    """The DDM25 Plus repository around pc/ when running from source (firmware sources at its root), else None"""
+    """The DDM32 Plus repository around pc/ when running from source (firmware sources at its root), else None"""
     if frozen():
         return None
     root = Path(__file__).resolve().parents[2]

@@ -2,8 +2,8 @@
 import unittest
 
 import fixtures  # noqa: F401  (test data folder)
-from ddm25_app import ports
-from ddm25_app.ports import PortInfo
+from ddm32_app import ports
+from ddm32_app.ports import PortInfo
 
 CH340 = lambda dev: PortInfo(dev, 'USB-SERIAL CH340', 0x1A86, 0x7523, 'USB VID:PID=1A86:7523')  # noqa: E731
 CP210 = PortInfo('COM5', 'Silicon Labs CP210x USB to UART Bridge', 0x10C4, 0xEA60, 'USB VID:PID=10C4:EA60')

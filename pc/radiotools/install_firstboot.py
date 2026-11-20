@@ -5,7 +5,7 @@
 Uses the pinned RAM monitor already used for backups (dm32_readonly_backup.py). The InstallPort guard lets only the
 changed application sectors (0xC000 and up) be erased/programmed, with their exact planned page bytes, in order and
 once. Boot area and data flash are read-only. A restart is permitted only after independent verification.
-install_plus.py reuses this guard and these helpers for every DDM25 Plus install.
+install_plus.py reuses this guard and these helpers for every DDM32 Plus install.
 
 The command line of this public copy does one thing: --restore-stock --use-saved-backup puts every application sector
 back from the user's own verified backup of the stock firmware (the restore proven on hardware in the lab: 244

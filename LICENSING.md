@@ -1,15 +1,15 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Licensing of DDM25 Plus
+# Licensing of DDM32 Plus
 
-DDM25 Plus is built on the upstream Open25-DM32 Classic source (r13), which is
+DDM32 Plus is built on the upstream Open25-DM32 Classic source (r13), which is
 itself built on RadioFoundry. Three kinds of files live in this tree:
 
 | Files | Licence | Notice |
 |---|---|---|
 | Upstream Open25-DM32 files (Classic r13: `tools/build_radiofoundry.py`, `tools/classic_*.py`, `src/p25/*` from upstream, `integration/radiofoundry/*` from upstream, upstream tests, ...) | MIT | `LICENSE`; the SPDX header in each file |
 | Vendored libraries (`third_party/p25cai`, `third_party/imbe`, `third_party/rf_codeplug`) and RadioFoundry (patched at build time) | MIT | their own `LICENSE` files, `LICENSES/RadioFoundry-MIT.txt` |
-| DDM25 Plus additions: the files we created (`tools/plus_*.py`, `tools/turkish_ui.py`, the other generators and checkers we added, `integration/radiofoundry/<our folders>/*`, `src/ysf`, `src/nxdn`, `src/dpmr`, `src/p25/p25_lcx.*`, `tests/plus/*`, our `docs/*`, `art/*`) | GPL-3.0-or-later | `LICENSES/GPL-3.0.txt`; the SPDX header in each file |
+| DDM32 Plus additions: the files we created (`tools/plus_*.py`, `tools/turkish_ui.py`, the other generators and checkers we added, `integration/radiofoundry/<our folders>/*`, `src/ysf`, `src/nxdn`, `src/dpmr`, `src/p25/p25_lcx.*`, `tests/plus/*`, our `docs/*`, `art/*`) | GPL-3.0-or-later | `LICENSES/GPL-3.0.txt`; the SPDX header in each file |
 
 Rules we follow:
 
@@ -17,7 +17,7 @@ Rules we follow:
   changed it. Most of our changes to upstream code are build-time transforms
   in `tools/plus_features.py` (GPL-3.0-or-later): the transform code is ours,
   the patched RadioFoundry/Open25 file in the build tree keeps its MIT notice.
-- A few upstream MIT files carry DDM25 Plus code directly, inside
+- A few upstream MIT files carry DDM32 Plus code directly, inside
   `#if CONFIG_...` blocks: `integration/radiofoundry/p25_lab.c`/`.h`,
   `integration/radiofoundry/native/native_lab.c`/`.h`,
   `integration/radiofoundry/native/hrc_native_port.c`/`.h`,
@@ -31,7 +31,7 @@ Rules we follow:
 
 ## The firmware binary
 
-The DDM25 Plus firmware image combines MIT code with GPL-3.0-or-later code, so
+The DDM32 Plus firmware image combines MIT code with GPL-3.0-or-later code, so
 the combined binary is distributed under **GPL-3.0-or-later**. Whoever passes
 the binary on must offer the complete corresponding source of this tree
 (including the RadioFoundry pin and the vendored libraries named in
@@ -39,7 +39,7 @@ the binary on must offer the complete corresponding source of this tree
 (`LICENSE`, `LICENSES/RadioFoundry-MIT.txt`, the vendored `LICENSE` files) are
 kept with the source and must stay with any copy.
 
-The upstream Classic build (`--classic`) contains no DDM25 Plus code and keeps
+The upstream Classic build (`--classic`) contains no DDM32 Plus code and keeps
 upstream's MIT terms.
 
 Data and third-party material used by the Plus generators (Natural Earth,

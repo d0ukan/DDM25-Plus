@@ -1,19 +1,19 @@
-"""Build the stand-alone DDM25 Plus program (no Python needed on the PC) and package it without private data.
+"""Build the stand-alone DDM32 Plus program (no Python needed on the PC) and package it without private data.
 
-  python pc/bundle.py build [--onefile]   PyInstaller: pc/dist/DDM25Plus/DDM25Plus.exe
-  python pc/bundle.py check [FOLDER]      scan a program folder (default pc/dist/DDM25Plus) for private data
-  python pc/bundle.py package             check, then zip pc/dist/DDM25Plus to pc/dist/DDM25Plus-<version>.zip
+  python pc/bundle.py build [--onefile]   PyInstaller: pc/dist/DDM32Plus/DDM32Plus.exe
+  python pc/bundle.py check [FOLDER]      scan a program folder (default pc/dist/DDM32Plus) for private data
+  python pc/bundle.py package             check, then zip pc/dist/DDM32Plus to pc/dist/DDM32Plus-<version>.zip
 
 What goes in beside the GUI (read by the tools at run time, all public sources):
-- radiotools/*.py: the guarded radio tools the program drives, unchanged, run as DDM25Plus.exe --run-tool NAME. They
+- radiotools/*.py: the guarded radio tools the program drives, unchanged, run as DDM32Plus.exe --run-tool NAME. They
   are kept out of PyInstaller's archive so that the app (signed-manifest checks) and the tools load the same files.
 - research/upstream/radiofoundry/: exactly the pinned RadioFoundry files of radiotools/upstream.py (RAM monitor host,
   debug protocol, codec slot writer, board registry, DM32 codec maps, licence), each checked against its SHA-256 at
   build time (the build refuses a different file) and again at run time. The tree is found as the tools find it
-  (DDM25_UPSTREAM, or research/upstream/radiofoundry of the repository).
+  (DDM32_UPSTREAM, or research/upstream/radiofoundry of the repository).
 - LICENSE, LICENSING.md, THIRD_PARTY.md of the repository.
 Never bundled: backups, release packages (.bin), RadioID/TRAC lists, stock firmware, codec bytes, logs, settings,
-signing keys. `check` enforces that on the result. The user's data lives in %LOCALAPPDATA%\\DDM25Plus, not here.
+signing keys. `check` enforces that on the result. The user's data lives in %LOCALAPPDATA%\\DDM32Plus, not here.
 """
 import argparse
 import ast
@@ -27,7 +27,7 @@ import zipfile
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-NAME = 'DDM25Plus'
+NAME = 'DDM32Plus'
 DIST = HERE / 'dist'
 WORK = HERE / 'build'
 sys.path.insert(0, str(HERE))
@@ -40,20 +40,20 @@ LOCAL_MODULES = {'radiotools', 'rfoundry', 'stubtool', 'f4stub', 'rfoundry_debug
 EXCLUDES = ('PyQt5.QtWebEngineWidgets', 'PyQt5.QtWebEngineCore', 'PyQt5.QtQml', 'PyQt5.QtQuick', 'PyQt5.QtMultimedia',
             'PyQt5.QtBluetooth', 'PyQt5.QtSql', 'PyQt5.QtTest', 'tkinter', 'unittest.mock', 'radiotools')
 README_NAME = 'BENIOKU.txt'
-README_TEXT = ('DDM25 Plus programlayıcı (Baofeng DM-32UV). DDM25Plus.exe\'yi çalıştırın.\n'
-               'Yedekler, indirilen sürümler ve ayarlar bu klasörde DEĞİL, %LOCALAPPDATA%\\DDM25Plus içinde tutulur;\n'
+README_TEXT = ('DDM32 Plus programlayıcı (Baofeng DM-32UV). DDM32Plus.exe\'yi çalıştırın.\n'
+               'Yedekler, indirilen sürümler ve ayarlar bu klasörde DEĞİL, %LOCALAPPDATA%\\DDM32Plus içinde tutulur;\n'
                'program güncellemeleri onlara dokunmaz. Yedek klasörünü kimseyle paylaşmayın.\n'
-               'Kaynak ve kullanım: https://github.com/d0ukan/DDM25-Plus (pc/README.md)\n')
+               'Kaynak ve kullanım: https://github.com/d0ukan/DDM32-Plus (pc/README.md)\n')
 
 # --- what may never be in a distributable folder -------------------------------------------------------------------
 FORBIDDEN_DIRS = {'backups', 'backup', 'yedekler', 'artifacts', 'research-data', 'originals', 'logs', '__pycache__',
                   'surumler', 'guncelleme'}
 FORBIDDEN_NAMES = {'user.csv', 'rptrs.json', 'repeaters.csv', 'settings.json', 'backup-manifest.json',
                    'install-receipt.json', 'preflight.json', 'celestrak-amateur.txt', 'tle.txt',
-                   'release-signing-key', 'ddm25-manifest.json', 'ddm25-manifest.json.sig'}
+                   'release-signing-key', 'ddm32-manifest.json', 'ddm32-manifest.json.sig'}
 FORBIDDEN_SUFFIXES = {'.bin', '.csv', '.map', '.elf', '.hex', '.img', '.raw', '.log', '.partial', '.download',
                       '.dfu', '.srec', '.pem', '.key', '.sig'}
-# certifi's public Mozilla root list (MPL-2.0), the one .pem the program may carry (ddm25_app/tls.py)
+# certifi's public Mozilla root list (MPL-2.0), the one .pem the program may carry (ddm32_app/tls.py)
 CA_BUNDLE_FILES = {'certifi/cacert.pem', '_internal/certifi/cacert.pem'}
 TEXT_SUFFIXES = {'.txt', '.py', '.json', '.md', '.csv', '.cfg', '.ini', '.toml'}
 TEXT_MARKERS = (b'RADIO_ID,CALLSIGN', b'"rptrs"', b'"backup_verified"', b'"writes_started"')
@@ -135,11 +135,11 @@ def pyinstaller_args(onefile=False):
         args += ['--hidden-import', m]
     for src, dest in bundled_files():
         args += ['--add-data', f'{src}{os.pathsep}{dest}']
-    return args + [str(HERE / 'run_ddm25.py')]
+    return args + [str(HERE / 'run_ddm32.py')]
 
 
 def app_version():
-    text = (HERE / 'ddm25_app' / '__init__.py').read_text(encoding='utf-8')
+    text = (HERE / 'ddm32_app' / '__init__.py').read_text(encoding='utf-8')
     return re.search(r"__version__ = '([^']+)'", text).group(1)
 
 

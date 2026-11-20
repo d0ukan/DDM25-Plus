@@ -1,7 +1,7 @@
 """Signed releases from GitHub: the version list, downloads with hash checks, the installed version, and the
 compatibility warnings for a change of version. No Qt here; network and file access are injected for the tests.
 
-Every release of d0ukan/DDM25-Plus carries ddm25-manifest.json and its Ed25519 signature (radiotools/signed_manifest.py).
+Every release of d0ukan/DDM32-Plus carries ddm32-manifest.json and its Ed25519 signature (radiotools/signed_manifest.py).
 A release whose manifest does not verify with the key embedded in this program is not listed (it shows up only as a
 rejected release in the details). A firmware zip is used only when its SHA-256 and size equal the signed manifest's;
 the application inside must equal the manifest's application_sha256. The installer checks the signed manifest again
@@ -21,10 +21,10 @@ import zipfile
 from . import __version__, paths, rt, tls
 
 START, SLOT = 0xC000, 0xE8000
-API_URL = 'https://api.github.com/repos/d0ukan/DDM25-Plus/releases?per_page=100'
+API_URL = 'https://api.github.com/repos/d0ukan/DDM32-Plus/releases?per_page=100'
 ALLOWED_HOSTS = ('api.github.com', 'github.com', 'objects.githubusercontent.com',
                  'release-assets.githubusercontent.com')
-USER_AGENT = f'DDM25Plus/{__version__}'
+USER_AGENT = f'DDM32Plus/{__version__}'
 PACKAGE_FILES = ('rfoundry_dm32.bin', 'rfoundry_dm32.json', 'rfoundry_dm32.map')
 MAX_API = 8 << 20
 MAX_MANIFEST = 1 << 20
@@ -132,7 +132,7 @@ class FirmwareVersion:
         return self.entry['notes'].get(lang) or self.entry['notes'].get('en', '')
 
     def label(self):
-        return f'DDM25 Plus {self.version}' + (' (beta)' if self.is_beta else '')
+        return f'DDM32 Plus {self.version}' + (' (beta)' if self.is_beta else '')
 
 
 class Catalog:
@@ -274,7 +274,7 @@ class Package:
         except sm.ManifestError as exc:
             self.problems.append(f'imza denetimi geçmedi: {exc}')
         self.version = self.entry['version'] if self.entry else self.folder.name
-        self.name = f'DDM25 Plus {self.version}'
+        self.name = f'DDM32 Plus {self.version}'
 
     @property
     def installable(self):
@@ -399,14 +399,14 @@ def change_warnings(current, target, detection=None):
             out.append((INFO, f'İlk kurulum: telsizde stok yazılım .{v} var. Telsizin kendi DMR codec\'i yedeğinizden '
                               'alınıp ayrılmış codec bölümüne hazırlanır.'))
             if not detection.get('stock_tested'):
-                out.append((WARN, f'DDM25 Plus yalnızca stok .047 üzerinde denendi. Stok .{v} desteklenen bir '
+                out.append((WARN, f'DDM32 Plus yalnızca stok .047 üzerinde denendi. Stok .{v} desteklenen bir '
                                   'sürüm ama bu sürümle denenmedi.'))
         elif detection.get('firmware') == 'classic':
             out.append((INFO, 'Telsizde Open25-DM32 Classic var; codec bölümü korunur, kanallar Classic biçiminden '
                               'okunur.'))
     if current is None:
-        if detection and detection.get('firmware') == 'ddm25':
-            out.append((WARN, 'Telsizdeki DDM25 Plus sürümü imzalı listede yok; ayar uyumluluğu denetlenemedi.'))
+        if detection and detection.get('firmware') == 'ddm32':
+            out.append((WARN, 'Telsizdeki DDM32 Plus sürümü imzalı listede yok; ayar uyumluluğu denetlenemedi.'))
         return out
     cur, new = sm.parse_version(current.version), sm.parse_version(target.version)
     if new == cur:

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus clock tools (CONFIG_CLOCK_TOOLS, docs/plus.md "Clock tools"): a stopwatch with lap times, a countdown
+/* DDM32 Plus clock tools (CONFIG_CLOCK_TOOLS, docs/plus.md "Clock tools"): a stopwatch with lap times, a countdown
  * and an alarm at a time of day. The portable part (no RTOS: every call gets the UI's millisecond clock); installed
  * as core/ui/clockx.{c,h}; the screen, the feed and the banner are ui_clock.c. RAM only: all off at power on.
  *

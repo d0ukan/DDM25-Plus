@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Read why the last P25 PTT call on DDM25 Plus ended (read-only debug link).
+"""Read why the last P25 PTT call on DDM32 Plus ended (read-only debug link).
 
 Sends only these read-only queries, refused locally otherwise:
   0x20 [13]  live TX summary (mic frames, encoder, stop reason)

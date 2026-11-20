@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus separate RX and TX NAC (docs/plus.md "Separate RX NAC and TX NAC") on Classic r13's channel store: the
+/* DDM32 Plus separate RX and TX NAC (docs/plus.md "Separate RX NAC and TX NAC") on Classic r13's channel store: the
  * TX NAC is upstream's (channel_t.p25_tx_nac_override, 0 = "Same as RX", else TX NAC + 1; the RFKV P25 parameter
  * block keeps its explicit-versus-inherited presence). Through the real codeplug encoder / decoder, RFKV tags, flash
  * journal and reboot path, with Plus's modes built in (YSF, NXDN, dPMR, CH_MODE 2 / 0xA5 read compatibility).

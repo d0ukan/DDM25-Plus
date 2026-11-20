@@ -12,7 +12,7 @@
 _Static_assert(HN_GUARD_TIMER != TIMER_PCM && HN_GUARD_TIMER != TIMER_PA,
                "Native P25 guard must not share the PCM or PA timer");
 #ifdef HN_GUARD_ON_TIMER5
-/* DDM25 Plus (APRS built): the guard is on the board one-shot timer 5, never APRS's AFSK timer */
+/* DDM32 Plus (APRS built): the guard is on the board one-shot timer 5, never APRS's AFSK timer */
 _Static_assert(HN_GUARD_TIMER == TIMER_BOARD && HN_GUARD_TIMER != TIMER_AFSK,
                "Native P25 guard must be timer 5, not APRS's AFSK timer");
 #endif

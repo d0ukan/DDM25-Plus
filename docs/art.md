@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# DDM25 Plus art: splash, wordmark and icons
+# DDM32 Plus art: splash, wordmark and icons
 
-Our own look for DDM25 Plus (working name DM32 Plus until 2026-11-19): a boot mark, a "DDM25 Plus" wordmark, the
+Our own look for DDM32 Plus (working name DM32 Plus until 2026-11-19): a boot mark, a "DDM32 Plus" wordmark, the
 author's callsign TA2DOU small at the splash's bottom centre, and 28 list icons. Nothing here is taken from
 RadioFoundry (its radio-in-a-hexagon mark and two-color "RadioFoundry" wordmark), from the upstream Open25-DM32
-Classic/Next releases, OnurP25 or the DM32-nxdn-p25 avatar. The name on screen is "DDM25 Plus" (`art.h`
+Classic/Next releases, OnurP25 or the DM32-nxdn-p25 avatar. The name on screen is "DDM32 Plus" (`art.h`
 `ART_PRODUCT`, `ART_CALLSIGN`; docs/plus.md "Name and public build"). `art/preview.png` and `art/mock-splash.png`
 still show the old wordmark until `--preview` is run again.
 
@@ -19,7 +19,7 @@ test done; not yet seen on the real screen (the radio still runs 7c90427b, which
 | `art/icons.txt` | 28 icons, 16x16, `#` ink / `.` none; order = `ART_ICON_*` enum order |
 | `art/mark.txt` | splash mark, 56x56, `.` none, `a` `b` `c` = its three colors (RGB + mono role in the header) |
 | `art/mark_gen.py` | draws `mark.txt` from shapes (optional; `mark.txt` may be edited by hand instead) |
-| `art/wordmark.txt` | "DDM25 Plus", 79x12, 1 bit; columns from `split` on are drawn in the accent color |
+| `art/wordmark.txt` | "DDM32 Plus", 79x12, 1 bit; columns from `split` on are drawn in the accent color |
 | `art/preview.png` | contact sheet: mark 2x/1x, wordmark 2x/1x, every icon at 3x and 1x on dark, light, focus blue |
 | `art/mock-splash.png` | 240x320 boot screen, dark and light theme, shown at 2x |
 | `art/mock-tools.png` | 240x320 Tools list with the icon column, dark (focus on 2) and light, shown at 2x |
@@ -42,7 +42,7 @@ row is 24 px (`ui_layout_init`), so 16x16 icons fit with 4 px above and below.
 - The mark is the only multi-color art: teal tile `(0,150,136)`, white C4FM four-level step trace, warm yellow
   plus `(255,214,64)`. It is drawn at 2x (112x112) on 240 px panels: square pixels on purpose, matching the
   pixel wordmark. Three fixed colors + the theme's bg/fg/dim stay well under 16.
-- The wordmark: "DDM25" in the theme's text color, "Plus" in the mark's teal (white/black on mono).
+- The wordmark: "DDM32" in the theme's text color, "Plus" in the mark's teal (white/black on mono).
 - Mono (1 bpp) fallback: mark colors marked `ink` in fg, `paper` in bg; wordmark in fg.
 - Source order is the ABI: append new icons at the end of `icons.txt`, never reorder (the enum follows it).
 

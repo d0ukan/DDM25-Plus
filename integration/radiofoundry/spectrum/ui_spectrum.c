@@ -3,7 +3,7 @@
  * mark, the floor as a line, and the close call hit (the strongest signal well above the floor) named under it.
  * Up / Down (or the knob) move the center by a quarter span, Left / Right change the span, OK tunes the VFO to the
  * hit (else the strongest point) and ends the sweep, Back ends it and leaves.
- * CONFIG_SPECTRUM_WF (DDM25 Plus, ui/wfall.h): the last sweeps as a waterfall under the bars, newest on top; * turns it
+ * CONFIG_SPECTRUM_WF (DDM32 Plus, ui/wfall.h): the last sweeps as a waterfall under the bars, newest on top; * turns it
  * off and on (RAM only, on at power on). Its buffer comes from the RTOS heap while the screen is on top with it on
  * (ui_spectrum_wf_tick gives it back once another screen is on top, Back and OK at once; back on top, the next draw
  * takes it again and the rows start over); when the heap has no room the bars are drawn alone and the screen says so

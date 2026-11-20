@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Stand-ins for the firmware's gfx, layout, colors and sbuf that splash_plus.c uses, so tests/plus/test_art.c can
-// draw the whole DDM25 Plus boot screen on the host (included by splash_plus.c under ART_HOST_TEST). The signatures
+// draw the whole DDM32 Plus boot screen on the host (included by splash_plus.c under ART_HOST_TEST). The signatures
 // follow core/ui/gfx.h, core/ui/ui_screens.h and core/fmt.h; the bodies are in test_art.c.
 #ifndef ART_HOST_UI_H
 #define ART_HOST_UI_H

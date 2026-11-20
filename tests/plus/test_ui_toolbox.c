@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus round 13 ideas 2 through the real UI in upstream's simulator (tests/plus/ui_sim_toolbox.c wraps it), on
+/* DDM32 Plus round 13 ideas 2 through the real UI in upstream's simulator (tests/plus/ui_sim_toolbox.c wraps it), on
  * the DM-32UV's display class (240 x 320, insets 10 x 5). Each case runs in a child process (the screens' static state
  * starts over). Covers:
  *   - the RAM reclaim: the six tool screens (spectrum, P25 / DMR search, P25 / DMR trunk, the pager's message page)

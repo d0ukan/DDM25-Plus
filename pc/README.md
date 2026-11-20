@@ -1,23 +1,23 @@
-# DDM25 Plus programlayıcı (Baofeng DM-32UV)
+# DDM32 Plus programlayıcı (Baofeng DM-32UV)
 
-Windows programı: DDM25 Plus firmware'ini telsize kurar, günceller, eski sürüme geçer, telsizin yedeğini alır ve
-yedekten geri yükler. Python gerekmez. **DDM25 Plus · d0ukan · TA2DOU** — <https://github.com/d0ukan/DDM25-Plus>
+Windows programı: DDM32 Plus firmware'ini telsize kurar, günceller, eski sürüme geçer, telsizin yedeğini alır ve
+yedekten geri yükler. Python gerekmez. **DDM32 Plus · d0ukan · TA2DOU** — <https://github.com/d0ukan/DDM32-Plus>
 
 [English](README.en.md)
 
 > [!CAUTION]
-> **Sorumluluk size aittir.** DDM25 Plus resmî olmayan, deneysel bir yazılımdır; firmware yüklemek telsizi kalıcı
+> **Sorumluluk size aittir.** DDM32 Plus resmî olmayan, deneysel bir yazılımdır; firmware yüklemek telsizi kalıcı
 > olarak kullanılamaz hâle getirebilir. Program ilk açılışta sorumluluk reddinin tamamını gösterir; "Okudum, anladım
 > ve kabul ediyorum" işaretlenmeden hiçbir telsiz düğmesi çalışmaz. Her yüklemeden önce yeniden sorulur:
 > "Sorumluluk size aittir. Yedeğiniz hazır mı?"
 
 ## Kurulum
 
-1. GitHub'daki son sürümden `DDM25Plus-<sürüm>.zip` dosyasını indirin ve bir klasöre açın (örneğin `Belgeler`).
-2. `DDM25Plus\DDM25Plus.exe`'yi çalıştırın. Windows "bilinmeyen yayımcı" derse **Ek bilgi → Yine de çalıştır**.
+1. GitHub'daki son sürümden `DDM32Plus-<sürüm>.zip` dosyasını indirin ve bir klasöre açın (örneğin `Belgeler`).
+2. `DDM32Plus\DDM32Plus.exe`'yi çalıştırın. Windows "bilinmeyen yayımcı" derse **Ek bilgi → Yine de çalıştır**.
 3. Sorumluluk reddini okuyun, kutuyu işaretleyip **Kabul ediyorum**'a basın.
 
-Yedekleriniz, indirilen sürümler ve ayarlar program klasöründe **değil**, `%LOCALAPPDATA%\DDM25Plus` içinde durur:
+Yedekleriniz, indirilen sürümler ve ayarlar program klasöründe **değil**, `%LOCALAPPDATA%\DDM32Plus` içinde durur:
 
 | Klasör | İçinde |
 |---|---|
@@ -43,11 +43,11 @@ Her ekranda tek iş; telsize dokunan her adımın kendi düğmesi vardır:
    kez okunur, iki okuma aynı olmalıdır (sadece okuma).
 3. **Kontrol** (port açılmaz, kendiliğinden): telsizde ne olduğu yedekten anlaşılır ve yazma planı hesaplanır.
    - **Stok yazılım** (.032 - .049): ilk kurulum. Telsizin kendi DMR codec'i yedeğinizden alınıp ayrılmış codec
-     bölümüne hazırlanır; uygulama ve codec bölümü yazılır. DDM25 Plus yalnızca **stok .047** üzerinde denendi;
+     bölümüne hazırlanır; uygulama ve codec bölümü yazılır. DDM32 Plus yalnızca **stok .047** üzerinde denendi;
      diğer sürümlerde uyarı çıkar.
-   - **Open25-DM32 Classic** ya da **DDM25 Plus**: güncelleme; yalnızca uygulama bölümü yazılır, codec bölümü korunur.
+   - **Open25-DM32 Classic** ya da **DDM32 Plus**: güncelleme; yalnızca uygulama bölümü yazılır, codec bölümü korunur.
    - **Tanınmayan yazılım** (örneğin stok .050): kurulmaz. Önce Open25-DM32 Classic'i kendi Flasher'ıyla kurun, sonra
-     DDM25 Plus'ı onun üzerine kurun.
+     DDM32 Plus'ı onun üzerine kurun.
    Bootloader ve veri çipi (kalibrasyon, kanallar) hiçbir zaman yazılmaz.
 4. **Yükle**: onay penceresi sürümü, yazılacak bölümü, uyarıları ve "Sorumluluk size aittir. Yedeğiniz hazır mı?"
    uyarısını gösterir. Sonra telsizi kapatıp açın. Yükleme yedekle aynı telsiz olduğunu, telsizin yedekten beri
@@ -56,14 +56,14 @@ Her ekranda tek iş; telsize dokunan her adımın kendi düğmesi vardır:
 
 ## Sürümler
 
-- **Güncellemeleri denetle**: GitHub'daki imzalı DDM25 Plus sürümlerini listeler (beta ve kararlı işaretli).
+- **Güncellemeleri denetle**: GitHub'daki imzalı DDM32 Plus sürümlerini listeler (beta ve kararlı işaretli).
   **Açılışta denetle** kapatılabilir; denetim yalnızca listeyi yeniler, hiçbir şey kurmaz.
 - Yeni sürüm varsa ana sayfada ve bu sayfada **"Yeni sürüm var"** notlarıyla görünür.
 - **Bu sürüme geç**: listedeki herhangi bir sürüm (eski sürümler dahil) her zaman yedek → kontrol → onay → yükleme
   yoluyla kurulur. Eski bir sürüme geçerken ayar / kanal biçimi geriye gidiyorsa uyarı çıkar ve ikinci bir onay
   istenir (örneğin yeni sürümde kaydedilmiş bir P25 kanalı eski sürümde farklı görünebilir).
 - **Programı güncelle**: yeni program indirilir, imzası ve SHA-256'sı denetlenir; program kapanır, yenisiyle
-  değiştirilir ve açılır. Yeni program açılmazsa eskisi geri gelir (eski klasör `DDM25Plus.old` olarak kalır).
+  değiştirilir ve açılır. Yeni program açılmazsa eskisi geri gelir (eski klasör `DDM32Plus.old` olarak kalır).
 
 İmzası programdaki anahtarla doğrulanmayan bir sürüm listede görünmez ve kurulamaz.
 
@@ -74,7 +74,7 @@ Her ekranda tek iş; telsize dokunan her adımın kendi düğmesi vardır:
   gelmez ve indirilmez; geri dönüş yalnızca bu telsizin yedeğiyle yapılır.
 
 İkisi de uygulama ve codec bölümünü yedekten yazar ve geri okuyarak doğrular. Veri çipi (kanallar, ayarlar) yazılmaz:
-DDM25 Plus'ta kaydedilen kanallar olduğu gibi kalır, stok yazılım bunları farklı gösterebilir; gerekirse stok CPS ile
+DDM32 Plus'ta kaydedilen kanallar olduğu gibi kalır, stok yazılım bunları farklı gösterebilir; gerekirse stok CPS ile
 yeniden yazın. **Yalnızca bu telsizin yedeğini kullanın.**
 
 ## Diğer sayfalar
@@ -90,5 +90,5 @@ ilk kurulum, kurulum yarıda kaldı, yedekler nerede.
 
 ## Teşekkürler
 
-RadioFoundry (MIT), Open25-DM32 Classic (MIT, tylerwatt12) ve depodaki `THIRD_PARTY.md`'de sayılan projeler. DDM25
-Plus bunlardan bağımsızdır; sorunları [DDM25 Plus'a](https://github.com/d0ukan/DDM25-Plus/issues) bildirin.
+RadioFoundry (MIT), Open25-DM32 Classic (MIT, tylerwatt12) ve depodaki `THIRD_PARTY.md`'de sayılan projeler. DDM32
+Plus bunlardan bağımsızdır; sorunları [DDM32 Plus'a](https://github.com/d0ukan/DDM32-Plus/issues) bildirin.

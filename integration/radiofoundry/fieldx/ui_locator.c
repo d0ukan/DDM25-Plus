@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus locator calculator (CONFIG_LOCATOR, locator.h), a page of Tools > Go-To (# there). # types a 4 or 6
+/* DDM32 Plus locator calculator (CONFIG_LOCATOR, locator.h), a page of Tools > Go-To (# there). # types a 4 or 6
  * character Maidenhead locator with the radio's text entry (the keypad letters; a held digit is the digit); the page
  * shows its centre's latitude / longitude and the distance and bearing from where we are (aprs_position_now: the GPS
  * fix, else the computer's, else the fixed position, as Tools > Repeaters), and our own locator. OK saves the centre

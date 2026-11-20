@@ -1,18 +1,18 @@
-# DDM25 Plus programmer — developer and maintainer notes
+# DDM32 Plus programmer — developer and maintainer notes
 
-The Windows program that installs, updates, downgrades, backs up and restores DDM25 Plus on a Baofeng DM-32UV. User
+The Windows program that installs, updates, downgrades, backs up and restores DDM32 Plus on a Baofeng DM-32UV. User
 guide (Turkish): [README.md](README.md). Licence: GPL-3.0-or-later (repository `LICENSING.md`).
 
 ## Layout
 
 ```
 pc/
-  ddm25_app/      PyQt5 app (Turkish UI). No module here talks to the radio.
+  ddm32_app/      PyQt5 app (Turkish UI). No module here talks to the radio.
   radiotools/     the guarded radio tools, each run as its own process (one user-approved step per run)
   release/        make_release.py: signing and release files (never uploads)
   tests/          unit tests on fakes (no port, no tool process, no network)
   docs/           stock-install.md: first install from stock, design and evidence
-  bundle.py, build_exe.ps1, run_ddm25.py, fetch_upstream.py
+  bundle.py, build_exe.ps1, run_ddm32.py, fetch_upstream.py
 ```
 
 - `radiotools/`: `dm32_readonly_backup.py` (two-pass backup, read-only transport), `install_plus.py` (install over
@@ -24,7 +24,7 @@ pc/
   hashes and first-boot entries); every guard is kept. Two changes in substance, both documented in
   `docs/stock-install.md`: the attached flash chips must equal the IDs the radio's own backup recorded (instead of the
   lab unit's), and the release gate below replaces `PLUS_REVIEWED`.
-- `ddm25_app/`: `main_window.py`, pages `home_tab`, `update_tab` (backup → detect → plan → install), `versions_tab`,
+- `ddm32_app/`: `main_window.py`, pages `home_tab`, `update_tab` (backup → detect → plan → install), `versions_tab`,
   `restore_tab`, `health_tab`, `live_tab`, `codeplug_tab` (RFKV read-only decoder `codeplug.py`), `data_tab`
   (developer only); logic without Qt: `wizard.py`, `parsers.py`, `releases.py`, `selfupdate.py`, `ports.py`,
   `paths.py`, `disclaimer.py`.
@@ -34,15 +34,15 @@ pc/
 ```powershell
 python pc\fetch_upstream.py        # RadioFoundry dfbaf20c into research\upstream\radiofoundry, hashes checked
 cd pc
-python -m ddm25_app
+python -m ddm32_app
 ```
 
 Needs Python 3.10, PyQt5, pyserial, and certifi (optional; the program bundles its Mozilla root list, MPL-2.0, beside
 the Windows certificate store so that GitHub downloads work on PCs whose store lacks a root, see
-`ddm25_app/tls.py`). `DDM25_UPSTREAM` may point at another RadioFoundry checkout of the pin (every
-pinned file is still hash-checked). User data: `%LOCALAPPDATA%\DDM25Plus` (`DDM25_DATA` overrides it).
+`ddm32_app/tls.py`). `DDM32_UPSTREAM` may point at another RadioFoundry checkout of the pin (every
+pinned file is still hash-checked). User data: `%LOCALAPPDATA%\DDM32Plus` (`DDM32_DATA` overrides it).
 
-The **Verileri güncelle** page (RadioID / repeater lists, TLE into the WSL build copy `~/ddm25-plus`, public WSL build
+The **Verileri güncelle** page (RadioID / repeater lists, TLE into the WSL build copy `~/ddm32-plus`, public WSL build
 `tools/build_radiofoundry.py --plus --public`) appears only from a source checkout with WSL; the frozen program hides
 it. A build made there is installable only after it is published as a signed release.
 
@@ -65,22 +65,22 @@ RadioFoundry files skip when they are not found.
 powershell -ExecutionPolicy Bypass -File pc\build_exe.ps1 -Paketle
 ```
 
-PyInstaller one-folder build `pc\dist\DDM25Plus\` (the radio tools and the pinned RadioFoundry files beside the .exe,
-hash-checked at build and run time), then `DDM25Plus.exe --run-tool _selfcheck`, then the private-data scan and the
-zip `pc\dist\DDM25Plus-<version>.zip` (top folder `DDM25Plus/`, as the self-update expects). The scan refuses
+PyInstaller one-folder build `pc\dist\DDM32Plus\` (the radio tools and the pinned RadioFoundry files beside the .exe,
+hash-checked at build and run time), then `DDM32Plus.exe --run-tool _selfcheck`, then the private-data scan and the
+zip `pc\dist\DDM32Plus-<version>.zip` (top folder `DDM32Plus/`, as the self-update expects). The scan refuses
 backups, `.bin`/`.map`/`.csv`/`.log`, keys, signatures, RadioID/TRAC lists, stock firmware and unexpected JSON.
 
 ## Release signing
 
-- **Format**: each GitHub release carries `ddm25-manifest.json` (format `ddm25-manifest/1`, see
-  `radiotools/signed_manifest.py`) and `ddm25-manifest.json.sig`: the Ed25519 signature (RFC 8032) of the manifest's
+- **Format**: each GitHub release carries `ddm32-manifest.json` (format `ddm32-manifest/1`, see
+  `radiotools/signed_manifest.py`) and `ddm32-manifest.json.sig`: the Ed25519 signature (RFC 8032) of the manifest's
   exact bytes, as 128 hex digits. Per firmware: version, channel (beta/stable), zip file name, URL, SHA-256, size,
   `application_sha256` and size of `rfoundry_dm32.bin`, `settings_format`, `codeplug_format`,
   `min_compatible_version`, notes TR/EN. Optional `app`: program version, zip, URL, SHA-256, size.
 - **Crypto**: verification is the RFC 8032 reference code in plain Python (`radiotools/ed25519.py`, ~150 lines,
   tested against the RFC's section 7.1 vectors). No crypto package is installed or bundled.
 - **Key**: `python pc\release\make_release.py --keygen` creates the private key at
-  `%USERPROFILE%\.ddm25\release-signing-key` (refuses a path inside the repository and never overwrites; ACL limited
+  `%USERPROFILE%\.ddm32\release-signing-key` (refuses a path inside the repository and never overwrites; ACL limited
   to the current user with `icacls`) and prints the public key. **Paste the public key into
   `pc/radiotools/signed_manifest.py`, `PUBLIC_KEY_HEX = '...'`**, run the tests, build the program. Until then
   `PUBLIC_KEY_HEX` is empty and the program verifies nothing, so it lists and installs nothing.
@@ -92,7 +92,7 @@ backups, `.bin`/`.map`/`.csv`/`.log`, keys, signatures, RadioID/TRAC lists, stoc
       --build-dir build\radiofoundry-p25\build\dm32-p25-plus-public `
       --settings-format 1 --codeplug-format 1 --min-compatible 1.0.0-beta.1 `
       --notes-tr "..." --notes-en "..." `
-      --app-zip pc\dist\DDM25Plus-1.0.0-beta.1.zip --app-version 1.0.0-beta.1 --out pc\dist\release-1.0.0-beta.1
+      --app-zip pc\dist\DDM32Plus-1.0.0-beta.1.zip --app-version 1.0.0-beta.1 --out pc\dist\release-1.0.0-beta.1
   python pc\release\make_release.py verify pc\dist\release-1.0.0-beta.1 --public-key <hex>
   ```
 
@@ -107,9 +107,9 @@ backups, `.bin`/`.map`/`.csv`/`.log`, keys, signatures, RadioID/TRAC lists, stoc
 
 ## The public firmware gate (what `PLUS_REVIEWED` is in the lab)
 
-`install_plus.py` installs a DDM25 Plus application only when (`signed_manifest.release_gate`):
+`install_plus.py` installs a DDM32 Plus application only when (`signed_manifest.release_gate`):
 
-1. the release folder holds `ddm25-manifest.json` and `ddm25-manifest.json.sig`,
+1. the release folder holds `ddm32-manifest.json` and `ddm32-manifest.json.sig`,
 2. the signature verifies with `PUBLIC_KEY_HEX` embedded in `radiotools/signed_manifest.py` (checked before the
    JSON is parsed), and the manifest passes the schema check,
 3. a firmware entry's `application_sha256` and `application_size` equal the raw `rfoundry_dm32.bin`, and
@@ -123,13 +123,13 @@ application inside it that differs from `application_sha256`. The lab gate in th
 
 ## Update check and self-update
 
-- The app reads `https://api.github.com/repos/d0ukan/DDM25-Plus/releases` (one call), then each release's manifest
+- The app reads `https://api.github.com/repos/d0ukan/DDM32-Plus/releases` (one call), then each release's manifest
   and signature (GitHub over HTTPS only, redirects checked). Verified manifests are cached under
-  `%LOCALAPPDATA%\DDM25Plus\surumler\manifests\<tag>\` and verified again whenever they are read. The check runs at
+  `%LOCALAPPDATA%\DDM32Plus\surumler\manifests\<tag>\` and verified again whenever they are read. The check runs at
   start (switchable off) or on a click; it never installs anything.
-- Self-update (`ddm25_app/selfupdate.py`, frozen program only): the new program zip from a signed manifest is
+- Self-update (`ddm32_app/selfupdate.py`, frozen program only): the new program zip from a signed manifest is
   downloaded and checked (size, SHA-256), extracted safely into `guncelleme\app-<version>\`, and the new .exe runs
-  as `DDM25Plus.exe --self-update ...`: it waits for the old program to exit, renames the program folder to
+  as `DDM32Plus.exe --self-update ...`: it waits for the old program to exit, renames the program folder to
   `<folder>.old`, copies the new one into place and starts it with `--update-check <marker>`. No marker within 90 s:
   the new one is stopped and moved to `<folder>.failed`, the old folder comes back and starts. The result is shown
   once at the next start.

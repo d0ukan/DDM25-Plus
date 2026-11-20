@@ -177,7 +177,7 @@ class Wizard:
 
 class RestoreFlow:
     """Geri dön: a chosen backup of this radio -> detect -> plan -> restore. The tool follows the backup's layout:
-    Classic / DDM25 Plus layout -> install_plus.py --restore; stock -> install_firstboot.py --restore-stock"""
+    Classic / DDM32 Plus layout -> install_plus.py --restore; stock -> install_firstboot.py --restore-stock"""
 
     def __init__(self):
         self.port = None

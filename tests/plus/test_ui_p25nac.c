@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus separate RX and TX NAC (Classic r13's "RX NAC" / "TX NAC" rows with Plus's extras, CONFIG_P25_TXNAC,
+/* DDM32 Plus separate RX and TX NAC (Classic r13's "RX NAC" / "TX NAC" rows with Plus's extras, CONFIG_P25_TXNAC,
  * docs/plus.md "Separate RX NAC and TX NAC"), through the real UI in the upstream simulator. Built like
  * tests/plus/test_ui_vfox.c (every digital mode, the VFO's modes, multi-watch) with -DCONFIG_P25_TXNAC=1.
  * Channel editor: the "RX NAC" row (hex, # Any, # # decimal), the "TX NAC" row: Same as RX by default, three hex

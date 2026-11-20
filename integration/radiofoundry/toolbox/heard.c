@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus heard list (heard.h): the portable part. Installed as core/ui/heard.c. */
+/* DDM32 Plus heard list (heard.h): the portable part. Installed as core/ui/heard.c. */
 #include "config.h"
 #if CONFIG_HEARD
 #include <string.h>

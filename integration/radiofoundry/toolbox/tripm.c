@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus GPS dashboard's trip meter (tripm.h): the portable part. Installed as core/ui/tripm.c. */
+/* DDM32 Plus GPS dashboard's trip meter (tripm.h): the portable part. Installed as core/ui/tripm.c. */
 #include "config.h"
 #if CONFIG_GPS_DASH
 #include <string.h>

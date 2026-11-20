@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* DDM25 Plus P25 extras: see p25_lcx.h. */
+/* DDM32 Plus P25 extras: see p25_lcx.h. */
 #include "p25_lcx.h"
 #include <string.h>
 
