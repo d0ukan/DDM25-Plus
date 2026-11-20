@@ -678,6 +678,7 @@ def main():
         "CONFIG_REPEATERS="+("y" if args.plus else "n"),
         "CONFIG_NAC_DEC="+("y" if args.plus else "n"),
         "CONFIG_PLUS_ART="+("y" if args.plus else "n"),
+        "CONFIG_LARGE_SCALE="+("y" if args.plus else "n"),
         "CONFIG_MULTI_WATCH="+("y" if args.plus else "n"),
         "CONFIG_MAP_TRACK="+("y" if args.plus else "n"),
         "CONFIG_AUTO_RPT="+("y" if args.plus else "n"),

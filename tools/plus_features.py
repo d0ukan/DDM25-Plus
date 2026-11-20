@@ -183,6 +183,122 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_brand", fromlist=["x"]).prepare_brand(transform)
     __import__((__package__ + "." if __package__ else "") + "plus_fieldx", fromlist=["x"]).prepare_fieldx(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_toolbox", fromlist=["x"]).prepare_toolbox(transform, install)
+    prepare_large_scale(transform)
+
+
+def prepare_large_scale(transform):
+    """Large text on wide panels (CONFIG_LARGE_SCALE, owner's report 2026-11-20): on 240 px panels Home's channel
+    font is already the largest font (16x32), so Settings > Display > Large text only took the other rows away and
+    left the screen looking empty. There each of its two lines is drawn 2x, 1.5x or 4/3 (gfx_text_scaled: every glyph
+    pixel a block, anti-aliased edges blended), else 1x, the largest that fits with the text's alternates, centred in
+    its half; a line that needs shortening even at 1x is drawn as before. Runs last: it anchors on the final draw_home_large and gfx.c."""
+    transform('config/features.mk', [
+        ('CONFIG_PLUS_ART ?= n\nFEATURES += PLUS_ART\n',
+         'CONFIG_PLUS_ART ?= n\nFEATURES += PLUS_ART\nCONFIG_LARGE_SCALE ?= n\nFEATURES += LARGE_SCALE\n'),
+    ])
+    transform('core/config.h', [
+        ('#ifndef CONFIG_PLUS_ART\n',
+         '#ifndef CONFIG_LARGE_SCALE\n#define CONFIG_LARGE_SCALE 0\n#endif\n#ifndef CONFIG_PLUS_ART\n'),
+    ])
+    transform('core/ui/gfx.h', [
+        ('int gfx_text_bg(const font_t *f, int x, int y, const char *s, color_t fg, color_t bg);\n',
+         'int gfx_text_bg(const font_t *f, int x, int y, const char *s, color_t fg, color_t bg);\n'
+         '#if CONFIG_LARGE_SCALE\n'
+         '// DDM32 Plus: s in f at num/den of its size (2/1, 3/2): each glyph pixel a block. Returns the x after it\n'
+         'int gfx_text_scaled(const font_t *f, int x, int y, const char *s, color_t fg, int num, int den);\n'
+         '#endif\n'),
+    ])
+    transform('core/ui/gfx.c', [
+        ('\nint gfx_text(const font_t *f, int x, int y, const char *s, color_t fg)\n{\n',
+         '\n#if CONFIG_LARGE_SCALE\n'
+         '// DDM32 Plus: the text loop above with every glyph pixel drawn as a num/den block (anti-aliased edges blended\n'
+         '// per pixel of the block). A glyph the font lacks is drawn from primitives at the font\'s own size, centred\n'
+         'int gfx_text_scaled(const font_t *f, int x, int y, const char *s, color_t fg, int num, int den)\n{\n'
+         '\tchar first[ALT_TEXT_MAX];\n'
+         '\tif (strchr(s, TEXT_ALT_OPEN[0])) {\n\t\tbool more;\n\t\talt_expand(s, 0, first, sizeof first, &more);\n'
+         '\t\ts = first;\n\t}\n'
+         '#ifdef GFX_FIT_TRACE\n\tconst char *s0 = s;\n\tint x0 = x;\n#endif\n'
+         '\tint cw = f->w * num / den, ch = f->h * num / den;\n'
+         '\tint bytes = (f->w * f->bpp + 7) / 8;\n'
+         '\tfor (; *s; s++, x += cw) {\n'
+         '\t\tint px = x + ox, py = y + oy;\n'
+         '\t\tif (px >= clip_x1)\n\t\t\tbreak;\n'
+         '\t\tif (px + cw <= clip_x0 || py >= clip_y1 || py + ch <= clip_y0)\n\t\t\tcontinue;\n'
+         '\t\tint top, rows;\n'
+         '\t\tconst uint8_t *g = font_glyph(f, (uint8_t)*s, &top, &rows);\n'
+         '\t\tif (g == NULL) {\n'
+         '\t\t\tfallback_glyph(f, x + (cw - f->w) / 2, y + (ch - f->h) / 2, (uint8_t)*s, fg);\n'
+         '\t\t\tcontinue;\n\t\t}\n'
+         '\t\tfor (int r = 0; r < rows; r++, g += bytes) {\n'
+         '\t\t\tint by0 = py + (top + r) * num / den, by1 = py + (top + r + 1) * num / den;\n'
+         '\t\t\tfor (int col = 0; col < f->w; col++) {\n'
+         '#if CONFIG_FONT_AA\n'
+         '\t\t\t\tunsigned a = f->bpp == 2 ? (g[col >> 2] >> (6 - 2 * (col & 3))) & 3u :\n'
+         '\t\t\t\t\t     (g[col >> 3] & (0x80u >> (col & 7))) ? 3u : 0;\n'
+         '#else\n'
+         '\t\t\t\tunsigned a = (g[col >> 3] & (0x80u >> (col & 7))) ? 3u : 0;\n'
+         '#endif\n'
+         '\t\t\t\tif (a == 0)\n\t\t\t\t\tcontinue;\n'
+         '\t\t\t\tint bx0 = px + col * num / den, bx1 = px + (col + 1) * num / den;\n'
+         '\t\t\t\tfor (int yy = by0; yy < by1; yy++) {\n'
+         '\t\t\t\t\tif (yy < clip_y0 || yy >= clip_y1)\n\t\t\t\t\t\tcontinue;\n'
+         '\t\t\t\t\tfor (int xx = bx0; xx < bx1; xx++) {\n'
+         '\t\t\t\t\t\tif (xx < clip_x0 || xx >= clip_x1)\n\t\t\t\t\t\t\tcontinue;\n'
+         '#if CONFIG_FONT_AA\n'
+         '\t\t\t\t\t\tif (a != 3) {\n\t\t\t\t\t\t\tedge_pixel(xx, yy, fg, a);\n\t\t\t\t\t\t\tcontinue;\n'
+         '\t\t\t\t\t\t}\n'
+         '#endif\n'
+         '\t\t\t\t\t\tspan(xx, xx + 1, yy, fg);\n'
+         '\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n'
+         '#ifdef GFX_FIT_TRACE\n\ttrace(GFX_TRACE_TEXT, x0, y, (int)strlen(s0) * cw, ch, s0);\n#endif\n'
+         '\treturn x;\n}\n#endif\n\n'
+         'int gfx_text(const font_t *f, int x, int y, const char *s, color_t fg)\n{\n'),
+    ])
+    transform('core/ui/ui_screens.c', [
+        ('// Large-text Home (accessibility): the status strip, the channel and the talk target, each as large as fits\n',
+         '#if CONFIG_LARGE_SCALE\n'
+         '// DDM32 Plus: a Large text line where the largest font is already Home\'s channel font (240 px panels), so the\n'
+         '// setting would make nothing larger: drawn 2x, 1.5x or 4/3, else at 1x, the largest that fits with its\n'
+         '// alternates, centred in its half. False (even 1x needs shortening): drawn as before\n'
+         'static bool __attribute__((noinline)) large_scaled(const char *text, int y, int room, color_t c, char *out,\n'
+         '\t\t\t\t\t\t   size_t cap)\n{\n'
+         '\tconst font_t *f = font_largest;\n'
+         '\tif (f != ui_layout.large)\n\t\treturn false;\n'
+         '\tstatic const uint8_t sc[4][2] = { { 2, 1 }, { 3, 2 }, { 4, 3 }, { 1, 1 } };\n'
+         '\tfor (unsigned i = 0; i < 4u; i++) {\n'
+         '\t\tint n = sc[i][0], d = sc[i][1], h = f->h * n / d;\n'
+         '\t\tif (h > room)\n\t\t\tcontinue;\n'
+         '\t\tbool more = true;\n'
+         '\t\tfor (int level = 0; more; level++) {\n'
+         '\t\t\tgfx_text_alt(text, level, out, cap, &more);\n'
+         '\t\t\tif ((int)strlen(out) * (f->w * n / d) <= gfx_width()) {\n'
+         '\t\t\t\tgfx_text_scaled(f, 0, y + (room - h) / 2, out, c, n, d);\n'
+         '\t\t\t\treturn true;\n\t\t\t}\n\t\t}\n\t}\n'
+         '\treturn false;\n}\n#endif\n\n'
+         '// Large-text Home (accessibility): the status strip, the channel and the talk target, each as large as fits\n'),
+        ('\tconst font_t *f = large_font(buf, room, form, sizeof form);\n'
+         '\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
+         '\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.fg);\n',
+         '\tconst font_t *f;\n'
+         '#if CONFIG_LARGE_SCALE\n'
+         '\tif (!large_scaled(buf, y, room, tx ? ui_col.tx : ui_col.fg, form, sizeof form))\n'
+         '#endif\n'
+         '\t{\n'
+         '\t\tf = large_font(buf, room, form, sizeof form);\n'
+         '\t\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
+         '\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.fg);\n'
+         '\t}\n'),
+        ('\tf = large_font(buf, room, form, sizeof form);\n'
+         '\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
+         '\tgfx_text(f, 0, y, fit, v->state == RS_TX ? ui_col.tx : v->state == RS_RX ? ui_col.rx : ui_col.fg);\n',
+         '\tcolor_t c2 = v->state == RS_TX ? ui_col.tx : v->state == RS_RX ? ui_col.rx : ui_col.fg;\n'
+         '#if CONFIG_LARGE_SCALE\n'
+         '\tif (large_scaled(buf, y, room, c2, form, sizeof form))\n\t\treturn;\n'
+         '#endif\n'
+         '\tf = large_font(buf, room, form, sizeof form);\n'
+         '\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
+         '\tgfx_text(f, 0, y, fit, c2);\n'),
+    ])
 
 
 def prepare_sat_alarm(transform):

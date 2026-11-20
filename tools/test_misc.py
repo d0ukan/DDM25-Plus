@@ -143,6 +143,7 @@ def main(ROOT, APP, OUT, flags, host):
     argv[argv.index('-o') + 1] = str(OUT / 'test_ui_misc')
     run([*argv, '-I' + str(host), '-I' + str(tp), '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_AM_RX=1', '-DCONFIG_APRS=1',
          '-DCONFIG_VFO=1', '-DCONFIG_AIRFIELDS=1', '-DCONFIG_MARINE=1', '-DCONFIG_QSO_LOG=1', '-DCONFIG_BATT_GRAPH=1',
+         '-DCONFIG_LARGE_SCALE=1',
          *(str(APP / 'core/ui' / f) for f in ('airfield.c', 'airfield_data.c', 'ui_airfield.c', 'ui_marine.c',
                                              'qso_log.c', 'ui_qso.c', 'battgraph.c', 'ui_battgraph.c')),
          str(APP / 'core/radio/marine.c'), str(APP / 'core/aprs/aprs_fmt.c'), '-lm'], cwd=host)
