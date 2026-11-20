@@ -3,7 +3,8 @@
 The Python-free Windows programmer for DDM32 Plus, replacing the PyQt5 program in `pc/` step by step. Same pages,
 same wizard (Hazırlık, Yedek, Kontrol, Yükle, Bitti), Turkish and English.
 
-**Stage 2 (this one): the radio tools are ported, radio access is off.** The backup, install, first install from
+**Stage 3 (this one): the radio tools are ported, radio access is off; quick update and install without backup;
+a developer build for the first real backup.** The backup, install, first install from
 stock and restore tools of `pc/radiotools` are ported to C# with every guard and are held to the Python tools byte for
 byte on 27 recorded runs (see [docs/porting-plan.md](docs/porting-plan.md)). The wizard and the "Geri dön" page run
 them, but the serial port is behind `RadioAccess` and **off in every build**: "Yedek al", "Yükle" and "Geri yükle"
@@ -77,16 +78,79 @@ python win/tests/DDM32Plus.Core.Tests/Fixtures/make_radio_fixtures.py
 It also writes `src/DDM32Plus.Core/Radio/Data/` (the RAM monitor image and the codec tables). Run it again when a
 radio tool in `pc/radiotools` changes; the replay tests then show where the C# port differs.
 
+## Faster update paths (over an installed DDM32 Plus only)
+
+Owner's decision 2026-11-20 (AGENTS.md rule 4). On the Backup step, besides "Yedek al" (the default):
+
+- **"Bu telsizin son yedeğini kullan (date)"** (quick update): the newest verified backup that holds DDM32 Plus
+  (this program's `yedekler` and the Python program's) is reused. Before anything is written the tool reads the chip
+  IDs, the boot area and the codec slot from the radio (only those ranges) and they must equal the backup's; otherwise
+  it stops and asks for a new backup. Every application sector below the slot is rewritten.
+- **"Yedeksiz yükle"** (install without backup): a red warning, an "Anladım" box, and a second "Emin misiniz?" before
+  the install. The 1 MiB program flash is read once from the radio, kept in memory (never saved), and the plan and
+  every check come from it.
+
+Both refuse a first install from stock (its codec slot is prepared from the backup) and any radio that does not run
+DDM32 Plus, before writing anything. Both keep every rule of the normal install: only application sectors, in plan
+order, once; boot area, codec slot and data chip never written (data chip CRCs checked before and after); the whole
+program read back before the restart; no retry of a failed write. The tool is `FastInstallTool` (`--quick --backup B`
+or `--no-backup`), tested on the C# FakeRadio (`FastInstallTests.cs`).
+
 ## Radio access (developer flag)
 
-`RadioAccess.Enabled` is a compile-time constant, false in every normal build. Only
+`RadioAccess.Enabled` is a compile-time constant, false in every normal build (the release exe and the setup). Only
 
 ```
 dotnet build -p:RadioAccess=true
 ```
 
-compiles the serial port in. Never publish or install such a build without the owner's approval for that specific
-step (AGENTS.md hard safety rules); the tests check that the normal build refuses to open a port.
+compiles the serial port in, and even then only for the **read-only backup**: the tools that write (install, quick
+update, install without backup, restore) get their port from `RadioAccess.WriteFactory`, which stays off in every build
+of this stage. Never run such a build against the radio without the owner's approval for that specific step
+(AGENTS.md hard safety rules); the tests check that the normal build refuses to open a port.
+
+### The developer build for the first real run
+
+Built (not installed, not part of the setup) with:
+
+```
+dotnet publish src/DDM32Plus/DDM32Plus.csproj -p:PublishProfile=win-x64 -p:RadioAccess=true -p:PublishDir=E:\GIT-REPO\ddm32-net\win\publish-dev\
+```
+
+Result: `win\publish-dev\DDM32Plus.exe`. Its title bar says **"DDM32 Plus 2.0.0-alpha.1 - DEVELOPER BUILD - radio
+access on"** and the pages say that only the backup reaches the radio. Its settings live next to the exe (or in
+`DDM32_DATA`). It opens no port until "Yedek al / Back up" is pressed; it then asks for the folder the backup goes to
+and writes `<folder>\dm32-YYYYMMDD\` and `<folder>\backup-dm32-YYYYMMDD.log`.
+
+The run (only after the owner's approval in chat for this step):
+
+1. Radio off, cable in (COM14). Start `win\publish-dev\DDM32Plus.exe`, accept the disclaimer, Update the radio >
+   Preparation (the cable shows COM14) > Backup > Back up, choose an empty folder outside the repository, for example
+   `E:\DDM32-dev-backups`.
+2. When the yellow "switch the radio off and on now" shows, switch the radio on. Wait for "VERIFIED" (both chips read
+   twice).
+
+The comparison with the Python backup of the same radio (a local compare; the private folder is never copied into
+the repository):
+
+```powershell
+$py = 'E:\GIT-REPO\open25-dm32\backups\dm32-047-plus-20261120-b'
+$cs = 'E:\DDM32-dev-backups\dm32-20261120'          # the folder the developer build wrote
+foreach ($f in 'progmem-pass1.bin','progmem-pass2.bin','q128-pass1.bin','q128-pass2.bin','stock-codeplug-pages.raw.bin') {
+  $same = (Get-FileHash "$py\$f").Hash -eq (Get-FileHash "$cs\$f").Hash
+  '{0,-30} {1}' -f $f, $(if ($same) { 'IDENTICAL' } else { 'DIFFERENT' })
+}
+python -c "import json,sys; a,b=(json.load(open(sys.argv[i]+r'\backup-manifest.json')) for i in (1,2)); skip={'started_utc','completed_utc','installed_firmware_user_reported'}; d=[k for k in sorted(set(a)|set(b)) if k not in skip and a.get(k)!=b.get(k)]; print('manifest differs in:', d or 'nothing')" $py $cs
+```
+
+Expected: all five files IDENTICAL and the manifests equal apart from the time stamps and the free-text firmware note
+(`outgoing_commands` also differs if either run had to ask for a frame again). If the radio's settings changed between
+the two backups (the radio was used), the `q128` images differ legitimately: the program flash images must still be
+identical, and the changed data sectors are listed by comparing the manifests' `sector_sha256` lists:
+
+```powershell
+python -c "import json,sys; c=[json.load(open(sys.argv[i]+r'\backup-manifest.json'))['captures'] for i in (1,2)]; q=[[r for r in x if r['file']=='q128-pass1.bin'][0]['sector_sha256'] for x in c]; print([hex(i*4096) for i,(u,v) in enumerate(zip(*q)) if u!=v])" $py $cs
+```
 
 `DDM32Plus.exe --show PAGE[:STEP[:BACKUP]]` opens a page (a wizard step, and a verified backup as "Mevcut yedeği
 seç..." takes it) for screenshots and demos; it only navigates and reads files.

@@ -12,6 +12,7 @@ how the C# port is proven equal to the Python tool **before** it is ever pointed
 | install_plus over Classic, from stock, restore (`InstallPort`) | `InstallTool`, `InstallPlan` | layer 2: 17 recorded runs (ok, plans, changed radio or data chip, corrupted readback, slot changed, wrong chip, refusals) |
 | install_firstboot --restore-stock | `RestoreStockTool` | layer 2: 4 recorded runs |
 | the guards' frame rules | `ReadOnlyPort`, `InstallPort` | layer 3: 89 frames + 5 step sequences, same verdicts and messages |
+| quick update and install without backup (C# only, owner's decision 2026-11-20) | `FastInstallTool` | the C# FakeRadio (`FakeRadio.cs`), itself checked to draw the Python tools' exact bytes on 11 recorded runs; 17 tests of the new paths and guard rules |
 | health / live panel (plus_live) | not yet | |
 
 Layer 2 means: `tests/DDM32Plus.Core.Tests/Fixtures/make_radio_fixtures.py` runs the Python tool against the pinned
@@ -21,7 +22,8 @@ manifests byte for byte, Windows line endings as Python writes them; only `write
 equal. The recording is made on Windows (Python's text files have CRLF there).
 
 The serial port is behind `RadioAccess` (`Ports.cs`): off in every build. A developer build with
-`dotnet build -p:RadioAccess=true` compiles the port in; nothing at run time can turn it on. The pages run the tools
+`dotnet build -p:RadioAccess=true` compiles the port in for the read-only backup only; the tools that write get their
+port from `RadioAccess.WriteFactory`, off in every build of this stage. Nothing at run time can turn either on. The pages run the tools
 through it, so in the normal build "Yedek al", "Yükle" and "Geri yükle" stop before any port is opened and say so.
 What works without a radio: the CH340 cable/driver check (Windows' device list), choosing a verified backup on disk,
 its detection and the write plan (the tools' own plan, checked equal to `--plan-only`).

@@ -159,6 +159,95 @@ public sealed class FlowTests(RadioInputs inputs) : IClassFixture<RadioInputs>
         Assert.Throws<InvalidOperationException>(() => w.SetPort("COM8"));
     }
 
+    // --- the faster paths (owner's decision 2026-11-20) -----------------------------------------------------------
+    private static readonly PyDict Ddm32 = new() { ["layout"] = "classic", ["firmware"] = "ddm32", ["install_mode"] = "over_classic", ["supported"] = true, ["reason"] = "" };
+    private static readonly PyDict Open25 = new() { ["layout"] = "classic", ["firmware"] = "classic", ["install_mode"] = "over_classic", ["supported"] = true, ["reason"] = "" };
+
+    private static Wizard QuickReady(PyDict detection)
+    {
+        var w = new Wizard();
+        w.SetPort("COM7");
+        w.SetPackage(new Pkg());
+        w.UseQuickBackup("old-backup");
+        w.StartDetect();
+        w.DetectFinished(detection);
+        return w;
+    }
+
+    [Fact]
+    public void QuickUpdateOnlyOverDdm32()
+    {
+        var w = QuickReady(Ddm32);
+        Assert.Equal(BackupPath.Quick, w.Path);
+        Assert.Equal("install_plus_quick", w.Mode);
+        w.StartPlan();
+        w.PlanFinished(PlanOk);
+        Assert.True(w.CanInstall());
+        var (tool, args) = w.InstallCommand("plus", "out");
+        Assert.Equal("fast_install", tool);
+        Assert.Equal(["--port", "COM7", "--quick", "--backup", "old-backup", "--plus", "plus", "--out", "out", "--wait", "600"], args);
+        foreach (var d in new[] { Stock, Open25, Unknown })
+        {
+            var q = QuickReady(d);
+            Assert.Null(q.Mode);
+            Assert.False(q.CanPlan());
+        }
+        Assert.Equal("Wiz_QuickNeedsDdm32", QuickReady(Stock).Message.Key);
+        // a new backup or a chosen backup is the normal path again
+        w = QuickReady(Ddm32);
+        w.UseExistingBackup("b");
+        Assert.Equal(BackupPath.Normal, w.Path);
+    }
+
+    [Fact]
+    public void InstallWithoutBackupNeedsTheRiskAccepted()
+    {
+        var w = new Wizard();
+        w.SetPort("COM7");
+        w.SetPackage(new Pkg());
+        Assert.Throws<InvalidOperationException>(() => w.ChooseNoBackup(false));
+        Assert.Equal(BackupPath.Normal, w.Path);
+        Assert.False(w.CanInstall());
+        w.ChooseNoBackup(true);
+        Assert.Equal((BackupPath.None, true, StepState.Skipped), (w.Path, w.RiskAccepted, w.Backup));
+        Assert.False(w.CanDetect());                                      // nothing to detect from: the tool reads live
+        Assert.Equal("install_plus_no_backup", w.Mode);
+        Assert.True(w.CanInstall());
+        Assert.Equal(["--port", "COM7", "--no-backup", "--plus", "p", "--out", "o", "--wait", "600"], w.InstallCommand("p", "o").Args);
+        w.SetPort(null);
+        Assert.False(w.CanInstall());
+        w.SetPort("COM7");
+        w.StartInstall();
+        w.InstallFinished(InstallMidWrite);
+        Assert.True(w.Locked);
+        Assert.Equal("Wiz_NoBackupStoppedAfterWrites", w.Message.Key);
+        Assert.False(w.CanInstall());
+        // a refusal before any write leaves it to the user, by hand
+        w = new Wizard();
+        w.SetPort("COM7");
+        w.SetPackage(new Pkg());
+        w.ChooseNoBackup(true);
+        w.StartInstall();
+        w.InstallFinished(new StepResult(false, false, false, "ValueError: first install from stock firmware needs a new backup"));
+        Assert.False(w.Locked);
+        Assert.Null(w.Running);
+        Assert.True(w.CanInstall());
+        // a normal backup afterwards turns the risk off again
+        w.StartBackup("b");
+        Assert.Equal((BackupPath.Normal, false), (w.Path, w.RiskAccepted));
+    }
+
+    [Fact]
+    public void NormalPathIsTheDefault()
+    {
+        var w = new Wizard();
+        Assert.Equal(BackupPath.Normal, w.Path);
+        Assert.False(w.RiskAccepted);
+        var r = Ready(Classic);
+        Assert.Equal("install_plus", r.InstallCommand("p", "o").Tool);
+        Assert.Equal("--from-stock", Ready(Stock).InstallCommand("p", "o").Args[^1]);
+    }
+
     private static RestoreFlow Flow(string kind, PyDict? detection)
     {
         var f = new RestoreFlow { Port = "COM7" };

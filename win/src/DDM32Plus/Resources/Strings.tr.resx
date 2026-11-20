@@ -804,4 +804,74 @@ Port: {3}
   <data name="Main_BusyClose" xml:space="preserve">
     <value>Bir adım sürüyor. Bitmeden pencere kapatılamaz (kapatmak işlemi yarıda keser).</value>
   </data>
+  <data name="Upd_Or" xml:space="preserve">
+    <value>ya da</value>
+  </data>
+  <data name="Upd_QuickBackup" xml:space="preserve">
+    <value>Bu telsizin son yedeğini kullan ({0})</value>
+  </data>
+  <data name="Upd_QuickBackupTip" xml:space="preserve">
+    <value>Yeni yedek almadan hızlı güncelleme: bu telsizin DDM32 Plus kuruluyken alınmış doğrulanmış yedeği kullanılır. Yazmadan önce telsizden çip kimlikleri, açılış bölümü ve codec bölümü okunur ve yedekle aynı olmalıdır; değilse yükleme durur ve yeni yedek istenir.</value>
+  </data>
+  <data name="Upd_QuickNone" xml:space="preserve">
+    <value>Hızlı güncelleme için bu telsizin DDM32 Plus kuruluyken alınmış doğrulanmış bir yedeği bulunamadı.</value>
+  </data>
+  <data name="Upd_QuickLooking" xml:space="preserve">
+    <value>Son yedek aranıyor...</value>
+  </data>
+  <data name="Upd_NoBackupTitle" xml:space="preserve">
+    <value>Yedeksiz yükle (önerilmez)</value>
+  </data>
+  <data name="Upd_NoBackupWarning" xml:space="preserve">
+    <value>Yedek alınmaz. Program belleği yalnızca bir kez okunur (planı ve denetimleri yapmak için) ve kaydedilmez. Yazma yarıda kalırsa geri dönülecek bir yedek yoktur: telsiz açılmayabilir ve kurtarmak için başka bir yol gerekir. Kalibrasyon ve kanallar veri çipindedir; veri çipine hiçbir zaman yazılmaz. Yalnızca DDM32 Plus kurulu bir telsizi güncellemek için: stoktan ilk kurulum her zaman yedek ister.</value>
+  </data>
+  <data name="Upd_NoBackupUnderstand" xml:space="preserve">
+    <value>Anladım: yedek olmadan yüklüyorum</value>
+  </data>
+  <data name="Upd_NoBackupContinue" xml:space="preserve">
+    <value>Yedeksiz devam et</value>
+  </data>
+  <data name="Upd_NoBackupCheck" xml:space="preserve">
+    <value>Yedeksiz yükleme: telsizdeki yazılım ve yazma planı, yükleme sırasında program belleği bir kez okunarak belirlenir. Telsizde DDM32 Plus yoksa (örneğin stok yazılım) yükleme hiçbir şey yazmadan durur.</value>
+  </data>
+  <data name="Upd_QuickCheck" xml:space="preserve">
+    <value>Hızlı güncelleme: tüm uygulama bölümü yeniden yazılır; açılış bölümü, codec bölümü ve veri çipi yazılmaz. Yazmadan önce telsizin bu yedekteki telsiz olduğu denetlenir.</value>
+  </data>
+  <data name="Upd_NoBackupSureTitle" xml:space="preserve">
+    <value>Yedeksiz yükleme</value>
+  </data>
+  <data name="Upd_NoBackupSure" xml:space="preserve">
+    <value>Emin misiniz?
+
+Yedek yok. Yazma yarıda kalırsa geri dönülecek yedek olmaz.
+
+⚠ {0}</value>
+  </data>
+  <data name="Wiz_QuickChosen" xml:space="preserve">
+    <value>Bu telsizin son yedeği seçildi (hızlı güncelleme): yazmadan önce telsiz yedekle karşılaştırılır.</value>
+  </data>
+  <data name="Wiz_QuickNeedsDdm32" xml:space="preserve">
+    <value>Hızlı güncelleme yalnızca DDM32 Plus kurulu bir telsizde yapılır. Bu yedek başka bir yazılım tutuyor: yeni bir yedek alın (stoktan ilk kurulum her zaman yedek ister).</value>
+  </data>
+  <data name="Wiz_NoBackupChosen" xml:space="preserve">
+    <value>Yedeksiz yükleme seçildi.</value>
+  </data>
+  <data name="Wiz_NoBackupStoppedAfterWrites" xml:space="preserve">
+    <value>Kurulum yazma başladıktan sonra durdu: otomatik tekrar yok ve geri dönülecek yedek yok. Telsizi kapatmayın, kabloyu çekmeyin; bir yedek alıp normal yolla yeniden yükleyin. ({0})</value>
+  </data>
+  <data name="Radio_WritesDisabled" xml:space="preserve">
+    <value>Bu derlemede yazan telsiz araçları (yükleme, geri yükleme) kapalı: hiçbir port açılmadı, telsize hiçbir şey yazılmadı.</value>
+  </data>
+  <data name="Dev_Title" xml:space="preserve">
+    <value> - DEVELOPER BUILD - radio access on</value>
+  </data>
+  <data name="Dev_NoteTitle" xml:space="preserve">
+    <value>Geliştirici derlemesi: telsiz erişimi açık</value>
+  </data>
+  <data name="Dev_Note" xml:space="preserve">
+    <value>Bu derlemede yalnızca salt okunur yedek aracı telsize ulaşır ("Yedek al"; yedek klasörü sorulur). Yükleme ve geri yükleme kapalıdır. Her telsiz adımı sahibin o adım için onayını ister.</value>
+  </data>
+  <data name="Dev_ChooseFolder" xml:space="preserve">
+    <value>Yedeğin yazılacağı klasörü seçin (geliştirici derlemesi)</value>
+  </data>
 </root>

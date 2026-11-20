@@ -55,8 +55,26 @@
                         </DockPanel>
                         <Button x:Name="BackupButton" Style="{StaticResource BigButton}" Tag="&#xE74E;" Content="{l:Tr Upd_BackupButton}"
                                 ToolTip="{l:Tr Upd_BackupButtonTip}" Click="OnBackup" />
+                        <TextBlock Text="{l:Tr Upd_Or}" Foreground="{StaticResource Grey}" Margin="0,2" />
+                        <!-- (A) quick update: an earlier backup of this radio, checked live before writing -->
+                        <Button x:Name="QuickButton" Style="{StaticResource IconButton}" Tag="&#xE81C;" HorizontalAlignment="Left"
+                                ToolTip="{l:Tr Upd_QuickBackupTip}" Click="OnQuickBackup" FontSize="{StaticResource Size2}" />
+                        <TextBlock x:Name="QuickText" Style="{StaticResource Plain}" FontSize="{StaticResource Size1}" Foreground="{StaticResource Grey}" />
                         <Button x:Name="ExistingButton" Style="{StaticResource IconButton}" Tag="&#xE8B7;" HorizontalAlignment="Left"
                                 Content="{l:Tr Upd_ExistingBackup}" ToolTip="{l:Tr Upd_ExistingBackupTip}" Click="OnExistingBackup" />
+                        <!-- (B) install without backup: red warning, "I understand", then a second confirmation -->
+                        <Border x:Name="NoBackupBox" BorderBrush="{StaticResource Red}" BorderThickness="2" CornerRadius="4"
+                                Background="#fdecea" Padding="10,8" Margin="0,10,0,4">
+                            <StackPanel>
+                                <TextBlock Text="{l:Tr Upd_NoBackupTitle}" FontWeight="Bold" FontSize="{StaticResource Size3}" Foreground="{StaticResource Red}" />
+                                <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Upd_NoBackupWarning}" Foreground="{StaticResource Red}" />
+                                <CheckBox x:Name="UnderstandBox" Margin="0,6" FontWeight="Bold" Click="OnUnderstand">
+                                    <TextBlock Text="{l:Tr Upd_NoBackupUnderstand}" />
+                                </CheckBox>
+                                <Button x:Name="NoBackupButton" Style="{StaticResource IconButton}" Tag="&#xE7BA;" HorizontalAlignment="Left"
+                                        Content="{l:Tr Upd_NoBackupContinue}" Click="OnNoBackup" IsEnabled="False" />
+                            </StackPanel>
+                        </Border>
                         <ProgressBar x:Name="BackupProgress" Height="14" Maximum="100" Margin="0,6" />
                         <TextBlock x:Name="BackupStatus" Style="{StaticResource Plain}" />
                     </StackPanel>
@@ -99,8 +117,8 @@
                 <!-- this build: no port is ever opened -->
                 <Border x:Name="AccessNote" Style="{StaticResource NextStage}">
                     <StackPanel>
-                        <TextBlock Text="{l:Tr Radio_DisabledTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
-                        <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Radio_Disabled}" />
+                        <TextBlock x:Name="AccessTitle" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                        <TextBlock x:Name="AccessText" Style="{StaticResource Plain}" />
                     </StackPanel>
                 </Border>
                 <Expander Header="{l:Tr Common_Details}">

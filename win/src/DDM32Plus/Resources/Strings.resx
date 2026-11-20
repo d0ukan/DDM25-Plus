@@ -804,4 +804,74 @@ Port: {3}
   <data name="Main_BusyClose" xml:space="preserve">
     <value>A step is running. The window cannot be closed before it ends (closing would stop it half way).</value>
   </data>
+  <data name="Upd_Or" xml:space="preserve">
+    <value>or</value>
+  </data>
+  <data name="Upd_QuickBackup" xml:space="preserve">
+    <value>Use my last backup of this radio ({0})</value>
+  </data>
+  <data name="Upd_QuickBackupTip" xml:space="preserve">
+    <value>A quick update without a new backup: the verified backup of this radio taken while it ran DDM32 Plus is used. Before anything is written the chip IDs, the boot area and the codec slot are read from the radio and must equal the backup's; if not, the install stops and asks for a new backup.</value>
+  </data>
+  <data name="Upd_QuickNone" xml:space="preserve">
+    <value>For a quick update there is no verified backup of this radio taken while it ran DDM32 Plus.</value>
+  </data>
+  <data name="Upd_QuickLooking" xml:space="preserve">
+    <value>Looking for the last backup...</value>
+  </data>
+  <data name="Upd_NoBackupTitle" xml:space="preserve">
+    <value>Install without backup (not recommended)</value>
+  </data>
+  <data name="Upd_NoBackupWarning" xml:space="preserve">
+    <value>No backup is taken. The program flash is read once (for the plan and the checks) and not saved. If the write stops part way there is no backup to go back to: the radio may not start and needs another way to be recovered. Calibration and channels are on the data chip, which is never written. Only for updating a radio that runs DDM32 Plus: a first install from stock always needs a backup.</value>
+  </data>
+  <data name="Upd_NoBackupUnderstand" xml:space="preserve">
+    <value>I understand: I install without a backup</value>
+  </data>
+  <data name="Upd_NoBackupContinue" xml:space="preserve">
+    <value>Continue without backup</value>
+  </data>
+  <data name="Upd_NoBackupCheck" xml:space="preserve">
+    <value>Install without backup: what the radio runs and the write plan come from one read of the program flash during the install. If the radio does not run DDM32 Plus (stock firmware, for example) the install stops without writing anything.</value>
+  </data>
+  <data name="Upd_QuickCheck" xml:space="preserve">
+    <value>Quick update: the whole application area is rewritten; the boot area, the codec slot and the data chip are not. Before writing, the radio is checked to be the radio of this backup.</value>
+  </data>
+  <data name="Upd_NoBackupSureTitle" xml:space="preserve">
+    <value>Install without backup</value>
+  </data>
+  <data name="Upd_NoBackupSure" xml:space="preserve">
+    <value>Are you sure?
+
+There is no backup. If the write stops part way there is no backup to go back to.
+
+⚠ {0}</value>
+  </data>
+  <data name="Wiz_QuickChosen" xml:space="preserve">
+    <value>The last backup of this radio was chosen (quick update): the radio is compared with it before anything is written.</value>
+  </data>
+  <data name="Wiz_QuickNeedsDdm32" xml:space="preserve">
+    <value>A quick update works only on a radio that runs DDM32 Plus. This backup holds other firmware: take a new backup (a first install from stock always needs one).</value>
+  </data>
+  <data name="Wiz_NoBackupChosen" xml:space="preserve">
+    <value>Install without backup chosen.</value>
+  </data>
+  <data name="Wiz_NoBackupStoppedAfterWrites" xml:space="preserve">
+    <value>The install stopped after writing started: it is never retried by itself and there is no backup to go back to. Do not switch the radio off or unplug the cable; take a backup and install again the normal way. ({0})</value>
+  </data>
+  <data name="Radio_WritesDisabled" xml:space="preserve">
+    <value>The radio tools that write (install, restore) are off in this build: no port was opened and nothing was written to the radio.</value>
+  </data>
+  <data name="Dev_Title" xml:space="preserve">
+    <value> - DEVELOPER BUILD - radio access on</value>
+  </data>
+  <data name="Dev_NoteTitle" xml:space="preserve">
+    <value>Developer build: radio access on</value>
+  </data>
+  <data name="Dev_Note" xml:space="preserve">
+    <value>In this build only the read-only backup tool reaches the radio ("Back up"; the backup folder is asked for). Install and restore are off. Every radio step needs the owner's approval for that step.</value>
+  </data>
+  <data name="Dev_ChooseFolder" xml:space="preserve">
+    <value>Choose the folder for the backup (developer build)</value>
+  </data>
 </root>

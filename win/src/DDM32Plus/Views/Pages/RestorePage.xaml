@@ -29,8 +29,8 @@
             <TextBlock x:Name="Result" Style="{StaticResource Plain}" />
             <Border x:Name="AccessNote" Style="{StaticResource NextStage}">
                 <StackPanel>
-                    <TextBlock Text="{l:Tr Radio_DisabledTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
-                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Radio_Disabled}" />
+                    <TextBlock x:Name="AccessTitle" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock x:Name="AccessText" Style="{StaticResource Plain}" />
                 </StackPanel>
             </Border>
             <TextBlock x:Name="OwnBackups" Style="{StaticResource Plain}" />

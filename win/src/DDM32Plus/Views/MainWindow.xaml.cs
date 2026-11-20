@@ -40,7 +40,7 @@ public partial class MainWindow : Window
 
     private void RefreshAll()
     {
-        Title = $"{AppInfo.Name} {AppState.ProgramVersion}";
+        Title = $"{AppInfo.Name} {AppState.ProgramVersion}" + (Core.Radio.RadioAccess.IsOn ? Loc.T("Dev_Title") : "");
         MenuTr.IsChecked = Loc.Instance.Language == "tr";
         MenuEn.IsChecked = Loc.Instance.Language == "en";
         StatusCable.Text = Loc.F("Status_Cable", CableScanner.Short(state.Cable, state.Port));

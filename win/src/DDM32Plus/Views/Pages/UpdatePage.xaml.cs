@@ -33,6 +33,9 @@ public partial class UpdatePage : UserControl, IPage
     private List<FirmwareVersion> choices = [];
     private readonly DispatcherTimer countdown = new() { Interval = TimeSpan.FromSeconds(1) };
     private int remaining;
+    private string? lastBackup;
+    private DateTime lastBackupDate;
+    private bool lookedForLast, lookingForLast;
 
     public UpdatePage()
     {
@@ -52,7 +55,6 @@ public partial class UpdatePage : UserControl, IPage
         this.window = window;
         runner = new ToolRunner(Dispatcher);
         FirmwareNote.Text = state.Settings.GetString("installed_firmware") ?? "";
-        AccessNote.Visibility = RadioAccess.Enabled ? Visibility.Collapsed : Visibility.Visible;
     }
 
     public bool Busy => wizard.Running is not null || downloading;
@@ -95,6 +97,8 @@ public partial class UpdatePage : UserControl, IPage
             pages[i].Visibility = i == page ? Visibility.Visible : Visibility.Collapsed;
         }
         var gate = state.DisclaimerAccepted;
+        AccessTitle.Text = Loc.T(RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
+        AccessText.Text = Loc.T(RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
         CableText.Text = CableScanner.Text(state.Cable);
         CableText.Foreground = (System.Windows.Media.Brush)FindResource(state.Cable.State == CableState.Ok ? "Green" : "Red");
         PortCombo.Visibility = state.Cable.Ports.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -110,11 +114,17 @@ public partial class UpdatePage : UserControl, IPage
         PrepContinue.IsEnabled = SelectedPackage() is not null && w.Port is not null && gate && !downloading && w.Running is null;
         BackupButton.IsEnabled = gate && w.CanBackup();
         ExistingButton.IsEnabled = w.Running is null;
+        QuickButton.Visibility = lastBackup is not null ? Visibility.Visible : Visibility.Collapsed;
+        QuickButton.Content = Loc.F("Upd_QuickBackup", lastBackupDate.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture));
+        QuickButton.IsEnabled = gate && w.Running is null;
+        QuickText.Text = lookingForLast ? Loc.T("Upd_QuickLooking") : lastBackup is null ? Loc.T("Upd_QuickNone") : "";
+        NoBackupButton.IsEnabled = gate && UnderstandBox.IsChecked == true && w.Running is null;
         BackupStatus.Text = string.Join("\n", new[] { w.Port is null ? Loc.T("Upd_NoCable") : "", Msg(w.Message) }.Where(x => x.Length > 0));
         RecheckButton.IsEnabled = w.CanDetect();
-        DetectStatus.Text = DetectionText(w.Detection);
-        CheckStatus.Text = PlanText();
-        CheckContinue.IsEnabled = w.Plan == StepState.Ok && w.Running is null;
+        DetectStatus.Text = w.Path == BackupPath.None ? Loc.T("Upd_NoBackupTitle") : DetectionText(w.Detection);
+        CheckStatus.Text = w.Path == BackupPath.None ? Loc.T("Upd_NoBackupCheck")
+            : w.Path == BackupPath.Quick && w.PlanData is not null ? PlanText() + "\n" + Loc.T("Upd_QuickCheck") : PlanText();
+        CheckContinue.IsEnabled = (w.Plan == StepState.Ok || (w.Path == BackupPath.None && w.Backup == StepState.Skipped)) && w.Running is null;
         InstallButton.IsEnabled = gate && w.CanInstall();
         InstallStatus.Text = stepMessage ?? Msg(w.Message);
         ToCheckButton.Visibility = w.Install == StepState.Idle && w.Plan == StepState.Idle && w.InstallResult is not null
@@ -199,6 +209,8 @@ public partial class UpdatePage : UserControl, IPage
     {
         var fv = Selected();
         var lines = new List<string>();
+        if (wizard.Path == BackupPath.None)
+            lines.Add(Loc.T("Upd_NoBackupTitle") + ": " + Loc.T("Upd_NoBackupWarning"));
         if (fv is { IsBeta: true })
             lines.Add(Loc.T("Label_Beta") + ": " + fv.Notes(Loc.Instance.Language));
         if (wizard.Detection is { } d && d["layout"] as string == "stock")
@@ -300,7 +312,16 @@ public partial class UpdatePage : UserControl, IPage
             return;
         var note = FirmwareNote.Text.Trim();
         state.Settings.Save("installed_firmware", note);
-        var outDir = AppPaths.UniqueFolder(state.Paths.Backups, $"dm32-{AppPaths.Today()}");
+        var parent = state.Paths.Backups;
+        if (RadioAccess.IsOn)
+        {
+            // developer build: the backup goes where the owner chooses (to compare it with the Python tool's)
+            var dlg = new Microsoft.Win32.OpenFolderDialog { InitialDirectory = parent, Title = Loc.T("Dev_ChooseFolder") };
+            if (dlg.ShowDialog(Window.GetWindow(this)) != true)
+                return;
+            parent = dlg.FolderName;
+        }
+        var outDir = AppPaths.UniqueFolder(parent, $"dm32-{AppPaths.Today()}");
         wizard.StartBackup(outDir);
         stepMessage = null;
         LogText.Clear();
@@ -308,7 +329,7 @@ public partial class UpdatePage : UserControl, IPage
         Refresh();
         var end = await runner.RunAsync(BackupTool.Run,
             ["--port", wizard.Port!, "--out", outDir, "--installed-firmware", note.Length > 0 ? note : "?", "--wait", "120"],
-            Path.Combine(state.Paths.Backups, $"backup-{Path.GetFileName(outDir)}.log"), OnLine);
+            Path.Combine(parent, $"backup-{Path.GetFileName(outDir)}.log"), OnLine, writes: false);
         EndBanner();
         if (end.AccessOff)
         {
@@ -387,26 +408,31 @@ public partial class UpdatePage : UserControl, IPage
         var pkg = SelectedPackage();
         if (state is null || runner is null || pkg is null || !wizard.CanInstall() || !state.DisclaimerAccepted)
             return;
-        var text = Loc.F("Upd_Confirm", pkg.Version, CheckStatus.Text, Path.GetFileName(wizard.BackupDir), wizard.Port, Loc.T("Disc_Short"));
+        var text = Loc.F("Upd_Confirm", pkg.Version, wizard.Path == BackupPath.None ? Loc.T("Upd_NoBackupWarning") : CheckStatus.Text,
+            wizard.BackupDir is null ? "-" : Path.GetFileName(wizard.BackupDir), wizard.Port, Loc.T("Disc_Short"));
         if (MessageBox.Show(Window.GetWindow(this)!, text, Loc.T("Upd_ConfirmTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning,
                 MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
+        // the install without backup asks a second time
+        if (wizard.Path == BackupPath.None && MessageBox.Show(Window.GetWindow(this)!, Loc.F("Upd_NoBackupSure", Loc.T("Disc_Short")),
+                Loc.T("Upd_NoBackupSureTitle"), MessageBoxButton.YesNo, MessageBoxImage.Stop, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
         installDir = AppPaths.UniqueFolder(state.Paths.Backups, $"install-{AppPaths.Today()}");
-        var mode = wizard.Mode!;
+        var (toolName, argv) = wizard.InstallCommand(pkg.Folder, installDir);
+        var path = wizard.Path;
         wizard.StartInstall();
         stepMessage = null;
         LogText.Clear();
         InstallProgress.Value = 0;
         Refresh();
-        List<string> argv = ["--port", wizard.Port!, "--backup", wizard.BackupDir!, "--plus", pkg.Folder, "--out", installDir, "--wait", "600"];
-        if (mode == "install_plus_from_stock")
-            argv.Add("--from-stock");
-        var end = await runner.RunAsync(InstallTool.Run, argv, installDir + ".log", OnLine);
+        Action<IReadOnlyList<string>, ToolContext> tool = toolName == "fast_install" ? FastInstallTool.Run : InstallTool.Run;
+        var end = await runner.RunAsync(tool, argv, installDir + ".log", OnLine, writes: true);
         EndBanner();
         if (end.AccessOff)
         {
             wizard.InstallFinished(new StepResult(false, false, false, Loc.T("Radio_DisabledTitle")));
-            MessageBox.Show(Window.GetWindow(this)!, Loc.T("Radio_Disabled"), Loc.T("Radio_DisabledTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Window.GetWindow(this)!, Loc.T(RadioAccess.IsOn ? "Radio_WritesDisabled" : "Radio_Disabled"),
+                Loc.T("Radio_DisabledTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else
         {
@@ -415,13 +441,14 @@ public partial class UpdatePage : UserControl, IPage
             if (result.Passed)
             {
                 state.Settings.Save("installed_sha256", pkg.Sha256);
-                state.Settings.Save("restore_previous_backup", wizard.BackupDir);
+                if (path != BackupPath.None)
+                    state.Settings.Save("restore_previous_backup", wizard.BackupDir);
                 state.Settings.Save("installed_firmware", $"DDM32 Plus {pkg.Version}");
                 state.NotifyChanged();
                 Show(Done);
                 return;
             }
-            if (result.WritesStarted)
+            if (result.WritesStarted && path != BackupPath.None)
                 state.Settings.Save("restore_previous_backup", wizard.BackupDir);
         }
         Refresh();
@@ -431,6 +458,61 @@ public partial class UpdatePage : UserControl, IPage
 
     private void OnToRestore(object sender, RoutedEventArgs e) => window?.OpenPage("restore");
 
+    // --- the faster paths (over an installed DDM32 Plus only) ----------------------------------------------------
+    /// <summary>The newest verified backup (this program's and the Python program's) that holds DDM32 Plus: offered
+    /// for the quick update. The tool checks live that the radio is the same before it writes.</summary>
+    private async Task FindLastBackup()
+    {
+        if (state is null || lookedForLast || lookingForLast)
+            return;
+        lookingForLast = true;
+        Refresh();
+        var roots = new List<string> { state.Paths.Backups };
+        roots.AddRange(state.PythonData.Select(d => d.Backups));
+        var found = await Task.Run(() =>
+        {
+            var cands = roots.Where(Directory.Exists).SelectMany(Directory.GetDirectories)
+                .Where(AppPaths.IsVerifiedBackup).OrderByDescending(Directory.GetLastWriteTime).Take(6);
+            foreach (var c in cands)
+            {
+                try
+                {
+                    if (Wizard.IsDdm32(FileSteps.DetectBackup(c, Codec.Dm32)))
+                        return c;
+                }
+                catch (Exception e) when (e is ToolError or IOException or UnauthorizedAccessException or System.Text.Json.JsonException or KeyNotFoundException)
+                {
+                }
+            }
+            return null;
+        });
+        lastBackup = found;
+        if (found is not null)
+            lastBackupDate = Directory.GetLastWriteTime(found);
+        lookingForLast = false;
+        lookedForLast = true;
+        Refresh();
+    }
+
+    private async void OnQuickBackup(object sender, RoutedEventArgs e)
+    {
+        if (lastBackup is null || wizard.Running is not null)
+            return;
+        wizard.UseQuickBackup(lastBackup);
+        await DetectAndPlan();
+        Show(Check);
+    }
+
+    private void OnUnderstand(object sender, RoutedEventArgs e) => Refresh();
+
+    private void OnNoBackup(object sender, RoutedEventArgs e)
+    {
+        if (UnderstandBox.IsChecked != true || wizard.Running is not null)
+            return;
+        wizard.ChooseNoBackup(true);
+        Show(Check);
+    }
+
     // --- navigation --------------------------------------------------------------------------------------------------
     private void Show(int index)
     {
@@ -438,6 +520,8 @@ public partial class UpdatePage : UserControl, IPage
             return;
         page = index;
         Refresh();
+        if (index == BackupStep)
+            _ = FindLastBackup();
     }
 
     private void OnBack(object sender, RoutedEventArgs e)

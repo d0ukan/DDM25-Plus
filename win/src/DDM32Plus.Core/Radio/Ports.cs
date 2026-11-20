@@ -99,6 +99,9 @@ public static class RadioAccess
     public sealed class DisabledException() : InvalidOperationException(
         "Radio access is switched off in this build: no serial port is opened (RadioAccess.Enabled = false)");
 
+    /// <summary>Enabled, read at run time (for the pages: no unreachable-code warning in either build).</summary>
+    public static bool IsOn => Enabled;
+
 #if DDM32_RADIO_WRITES
     public const bool WritesEnabled = Enabled;
 #else

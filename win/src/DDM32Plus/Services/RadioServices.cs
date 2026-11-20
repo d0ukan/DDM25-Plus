@@ -64,8 +64,10 @@ public sealed class ToolRunner(Dispatcher dispatcher)
 {
     public bool Busy { get; private set; }
 
+    /// <param name="writes">The tool writes to the radio (install, restore): its port comes from
+    /// RadioAccess.WriteFactory, off even in the developer build.</param>
     public async Task<RunEnd> RunAsync(Action<IReadOnlyList<string>, ToolContext> tool, List<string> argv, string logPath,
-        Action<string> line)
+        Action<string> line, bool writes)
     {
         Busy = true;
         try
@@ -85,7 +87,7 @@ public sealed class ToolRunner(Dispatcher dispatcher)
                     dispatcher.BeginInvoke(() => line(l));
                 }
             }
-            var ctx = new ToolContext { Print = Print, Serial = RadioAccess.Factory, Codec = Codec.Dm32 };
+            var ctx = new ToolContext { Print = Print, Serial = writes ? RadioAccess.WriteFactory : RadioAccess.Factory, Codec = Codec.Dm32 };
             return await Task.Run(() =>
             {
                 try

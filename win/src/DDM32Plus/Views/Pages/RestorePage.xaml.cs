@@ -40,7 +40,7 @@ public partial class RestorePage : UserControl, IPage
     {
         this.state = state;
         runner = new ToolRunner(Dispatcher);
-        AccessNote.Visibility = RadioAccess.Enabled ? Visibility.Collapsed : Visibility.Visible;
+
     }
 
     public bool Busy => flow.Running is not null;
@@ -54,6 +54,8 @@ public partial class RestorePage : UserControl, IPage
         if (flow.Running != "restore")
             flow.Port = state.Port;
         CableText.Text = CableScanner.Text(state.Cable);
+        AccessTitle.Text = Loc.T(RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
+        AccessText.Text = Loc.T(RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
         var free = flow.Running is null;
         PreviousButton.IsEnabled = StockButton.IsEnabled = OtherButton.IsEnabled = free;
         RestoreButton.IsEnabled = flow.CanRestore() && state.DisclaimerAccepted;
@@ -174,13 +176,14 @@ public partial class RestorePage : UserControl, IPage
         Refresh();
         List<string> argv = ["--port", flow.Port!, "--backup", flow.BackupDir!, "--out", outDir, "--wait", "600", .. tool.Args];
         Action<IReadOnlyList<string>, ToolContext> run = tool.Tool == "install_firstboot" ? RestoreStockTool.Run : InstallTool.Run;
-        var end = await runner.RunAsync(run, argv, outDir + ".log", OnLine);
+        var end = await runner.RunAsync(run, argv, outDir + ".log", OnLine, writes: true);
         countdown.Stop();
         Banner.Visibility = Visibility.Collapsed;
         if (end.AccessOff)
         {
             flow.RestoreFinished(new StepResult(false, false, false, Loc.T("Radio_DisabledTitle")));
-            MessageBox.Show(Window.GetWindow(this)!, Loc.T("Radio_Disabled"), Loc.T("Radio_DisabledTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Window.GetWindow(this)!, Loc.T(RadioAccess.IsOn ? "Radio_WritesDisabled" : "Radio_Disabled"),
+                Loc.T("Radio_DisabledTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else
         {

@@ -3,7 +3,11 @@ using System.Text.Json;
 
 namespace DDM32Plus.Core.Radio;
 
-public enum StepState { Idle, Running, Ok, Failed, Used, Stale }
+public enum StepState { Idle, Running, Ok, Failed, Used, Stale, Skipped }
+
+/// <summary>Where the install's backup comes from: a new one (the default), an earlier one of the same radio (quick
+/// update), or none (install without backup). The last two only over an installed DDM32 Plus.</summary>
+public enum BackupPath { Normal, Quick, None }
 
 /// <summary>How a radio step ended, read from what the tool left (pc/ddm32_app/parsers.py).</summary>
 public sealed record StepResult(bool Passed, bool WritesStarted, bool Timeout, string Error)
@@ -77,6 +81,10 @@ public sealed class Wizard
     public bool Locked { get; private set; }
     public string? Running { get; private set; }
     public (string Key, object?[] Args) Message { get; private set; } = ("", []);
+    public BackupPath Path { get; private set; } = BackupPath.Normal;
+
+    /// <summary>The "I understand" box and the second confirmation of the install without backup.</summary>
+    public bool RiskAccepted { get; private set; }
 
     private static readonly Dictionary<string, string> Modes = new() { ["over_classic"] = "install_plus", ["from_stock"] = "install_plus_from_stock" };
 
@@ -111,28 +119,78 @@ public sealed class Wizard
         get
         {
             var d = Detection;
+            if (Path == BackupPath.None)
+                return "install_plus_no_backup";
             if (DetectState != StepState.Ok || d is null || d["supported"] is not true)
                 return null;
+            if (Path == BackupPath.Quick)
+                return d["layout"] as string == "classic" && d["firmware"] as string == "ddm32" ? "install_plus_quick" : null;
             return d["install_mode"] is string m && Modes.TryGetValue(m, out var mode) ? mode : null;
         }
     }
 
     public bool CanBackup() => Running is null && Port is not null;
 
-    public bool CanDetect() => Running is null && Backup == StepState.Ok && !Locked;
+    public bool CanDetect() => Running is null && Backup == StepState.Ok && Path != BackupPath.None && !Locked;
 
     public bool CanPlan() => Running is null && Backup == StepState.Ok && DetectState == StepState.Ok && Mode is not null &&
                              !Locked && Install != StepState.Ok && Package is { Installable: true };
 
-    public bool CanInstall() => Running is null && Plan == StepState.Ok && Port is not null && !Locked &&
-                                Install == StepState.Idle && Package is { Installable: true } &&
-                                PlanKey == (BackupDir!, Package.Sha256, Mode!);
+    public bool CanInstall() => Path == BackupPath.None
+        ? Running is null && Backup == StepState.Skipped && RiskAccepted && Port is not null && !Locked &&
+          Install == StepState.Idle && Package is { Installable: true }
+        : Running is null && Plan == StepState.Ok && Port is not null && !Locked &&
+          Install == StepState.Idle && Package is { Installable: true } &&
+          PlanKey == (BackupDir!, Package.Sha256, Mode!);
+
+    /// <summary>The faster paths are for an update over an installed DDM32 Plus only.</summary>
+    public static bool IsDdm32(PyDict? d) => d is not null && d["layout"] as string == "classic" && d["firmware"] as string == "ddm32";
+
+    /// <summary>(A) quick update: an earlier verified backup of this radio (checked live by the tool before writing).</summary>
+    public void UseQuickBackup(string backupDir)
+    {
+        UseExistingBackup(backupDir);
+        Path = BackupPath.Quick;
+        Message = ("Wiz_QuickChosen", []);
+    }
+
+    /// <summary>(B) install without backup: only with the risk accepted ("I understand").</summary>
+    public void ChooseNoBackup(bool understood)
+    {
+        if (Running is not null)
+            throw new InvalidOperationException("busy");
+        if (!understood)
+            throw new InvalidOperationException("the risk of an install without backup must be accepted first");
+        (Backup, BackupDir, BackupExisting) = (StepState.Skipped, null, false);
+        (DetectState, Detection) = (StepState.Idle, null);
+        Locked = false;
+        ResetPlan();
+        (Install, InstallResult) = (StepState.Idle, null);
+        Path = BackupPath.None;
+        RiskAccepted = true;
+        Message = ("Wiz_NoBackupChosen", []);
+    }
+
+    /// <summary>(tool, arguments) of the install for the chosen path: install_plus (normal, from stock) or the
+    /// fast install tool (quick, no backup).</summary>
+    public (string Tool, List<string> Args) InstallCommand(string plusFolder, string outDir)
+    {
+        var mode = Mode ?? throw new InvalidOperationException("no install mode");
+        return mode switch
+        {
+            "install_plus_quick" => ("fast_install", ["--port", Port!, "--quick", "--backup", BackupDir!, "--plus", plusFolder, "--out", outDir, "--wait", "600"]),
+            "install_plus_no_backup" => ("fast_install", ["--port", Port!, "--no-backup", "--plus", plusFolder, "--out", outDir, "--wait", "600"]),
+            "install_plus_from_stock" => ("install_plus", ["--port", Port!, "--backup", BackupDir!, "--plus", plusFolder, "--out", outDir, "--wait", "600", "--from-stock"]),
+            _ => ("install_plus", ["--port", Port!, "--backup", BackupDir!, "--plus", plusFolder, "--out", outDir, "--wait", "600"]),
+        };
+    }
 
     public void StartBackup(string backupDir)
     {
         if (!CanBackup())
             throw new InvalidOperationException("backup not allowed now");
         Running = "backup";
+        (Path, RiskAccepted) = (BackupPath.Normal, false);
         (Backup, BackupDir, BackupExisting) = (StepState.Running, backupDir, false);
         (DetectState, Detection) = (StepState.Idle, null);
         ResetPlan();
@@ -160,6 +218,7 @@ public sealed class Wizard
     {
         if (Running is not null)
             throw new InvalidOperationException("busy");
+        (Path, RiskAccepted) = (BackupPath.Normal, false);
         (Backup, BackupDir, BackupExisting) = (StepState.Ok, backupDir, true);
         (DetectState, Detection) = (StepState.Idle, null);
         Locked = false;
@@ -183,7 +242,8 @@ public sealed class Wizard
         if (detection is not null)
         {
             (DetectState, Detection) = (StepState.Ok, detection);
-            Message = detection["supported"] is true ? ("", []) : ("Wiz_Unsupported", [detection["reason"] as string ?? ""]);
+            Message = detection["supported"] is not true ? ("Wiz_Unsupported", [detection["reason"] as string ?? ""])
+                : Path == BackupPath.Quick && !IsDdm32(detection) ? ("Wiz_QuickNeedsDdm32", []) : ("", []);
         }
         else
         {
@@ -242,7 +302,7 @@ public sealed class Wizard
         {
             Install = StepState.Failed;
             Locked = true;
-            Message = ("Wiz_InstallStoppedAfterWrites", [result.Error]);
+            Message = (Path == BackupPath.None ? "Wiz_NoBackupStoppedAfterWrites" : "Wiz_InstallStoppedAfterWrites", [result.Error]);
         }
         else
         {
@@ -372,6 +432,8 @@ public static class FileSteps
     /// <summary>The plan install_plus.py --plan-only prints for this backup and release.</summary>
     public static PyDict Plan(string mode, string backup, string plus, string? keyHex, Codec codec)
     {
+        if (mode == "install_plus_quick")
+            return FastInstallTool.QuickPlan(backup, plus, keyHex, codec).Plan;
         if (mode == "install_plus_from_stock")
         {
             var (o, t, _, prof) = InstallPlan.StockInputs(backup, plus, keyHex, codec);

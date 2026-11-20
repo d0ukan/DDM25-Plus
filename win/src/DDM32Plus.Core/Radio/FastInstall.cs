@@ -45,6 +45,17 @@ public static class FastInstallTool
         return (basis, target, tag);
     }
 
+    /// <summary>(A)'s images and the plan it prints (files only; also what the wizard's check step shows).</summary>
+    public static (byte[] Basis, byte[] Target, PyDict Plan) QuickPlan(string backup, string plus, string? keyHex, Codec codec)
+    {
+        var (basis, target, tag) = QuickInputs(backup, plus, keyHex, codec);
+        UnitImage.BackupJedec(backup);
+        var plan = InstallPlan.MakePlan("install_plus_quick", basis, target, tag);
+        plan["backup"] = "reused";
+        plan["identity_checked_live"] = new List<object?> { "chip_ids", "boot_area", "codec_slot" };
+        return (basis, target, plan);
+    }
+
     /// <summary>--port P --plus R --out NEWDIR (--quick --backup B | --no-backup) [--wait 1..600] [--plan-only]</summary>
     public static void Run(IReadOnlyList<string> argv, ToolContext ctx)
     {
@@ -67,11 +78,8 @@ public static class FastInstallTool
         if (quick)
         {
             var backup = args.Get("--backup")!;
-            (basis, target, var tag) = QuickInputs(backup, plus, ctx.ReleaseKeyHex, ctx.Codec);
+            (basis, target, plan) = QuickPlan(backup, plus, ctx.ReleaseKeyHex, ctx.Codec);
             expectedChips = UnitImage.BackupJedec(backup);
-            plan = InstallPlan.MakePlan("install_plus_quick", basis, target, tag);
-            plan["backup"] = "reused";
-            plan["identity_checked_live"] = new List<object?> { "chip_ids", "boot_area", "codec_slot" };
             ctx.Print(PyJson.Dumps(plan));
             if (args.Has("--plan-only"))
                 return;
