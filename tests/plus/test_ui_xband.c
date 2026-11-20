@@ -1,0 +1,381 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* DDM32 Plus Tools > Cross-band (core/ui/ui_xband.c, docs/plus.md "Cross-band store and forward") through the real UI
+ * in upstream's simulator, on the DM-32UV's display class (240 x 320, insets 10 x 5, key map M), in English and in
+ * Turkish, with the real engine (core/radio/xband.c) driven by the test as the radio core would drive it. Covers the
+ * form (its rows, frequencies typed, the steps), every refusal before a start (PMR446, a repeater segment, a repeater
+ * of the list, A = B, outside the amateur bands, FM and P25, no callsign), the picker (a zone's channels, a repeater
+ * channel refused, a DMR channel bringing its colour code and slot, Left / Right another zone), the attended-operation
+ * question (Back: nothing starts; OK: it starts, Home), Home while it runs (CROSS in the status strip, the relay's
+ * phase and the over's length on the bottom line), the lock (every key refused but Back, which stops it), and a
+ * session that ends by itself (no memory). Each case runs in a child process (the screens' static state starts
+ * over). */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include "sim/ui_sim.h"
+#include "hal_time.h"
+#include "ui/ui_app.h"
+#include "ui/ui_nav.h"
+#include "ui/i18n.h"
+#include "ui/rpt.h"
+#include "radio/xband.h"
+#include "codeplug/codeplug.h"
+
+/* Tools > Repeaters' table: one repeater outside the band plan's segments (430.400, input 432.000) */
+#define P(la, lo) (int32_t)((la) * 1e5 + 0.5), (int32_t)((lo) * 1e5 + 0.5)
+const rpt_entry_t rpt_table[] = {
+	{ P(39.93, 32.86), 430400000, 1280, 885, RPT_FM, 0, "TA2RAK", "Ankara", 6 },
+};
+const rpt_info_t rpt_info = { sizeof rpt_table / sizeof rpt_table[0], 0, "2026-11-20", "test" };
+
+/* --- The radio task's side, faked (and what Tools > Repeaters asks of it: not used here) --- */
+bool aprs_position_now(int32_t *lat, int32_t *lon, uint32_t *err_m, bool *dmr_gps)
+{
+	(void)lat, (void)lon, (void)err_m, (void)dmr_gps;
+	return false;
+}
+void radio_req_mode(uint8_t mode) { (void)mode; }
+void radio_req_dmr_color_code(uint8_t cc) { (void)cc; }
+void radio_req_dmr_timeslot(uint8_t ts) { (void)ts; }
+static char radio_name[CODEPLUG_NAME_LEN + 1] = "TA2DOU";
+void codeplug_radio_name(char out[CODEPLUG_NAME_LEN + 1])
+{
+	memcpy(out, radio_name, sizeof radio_name);
+}
+static int req_on, req_off;
+void radio_req_xband(bool on)
+{
+	if (on)
+		req_on++;
+	else
+		req_off++;
+}
+
+/* The engine as the radio core drives it */
+static int tunes, keys;
+static uint8_t tuned;
+static bool keyed;
+static void io_tune(uint8_t side) { tunes++; tuned = side; }
+static bool io_key(uint8_t side, uint32_t dst, bool group) { (void)side, (void)dst, (void)group; keys++; keyed = true; return true; }
+static void io_unkey(void) { keyed = false; }
+static bool io_cw(uint8_t side) { (void)side; return false; }
+static void io_beep(uint8_t what) { (void)what; }
+static const xband_io_t io = { io_tune, io_key, io_unkey, io_cw, io_beep };
+static uint8_t mem[17104];
+static void engine_take(bool memory)
+{
+	uint8_t *seg[1] = { mem };
+	size_t len[1] = { sizeof mem };
+	if (!xband_begin(hal_millis()))
+		return;
+	xband_memory(seg, len, memory ? 1 : 0, hal_millis());
+}
+static void engine_poll(void)
+{
+	xband_in_t in = { .tx = keyed };
+	xband_poll(&io, &in, hal_millis());
+}
+static void ok_run(const char *script);
+/* The radio core polls every 25 ms: the engine goes between A and B until it listens on side */
+static void engine_to_side(uint8_t side)
+{
+	xband_view_t v;
+	for (int i = 0; i < 200; i++) {
+		engine_poll();
+		xband_view(&v);
+		if (v.phase == XB_P_LISTEN && v.side == side)
+			return;
+		ok_run("wait:25");
+	}
+}
+
+/* --- The harness --- */
+static int fails;
+static const char *name;
+static bool turkish;
+#define T(en, trk) (turkish ? (trk) : (en))
+
+static void ok_run(const char *script)
+{
+	char err[300];
+	if (!sim_run(script, err, sizeof err)) {
+		printf("FAIL %s (%s): %s: %s\n", name, turkish ? "tr" : "en", script, err);
+		fails++;
+	}
+}
+
+static void expect(const char *e)
+{
+	char buf[500], *o = buf;
+	while (*e && o < buf + sizeof buf - 16) {
+		while (*e == ' ')
+			e++;
+		if (!*e)
+			break;
+		memcpy(o, "expect:", 7);
+		o += 7;
+		while (*e && *e != ' ' && o < buf + sizeof buf - 2)
+			*o++ = *e++;
+		*o++ = ' ';
+	}
+	*o = 0;
+	ok_run(buf);
+}
+
+/* key=the text in the language in use (spaces as _), as the screen has it */
+static void expect_tr(const char *key, const char *en)
+{
+	char buf[160];
+	int n = snprintf(buf, sizeof buf, "%s=%s", key, tr(en));
+	for (int i = 0; i < n && i < (int)sizeof buf; i++)
+		if (buf[i] == ' ')
+			buf[i] = '_';
+	expect(buf);
+}
+
+static void check(bool c, const char *what)
+{
+	if (!c) {
+		printf("FAIL %s (%s): %s\n", name, turkish ? "tr" : "en", what);
+		fails++;
+	}
+}
+
+static void layout(void)
+{
+	char issues[SIM_LAYOUT_MAX][160];
+	int n = sim_layout_issues(issues, SIM_LAYOUT_MAX);
+	for (int k = 0; k < n; k++)
+		printf("FAIL %s (%s): layout: %s\n", name, turkish ? "tr" : "en", issues[k]);
+	fails += n != 0;
+}
+
+static void start(const char *n)
+{
+	name = n;
+	sim_reset(sim_geom_find("240x320i10x5"), SIM_MAP_M);
+	const char *shots = getenv("XBAND_SHOTS");	/* a directory: the pages as PNG files */
+	if (shots != NULL)
+		sim_set_shot_dir(shots, turkish ? "tr-" : "en-");
+	if (turkish && !lang_set(lang_find('t' << 8 | 'r'))) {
+		printf("FAIL %s: no Turkish in this build\n", name);
+		fails++;
+	}
+	ok_run("wait:100");
+	/* Tools > Cross-band, found by its (translated) name */
+	ui_push(SCR_TOOLS, 0);
+	ok_run("wait:100");
+	const char *want = tr("Cross-band");
+	for (int i = 0; i < 40 && strcmp(ui_app_focus_label(), want) != 0; i++)
+		ok_run("down");
+	check(strcmp(ui_app_focus_label(), want) == 0, "Tools has Cross-band");
+	ok_run("ok wait:200");
+	expect("screen=xband");
+}
+
+/* A valid pair on the form; then Start (the 7th row) */
+static void pair(uint32_t a, uint32_t b)
+{
+	xband_req_t *r = xband_req();
+	r->hz[0] = a;
+	r->hz[1] = b;
+	r->mode = XB_MODE_DMR;
+}
+static void press_start(void)
+{
+	ok_run("up up up up up up up down down down down down down ok wait:100");
+}
+
+/* --- The cases --- */
+
+static void form(void)
+{
+	start("the form");
+	expect("shows=A shows=B shows=DMR");
+	expect_tr("shows", "Color code");
+	expect_tr("shows", "Start");
+	expect_tr("shows", "Low");
+	layout();
+	ok_run("shot:xband-form");
+	/* A typed (kHz), B typed with its 100 Hz digit */
+	ok_run("1 4 5 5 0 0 down 4 3 3 5 1 2 5 down");
+	expect("shows=145.500 shows=433.5125");
+	check(xband_req()->hz[0] == 145500000 && xband_req()->hz[1] == 433512500, "typed");
+	/* the steps: mode, colour code, slot, power */
+	ok_run("right");
+	expect("shows=FM");
+	ok_run("left down right right down right down right");
+	check(xband_req()->mode == XB_MODE_DMR && xband_req()->cc == 3 && xband_req()->ts == 2 && xband_req()->power == 2,
+	      "mode, CC 3, TS 2, Mid");
+	expect_tr("shows", "Mid");
+	layout();
+}
+
+static void refusals(void)
+{
+	start("refusals");
+	static const struct { uint32_t b; const char *why; } t[] = {
+		{ 446006250, "PMR446: no repeaters allowed" },
+		{ 439000000, "Repeater frequency" },
+		{ 145600000, "Repeater frequency" },
+		{ 432000000, "Repeater frequency" },	/* the list's repeater input */
+		{ 430400000, "Repeater frequency" },	/* and its output */
+		{ 435500000, "Satellite segment" },
+		{ 144800000, "APRS frequency" },
+		{ 145500000, "A and B are the same" },
+		{ 162550000, "Not an amateur band" },
+	};
+	for (unsigned i = 0; i < sizeof t / sizeof t[0]; i++) {
+		pair(145500000, t[i].b);
+		press_start();
+		expect("screen=xband");
+		expect_tr("toast", t[i].why);
+		ok_run("wait:3000");
+	}
+	pair(145500000, 433500000);
+	xband_req()->mode = XB_MODE_FM;
+	press_start();
+	expect_tr("toast", "DMR only for now");
+	ok_run("wait:3000");
+	xband_req()->mode = XB_MODE_P25;
+	press_start();
+	expect_tr("toast", "DMR only for now");
+	ok_run("wait:3000");
+	xband_req()->mode = XB_MODE_DMR;
+	strcpy(radio_name, "Dogan");
+	press_start();
+	expect_tr("toast", "Set your callsign (the radio name) in qdmr.");
+	check(!xband_on() && req_on == 0, "nothing started");
+	layout();
+}
+
+static void picker(void)
+{
+	start("the picker");
+	ok_run("ok wait:200");	/* A's row */
+	expect("screen=xband-pick shows=Base_repeater shows=146.940");
+	layout();
+	ok_run("shot:xband-pick");
+	ok_run("ok wait:100");	/* a repeater (RX and TX differ) */
+	expect("screen=xband-pick");
+	expect_tr("toast", "Repeater channel (RX and TX differ)");
+	ok_run("right right wait:100");	/* zone 3, the hotspots */
+	expect("shows=HS_433.5");
+	ok_run("down ok wait:200");
+	expect("screen=xband shows=433.500");
+	check(xband_req()->hz[0] == 433500000 && xband_req()->cc == 1 && xband_req()->ts == 1, "A from the channel");
+	ok_run("down ok wait:200");	/* B's row: a 2 m DMR channel of the same zone */
+	ok_run("right right down down down down down down down ok wait:200");	/* 36 DMR SPX 5 */
+	check(xband_req()->hz[1] == 145510000, "B from the channel");
+	ok_run("back");
+}
+
+static void question_and_run(void)
+{
+	start("the question, the run");
+	pair(145500000, 433500000);
+	press_start();
+	expect(T("shows=Attended", "shows=Yaln"));
+	layout();
+	ok_run("shot:xband-question");
+	ok_run("back wait:100");
+	expect("screen=xband");
+	check(!xband_on() && req_on == 0, "Back: nothing starts");
+	press_start();
+	ok_run("ok wait:200");
+	expect("screen=home shows=CROSS");
+	expect_tr("toast", "Cross-band on: Back stops");
+	check(xband_on() && req_on == 1, "started");
+	/* the radio core takes it: listening on A */
+	engine_take(true);
+	engine_poll();
+	ok_run("wait:4000");	/* the toast goes; the bottom line says what the relay does */
+	char s[64];
+	snprintf(s, sizeof s, "%s A", tr("Listen"));
+	expect_tr("shows", s);
+	layout();
+	ok_run("shot:xband-home");
+	/* an over on A: recorded, 2 s */
+	engine_to_side(0);
+	xband_rx_begin(3101234, 91, true, false);
+	for (int i = 0; i < 100; i++)
+		xband_rx_frame((const uint8_t[XB_FRAME_BYTES]){ 1 });
+	engine_poll();
+	ok_run("wait:300");
+	snprintf(s, sizeof s, "%s A 0:02", tr("Record"));
+	expect_tr("shows", s);
+	layout();
+	/* sent on B */
+	xband_rx_end();
+	engine_poll();
+	ok_run("wait:300");
+	snprintf(s, sizeof s, "%s B 0:02", tr("Send"));
+	expect_tr("shows", s);
+	check(keys == 1 && tuned == 1, "sending on B");
+	layout();
+	ok_run("shot:xband-sending");
+	/* the lock: every key refused, nothing moves */
+	ok_run("up wait:100");
+	expect("screen=home");
+	expect_tr("toast", "Cross-band on: Back stops");
+	ok_run("ok wait:100 1 wait:100 ctx wait:100 quick wait:100");
+	expect("screen=home");	/* (OK on Home opens the menu once the lock is gone, below) */
+	check(xband_on(), "still on");
+	/* Back stops it */
+	ok_run("back wait:100");
+	expect_tr("toast", "Cross-band off");
+	engine_poll();
+	ok_run("wait:300");
+	check(!xband_on() && req_off == 1, "stopped");
+	expect("screen=home hides=CROSS");
+	/* the keys work again: OK opens the menu */
+	ok_run("ok wait:200");
+	expect("screen=hub");
+}
+
+static void ended_itself(void)
+{
+	start("no memory");
+	pair(145500000, 433500000);
+	press_start();
+	ok_run("ok wait:200");
+	check(xband_on(), "started");
+	engine_take(false);
+	engine_poll();
+	ok_run("wait:300");
+	check(!xband_on(), "ended");
+	expect_tr("toast", "Cross-band off: no memory");
+	expect("hides=CROSS");
+}
+
+typedef void (*case_fn)(void);
+
+int main(void)
+{
+	static const case_fn all[] = { form, refusals, picker, question_and_run, ended_itself };
+	int bad = 0, run = 0;
+	for (int lang = 0; lang < 2; lang++) {
+		for (unsigned i = 0; i < sizeof all / sizeof all[0]; i++) {
+			fflush(stdout);
+			pid_t pid = fork();
+			if (pid == 0) {
+				turkish = lang == 1;
+				all[i]();
+				fflush(stdout);
+				_exit(fails != 0);
+			}
+			int st = 0;
+			waitpid(pid, &st, 0);
+			run++;
+			if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+				bad++;
+				if (!WIFEXITED(st))
+					printf("FAIL case %u (%s): crashed\n", i, lang ? "tr" : "en");
+			}
+		}
+	}
+	printf("Cross-band screens: %d flows (English and Turkish), %d failed\n", run, bad);
+	return bad != 0;
+}

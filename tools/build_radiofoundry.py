@@ -716,6 +716,7 @@ def main():
         "CONFIG_SPECTRUM_WF3D="+("y" if args.plus else "n"),	# DDM32 Plus 3D waterfall (item 45, tools/plus_air.py)
         "CONFIG_DATAPACK="+("y" if args.plus else "n"),	# DDM32 Plus user data packs (docs/r14.md 7)
         "CONFIG_LAST_CALLS="+("y" if args.plus else "n"),	# DDM32 Plus last calls (docs/plus.md, item 43)
+        "CONFIG_XBAND="+("y" if args.plus else "n"),	# DDM32 Plus cross-band store and forward (docs/plus.md, item 46)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:
@@ -781,6 +782,7 @@ def main():
             if args.plus:
                 from tools import plus_dota
                 extra+=plus_dota.STACK_EDGES	# DDM32 Plus DOTA: the session's io calls, the storage job
+                extra+=__import__("tools.plus_xband",fromlist=["x"]).STACK_EDGES	# DDM32 Plus cross-band: its voice wrappers and io
             edges.write_text((UP / "tools/stack_check_edges.txt").read_text()+extra)
             stack_args=[f"STACK_CHECK_ARGS=--edges {edges}"]
         with stack_log.open("w") as f:

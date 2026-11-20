@@ -19,6 +19,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "config.h"
+#if CONFIG_XBAND
+#include "codeplug/codeplug.h"
+#endif
 #if CONFIG_SPECTRUM
 #include "radio/spectrum.h"
 #endif
@@ -51,7 +54,7 @@ typedef struct {
 
 /* Who filled the buffer last */
 enum { UI_SCRATCH_NONE, UI_SCRATCH_SPECTRUM, UI_SCRATCH_DMRS, UI_SCRATCH_P25S, UI_SCRATCH_DMRTK, UI_SCRATCH_P25TK,
-       UI_SCRATCH_MSG, UI_SCRATCH_APRSX };
+       UI_SCRATCH_MSG, UI_SCRATCH_APRSX, UI_SCRATCH_XBAND };
 
 typedef union {
 #if CONFIG_SPECTRUM
@@ -74,6 +77,12 @@ typedef union {
 #endif
 #if CONFIG_APRS_STATION
 	ui_scratch_aprsx_t aprsx;
+#endif
+#if CONFIG_XBAND
+	struct {		/* DDM32 Plus Tools > Cross-band's picker (ui_xband.c): a zone, one of its channels */
+		zone_t z;
+		channel_t ch;
+	} xband;
 #endif
 	uint32_t none;
 } ui_scratch_t;

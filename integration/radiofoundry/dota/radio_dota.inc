@@ -48,7 +48,8 @@ static void dota_beep(uint8_t b)
 static void dota_take(radio_sm_t *sm, uint32_t now_ms)
 {
 	dota_req_t r;
-	if (sm->hotspot || sm->ptt || sm->view.state == RS_TX || !dota_begin(&r, now_ms)) {
+	/* (xband_on: a cross-band session keeps the radio, radio_xband.inc) */
+	if (sm->hotspot || sm->ptt || sm->view.state == RS_TX || xband_on() || !dota_begin(&r, now_ms)) {
 		return;
 	}
 	aprs_rf_abort(sm, now_ms);

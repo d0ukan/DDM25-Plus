@@ -2482,3 +2482,70 @@ call through Recent's own feed, MDC / FleetSync / DTMF through `radio_fmid_logge
 Tools > Last call; the P25 row's replay refused off a P25 channel, stopped while playing, not offered for an older or
 encrypted P25 call; empty list; RAM only; the layout on every page), run by `tools/test_xband.py` from
 `tools/test_classic.py`. Radio rows: `docs/plus-radio-test.md` "Round 14 xband".
+
+## Cross-band store and forward (`CONFIG_XBAND`, ours; branch `r14-xband`, ROADMAP item 46)
+
+**Real-time cross-band is impossible on this radio** (docs/r14.md 46: one FD6818 transceiver with one synthesizer,
+both LNAs off while it transmits). Tools > Cross-band is therefore a store-and-forward relay between two frequencies
+A and B: an over heard on one is recorded whole, then transmitted on the other (A to B and B to A); while nothing is
+heard the receiver goes between A and B, a second on each (held while bursts are heard). **DMR only.**
+
+| Mode | Can | Cannot |
+|---|---|---|
+| DMR | relay whole overs between two simplex frequencies in the amateur bands, the same colour code and slot on both: the over's AMBE+2 air frames are kept as heard (9 bytes a 20 ms frame) and sent again through the call stack's voice source, so the voice is bit for bit what was heard (no decode / encode); sent as a new call from our own DMR ID to the talkgroup (or unit) it was heard for; up to **37.98 s an over** (the memory: 1,899 frames); longer overs are cut with the alert tone and "!" on Home (the 3-minute rule is in the engine too, but the memory always cuts first) | keep the caller's own ID (we transmit, so the call is ours), relay encrypted calls (no clear voice), hear the other side while it sends, catch the start of an over that begins while it listens on the other frequency (up to about a second can be lost: the dwell, then DMR late entry), different colour codes or slots on A and B (one pair of settings) |
+| FM | - | **not built.** As PCM an over needs 16 KB/s: the memory holds 1 s. Through the AMBE codec (the r14 study's idea) it needs the owner's stock codec to encode FM audio, which no host test can run (the owner's condition was "only if it works in host tests"), and the FM audio-to-encoder path has never been measured. Through our own IMBE codec it would need the P25 worker's codec context and FIFO, which are the very memory the recording uses |
+| P25 | - | **not built.** Its frames come through the P25 worker, whose buffers are the recording's memory (both cannot run at once); the worker has no path to transmit stored IMBE frames (its transmitter encodes the microphone live), and without the worker's buffers only the call replay's 4.4 KB (8 s) would be left |
+
+Owner's rules (2026-11-20) and how they are kept:
+
+- **Attended only**: the question "Attended only: stay at the radio while it relays. Start?" before every start.
+- **The screen is locked; only the stop key works**: while a session runs every key but Back is refused with "Cross-band
+  on: Back stops" (`ui_xband_lock`, first in `ui_app_key`: the emergency / SOS key too); Back stops it at once (off the
+  air at once, `dmr_end`). The radio core drops every request but beeps, settings, the volume and power off; PTT gets
+  the deny tone and never keys. DOTA cannot take the radio meanwhile (`radio_dota.inc`), nor APRS beacons, nor a
+  codeplug reload.
+- **A clear CROSS mark**: "CROSS" in the status strip of every screen (warn colour), and Home's bottom line says what the
+  relay does ("Listen A", "Record A 0:12", "Send B 0:12", "CW ID", "!" when cut) whatever Settings says of hints.
+- **Refused frequencies** (`xband_check_hz`, IARU Region 1 band plan): outside 144-146 / 430-440 MHz; PMR446
+  446.000-446.200 MHz (its own refusal: no repeaters there, the radio is not type-approved); the repeater segments
+  (2 m inputs 145.000-145.1875 and outputs 145.600-145.7875, 70 cm inputs 431.050-431.825 and outputs 438.650-439.425,
+  each with half a 12.5 kHz channel around it); the satellite segments (145.800-146.000, 435-438 MHz); APRS 144.800;
+  A = B; any input or output of the repeater list (Tools > Repeaters' table); a channel whose RX and TX differ when
+  picked from a zone; frequencies the radio cannot transmit on.
+- **CW ID every 10 minutes**: the callsign (the radio name, `radio_cwid_callsign`: refused to start without one) in
+  Morse on each frequency transmitted on since the last ID: after the first over, then again once 10 minutes have passed
+  and there was traffic (as the SFR repeater's ID); the CW beacon's keyer (FM carrier, the settings' speed and tone).
+- **At most 3 minutes an over**: cut at 9,000 frames or at the memory's end, whichever comes first (here the memory).
+
+Design: `integration/radiofoundry/xband/` - `xband.c` (portable: the rules, the state machine LISTEN / RECORD / SEND /
+ID, the frame store over up to three memory pieces), `radio_xband.inc` (the radio core: the session channel, the
+voice sink and source wrapped for the session, keying through `ptt_down` so every gate of a user's transmission holds
+- TX inhibit, the battery, the band, the radio's time-out - the CW ID through `cw_begin`, the request filter, the
+restore), `ui_xband.c` (the form, the picker, the question, the lock, Home's line). The memory: the P25 worker's `voice`
+(6,916 B), `fifo` (5,788 B) and the call replay's `rp_buf` (4,400 B), lent while the worker is idle (`p25_lab_lend`;
+the session's DMR channel stops a P25 receive first, 2 s at most, else it ends "no memory") and given back zeroed
+before the user's channel returns (`p25_lab_give_back`); while lent, every worker start refuses. The cost of that: no
+P25 / YSF receive during a session (it is DMR anyway) and the call replay's last P25 call is gone after one.
+Deviations from docs/r14.md: no separate duty limit (the owner's rules name the 3-minute over; the radio's own time-out
+applies to each transmission too); no ID at the very end (the stop must be immediate); the ID on each frequency
+actually used rather than always both.
+
+Cost (public build, `--plus --public --stack-check --verify-rebuild`, on top of last calls): FLASH 812,416 ->
+820,032 B (+7,616, strings and Turkish included), static RAM 209,744 -> 209,904 B (+160; **1,552 B free**: the
+picker's zone and channel share the tool screens' buffer, the session's memory is the P25 worker's, the engine's own
+state is packed); every task's deepest stack path unchanged (UI 196 B, radio 760 B, start 348 B free beyond the margin;
+the stack check follows the wrapped voice sink and source and the engine's io through `plus_xband.STACK_EDGES`).
+Owner build (`--plus`): FLASH 891,192 -> 898,804 B (+7,612; **2,316 B free: below the 11,500 B owner rule**, as
+docs/r14.md foresaw without a reclaim), RAM 209,792 -> 209,952 B (1,504 B free). Both zero warnings, forced rebuild
+identical. Round 14 xband in all (items 43 and 46): public +9,808 B flash / +296 B RAM, owner +9,808 B / +296 B.
+
+Tests: `tests/plus/test_xband.c` (the rules at every segment's edge; an over recorded and sent in order; B to A, a
+private call; the dwell, held by bursts; a key-up and an encrypted call not relayed; a recording whose end never comes;
+the cut at the memory and at 3 minutes, one beep; a refused transmission; one cut short on the air; the CW ID's first
+time, the 10 minutes, a refused ID; the stop on the air, the battery, no memory), `tests/plus/test_xband_radio.inc`
+(the real radio core and DMR call stack on the simulated modem, after upstream's and Classic's radio suites: the
+session channel, PTT refused, requests dropped, a call heard on A sent on B with every voice burst as heard, the
+header to the talkgroup from our ID, the terminator, the CW ID in FM on B and DMR back, the dwell, the stop restoring
+the FM channel and the memory, a refused transmission, a P25 worker that keeps its memory), `tests/plus/test_ui_xband.c`
+(10 flows, English and Turkish: the form, every refusal, the picker, the question, Home while it relays, the lock, the
+stop, an end by itself; the layout). Radio rows: `docs/plus-radio-test.md` "Round 14 xband", XB-*.

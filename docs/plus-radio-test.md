@@ -517,3 +517,18 @@ Last calls (Tools > Last call, docs/plus.md "Last calls"). Receive only: nothing
 | LC-2 | Watch channels 4 (multi-watch on), a call on C, then on A, then on D | the rows start with C, A, D (newest first), each with the caller and the talkgroup |
 | LC-3 | After LC-1, on the P25 channel: OK on the P25 row (marked ">"), then OK again | the call plays again as Tools > Last call did before ("Playing the last call"), the second OK stops it ("Replay stopped"); OK on the DMR row: "No audio kept for this call" |
 | LC-4 | The same station calls twice with 10 s between; then an 8-call burst from several stations | two rows for the first station; the list never holds more than 8, the oldest goes |
+
+Cross-band store and forward (Tools > Cross-band, docs/plus.md "Cross-band store and forward"). **Transmits**: attended
+only, amateur frequencies only, the owner's callsign as the radio name (the CW ID). Needs a DMR radio on A (2 m) and
+one on B (70 cm), or the SDR; an FM radio or the SDR on B to hear the CW ID.
+
+| # | Do | Expect |
+|---|---|---|
+| XB-1 | Tools > Cross-band: A 145500, B 433500 (typed), DMR, CC 1, slot 1, Low, Start | the question "Attended only: stay at the radio while it relays. Start?"; OK: Home with CROSS in the status strip, the bottom line "Listen A  Back", then "Listen B" and back every second |
+| XB-2 | While it runs: Up, Down, OK, a digit, #, the side keys, PTT; the volume knob | each key: "Cross-band on: Back stops", nothing changes; PTT: the deny tone, nothing keyed; the volume follows the knob |
+| XB-3 | Radio 1 on 145.500 (CC 1, TS 1) talks 10 s to TG 9 | the DM-32 plays it; "Record A 0:10"; at its end "Send B 0:10": radio 2 on 433.500 hears the over from the DM-32's DMR ID to TG 9, the voice as radio 1 said it; then the CW ID (the callsign, 20 wpm) on 433.500 in FM; then "Listen B" |
+| XB-4 | Radio 2 answers on 433.500; within 10 minutes a third over; after 10 minutes another one | the answer sent on 145.500; no ID for the second and third overs; after the 10 minutes the CW ID on each frequency it transmitted on since the last ID |
+| XB-5 | Radio 1 talks 45 s | the alert tone and "!" on Home at about 38 s (the memory full); 38 s sent on B, the rest not |
+| XB-6 | Refusals: B 446.00625, 439.000, 145.600, 435.500, 144.800, 145.500 (= A), 162.550; the picker's repeater channel; Mode FM and P25; a radio name that is not a callsign | the toasts "PMR446: no repeaters allowed", "Repeater frequency" (x2), "Satellite segment", "APRS frequency", "A and B are the same", "Not an amateur band", "Repeater channel (RX and TX differ)", "DMR only for now", "Set your callsign ..."; nothing transmits |
+| XB-7 | Back while it sends (XB-3) | off the air at once, "Cross-band off"; the user's channel back (frequency, mode, power) |
+| XB-8 | Start from a P25 channel while it receives; stop after one relay | it starts within 2 s; after the stop the P25 channel receives again; Tools > Last call's P25 replay: nothing kept (the memory came back cleared) |

@@ -766,6 +766,19 @@ def main():
          *(str(APP/'core/radio'/f) for f in ('dota.c','dota_proto.c','dota_rec.c','dota_import.c')),
          str(APP/'core/aprs/ax25.c'),str(APP/'core/aprs/hdlc.c')],cwd=host)
     run([OUT/'test_radio_dota'],cwd=host)
+    # DDM32 Plus cross-band store and forward in the radio core: the same suites with it built in, then a DMR call on A
+    # recorded and sent on B through the real call stack, the CW ID, the lock on requests and PTT, the channel back,
+    # a refused transmission, the P25 worker's memory not lent (tests/plus/test_xband_radio.inc)
+    xbrad=OUT/'radioCoreXband.c'
+    xbrad.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n'+fixture+
+                     '\n#define main classic_radio_main\n#include "'+str(ROOT/'tests/classic/test_radio.inc')+'"\n#undef main\n'
+                     '#include "'+str(ROOT/'tests/plus/test_xband_radio.inc')+'"\n')
+    argv_xb=list(argv_cw)
+    argv_xb[argv_xb.index(str(cwrad))]=str(xbrad)
+    argv_xb[argv_xb.index('-o')+1]=str(OUT/'test_radio_xband')
+    run([*argv_xb,'-DCONFIG_XBAND=1','-I'+str(ROOT/'tests/classic'),'-Wl,--wrap=beep_play',
+         str(APP/'core/radio/xband.c')],cwd=host)
+    run([OUT/'test_radio_xband'],cwd=host)
     command=run(['make','-Bn','uiFlowTest','SANITIZE=1'],cwd=host,capture_output=True,text=True).stdout
     argv=shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))
     argv[argv.index('uiFlowTest.c')]=str(ROOT/'tests/classic/test_ui.c')

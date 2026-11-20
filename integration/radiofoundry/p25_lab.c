@@ -41,6 +41,12 @@
 #endif
 
 static p25_voice voice;
+#if CONFIG_XBAND
+static volatile uint8_t xb_lent;   /* DDM32 Plus cross-band: voice, fifo and rp_buf are lent (p25_lab_lend) */
+#define XB_LENT xb_lent
+#else
+#define XB_LENT 0
+#endif
 #if CONFIG_P25_BENCH || CONFIG_DEV_TX
 static p25_selftest_result result;
 #endif
@@ -644,7 +650,7 @@ static uint32_t live_overflows;
 int p25_lab_live_begin(uint32_t sid)
 {
     taskENTER_CRITICAL();
-    int ok=worker && state!=1 && board.native_mic_route && board.audio &&
+    int ok=worker && state!=1 && !XB_LENT && board.native_mic_route && board.audio &&
            board.audio->start && board.audio->stop;
 #if CONFIG_YSF_TX
     /* DM32 Plus: a YSF channel transmits YSF Voice FR, and only with a callsign (docs/ysf-nxdn-tx.md) */
@@ -673,7 +679,7 @@ void p25_lab_live_key(void)
 int p25_lab_channel_rx(uint32_t hz)
 {
     taskENTER_CRITICAL();
-    int ok=worker && state!=1;
+    int ok=worker && state!=1 && !XB_LENT;
     if (ok) {
         frequency=hz;
 #if CONFIG_P25_CHANNELS
@@ -1254,6 +1260,37 @@ static void run(void *ctx)
 #define P25_WORKER_WORDS 1024 /* RX: static bound 2368 B; >1.5 KiB margin */
 #endif
 #endif
+#if CONFIG_XBAND
+/* DDM32 Plus cross-band (radio/xband.h, docs/plus.md "Cross-band store and forward"): the worker's own memory lent as
+ * plain bytes while it is idle; every start refuses meanwhile (XB_LENT), and nothing else reads it then (the caller
+ * fields Home shows are copies outside voice). Given back zeroed: the state the worker finds at power on, which its
+ * next receive or transmission initializes anyway */
+uint8_t p25_lab_lend(uint8_t *seg[],size_t len[])
+{
+    taskENTER_CRITICAL();
+    int ok=!xb_lent && state!=1;
+    if(ok)xb_lent=1;
+    taskEXIT_CRITICAL();
+    if(!ok)return 0;
+    uint8_t n=0;
+    seg[n]=(uint8_t *)&voice;len[n++]=sizeof voice;
+    seg[n]=(uint8_t *)&fifo;len[n++]=sizeof fifo;
+#if CONFIG_CALL_REPLAY && CONFIG_DEV_TX && CONFIG_P25_CHANNELS
+    rp_request=rp_playing=0;rp_count=rp_head=0;   /* the last call's frames go */
+    seg[n]=&rp_buf[0][0];len[n++]=sizeof rp_buf;
+#endif
+    return n;
+}
+void p25_lab_give_back(void)
+{
+    memset(&voice,0,sizeof voice);
+    memset(&fifo,0,sizeof fifo);
+#if CONFIG_CALL_REPLAY && CONFIG_DEV_TX && CONFIG_P25_CHANNELS
+    memset(rp_buf,0,sizeof rp_buf);rp_count=rp_head=rp_pos=0;
+#endif
+    taskENTER_CRITICAL();xb_lent=0;taskEXIT_CRITICAL();
+}
+#endif
 void p25_lab_start(void)
 {
     if(xTaskCreate(run,"p25-lab",P25_WORKER_WORDS,NULL,3,&worker)!=pdPASS) { worker=NULL;state=4; }
@@ -1338,7 +1375,7 @@ size_t p25_lab_command(const uint8_t *req,uint16_t len,uint8_t *out,size_t cap)
     if((req[0]>=(CONFIG_DEV_TX?2:1) && req[0]<=4) || req[0]==9 || req[0]==12) { out[0]=DL_ST_UNAVAILABLE;return 1; }
 #endif
     taskENTER_CRITICAL();
-    int busy=state==1;
+    int busy=state==1 || XB_LENT;
 #if CONFIG_P25_NATIVE
     busy=busy || native_lab_reserved();
 #endif

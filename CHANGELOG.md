@@ -44,6 +44,11 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   and every watched channel, newest first: the watch letter (A-F), the mode, the caller, the talkgroup, how long ago.
   The newest P25 call still plays again with OK; the other modes keep no audio. **Not tried on the radio yet**
   (docs/plus-radio-test.md, rows LC-*).
+- Cross-band store and forward (Tools > Cross-band), DMR only: an over heard on frequency A is recorded and sent on
+  frequency B (and B to A); both in the amateur bands, never PMR446, a repeater, satellite or APRS frequency. Attended
+  operation only; while it runs the keys are locked (Back stops it) and Home shows CROSS. Up to 38 s an over (the
+  memory; 3 minutes at most), the callsign in CW on each frequency used, then at least every 10 minutes. FM and P25
+  are not possible this way on this radio (docs/plus.md). **Not tried on the radio yet** (rows XB-*).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

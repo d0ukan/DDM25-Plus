@@ -6041,3 +6041,79 @@ msgstr "OK çal  Geri"
 #: core/ui/ui_lastcall.c
 msgid "No audio kept for this call"
 msgstr "Bu çağrının sesi tutulmadı"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band"
+msgstr "Çapraz bant"
+
+#: core/ui/ui_xband.c
+msgid "A and B are the same"
+msgstr "A ile B aynı"
+
+#: core/ui/ui_xband.c
+msgid "PMR446: no repeaters allowed"
+msgstr "PMR446: röle yasak"
+
+#: core/ui/ui_xband.c
+msgid "Not an amateur band"
+msgstr "Amatör bant değil"
+
+#: core/ui/ui_xband.c
+msgid "Repeater frequency"
+msgstr "Röle frekansı"
+
+#: core/ui/ui_xband.c
+msgid "Satellite segment"
+msgstr "Uydu bölümü"
+
+#: core/ui/ui_xband.c
+msgid "DMR only for now"
+msgstr "Şimdilik yalnız DMR"
+
+#: core/ui/ui_xband.c
+msgid "Repeater channel (RX and TX differ)"
+msgstr "Röle kanalı (RX ve TX farklı)"
+
+#: core/ui/ui_xband.c
+msgid "A DOTA transfer runs"
+msgstr "DOTA aktarımı sürüyor"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band on: Back stops"
+msgstr "Çapraz bant açık: Geri durdurur"
+
+#: core/ui/ui_xband.c
+msgid "Start"
+msgstr "Başlat"
+
+#: core/ui/ui_xband.c
+msgid "Attended only: stay at the radio while it relays. Start?"
+msgstr "Yalnızca başında: aktarırken telsizin yanında kalın. Başlasın mı?"
+
+#: core/ui/ui_xband.c
+msgid "OK pick  <> zone  Back"
+msgstr "OK seç  <> bölge  Geri"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off"
+msgstr "Çapraz bant kapalı"
+
+#: core/ui/ui_xband.c
+msgid "Starting"
+msgstr "Başlıyor"
+
+#: core/ui/ui_xband.c
+msgid "Record"
+msgstr "Kayıt"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off: battery low"
+msgstr "Çapraz bant kapalı: pil zayıf"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off: no memory"
+msgstr "Çapraz bant kapalı: bellek yok"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off: refused"
+msgstr "Çapraz bant kapalı: reddedildi"

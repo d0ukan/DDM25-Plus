@@ -80,6 +80,14 @@ typedef struct {
 uint32_t p25_lab_call(p25_lab_call_t *out);
 #endif
 #endif
+#if CONFIG_XBAND
+/* DDM32 Plus cross-band (radio/xband.h): the worker's voice context, audio FIFO and the call replay's frames as plain
+ * memory (up to 3 segments: their addresses and sizes); 0 while the worker runs (or they are lent already). Until they
+ * come back no receive, transmission or bench request starts; given back cleared, as at power on (the call replay's
+ * last call is gone) */
+uint8_t p25_lab_lend(uint8_t *seg[], size_t len[]);
+void p25_lab_give_back(void);
+#endif
 #if CONFIG_CALL_REPLAY
 /* The last P25 call kept for replay: its frames (20 ms each, 0 = none) and who it was; start (1) plays it on the
  * P25 channel in use, 0 stops; replaying: playing or about to */

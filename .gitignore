@@ -555,3 +555,11 @@ __pycache__/
 !/integration/radiofoundry/lastcall/ui_lastcall.h
 !/tests/plus/test_lastcall.c
 !/tests/plus/test_ui_lastcall.c
+!/integration/radiofoundry/xband/xband.c
+!/integration/radiofoundry/xband/xband.h
+!/integration/radiofoundry/xband/radio_xband.inc
+!/integration/radiofoundry/xband/ui_xband.c
+!/integration/radiofoundry/xband/ui_xband.h
+!/tests/plus/test_xband.c
+!/tests/plus/test_xband_radio.inc
+!/tests/plus/test_ui_xband.c
