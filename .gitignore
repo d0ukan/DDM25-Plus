@@ -501,6 +501,10 @@ __pycache__/
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/*.py
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/*.json
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/legacy/*
+!/win/tests/DDM32Plus.Core.Tests/Fixtures/radio/*.json
+!/win/tests/DDM32Plus.Core.Tests/Fixtures/radio/*.json.gz
+!/win/src/DDM32Plus.Core/Radio/Data/ram-monitor.bin
+!/win/src/DDM32Plus.Core/Radio/Data/codec-dm32.json
 !/win/installer/*.iss
 !/win/docs/*.md
 !/win/docs/screenshots/*.png
