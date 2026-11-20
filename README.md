@@ -10,7 +10,7 @@ by **d0ukan · TA2DOU**
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSING.md)
 [![Based on Open25-DM32](https://img.shields.io/badge/based%20on-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
-[![Status: beta, not yet field-tested](https://img.shields.io/badge/status-beta%20%C2%B7%20not%20field--tested-orange)](#status)
+[![Release: v1.0.0-beta.2](https://img.shields.io/badge/release-v1.0.0--beta.2-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.2)
 
 [Türkçe README](README.tr.md)
 
@@ -37,9 +37,11 @@ by **d0ukan · TA2DOU**
 
 ## Status
 
-DDM32 Plus is in **beta**. Every feature below is built and covered by host tests (a simulator of the radio's
-screens, radio core and modems), but **most of it has not yet been tried on a real radio**. The first public
-release will be marked as a pre-release. Radio test notes live in [`docs/plus-radio-test.md`](docs/plus-radio-test.md).
+DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.2](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.2)** (2026-11-20). It was
+installed and checked on the author's radio (boot screen, themes, Home, Marine, map, Large text, multi-watch).
+Every feature below is built and covered by host tests (a simulator of the radio's screens, radio core and
+modems), but **many features have not yet been tried on the air**. Radio test notes live in
+[`docs/plus-radio-test.md`](docs/plus-radio-test.md); changes per release in [CHANGELOG.md](CHANGELOG.md).
 
 ## Where it comes from
 
@@ -110,12 +112,31 @@ The whole interface is translated to Turkish (and remains available in English).
 
 ## Installing
 
-Use the **DDM32 Plus programmer** for Windows (no Python needed): download it from
-[Releases](https://github.com/d0ukan/DDM32-Plus/releases) once the first release is out. It backs the radio up,
+Use the **DDM32 Plus programmer** for Windows (no Python needed):
+
+1. Download `DDM32Plus-1.0.0-beta.2.zip` from the [latest release](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.2) and unzip it.
+2. Run `DDM32Plus.exe`. Windows may warn about an unknown publisher (the program is not code-signed yet):
+   **More info → Run anyway**.
+3. Connect the programming cable (CH340) and follow the steps; the program tells you when to switch the radio off
+   and on.
+
+Coming from v1.0.0-beta.1 (published as DDM25 Plus)? That program cannot update itself across the rename:
+download the zip above once. Your backups and settings are found and kept.
+
+The programmer backs the radio up,
 shows exactly what will change, installs (also from the radio's stock firmware, using the radio's own codec), goes
 back to the previous version or to stock from your own backup, checks signed updates and lists every version.
 Guide: [`pc/README.en.md`](pc/README.en.md) · source: [`pc/`](pc/). Everything **at your own risk** (see the
 disclaimer above).
+
+## In development
+
+- **Frequency on Home**: the channel's RX/TX frequency under the channel, and as a third line in Large text.
+- **DOTA Transfer** (Tools): radio-to-radio transfer of channels, zones or the whole channel set (DOTA Clone)
+  over FM (AFSK, with a CTCSS tone) or DMR data, with a pairing code, progress on both radios, and nothing
+  changed on the receiver unless everything arrived. Host-tested; two-radio tests pending.
+- **New Windows programmer** (C# / .NET, one exe, installer, Turkish / English, self-update, quick update from
+  your last backup). Its backup has been checked against the current programmer on a real radio.
 
 ## Building
 
