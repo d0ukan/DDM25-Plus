@@ -2441,3 +2441,44 @@ Role Receive, Ready as for channels (the import rows do not matter for a pack; "
 `docs/r14.md` 7.6: the receiver has no "What: Data pack" of its own; it is asked about whatever pack a sender offers,
 and a sender of channels is received as before. Nothing reaches the codeplug; the new pack replaces the one of its
 type only when every byte arrived and checked, and About shows it at once.
+
+## Last calls (`CONFIG_LAST_CALLS`, ours; branch `r14-xband`, ROADMAP item 43)
+
+Tools > Last call is now a list of the **last 8 calls** heard, newest first, from every mode (DMR, P25, YSF, NXDN,
+dPMR, and the FM caller IDs MDC1200 / FleetSync / DTMF) and from every watched channel: one row a call, "B DMR Joe"
+(the multi-watch letter A-F, or dual watch's A / B; the mode; the caller's name, else its ID or callsign) and
+"TG2862 2m" (the talkgroup, or the unit a private call went to; how long ago; the talkgroup gives way where the row is
+short). Encrypted calls say so. Owner's decisions (docs/r14.md on `r14`, 2026-11-20): 8 calls; **no stored audio for
+the new modes**; the P25 replay stays as it was for the latest P25 call: OK on the newest P25 call (shown "> TG101")
+plays it again on the P25 channel in use, OK again stops it, the same toasts as before; OK on any other row says "No
+audio kept for this call". Design and code:
+
+- `integration/radiofoundry/lastcall/lastcall.{c,h}` (portable, installed as `core/ui/`): 8 entries of 16 bytes
+  (source and destination 24 bits each, or a YSF callsign / DTMF string's first 8 characters at 6 bits each; the
+  letter; private / encrypted / text flags; the UI clock's ms; NAC / RAN / colour code | slot; the mode). One entry a
+  call: a call going on updates its entry (P25's source arrives with its first LDU1), the same station heard again
+  after 5 s of quiet is a call of its own, a new call naming the same known source within those 5 s is the same call
+  (a caller reported twice), one whose source is still unknown never is (a P25 reply on the same talkgroup).
+- `ui_lastcall.c`: fed at exactly the heard list's hooks in `ui_app.c` (recent_add for a new call, the DMR and P25
+  "call goes on" spots, the tick's view), so every mode Recent already logs arrives through one path; the caller's
+  name is looked up in Recent when the row is drawn (no copy). The letter comes from `ui_dual_letter_here()` (added to
+  `ui_dual.c`): the ring's `mw_tuned()` or dual watch's `tuned_pane()` on the view of that tick (the ring's own
+  `mw_rx` follows a tick later, after Recent is fed).
+- Reuse, not duplication: the heard list keeps a station once with its count; Recent keeps 20 stations with their
+  names; this list keeps the last calls in order and points back to Recent for the names. The r14 study's shared
+  multi-mode audio ring is not built (no audio for the new modes).
+
+Cost (public build, `--plus --public --stack-check --verify-rebuild`): FLASH 810,224 -> 812,416 B (+2,192), static
+RAM 209,608 -> 209,744 B (+136; **1,712 B free**); stacks unchanged (UI 196 B, radio 760 B free beyond the margin).
+Owner build (`--plus`): 888,996 -> 891,192 B (+2,196; **9,928 B free: below the 11,500 B owner rule**, as docs/r14.md
+foresaw for every r14 item without a reclaim), RAM 209,792 B (1,664 free). Both zero warnings, forced rebuild
+identical.
+
+Tests: `tests/plus/test_lastcall.c` (the list's rules: calls and continuations, the gap, the P25 source rule, stations
+told apart by letter / mode / private / destination, the oldest dropped, texts with `*` and `#`, the 16-byte entry)
+and `tests/plus/test_ui_lastcall.c` (12 flows, English and Turkish, through the real UI in upstream's simulator: a DMR
+call through Recent's own feed, MDC / FleetSync / DTMF through `radio_fmid_logged`, P25 / YSF / NXDN / dPMR as
+`call_log_update` hands them over, the oldest dropped; letters A-F on a six-channel ring and A / B in dual watch;
+Tools > Last call; the P25 row's replay refused off a P25 channel, stopped while playing, not offered for an older or
+encrypted P25 call; empty list; RAM only; the layout on every page), run by `tools/test_xband.py` from
+`tools/test_classic.py`. Radio rows: `docs/plus-radio-test.md` "Round 14 xband".

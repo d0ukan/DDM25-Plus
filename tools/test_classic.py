@@ -886,5 +886,8 @@ def main():
     # DDM32 Plus user data packs (tools/test_datapack.py, docs/r14.md 7)
     import test_datapack
     test_datapack.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 14 xband: last calls of every mode and letter (tools/test_xband.py)
+    import test_xband
+    test_xband.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

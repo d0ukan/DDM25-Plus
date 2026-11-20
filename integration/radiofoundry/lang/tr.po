@@ -6028,3 +6028,16 @@ msgstr "veri paketi"
 #: core/ui/ui_dota.c
 msgid "Not accepted"
 msgstr "Kabul edilmedi"
+
+# DDM32 Plus branch r14-xband: last calls (item 43), cross-band store and forward (item 46)
+#: core/ui/ui_lastcall.c
+msgid "Last calls"
+msgstr "Son çağrılar"
+
+#: core/ui/ui_lastcall.c
+msgid "OK play  Back"
+msgstr "OK çal  Geri"
+
+#: core/ui/ui_lastcall.c
+msgid "No audio kept for this call"
+msgstr "Bu çağrının sesi tutulmadı"

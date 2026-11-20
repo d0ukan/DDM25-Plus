@@ -40,6 +40,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   or a power cut leaves the old one. Radios with older firmware simply don't answer (nothing changes on them).
 - DOTA over DMR: a receiver's refusal ("Codeplug full", "Other version") now reaches the sender (it was sent to no
   one, so the sender only saw "No answer").
+- Last calls (Tools > Last call): the last 8 calls heard from every mode (DMR, P25, YSF, NXDN, dPMR, FM caller IDs)
+  and every watched channel, newest first: the watch letter (A-F), the mode, the caller, the talkgroup, how long ago.
+  The newest P25 call still plays again with OK; the other modes keep no audio. **Not tried on the radio yet**
+  (docs/plus-radio-test.md, rows LC-*).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

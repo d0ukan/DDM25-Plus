@@ -715,6 +715,7 @@ def main():
         "CONFIG_AIR_WATCH="+("y" if args.plus else "n"),	# DDM32 Plus air watch (item 44b, tools/plus_air.py)
         "CONFIG_SPECTRUM_WF3D="+("y" if args.plus else "n"),	# DDM32 Plus 3D waterfall (item 45, tools/plus_air.py)
         "CONFIG_DATAPACK="+("y" if args.plus else "n"),	# DDM32 Plus user data packs (docs/r14.md 7)
+        "CONFIG_LAST_CALLS="+("y" if args.plus else "n"),	# DDM32 Plus last calls (docs/plus.md, item 43)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

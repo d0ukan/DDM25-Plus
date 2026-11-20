@@ -545,3 +545,13 @@ __pycache__/
 !/integration/radiofoundry/toolbox/wf3d.h
 !/tests/plus/test_wf3d.c
 !/tests/plus/test_ui_wf3d.c
+
+# DDM32 Plus round 14 xband: last calls (item 43), cross-band store and forward (item 46) (tools/plus_xband.py)
+!/tools/plus_xband.py
+!/tools/test_xband.py
+!/integration/radiofoundry/lastcall/lastcall.c
+!/integration/radiofoundry/lastcall/lastcall.h
+!/integration/radiofoundry/lastcall/ui_lastcall.c
+!/integration/radiofoundry/lastcall/ui_lastcall.h
+!/tests/plus/test_lastcall.c
+!/tests/plus/test_ui_lastcall.c

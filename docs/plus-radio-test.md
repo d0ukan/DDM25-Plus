@@ -506,3 +506,14 @@ YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec
 
 The data chip is never written by these tools: after Classic's "Start new" the stock codeplug lives only in the
 Firmware Utility backup and in `backups/dm32-047-20261113/q128-pass1.bin`.
+
+## Round 14 xband (branch `r14-xband`)
+
+Last calls (Tools > Last call, docs/plus.md "Last calls"). Receive only: nothing here transmits.
+
+| # | Do | Expect |
+|---|---|---|
+| LC-1 | Hear a DMR call, a P25 call, a YSF call and an FM call with an MDC1200 or DTMF ID (the other radio, the SDR); open Tools > Last call | one row each, newest first: "DMR <name or ID>  TG..", "P25 <ID>  TG..", "YSF <callsign>", "FM MDC ...." / "FM DTMF ...", each with its age counting up |
+| LC-2 | Watch channels 4 (multi-watch on), a call on C, then on A, then on D | the rows start with C, A, D (newest first), each with the caller and the talkgroup |
+| LC-3 | After LC-1, on the P25 channel: OK on the P25 row (marked ">"), then OK again | the call plays again as Tools > Last call did before ("Playing the last call"), the second OK stops it ("Replay stopped"); OK on the DMR row: "No audio kept for this call" |
+| LC-4 | The same station calls twice with 10 s between; then an 8-call burst from several stations | two rows for the first station; the list never holds more than 8, the oldest goes |
