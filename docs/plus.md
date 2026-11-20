@@ -2137,6 +2137,7 @@ owner relaxed the flash rule to >= 11,500 B free (<= 889,620 B).
 | 7 | Docs: `dota.md` sections 13.1 (sound paths), 17 (the owner's answers), 19 (as built); radio rows D-* in `plus-radio-test.md` | 888,540 (0) | 209,648 (0) | 1,808 | 216 / 760 |
 | 7b | Review: the stack check names the storage job and the session's transport calls (`plus_dota.STACK_EDGES`; the job's chain 1,988 B on the start task, 376 B free beyond the margin); singular / plural result texts with the counts where the language puts them; `radio_dota.inc` includes `hal_time.h`; host tests `test_dota_fm.c` (AFSK through audio, CTCSS, noise) and `test_dota_radio.inc` (the radio core) | 888,652 (+112) | 209,648 (0) | 1,808 | 196 / 760 |
 | rebase | onto `ddm25` 3032f91 (beta.2 prep, README, CONFIG_HOME_FREQ: base now 864,380 B / 209,672 B, UI stack 268 free); DOTA's share unchanged (+24,616 B flash, -16 B RAM). DOTA's screens are lists and use none of Home's layout fields (`freq_y`). Free flash: 12,124 B | 888,996 | 209,656 | 1,800 | 196 / 760 |
+| ux | Pairing without typing (owner): the frequency source row (Default 433.450 / Current channel / Last used / Manual), the tone from a short list, DMR CC 1 / TS 1 fixed and hidden. Public build (the owner's radio now): 810,388 B (+164), RAM 209,616 B (1,840 free); owner build below | 889,160 (+164) | 209,664 | 1,792 | 200 / 760 |
 
 ## Name and public build
 

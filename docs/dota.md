@@ -567,6 +567,29 @@ The channel picker (`SCR_DOTA_PICK`): every codeplug channel with a tick; OK tic
 Form values are RAM only (the last ones used come back until power off); defaults: the current channel's receive
 frequency, tone 88.5 Hz, colour code 1, slot 1, power low, import "New zone" with an empty name.
 
+### 12.6 Pairing without typing (owner, 2026-11-20, after the first look on the radio)
+
+"Frequency selection is hard": both roles now start from the same values, so two radios pair with no typing at all.
+
+| Row | Choices | Default |
+|---|---|---|
+| Frequency (the source) | Default / Current channel / Last used / Manual (Turkish: Varsayılan / Mevcut kanal / Son kullanılan / Elle gir); Left / Right step through the ones that have a frequency now | Default |
+| MHz | the source's frequency; digits type one (433500 or 4335125), Left / Right step 12.5 kHz: either makes the source Manual | 433.450 |
+| Tone (FM) | a short list: 88.5, 100.0, 123.0, 131.8, 162.2 Hz (no typing) | 88.5 |
+| Colour code / slot (DMR) | fixed CC 1, TS 1, on no screen | |
+| Receiver ID (DMR sender) | typed; the receiver's waiting page shows its own ID ("ID 3101276") to read out | |
+
+- **Default 433.450 MHz** (`DOTA_DEFAULT_HZ`, `dota.h`): no Turkish band plan is in this repository, so the IARU Region 1
+  70 cm plan decides: 433.450 is one of its FM simplex channels (433.400-433.575, 12.5 kHz), not the calling channel
+  433.500, no APRS frequency (144.800, 432.500 and the 433.800 some countries use), outside the repeater inputs and
+  outputs, below the satellite segment (435-438 MHz). Like every 70 cm frequency below 434.790 it also carries LPD433
+  (licence-free) devices: the CTCSS tone keeps them out of the transfer, not off the air.
+- **Current channel** is offered only when the channel (or the VFO) is simplex, may transmit and is in an amateur band.
+- **Last used** is the last session's frequency, until power off (RAM only: a stored value would need a settings
+  field; proposed for later if the owner wants it across power off).
+- The Receiver ID is typed. Proposal for later (not built): pick it from the last DMR stations heard (Tools > Heard
+  list), costing ~0.4 KB.
+
 ## 13. Sound
 
 | When | FM | DMR |

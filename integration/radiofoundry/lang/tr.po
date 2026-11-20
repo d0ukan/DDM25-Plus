@@ -5637,10 +5637,6 @@ msgid "What"
 msgstr "Ne"
 
 #: core/ui/ui_dota.c
-msgid "Slot"
-msgstr "Slot"
-
-#: core/ui/ui_dota.c
 msgid "Receiver ID"
 msgstr "Alıcı ID"
 
@@ -5787,3 +5783,15 @@ msgstr "^ gönderildi"
 #: core/ui/ui_dota.c
 msgid "Imported ^"
 msgstr "^ içe aktarıldı"
+
+#: core/ui/ui_dota.c
+msgid "Current channel"
+msgstr "Mevcut kanal"
+
+#: core/ui/ui_dota.c
+msgid "Last used"
+msgstr "Son kullanılan"
+
+#: core/ui/ui_dota.c
+msgid "Manual"
+msgstr "Elle gir"

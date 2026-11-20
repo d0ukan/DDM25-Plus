@@ -19,19 +19,25 @@
 #include "aprs/aprs.h"
 #include "storage/storage.h"
 #include "ui/ui_dota.h"
-#include "radio/tones.h"
 
 enum { PG_FORM, PG_RUN };
-enum { R_ROLE, R_METHOD, R_WHAT, R_ITEM, R_FREQ, R_TONE, R_CC, R_TS, R_ID, R_POWER, R_CODE, R_GO, R_IMPORT,
-       R_ZNAME, R_TXOK };
+enum { R_ROLE, R_METHOD, R_WHAT, R_ITEM, R_FSRC, R_FREQ, R_TONE, R_ID, R_POWER, R_CODE, R_GO, R_IMPORT, R_ZNAME,
+       R_TXOK };
+/* Where the frequency comes from (both roles the same, so two radios pair without typing; docs/dota.md 12.6) */
+enum { FS_DEFAULT, FS_CHANNEL, FS_LAST, FS_MANUAL, FS_COUNT };
+/* The FM tone's short list (the first is DOTA_CTCSS_DEFAULT) */
+static const uint16_t tone_list[] = { DOTA_CTCSS_DEFAULT, 1000, 1230, 1318, 1622 };
 /* Questions before a start, asked in this order, and the transfer's own */
 #define ASK_BAND	0x01u
 #define ASK_BATT	0x02u
 #define ASK_READY	0x04u
 #define ASK_STOP	0x08u
 
-static dota_req_t rq = { .method = DOTA_FM, .ctcss = DOTA_CTCSS_DEFAULT, .cc = 1, .ts = 1, .code = 10000 };
-static uint8_t pg, focus, asks, ndigits;
+/* DMR: colour code 1, slot 1 always (not on any DOTA screen) */
+static dota_req_t rq = { .method = DOTA_FM, .hz = DOTA_DEFAULT_HZ, .ctcss = DOTA_CTCSS_DEFAULT, .cc = 1, .ts = 1,
+			 .code = 10000 };
+static uint8_t pg, focus, asks, ndigits, fsrc;
+static uint32_t last_hz;	/* the last session's frequency (until power off) */
 static char digits[9];		/* a number being typed on the focused row */
 static uint32_t shown_serial;
 static uint16_t est_s, est_ch;	/* the sender's estimate, made when the form changes */
@@ -63,13 +69,10 @@ static uint8_t rows(uint8_t *r)
 		if (rq.kind != DOTA_KIND_CLONE)
 			r[n++] = R_ITEM;
 	}
+	r[n++] = R_FSRC;
 	r[n++] = R_FREQ;
-	if (dmr()) {
-		r[n++] = R_CC;
-		r[n++] = R_TS;
-	} else {
+	if (!dmr())
 		r[n++] = R_TONE;
-	}
 	if (sending()) {
 		if (dmr())
 			r[n++] = R_ID;
@@ -85,6 +88,18 @@ static uint8_t rows(uint8_t *r)
 	if (focus >= n)
 		focus = (uint8_t)(n - 1u);	/* the rows changed under it */
 	return n;
+}
+
+/* A frequency source's frequency now, 0 when it has none: the current channel only when it is simplex, may transmit
+ * and is in an amateur band */
+static uint32_t src_hz(uint8_t s)
+{
+	const channel_t *c = &ui_view()->ch;
+	if (s == FS_DEFAULT)
+		return DOTA_DEFAULT_HZ;
+	if (s == FS_CHANNEL)
+		return c->rx_hz == c->tx_hz && !c->rx_only && aprs_amateur_hz(c->rx_hz) ? c->rx_hz : 0;
+	return s == FS_LAST ? last_hz : rq.hz;
 }
 
 /* The sender's estimate: how many channels go, about how long (docs/dota.md 8) */
@@ -118,9 +133,10 @@ static void row_text(uint8_t r, bool f, sbuf_t *b, const char **label)
 	static const char *const what[] = { TRN("One channel"), TRN("Selected channels"), TRN("A zone"),
 					    TRN("DOTA Clone (all)") };
 	/* By R_*; R_ITEM and R_GO name themselves below */
-	static const char *const labels[] = { TRN("Role"), TRN("Method"), TRN("What"), "", TRN("Frequency"),
-					      TRN("Tone"), TRN("Color code"), TRN("Slot"), TRN("Receiver ID"), TRN("Power"),
-					      TRN("Code"), "", TRN("Import"), TRN("Zone name"), TRN("May transmit") };
+	static const char *const labels[] = { TRN("Role"), TRN("Method"), TRN("What"), "", TRN("Frequency"), "MHz",
+					      TRN("Tone"), TRN("Receiver ID"), TRN("Power"), TRN("Code"), "", TRN("Import"),
+					      TRN("Zone name"), TRN("May transmit") };
+	static const char *const srcs[] = { TRN("Default"), TRN("Current channel"), TRN("Last used"), TRN("Manual") };
 	bool typing = f && ndigits != 0;
 	*label = tr(labels[r]);
 	switch (r) {
@@ -137,14 +153,13 @@ static void row_text(uint8_t r, bool f, sbuf_t *b, const char **label)
 			sb_u32(b, rq.kind == DOTA_KIND_SELECTED ? est_ch : rq.channel, 1);
 		}
 		break;
+	case R_FSRC: sb_str(b, tr(srcs[fsrc])); break;
 	case R_FREQ: typing ? sb_str(b, digits) : sb_freq(b, rq.hz); break;
 	case R_TONE: {
 		subtone_t t = { TONE_CTCSS, rq.ctcss };
 		sb_tone(b, &t);
 		break;
 	}
-	case R_CC: sb_u32(b, rq.cc, 1); break;
-	case R_TS: sb_u32(b, rq.ts, 1); break;
 	case R_ID: typing ? sb_str(b, digits) : sb_u32(b, rq.peer_id, 1); break;
 	case R_POWER:
 		sb_str(b, rq.power == 0 ? TR("Low") : rq.power == 1 ? TR("Mid") : TR("High"));
@@ -250,14 +265,9 @@ static void dota_draw(void)
 		l.prefix = sending() ? TR("Send") : TR("Receive");
 		l.name = dmr() ? "DMR" : "FM";
 		sb_freq(&b, rq.hz);
-		sb_chr(&b, ' ');
-		if (dmr()) {
-			sb_str(&b, "CC");
-			sb_u32(&b, rq.cc, 1);
-			sb_str(&b, " TS");
-			sb_u32(&b, rq.ts, 1);
-		} else {
+		if (!dmr()) {
 			subtone_t t = { TONE_CTCSS, rq.ctcss };
+			sb_chr(&b, ' ');
 			sb_tone(&b, &t);
 		}
 		l.header = head;
@@ -302,18 +312,29 @@ static void step(uint8_t r, int dir)
 	case R_METHOD: rq.method = !rq.method; break;
 	case R_WHAT: rq.kind = (uint8_t)((rq.kind + 4 + dir) % 4); break;
 	case R_TONE: {
-		unsigned i = 0, n = TONES_CTCSS_COUNT;
-		while (i < n && tones_ctcss[i] != rq.ctcss)
+		unsigned i = 0, n = sizeof tone_list / sizeof tone_list[0];
+		while (i < n && tone_list[i] != rq.ctcss)
 			i++;
-		rq.ctcss = tones_ctcss[(i + n + (unsigned)dir) % n];
+		rq.ctcss = tone_list[(i + n + (unsigned)dir) % n];
 		break;
 	}
-	case R_CC: rq.cc = (uint8_t)((rq.cc + 16 + dir) % 16); break;
-	case R_TS: rq.ts = (uint8_t)(3 - rq.ts); break;
+	case R_FSRC: {
+		/* the next source that has a frequency now (Manual always has: the one shown) */
+		uint8_t s = fsrc;
+		do
+			s = (uint8_t)((s + FS_COUNT + dir) % FS_COUNT);
+		while (src_hz(s) == 0);
+		fsrc = s;
+		rq.hz = src_hz(s);
+		break;
+	}
 	case R_POWER: rq.power = (uint8_t)((rq.power + 3 + dir) % 3); break;
 	case R_IMPORT: rq.imp.mode = !rq.imp.mode; break;
 	case R_TXOK: rq.imp.tx_ok = !rq.imp.tx_ok; break;
-	case R_FREQ: rq.hz = (uint32_t)((int32_t)rq.hz + dir * 12500); break;
+	case R_FREQ:
+		rq.hz = (uint32_t)((int32_t)rq.hz + dir * 12500);
+		fsrc = FS_MANUAL;
+		break;
 	default: break;
 	}
 	estimate();
@@ -325,9 +346,10 @@ static void typed(uint8_t r)
 	uint32_t n = 0;
 	for (uint8_t i = 0; i < ndigits; i++)
 		n = n * 10u + (uint32_t)(digits[i] - '0');
-	if (r == R_FREQ && (ndigits == 6 || ndigits == 7))
+	if (r == R_FREQ && (ndigits == 6 || ndigits == 7)) {
 		rq.hz = n * (ndigits == 6 ? 1000u : 100u);
-	else if (r == R_ID)
+		fsrc = FS_MANUAL;
+	} else if (r == R_ID)
 		rq.peer_id = n <= 16776415u ? n : 0;
 	else if (r == R_CODE)
 		rq.code = ndigits == 4 ? (uint16_t)n : 10000u;
@@ -376,6 +398,7 @@ static void go(void)
 		rq.imp.zone = v->zone_index;
 	}
 	if (dota_start(&rq)) {
+		last_hz = rq.hz;
 		pg = PG_RUN;
 		shown_serial = 0;
 	}
@@ -472,8 +495,6 @@ static void dota_enter(void)
 {
 	const radio_view_t *v = ui_view();
 	pg = dota_on() ? PG_RUN : PG_FORM;	/* back to a transfer that runs */
-	if (rq.hz == 0)
-		rq.hz = v->ch.rx_hz;
 	if (rq.channel == 0)
 		rq.channel = v->channel_number;
 	estimate();

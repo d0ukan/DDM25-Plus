@@ -14,6 +14,10 @@
 
 #define DOTA_PORT		4101u	/* UDP, both ends (zone sharing has 4100) */
 #define DOTA_CTCSS_DEFAULT	885u	/* 88.5 Hz */
+/* Both roles start here, so two radios pair without typing (docs/dota.md 12.6): 433.450 MHz, an FM simplex channel of
+ * the IARU Region 1 70 cm plan (433.400-433.575), not its calling channel (433.500), not APRS (432.500 / 433.800 /
+ * 144.800), no repeater input or output, below the satellite segment (435-438) */
+#define DOTA_DEFAULT_HZ		433450000u
 #define DOTA_LOW_BATTERY_PCT	10u
 
 enum { DOTA_FM, DOTA_DMR };

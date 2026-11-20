@@ -222,7 +222,6 @@ static void start(const char *n)
 	ok_run("wait:100");
 	ui_push(SCR_DOTA, 0);
 	ok_run("wait:100");
-	ok_run("down down down down 4 3 3 5 0 0 up up up up");	/* 433.500 MHz, back on the first row */
 }
 
 /* The view moved: the screen's tick draws it */
@@ -241,32 +240,35 @@ static void form_send_fm(void)
 {
 	start("form: sender, FM");
 	expect("screen=dota");
-	expect(T("shows=Role shows=Send shows=Method shows=FM shows=What shows=One_channel shows=Frequency shows=88.5 "
+	expect(T("shows=Role shows=Send shows=Method shows=FM shows=What shows=One_channel shows=Frequency shows=Default "
+		 "shows=433.450 shows=88.5 "
 		 "shows=Power shows=Low shows=Code shows=About hides=Import hides=Slot",
 		 "shows=Rol shows=Frekans shows=Ton shows=Kod shows=Yakla hides=Slot"));
 	layout();
 	ok_run("shot:form-send");
 	/* Power: Left from Low wraps to High, Right twice from there: Mid */
-	ok_run("down down down down down down");	/* Role, Method, What, item, Frequency, Tone, Power */
+	ok_run("down down down down down down down");	/* Role, Method, What, item, source, Frequency, Tone, Power */
 	ok_run("left");
 	expect(T("shows=High", "shows=Y"));
 	ok_run("right right");
 	expect(T("shows=Mid", "shows=Orta"));
 	/* the tone steps through the CTCSS list */
 	ok_run("up right");
-	expect("hides=88.5 shows=91.5");
+	expect("hides=88.5 shows=100.0");	/* the short list: 88.5, 100.0, 123.0, 131.8, 162.2 */
+	ok_run("right right right right");
+	expect("shows=88.5");
 }
 
 static void form_receive_dmr(void)
 {
 	start("form: receiver, DMR");
 	ok_run("right down right");	/* Role: Receive; Method: DMR */
-	expect(T("shows=Receive shows=DMR shows=Color_code shows=Slot shows=Import shows=New_zone shows=Zone_name "
-		 "shows=May_transmit shows=Off shows=Ready hides=What hides=Power hides=About",
-		 "shows=Al shows=DMR shows=Color_code shows=Slot shows=Yeni shows=nderebilir"));
+	expect(T("shows=Receive shows=DMR shows=Import shows=New_zone shows=Zone_name shows=May_transmit shows=Off "
+		 "shows=Ready hides=What hides=Power hides=About hides=Color_code hides=Slot hides=CC",
+		 "shows=Al shows=DMR shows=Yeni shows=nderebilir hides=Color_code hides=Slot"));
 	layout();
 	/* Import: Current zone takes the zone name row away */
-	ok_run("down down down down right");	/* Frequency, CC, Slot, Import */
+	ok_run("down down down right");	/* source, Frequency, Import */
 	expect(T("shows=Current_zone hides=Zone_name", "shows=Ge"));
 	layout();
 }
@@ -275,20 +277,68 @@ static void form_sender_dmr(void)
 {
 	start("form: sender, DMR");
 	ok_run("down right");
-	expect(T("shows=Receiver_ID shows=Color_code shows=Slot hides=88.5", "shows=ID shows=Color_code hides=88.5"));
+	expect(T("shows=Receiver_ID hides=Color_code hides=Slot hides=88.5", "shows=ID hides=Color_code hides=88.5"));
 	layout();
 	/* more rows than fit: the last ones scroll into view */
 	ok_run("down down down down down down down down down down down");
-	expect(T("shows=Code hides=Method", "shows=Kod hides=ntem"));
+	expect(T("shows=Code hides=Role", "shows=Kod hides=Rol_"));
 	layout();
+}
+
+static void type_code(const char *digits);
+
+/* The frequency's source: Default (433.450) on both roles; the current channel only when simplex, may transmit and
+ * amateur; the last session's; typed (Manual) */
+static void form_freq_source(void)
+{
+	start("form: the frequency's source");
+	ok_run("down down down down");	/* Role, Method, What, item: the source */
+	expect(T("shows=Frequency shows=Default shows=433.450", "shows=Frekans shows=Varsay shows=433.450"));
+	layout();
+	/* the radio is on a DMR channel outside the amateur bands, no session yet: Default, then Manual */
+	ok_run("right");
+	expect(T("shows=Manual shows=433.450 hides=Current_channel hides=Last_used", "shows=Elle"));
+	ok_run("right");
+	expect(T("shows=Default", "shows=Varsay"));
+	/* typing a frequency makes it Manual */
+	ok_run("down 4 3 3 6 0 0 up");
+	expect(T("shows=Manual shows=433.600", "shows=Elle shows=433.600"));
+	/* the receiver starts with the same source and frequency as a sender */
+	ok_run("up up up up right");
+	expect(T("shows=Receive shows=Manual shows=433.600", "shows=Al shows=433.600"));
+	ok_run("down down right");	/* the source: Default again */
+	expect("shows=433.450");
+	layout();
+}
+
+/* The current channel when it is a simplex amateur one; the last session's frequency afterwards */
+static void form_freq_channel_last(void)
+{
+	start("form: current channel, last used");
+	ok_run("dlpos:8 wait:300");	/* channel 8: 145.230 MHz simplex FM */
+	ui_push(SCR_DOTA, 0);
+	ok_run("wait:100 down down down down right");
+	expect(T("shows=Current_channel shows=145.230", "shows=Mevcut shows=145.230"));
+	ok_run("left");
+	expect("shows=433.450");
+	type_code("1 2 3 4");
+	ok_run("down ok ok");
+	check(starts == 1 && got.hz == DOTA_DEFAULT_HZ && got.cc == 1 && got.ts == 1, "started on the default");
+	on = false;
+	fv.phase = DOTA_P_FAILED;
+	moved();
+	ok_run("back");
+	ui_push(SCR_DOTA, 0);
+	ok_run("wait:100 up up up up up up up up up up down down down down right right");
+	expect(T("shows=Last_used shows=433.450", "shows=Son shows=433.450"));
 }
 
 /* --- Starting --- */
 
 static void type_code(const char *digits)
 {
-	/* the code row: Role, Method, What, item, Frequency, Tone, Power, Code */
-	ok_run("up up up up up up up up up down down down down down down down");
+	/* the code row: Role, Method, What, item, source, Frequency, Tone, Power, Code */
+	ok_run("up up up up up up up up up up down down down down down down down down");
 	ok_run(digits);
 	ok_run("ok");
 }
@@ -296,7 +346,7 @@ static void type_code(const char *digits)
 static void start_needs_code(void)
 {
 	start("start: the code first");
-	ok_run("down down down down down down down down ok");	/* Send without a code */
+	ok_run("down down down down down down down down down ok");	/* Send without a code */
 	expect(T("toast=Code_/_ID_needed", "toast=Kod_/_ID_gerekli"));
 	check(starts == 0, "started without a code");
 }
@@ -324,14 +374,14 @@ static void start_question_no(void)
 	type_code("1 2 3 4");
 	ok_run("down ok back");
 	check(starts == 0, "started after No");
-	expect(T("shows=Role", "shows=Rol"));
+	expect(T("shows=Method shows=Send", "shows=ntem shows=nder"));
 }
 
 static void start_band_and_battery(void)
 {
 	start("start: band, battery, ready in turn");
 	ok_run("battery:5");
-	ok_run("down down down down 4 4 6 0 0 0 up");	/* 446.000 MHz: not an amateur band here */
+	ok_run("down down down down down 4 4 6 0 0 0 up");	/* 446.000 MHz: not an amateur band here */
 	expect("shows=446");
 	ok_run("down down down down 1 2 3 4 down ok");
 	expect(T("shows=Not_amateur_band", "shows=bant"));
@@ -364,7 +414,7 @@ static void start_refusals(void)
 static void receiver_start(void)
 {
 	start("receiver: the zone name, the code and the wait");
-	ok_run("right down down down down down down down ok");	/* Ready: a new zone without a name */
+	ok_run("right down down down down down down down down ok");	/* Ready: a new zone without a name */
 	expect(T("toast=Zone_name_needed", "toast=B"));
 	check(starts == 0, "started without a zone name");
 	ok_run("up up up right");	/* Import: Current zone (the name row goes) */
@@ -381,8 +431,8 @@ static void receiver_dmr_id(void)
 {
 	start("receiver: DMR shows our ID");
 	ok_run("right down right");
-	ok_run("down down down down right down down ok");	/* Import: Current zone; Ready */
-	check(starts == 1 && got.method == DOTA_DMR, "DMR receiver started");
+	ok_run("down down down right down down ok");	/* Import: Current zone; Ready */
+	check(starts == 1 && got.method == DOTA_DMR && got.cc == 1 && got.ts == 1, "DMR receiver started, CC 1 TS 1");
 	expect("shows=3101276");
 	ok_run("shot:dmr-wait");
 }
@@ -462,7 +512,7 @@ static void ptt_prompt(void)
 static void writing_holds(void)
 {
 	start("transfer: writing can't be stopped");
-	ok_run("right down down down down right down down ok");
+	ok_run("right down down down down down right down down ok");
 	fv.phase = DOTA_P_WRITING;
 	moved();
 	expect(T("shows=Writing", "shows=Yaz"));
@@ -508,7 +558,7 @@ static void results(void)
 static void receiver_done(void)
 {
 	start("receiver: done");
-	ok_run("right down down down down right down down ok");
+	ok_run("right down down down down down right down down ok");
 	fv.phase = DOTA_P_DONE;
 	fv.result = DOTA_RES_DONE;
 	fv.ch_added = 1;
@@ -558,7 +608,8 @@ static void picker_selected(void)
 
 typedef void (*case_fn)(void);
 static const case_fn all[] = {
-	form_send_fm, form_receive_dmr, form_sender_dmr, start_needs_code, start_asks_ready, start_question_no,
+	form_send_fm, form_receive_dmr, form_sender_dmr, form_freq_source, form_freq_channel_last, start_needs_code,
+	start_asks_ready, start_question_no,
 	start_band_and_battery, start_refusals, receiver_start, receiver_dmr_id, run_page, back_stop_no, back_stop_yes,
 	ptt_prompt, writing_holds, results, receiver_done, picker_zone, picker_selected,
 };
