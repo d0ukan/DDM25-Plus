@@ -38,7 +38,7 @@ class LogPane(QPlainTextEdit):
 
 
 class RadioOnBanner(QFrame):
-    """'Telsizi şimdi açın' with a countdown, shown while a tool waits for the radio's boot ROM"""
+    """'Telsizi şimdi kapatıp açın' with a countdown, shown while a tool waits for the radio's boot ROM"""
     expired = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -48,7 +48,7 @@ class RadioOnBanner(QFrame):
         self.setStyleSheet('#radioOnBanner { background: #f6c343; border-radius: 6px; } '
                            '#radioOnBanner QLabel { color: #1d1d1d; }')
         lay = QVBoxLayout(self)
-        self.title = QLabel('Telsizi şimdi açın')
+        self.title = QLabel('Telsizi şimdi kapatıp açın')
         f = QFont(self.font())
         f.setPointSize(f.pointSize() + 12)
         f.setBold(True)
@@ -59,7 +59,7 @@ class RadioOnBanner(QFrame):
         f2.setPointSize(f2.pointSize() + 6)
         self.count.setFont(f2)
         self.count.setAlignment(Qt.AlignCenter)
-        self.hint = QLabel('Ekran normal açılırsa kapatıp tekrar açın.')
+        self.hint = QLabel('Telsiz açıksa önce kapatın, sonra açın; tuşlara basmayın. Ekran normal açılırsa bir kez daha kapatıp açın.')
         self.hint.setAlignment(Qt.AlignCenter)
         lay.addWidget(self.title)
         lay.addWidget(self.count)
@@ -165,7 +165,7 @@ HELP_HTML = """
 <h2>Yardım</h2>
 <h3>1. Telsiz yakalanamadı (zaman aşımı)</h3>
 <p>Araç telsizin açılmasını bekler. Telsizi kapatın, kabloyu takılı bırakın, <b>Tekrar dene</b>'ye basın ve sarı
-<b>"Telsizi şimdi açın"</b> yazısını görünce telsizi açın. Telsiz normal ekranla açılırsa kapatıp bir daha açın.
+<b>"Telsizi şimdi kapatıp açın"</b> yazısını görünce telsiz açıksa kapatın, sonra açın. Telsiz normal ekranla açılırsa kapatıp bir daha açın.
 Tuşlara basmayın.</p>
 <h3>2. Kablo bulunamadı</h3>
 <p>Programlama kablosunu bilgisayara ve telsize sıkıca takın, <b>Yenile</b>'ye basın. DM-32UV kablosu genelde

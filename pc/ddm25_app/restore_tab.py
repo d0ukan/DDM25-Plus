@@ -174,7 +174,7 @@ class RestoreTab(QWidget):
         tool, extra, _ = self.flow.tool
         self.flow.start_restore()
         self.progress.setValue(0)
-        self.result.setText('Telsizi <b>kapatın</b>. Sarı yazıyı görünce açın.')
+        self.result.setText('Telsizi <b>kapatın</b> (açıksa). Sarı yazıyı görünce açın.')
         self.out_dir = paths.unique_folder(self.layout_.backups, f'restore-{paths.today()}')
         args = ['--port', self.flow.port, '--backup', self.layout_.rel(self.flow.backup_dir),
                 '--out', self.layout_.rel(self.out_dir)] + extra + ['--wait', str(RESTORE_WAIT)]

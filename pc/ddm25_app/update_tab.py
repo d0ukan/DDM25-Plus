@@ -168,7 +168,7 @@ class UpdateTab(QWidget):
         # 2. Yedek
         p = Page('2. Yedek')
         p.lay.addWidget(plain_label('Telsizin tam yedeği alınır (sadece okuma, telsize hiçbir şey yazılmaz).<br>'
-                                    'Telsiz <b>kapalıyken</b> butona basın. Sarı yazıyı görünce telsizi açın.'))
+                                    'Telsiz <b>kapalıyken</b> butona basın. Sarı yazıyı görünce telsizi açın (açıksa önce kapatıp açın).'))
         self.backup_btn = big_button('Yedek al', 'SP_DialogSaveButton', 'Telsizi okuyup yedeğini bilgisayara kaydeder.')
         self.backup_btn.clicked.connect(self.start_backup)
         p.lay.addWidget(self.backup_btn)
@@ -451,7 +451,7 @@ class UpdateTab(QWidget):
         out = paths.unique_folder(self.layout_.backups, f'dm32-{paths.today()}')
         self.wizard.start_backup(out)
         self.backup_folder.setText(str(out))
-        self.backup_status.setText('Hazırlanıyor... Sarı yazıyı görünce telsizi açın.')
+        self.backup_status.setText('Hazırlanıyor... Sarı yazıyı görünce telsizi açın (açıksa önce kapatıp açın).')
         self.backup_progress.setValue(0)
         args = ['--port', self.wizard.port, '--out', self.layout_.rel(out), '--installed-firmware', fw,
                 '--wait', str(BACKUP_WAIT)]
@@ -564,7 +564,7 @@ class UpdateTab(QWidget):
         for b in (self.to_check_btn, self.to_restore_btn):
             b.hide()
         self.install_progress.setValue(0)
-        self.install_status.setText('Telsizi <b>kapatın</b>. Sarı yazıyı görünce açın.')
+        self.install_status.setText('Telsizi <b>kapatın</b> (açıksa). Sarı yazıyı görünce açın.')
         lay = self.layout_
         args = ['--port', self.wizard.port, '--backup', lay.rel(self.wizard.backup_dir),
                 '--plus', lay.rel(self.wizard.package.folder), '--out', lay.rel(self.install_dir),

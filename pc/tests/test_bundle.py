@@ -143,7 +143,8 @@ class BuiltProgramTest(unittest.TestCase):
     def test_dist_zips(self):
         for z in (HERE / 'dist').glob(f'{bundle.NAME}-*.zip'):
             names = zipfile.ZipFile(z).namelist()
-            self.assertFalse([n for n in names if Path(n).suffix.lower() in bundle.FORBIDDEN_SUFFIXES], z.name)
+            self.assertFalse([n for n in names if Path(n).suffix.lower() in bundle.FORBIDDEN_SUFFIXES
+                              and n.split('/', 1)[1] not in bundle.CA_BUNDLE_FILES], z.name)
             self.assertFalse([n for n in names if set(n.lower().split('/')) & bundle.FORBIDDEN_DIRS], z.name)
 
 
