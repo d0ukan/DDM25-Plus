@@ -110,9 +110,12 @@ The whole interface is translated to Turkish (and remains available in English).
 
 ## Installing
 
-A Windows programmer (no Python needed) with backup, install, restore, auto-update and a live panel is being
-prepared for the first release. Until then the firmware can be built from source (below); installing a self-built
-image is for experienced users only and **entirely at your own risk** (see the disclaimer above).
+Use the **DDM25 Plus programmer** for Windows (no Python needed): download it from
+[Releases](https://github.com/d0ukan/DDM25-Plus/releases) once the first release is out. It backs the radio up,
+shows exactly what will change, installs (also from the radio's stock firmware, using the radio's own codec), goes
+back to the previous version or to stock from your own backup, checks signed updates and lists every version.
+Guide: [`pc/README.en.md`](pc/README.en.md) · source: [`pc/`](pc/). Everything **at your own risk** (see the
+disclaimer above).
 
 ## Building
 

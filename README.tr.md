@@ -110,10 +110,12 @@ Arayüzün tamamı Türkçeye çevrildi (İngilizce de seçilebilir). Teknik adl
 
 ## Kurulum
 
-İlk sürüm için Python gerektirmeyen bir Windows programlayıcı hazırlanıyor: yedek, yükleme, geri dönüş, otomatik
-güncelleme ve canlı panel. O zamana kadar firmware kaynaktan derlenebilir (aşağıda); kendi derlediğiniz bir imajı
-yüklemek yalnızca deneyimli kullanıcılar içindir ve **tamamen sizin riskinizdedir** (yukarıdaki sorumluluk reddine
-bakın).
+Windows için **DDM25 Plus programlayıcı**yı kullanın (Python gerekmez): ilk sürüm çıkınca
+[Releases](https://github.com/d0ukan/DDM25-Plus/releases) sayfasından indirin. Telsizin yedeğini alır, neyin
+değişeceğini tam olarak gösterir, yükler (telsizin kendi codec'iyle stok yazılımdan da), kendi yedeğinizden önceki
+sürüme veya stok yazılıma geri döner, imzalı güncellemeleri denetler ve tüm sürümleri listeler.
+Rehber: [`pc/README.md`](pc/README.md) · kaynak: [`pc/`](pc/). Her şey **sizin sorumluluğunuzdadır** (yukarıdaki
+sorumluluk reddine bakın).
 
 ## Derleme
 
