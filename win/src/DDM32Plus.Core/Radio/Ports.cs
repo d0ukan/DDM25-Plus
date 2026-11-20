@@ -102,14 +102,18 @@ public static class RadioAccess
     /// <summary>Enabled, read at run time (for the pages: no unreachable-code warning in either build).</summary>
     public static bool IsOn => Enabled;
 
-#if DDM32_RADIO_WRITES
-    public const bool WritesEnabled = Enabled;
+#if DDM32_RADIO_WRITES && DDM32_RADIO_ACCESS
+    public const bool WritesEnabled = true;
 #else
     public const bool WritesEnabled = false;
 #endif
 
-    /// <summary>The port factory for the tools that write (install, restore): off even in the developer build with
-    /// radio access, which runs only the read-only backup. A later, separately approved flag turns writes on.</summary>
+    /// <summary>WritesEnabled, read at run time (for the pages).</summary>
+    public static bool WritesOn => WritesEnabled;
+
+    /// <summary>The port factory for the tools that write (install, quick update, install without backup,
+    /// restore): only in the developer build made with both -p:RadioAccess=true and -p:RadioWrite=true (the
+    /// owner's approval 2026-11-20 for their install); never in the release build or the setup.</summary>
     public static SerialFactory WriteFactory =>
 #pragma warning disable CS0162
         WritesEnabled ? name => new SerialRadioPort(name) : _ => throw new DisabledException();

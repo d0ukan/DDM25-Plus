@@ -112,6 +112,28 @@ public sealed class AppState
     public static bool CanSelfUpdate =>
         !File.Exists(Path.Combine(AppContext.BaseDirectory, AppInfo.ExeName + ".dll"));
 
+    private Catalog? local;
+
+    /// <summary>A signed release from a local folder (developer builds): verified with the embedded key exactly like
+    /// a downloaded one and joined to the list, marked local. (error text or null, versions loaded)</summary>
+    public async Task<(string? Error, IReadOnlyList<string> Versions)> LoadLocalAsync(string folder)
+    {
+        try
+        {
+            var cat = await ReleaseClientLocal.LoadAsync(folder, Paths.Releases).ConfigureAwait(true);
+            if (cat.Firmware.Count == 0)
+                return (string.Join("; ", cat.Rejected.Select(r => $"{r.Tag}: {r.Reason}")), []);
+            local = cat;
+            Catalog.AddLocal(cat);
+            Changed?.Invoke();
+            return (null, [.. cat.Firmware.Select(f => f.Version)]);
+        }
+        catch (Exception e) when (e is NetException or IOException or UnauthorizedAccessException)
+        {
+            return (e.Message, []);
+        }
+    }
+
     public async Task CheckAsync()
     {
         if (Checking)
@@ -121,6 +143,8 @@ public sealed class AppState
         try
         {
             Catalog = await ReleaseClient.LoadCatalogAsync(Paths.Releases, Net).ConfigureAwait(true);
+            if (local is not null)
+                Catalog.AddLocal(local);
             Settings.Save("last_check_utc", Catalog.CheckedUtc);
             LastCheckError = null;
         }
@@ -161,6 +185,9 @@ public sealed class AppState
     public AppRelease? AppUpdate() => Catalog.NewerApp(AppInfo.Version, Settings.IncludeBeta);
 
     public static string LabelText(ReleaseLabel label) => Loc.T("Label_" + label);
+
+    public static string LabelText(FirmwareVersion fv, IEnumerable<FirmwareVersion> all) =>
+        LabelText(ReleaseLabels.For(fv, all)) + (fv.IsLocal ? " · " + Loc.T("Label_Local") : "");
 
     /// <summary>
     /// The program update: download (hash-checked against the signed manifest), stage, start the new program as the

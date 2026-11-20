@@ -512,3 +512,4 @@ __pycache__/
 /win/**/obj/
 /win/publish/
 /win/publish-dev/
+/win/publish-dev-write/

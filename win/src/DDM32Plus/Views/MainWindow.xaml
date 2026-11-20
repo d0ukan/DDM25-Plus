@@ -28,6 +28,12 @@
                         <TextBlock Text="{l:Tr Menu_About}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
+                <Button x:Name="LocalButton" Click="OnLocalRelease" ToolTip="{l:Tr Menu_LocalReleaseTip}" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8B7;" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{l:Tr Menu_LocalRelease}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
                 <Separator />
                 <Menu Background="Transparent" VerticalAlignment="Center" ToolTip="{l:Tr Menu_LanguageTip}">
                     <MenuItem x:Name="LanguageMenu">

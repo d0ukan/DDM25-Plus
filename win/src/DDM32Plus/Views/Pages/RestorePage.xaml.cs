@@ -54,8 +54,8 @@ public partial class RestorePage : UserControl, IPage
         if (flow.Running != "restore")
             flow.Port = state.Port;
         CableText.Text = CableScanner.Text(state.Cable);
-        AccessTitle.Text = Loc.T(RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
-        AccessText.Text = Loc.T(RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
+        AccessTitle.Text = Loc.T(RadioAccess.WritesOn ? "Dev_NoteWriteTitle" : RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
+        AccessText.Text = Loc.T(RadioAccess.WritesOn ? "Dev_NoteWrite" : RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
         var free = flow.Running is null;
         PreviousButton.IsEnabled = StockButton.IsEnabled = OtherButton.IsEnabled = free;
         RestoreButton.IsEnabled = flow.CanRestore() && state.DisclaimerAccepted;

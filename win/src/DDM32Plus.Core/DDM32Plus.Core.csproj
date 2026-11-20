@@ -15,6 +15,12 @@
     <DefineConstants>$(DefineConstants);DDM32_RADIO_ACCESS</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RadioWrite)' == 'true'">
+    <!-- Developer flag for the owner's install (needs RadioAccess too): the writing tools get a port. Never in a
+         release build or the setup. -->
+    <DefineConstants>$(DefineConstants);DDM32_RADIO_WRITES</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="System.IO.Ports" Version="10.0.3" />
   </ItemGroup>

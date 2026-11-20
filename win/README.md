@@ -152,6 +152,26 @@ identical, and the changed data sectors are listed by comparing the manifests' `
 python -c "import json,sys; c=[json.load(open(sys.argv[i]+r'\backup-manifest.json'))['captures'] for i in (1,2)]; q=[[r for r in x if r['file']=='q128-pass1.bin'][0]['sector_sha256'] for x in c]; print([hex(i*4096) for i,(u,v) in enumerate(zip(*q)) if u!=v])" $py $cs
 ```
 
+### The developer build with writing (owner's approval 2026-11-20, for their install)
+
+```
+dotnet publish src/DDM32Plus/DDM32Plus.csproj -p:PublishProfile=win-x64 -p:RadioAccess=true -p:RadioWrite=true -p:PublishDir=E:\GIT-REPO\ddm32-net\win\publish-dev-write\
+```
+
+`win\publish-dev-write\DDM32Plus.exe`, title **"DEVELOPER BUILD - radio WRITE on"**: backup, quick update, install
+without backup, normal install and restore reach the radio, with every guard unchanged. `RadioWrite` alone does
+nothing (it needs `RadioAccess`); neither is ever set for the release exe or the setup. Publish each variant into its
+own new folder; never delete inside a publish folder (the developer builds keep their settings next to the exe).
+
+### A signed release from a local folder (developer builds)
+
+The toolbar entry "Yerel sürüm klasörü..." (only in developer builds) or `DDM32Plus.exe --release-folder PATH` reads
+`ddm32-manifest.json`, its `.sig` and the zip it lists from a folder, as `pc/release/make_release.py build` writes
+them. The folder stands in for GitHub (`LocalReleaseNet`), and the rest is the downloaded release's own code path:
+the signature with the embedded release key, the manifest schema and tag, then on "İndir ve doğrula" the zip's size
+and SHA-256 and the application inside. The version is listed in Sürümler and the version picker marked
+"yerel / local". The release build ignores both.
+
 `DDM32Plus.exe --show PAGE[:STEP[:BACKUP]]` opens a page (a wizard step, and a verified backup as "Mevcut yedeği
 seç..." takes it) for screenshots and demos; it only navigates and reads files.
 

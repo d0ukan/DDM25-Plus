@@ -97,8 +97,8 @@ public partial class UpdatePage : UserControl, IPage
             pages[i].Visibility = i == page ? Visibility.Visible : Visibility.Collapsed;
         }
         var gate = state.DisclaimerAccepted;
-        AccessTitle.Text = Loc.T(RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
-        AccessText.Text = Loc.T(RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
+        AccessTitle.Text = Loc.T(RadioAccess.WritesOn ? "Dev_NoteWriteTitle" : RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
+        AccessText.Text = Loc.T(RadioAccess.WritesOn ? "Dev_NoteWrite" : RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
         CableText.Text = CableScanner.Text(state.Cable);
         CableText.Foreground = (System.Windows.Media.Brush)FindResource(state.Cable.State == CableState.Ok ? "Green" : "Red");
         PortCombo.Visibility = state.Cable.Ports.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -144,7 +144,7 @@ public partial class UpdatePage : UserControl, IPage
         VersionCombo.Items.Clear();
         foreach (var fv in choices)
         {
-            var label = AppState.LabelText(ReleaseLabels.For(fv, state.Catalog.Firmware));
+            var label = AppState.LabelText(fv, state.Catalog.Firmware);
             VersionCombo.Items.Add(new ComboBoxItem { Content = $"DDM32 Plus {fv.Version}  ({label})", Tag = fv.Version });
         }
         var pick = choices.FindIndex(f => f.Version == current);
@@ -284,7 +284,7 @@ public partial class UpdatePage : UserControl, IPage
         try
         {
             var progress = new Progress<double>(v => DownloadProgress.Value = v);
-            var folder = await ReleaseClient.DownloadFirmwareAsync(fv, state.Paths.Releases, state.Net,
+            var folder = await ReleaseClient.DownloadFirmwareAsync(fv, state.Paths.Releases, fv.Source ?? state.Net,
                 (d, t) => ((IProgress<double>)progress).Report(Math.Min(100, d * 100.0 / Math.Max(1, t))));
             downloadMessage = Loc.F("Upd_Downloaded", folder);
         }

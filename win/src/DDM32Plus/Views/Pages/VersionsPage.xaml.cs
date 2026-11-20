@@ -85,7 +85,7 @@ public partial class VersionsPage : UserControl, IPage
                 ReleaseLabel.Legacy => Res("Grey"),
                 _ => Brushes.Black,
             };
-            rows.Add(new VersionRow(fv.Version, AppState.LabelText(kind), brush,
+            rows.Add(new VersionRow(fv.Version, AppState.LabelText(fv, cat.Firmware), brush,
                 kind == ReleaseLabel.Latest ? FontWeights.Bold : FontWeights.Normal, string.Join(", ", states),
                 fv.Notes(lang), $"TR: {fv.Notes("tr")}\nEN: {fv.Notes("en")}", fv, kind));
         }

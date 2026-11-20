@@ -28,6 +28,10 @@ public partial class App : Application
         var si = args.IndexOf("--show");
         if (si >= 0 && si + 1 < args.Count)
             show = args[si + 1];
+        string? releaseFolder = null;
+        var ri = args.IndexOf("--release-folder");
+        if (ri >= 0 && ri + 1 < args.Count && Core.Radio.RadioAccess.IsOn)      // developer builds only
+            releaseFolder = args[ri + 1];
         string? marker = null;
         var i = args.IndexOf(SelfUpdate.CheckArg);
         if (i >= 0 && i + 1 < args.Count)
@@ -64,6 +68,8 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         window.Show();
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, window.FirstStart);
+        if (releaseFolder is not null)
+            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => window.LoadLocalRelease(releaseFolder));
         if (show is not null)
             Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => window.ShowFromArgs(show));
         if (marker is not null)

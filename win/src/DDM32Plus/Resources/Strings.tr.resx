@@ -877,4 +877,28 @@ Yedek yok. Yazma yarıda kalırsa geri dönülecek yedek olmaz.
   <data name="Wiz_BackupDone" xml:space="preserve">
     <value>Yedek alındı ve doğrulandı ({0}). Telsizi şimdi kapatıp açın: yedek alındıktan sonra telsiz, kapatılıp açılana kadar normal kullanıma dönmez.</value>
   </data>
+  <data name="Label_Local" xml:space="preserve">
+    <value>yerel</value>
+  </data>
+  <data name="Menu_LocalRelease" xml:space="preserve">
+    <value>Yerel sürüm klasörü...</value>
+  </data>
+  <data name="Menu_LocalReleaseTip" xml:space="preserve">
+    <value>İmzalı bir sürümü yerel bir klasörden yükler (geliştirici derlemesi). İmza programdaki anahtarla, dosyalar SHA-256 ile indirilen bir sürüm gibi denetlenir.</value>
+  </data>
+  <data name="Local_Loaded" xml:space="preserve">
+    <value>Yerel sürüm yüklendi: {0} (imza doğrulandı). "Telsizi güncelle" sayfasında seçip "İndir ve doğrula" ile klasörden alın.</value>
+  </data>
+  <data name="Local_Failed" xml:space="preserve">
+    <value>Yerel sürüm yüklenemedi: {0}</value>
+  </data>
+  <data name="Dev_TitleWrite" xml:space="preserve">
+    <value> - DEVELOPER BUILD - radio WRITE on</value>
+  </data>
+  <data name="Dev_NoteWriteTitle" xml:space="preserve">
+    <value>Geliştirici derlemesi: telsize YAZMA açık</value>
+  </data>
+  <data name="Dev_NoteWrite" xml:space="preserve">
+    <value>Bu derlemede yedek, hızlı güncelleme, yedeksiz yükleme, normal yükleme ve geri yükleme telsize ulaşır. Bütün denetimler aynıdır. Her telsiz adımı sahibin o adım için onayını ister.</value>
+  </data>
 </root>

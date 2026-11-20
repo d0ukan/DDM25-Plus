@@ -8,6 +8,11 @@ public sealed class FirmwareVersion(FirmwareEntry entry, string release, string?
     public string Release { get; } = release;
     public string? ManifestDir { get; } = manifestDir;
     public ManifestSchema Schema { get; } = schema;
+
+    /// <summary>Where its files come from when not from GitHub: a local release folder (developer builds).</summary>
+    public IReleaseNet? Source { get; set; }
+
+    public bool IsLocal => Source is not null;
     public string Version => Entry.Version;
     public string Channel => Entry.Channel;
     public string ApplicationSha256 => Entry.ApplicationSha256;
@@ -42,6 +47,17 @@ public sealed class Catalog
         // Only this Windows program's own zip ("app_net") is a program update; never from a legacy manifest
         if (manifest.AppNet is not null && !manifest.Schema.IsLegacy)
             Apps.Add(new AppRelease(manifest.AppNet, tag, manifestDir));
+    }
+
+    /// <summary>Adds the versions of a local release that this list does not have (a version listed from GitHub
+    /// already is the same signed version).</summary>
+    public void AddLocal(Catalog local)
+    {
+        var known = Firmware.Select(f => f.Version).ToHashSet(StringComparer.Ordinal);
+        foreach (var fv in local.Firmware)
+            if (known.Add(fv.Version))
+                Firmware.Add(fv);
+        Sort();
     }
 
     /// <summary>Newest first; a stable sort, like Python's list.sort.</summary>

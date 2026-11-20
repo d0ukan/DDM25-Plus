@@ -877,4 +877,28 @@ There is no backup. If the write stops part way there is no backup to go back to
   <data name="Wiz_BackupDone" xml:space="preserve">
     <value>Backup taken and verified ({0}). Switch the radio off and on now: after a backup the radio stays in its loader until it is switched off and on.</value>
   </data>
+  <data name="Label_Local" xml:space="preserve">
+    <value>local</value>
+  </data>
+  <data name="Menu_LocalRelease" xml:space="preserve">
+    <value>Local release folder...</value>
+  </data>
+  <data name="Menu_LocalReleaseTip" xml:space="preserve">
+    <value>Loads a signed release from a local folder (developer build). The signature is checked with the key in the program and the files by SHA-256, like a downloaded release.</value>
+  </data>
+  <data name="Local_Loaded" xml:space="preserve">
+    <value>Local release loaded: {0} (signature verified). Pick it on the "Update the radio" page and take it from the folder with "Download and verify".</value>
+  </data>
+  <data name="Local_Failed" xml:space="preserve">
+    <value>The local release could not be loaded: {0}</value>
+  </data>
+  <data name="Dev_TitleWrite" xml:space="preserve">
+    <value> - DEVELOPER BUILD - radio WRITE on</value>
+  </data>
+  <data name="Dev_NoteWriteTitle" xml:space="preserve">
+    <value>Developer build: radio WRITE on</value>
+  </data>
+  <data name="Dev_NoteWrite" xml:space="preserve">
+    <value>In this build backup, quick update, install without backup, normal install and restore reach the radio. Every check is the same. Every radio step needs the owner's approval for that step.</value>
+  </data>
 </root>
