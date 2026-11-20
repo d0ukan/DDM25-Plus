@@ -261,7 +261,6 @@ __pycache__/
 !/tests/plus/test_ui_any.c
 !/docs/plus-radio-test.md
 !/docs/tle-update.md
-!/tools/turkish_ui.py
 !/integration/radiofoundry/lang/tr.po
 !/docs/map.md
 !/tools/turkey_map.py

@@ -20,6 +20,7 @@
 #include "sim/ui_sim.h"
 #include "ui/ui_app.h"
 #include "ui/qso_log.h"
+#include "ui/ui_svc.h"
 #include "ui_sim_misc.h"
 
 static int fails;
@@ -229,6 +230,8 @@ static void marine_duplex(void)
 	tool("Marine VHF");
 	run("down down down down down down");	/* 16 -> 22 */
 	expect("shows=157.100_/_161.700 shows=Public_corr.");
+	run("shot:marine-duplex");
+	layout();		/* the duplex pairs beside the channel numbers (18 and on overlapped them) */
 	run("ok");
 	expect("screen=home freq=161700000 toast=Ch_22_161.700");
 	requests("vfo_set:161700000 mode_fm:1 bw:25 tone_tx:0 tone_rx:0 vfo_tx:0");
@@ -299,6 +302,18 @@ static void battery_graph(void)
 	expect("shows=Time_left:_-- shows=Charging");
 }
 
+/* --- Settings > Display > Large text: Home with the channel and the talk target only, large --- */
+
+static void large_text_home(void)
+{
+	run("shot:home");
+	ui_svc_setting_set(UI_SET_LARGE_TEXT, 1);
+	run("reboot wait:200");
+	expect("screen=home");
+	run("shot:home-large");
+	layout();
+}
+
 int main(void)
 {
 	static const struct { const char *name; case_fn fn; } cases[] = {
@@ -313,6 +328,7 @@ int main(void)
 		{ "MV data channels", marine_data },
 		{ "QSO star on Recent", qso_star },
 		{ "BG battery graph", battery_graph },
+		{ "LT large text Home", large_text_home },
 	};
 	int failed = 0;
 	for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)

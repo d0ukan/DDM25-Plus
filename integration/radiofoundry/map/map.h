@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAP_ZOOMS		7u	/* 0: all of Turkey .. 4: one province .. 6: a few districts */
+#define MAP_ZOOMS		9u	/* 0: all of Turkey .. 4: one province .. 6: a few districts .. 8: a town (~40 m a pixel) */
 #define MAP_NONE		(-1)	/* no province */
 #define MAP_DISTRICT_NONE	0xFFFFu	/* no district */
 

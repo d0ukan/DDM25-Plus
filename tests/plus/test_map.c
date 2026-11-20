@@ -215,8 +215,10 @@ static void test_projection(void)
 	for (uint8_t z = 0; z < MAP_ZOOMS; z++) {
 		map_view_set(&v, 399334000, 328597000, z);
 		CHECK(v.zoom == z);
-		/* the centre lands in the middle of the viewport */
-		CHECK(map_project(&v, 399334000, 328597000, &x, &y) && abs(x - FB_W / 2) <= 1 && abs(y - (16 + 48)) <= 1);
+		/* the centre lands in the middle of the viewport: within a pixel, plus a unit's pixels from zoom 7 on (the
+		 * view's centre is a whole unit, the position is projected exactly) */
+		int tx = 1 + (int)(v.kx >> 16), ty = 1 + (int)(v.ky >> 16);
+		CHECK(map_project(&v, 399334000, 328597000, &x, &y) && abs(x - FB_W / 2) <= tx && abs(y - (16 + 48)) <= ty);
 		/* pixel -> position -> the same pixel, everywhere in the viewport */
 		bool exact = true;
 		for (int py = v.y; py < v.y + v.h; py += 7)
@@ -235,6 +237,15 @@ static void test_projection(void)
 		CHECK(abs(la - 391234567) <= tol_lat && abs(lo - 331234567) <= tol_lon);
 		if (z)
 			CHECK(map_view_width_m(&v) * 2 > w0 >> z && map_view_width_m(&v) < (w0 >> (z - 1)));
+	}
+	/* the closest zooms (7, 8: finer than the data's 0.001 degree unit): marks 0.0005 degree (~50 m) apart are apart
+	 * on screen, not snapped to the unit grid (owner's request 2026-11-20) */
+	CHECK(MAP_ZOOMS == 9u);
+	map_view_set(&v, 399334000, 328597000, MAP_ZOOMS - 1);
+	{
+		int ax = 0, ay = 0, bx = 0, by = 0;
+		CHECK(map_project(&v, 399334000, 328597000, &ax, &ay) && map_project(&v, 399339000, 328603000, &bx, &by));
+		CHECK(bx - ax >= 1 && ay - by >= 1);
 	}
 	/* zoom in / out keeps the centre and stops at the ends */
 	map_view_set(&v, 385012000, 433730000, 2);
@@ -326,7 +337,7 @@ static void test_render(const char *pgm)
 	map_view_set(&v, 385012000, 433730000, 4);
 	n = fb_render(&fb, &v);
 	CHECK(map_label(&v, 64, &lx, &ly));
-	/* the closest zoom (6, ~0.25 degree across this viewport) draws too */
+	/* the closest zoom (8, ~0.06 degree across this viewport) draws too */
 	map_view_set(&v, 385012000, 433730000, MAP_ZOOMS - 1);
 	n = fb_render(&fb, &v);
 	CHECK(n > 0 || fb_count(&fb) == 0);

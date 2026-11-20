@@ -2004,6 +2004,15 @@ def prepare_art(transform, install):
          '\t\t\tart_icon(it.icon - 1u, x, ry + (L->row_h - ART_ICON_H) / 2, fg);\n'
          '\t\t\tx += ART_ICON_W + 5;\n\t\t}\n#endif\n'),
     ])
+    # The splash is drawn before ui_app_init applies the saved settings, so it showed the compiled-in theme (Classic's
+    # light one, tools/classic_channels.py) on a radio set to dark. Settings are loaded before the UI task starts
+    # (app.c: settings_init, then ui_start), so the saved theme is already there to read.
+    transform('core/ui/ui.c', [
+        ('\t\tui_layout_init();\n\t\tchar line1[17], line2[17];\n',
+         '\t\tui_layout_init();\n#if CONFIG_PLUS_ART\n'
+         '\t\tui_theme_set((uint8_t)ui_svc_setting_get(UI_SET_THEME));\t// DDM25 Plus: the splash in the saved theme\n'
+         '#endif\n\t\tchar line1[17], line2[17];\n'),
+    ])
     transform('core/ui/ui_screens.h', [
         ("\tchar num;\t\t// key shown before the label ('1'..'9', '0'), 0 = none\n",
          "\tchar num;\t\t// key shown before the label ('1'..'9', '0'), 0 = none\n#if CONFIG_PLUS_ART\n"

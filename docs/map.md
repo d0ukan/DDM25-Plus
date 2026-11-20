@@ -148,10 +148,12 @@ Stack: `map_draw` and the lookup use a few dozen bytes; no recursion, no heap, n
 ## Renderer core (`map.h`)
 
 - Equirectangular projection with cos(latitude) of the view centre (Q15 table 30–50°, interpolated), Q16 fixed point.
-- Zoom 0..6: 0.1, 0.05, 0.025, 0.0125, 0.00625, 0.003125, 0.0015625 °/pixel (latitude). On a 160 px wide screen
-  zoom 0 shows all of Turkey (~1,780 km across), zoom 4 ~110 km (province level), zoom 6 ~28 km (a few districts);
-  twice that on the DM-32UV's 320 px. From zoom 6 on, `pixels x k` exceeds int32, so the projection multiplies in
-  64 bits.
+- Zoom 0..8: 0.1, 0.05, 0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00075, 0.000375 °/pixel (latitude). On a
+  160 px wide screen zoom 0 shows all of Turkey (~1,780 km across), zoom 4 ~110 km (province level), zoom 6 ~28 km
+  (a few districts), zoom 8 ~7 km (a town, ~40 m a pixel); twice that on the DM-32UV's 320 px. From zoom 6 on,
+  `pixels x k` exceeds int32, so the projection multiplies in 64 bits. Zoom 7 and 8 (owner's request 2026-11-20)
+  are finer than the data's 0.001° unit: borders and district dots stay on that grid, but `map_project` /
+  `map_unproject` work in 1e-7° so stations, repeaters and our position don't snap to it.
 - `map_view_pan` (pixels), `map_view_zoom` (keeps the centre), the centre is clamped to the data bounds ± 2°;
   far positions are clamped before multiplying, so nothing overflows.
 - `map_draw` culls provinces by bounding box, merges consecutive points on the same pixel (zoom 0: ~4,000 segments
@@ -174,8 +176,10 @@ Stack: `map_draw` and the lookup use a few dozen bytes; no recursion, no heap, n
 - Borders as before; province names from zoom 2 (in the foreground colour once district names show), district
   dots from zoom 3, district names (tiny font, right of the dot) from zoom 4; provinces' labels are placed first.
   "GeoNames" in the bottom right corner whenever district dots are drawn (CC BY 4.0 attribution).
-- Repeaters (`CONFIG_REPEATERS`, the existing `rpt_table`: no copy of the data): a small filled triangle at each
-  entry with a position, at every zoom. # picks the repeater nearest the map's centre (`rpt_here_set` with the
+- Repeaters (`CONFIG_REPEATERS`, the existing `rpt_table`: no copy of the data): a filled triangle in the theme's
+  `priv` blue at each entry with a position, at every zoom; APRS stations are 5 px squares in `rx` green. Both sit on
+  a one-pixel ring of the background so they stand out from the 2 px dim district dots and the border lines
+  (owner's request 2026-11-20). # picks the repeater nearest the map's centre (`rpt_here_set` with the
   centre, `rpt_nearest`), # again the next nearest (`rpt_next`, round to the nearest after the last): drawn larger in
   the foreground colour with its callsign; the line under the map reads "TA1ABC 439.1625 12.3 km NE" (the way from
   the centre), the hint "OK details  # next  Back clear". OK opens Tools > Repeaters on that entry's details

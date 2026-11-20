@@ -16,7 +16,7 @@
  *      the legend under the map beside the scale. RAM only, off at power on.
  * The stations are upstream's heard list (no copy): a dot each, the callsign from zoom 3 (no two labels overlap).
  *
- * Zoom 0..6. Province names from zoom 2, district dots from zoom 3 and their names from zoom 4; no two labels overlap
+ * Zoom 0..8. Province names from zoom 2, district dots from zoom 3 and their names from zoom 4; no two labels overlap
  * (map_occ_t: the first drawn wins, provinces first, then stations). */
 #include "config.h"
 #if CONFIG_MAP
@@ -134,6 +134,23 @@ static void marker_triangle(int x, int y, int r, color_t c)
 			if (inside_view(xx, yy))
 				gfx_pixel(xx, yy, c);
 	}
+}
+
+/* APRS stations and repeaters stand out from the district dots (2 px, dim) and the borders: larger, in their own
+ * theme colours (stations rx green, repeaters priv blue), each on a one-pixel ring of the background so a border
+ * line under them doesn't run into them. Theme colours only: no palette entries on the 4 bpp panel */
+static void mark_station(int x, int y, bool picked)
+{
+	int r = picked ? 3 : 2;
+	marker_dot(x, y, r + 1, ui_col.bg);
+	marker_dot(x, y, r, picked ? ui_col.fg : ui_col.rx);
+}
+
+static void mark_repeater(int x, int y, bool picked)
+{
+	int r = picked ? 5 : 3;
+	marker_triangle(x, y + 1, r + 2, ui_col.bg);
+	marker_triangle(x, y, r, picked ? ui_col.fg : ui_col.priv);
 }
 
 /* A label of font f at (x, y) (top-left) if it fits in the view and no other label is there */
@@ -271,14 +288,14 @@ static void __attribute__((noinline)) draw_repeaters(void)
 		if (i == pick || e->lat_e5 == RPT_NOPOS || e->lon_e5 == RPT_NOPOS ||
 		    !map_project(&view, e->lat_e5 * 100, e->lon_e5 * 100, &x, &y))
 			continue;
-		marker_triangle(x, y, 2, ui_col.chnum);
+		mark_repeater(x, y, false);
 	}
 	if (pick < rpt_info.count) {
 		const rpt_entry_t *e = &rpt_table[pick];
 		int x, y;
 		if (e->lat_e5 != RPT_NOPOS && e->lon_e5 != RPT_NOPOS &&
 		    map_project(&view, e->lat_e5 * 100, e->lon_e5 * 100, &x, &y)) {
-			marker_triangle(x, y, 4, ui_col.fg);
+			mark_repeater(x, y, true);
 			pick_label(x, y, e->name);
 		}
 	}
@@ -325,10 +342,10 @@ static void __attribute__((noinline)) draw_marks(bool here, const ui_position_t 
 		if (!ui_svc_aprs_station(i, &st) || !st.has_pos || !map_project(&view, st.lat, st.lon, &x, &y))
 			continue;
 		if (spick != 0 && mapnav_call_hash(st.call) == spick) {
-			marker_dot(x, y, 2, ui_col.fg);
+			mark_station(x, y, true);
 			pick_label(x, y, st.call);
 		} else {
-			marker_dot(x, y, 1, ui_col.rx);
+			mark_station(x, y, false);
 		}
 	}
 	nav_point_t wp;

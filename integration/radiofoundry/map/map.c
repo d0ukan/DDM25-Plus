@@ -9,9 +9,10 @@
 #include "turkey_map_data.h"
 #include "turkey_district_data.h"
 
-/* Units per pixel x 16 (latitude), zoom 0..6: 0.1, 0.05, 0.025, 0.0125, 0.00625, 0.003125, 0.0015625 degree per
- * pixel */
-static const uint16_t upp_q4[MAP_ZOOMS] = { 1600, 800, 400, 200, 100, 50, 25 };
+/* Units per pixel x 16 (latitude), zoom 0..8: 0.1, 0.05, 0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00075,
+ * 0.000375 degree per pixel (7 and 8 round to whole q4 steps). From zoom 7 on a pixel is finer than the data's unit
+ * (0.001 degree), so marks sit on a 2-3 pixel grid there: the zoom is for telling close marks apart, not survey work */
+static const uint16_t upp_q4[MAP_ZOOMS] = { 1600, 800, 400, 200, 100, 50, 25, 12, 6 };
 /* cos(latitude) Q15 at 30 .. 50 degrees */
 static const uint16_t cos_q15[21] = { 28378, 28088, 27789, 27482, 27166, 26842, 26510, 26170, 25822, 25466, 25102,
 	24730, 24351, 23965, 23571, 23170, 22763, 22348, 21926, 21498, 21063 };
@@ -24,12 +25,6 @@ static int32_t floor_div(int32_t a, int32_t b)	/* b > 0 */
 {
 	int32_t q = a / b;
 	return (a % b != 0 && a < 0) ? q - 1 : q;
-}
-
-static int32_t ceil_div(int32_t a, int32_t b)	/* b > 0 */
-{
-	int32_t q = a / b;
-	return (a % b != 0 && a > 0) ? q + 1 : q;
 }
 
 static int32_t clamp32(int32_t v, int32_t lo, int32_t hi)
@@ -50,7 +45,7 @@ static void view_scale(map_view_t *v)
 	v->cx = clamp32(v->cx, TURKEY_MAP_XMIN - MARGIN, TURKEY_MAP_XMAX + MARGIN);
 	v->cy = clamp32(v->cy, TURKEY_MAP_YMIN - MARGIN, TURKEY_MAP_YMAX + MARGIN);
 	v->ky = (int32_t)((16ul << 16) / upp_q4[v->zoom]);
-	v->kx = v->ky * cos_at(v->cy) / 32768;
+	v->kx = (int32_t)((int64_t)v->ky * cos_at(v->cy) / 32768);	/* ky x cos overflows int32 from zoom 7 on */
 }
 
 static int32_t ux_of(int32_t lon_e7)
@@ -120,9 +115,33 @@ uint32_t map_view_width_m(const map_view_t *v)
 	return units * M_PER_UNIT_X100 / 100u;
 }
 
+static int64_t floor_div64(int64_t a, int64_t b)	/* b > 0 */
+{
+	int64_t q = a / b;
+	return (a % b != 0 && a < 0) ? q - 1 : q;
+}
+
+static int64_t ceil_div64(int64_t a, int64_t b)	/* b > 0 */
+{
+	int64_t q = a / b;
+	return (a % b != 0 && a > 0) ? q + 1 : q;
+}
+
+#define E7_Q16	((int64_t)TURKEY_MAP_UNIT_E7 * 65536)
+
+/* A position to the pixel, in 1e-7 degree rather than whole units: from zoom 7 on a unit is wider than a pixel, and
+ * a mark (station, repeater, us) must not snap to the unit grid. Whole-unit positions (borders, districts) land on
+ * the same pixel as px_x / px_y put them */
 bool map_project(const map_view_t *v, int32_t lat_e7, int32_t lon_e7, int *x, int *y)
 {
-	int32_t px = px_x(v, ux_of(lon_e7)), py = px_y(v, uy_of(lat_e7));
+	/* 64-bit differences: any int32 position (-180 degrees too) minus the centre, then clamped as px_x / px_y do */
+	const int64_t lim = (int64_t)SPAN * TURKEY_MAP_UNIT_E7;
+	int64_t dx = (int64_t)lon_e7 - ((int64_t)TURKEY_MAP_LON0_E7 + (int64_t)v->cx * TURKEY_MAP_UNIT_E7);
+	int64_t dy = ((int64_t)TURKEY_MAP_LAT0_E7 + (int64_t)v->cy * TURKEY_MAP_UNIT_E7) - (int64_t)lat_e7;
+	dx = dx < -lim ? -lim : dx > lim ? lim : dx;
+	dy = dy < -lim ? -lim : dy > lim ? lim : dy;
+	int32_t px = v->x + v->w / 2 + (int32_t)floor_div64((int64_t)dx * v->kx, E7_Q16);
+	int32_t py = v->y + v->h / 2 + (int32_t)floor_div64((int64_t)dy * v->ky, E7_Q16);
 	*x = (int)px;
 	*y = (int)py;
 	return px >= v->x && px < v->x + v->w && py >= v->y && py < v->y + v->h;
@@ -130,11 +149,11 @@ bool map_project(const map_view_t *v, int32_t lat_e7, int32_t lon_e7, int *x, in
 
 void map_unproject(const map_view_t *v, int x, int y, int32_t *lat_e7, int32_t *lon_e7)
 {
-	/* ceil: the smallest unit whose floor projection is this pixel, so project(unproject(p)) == p */
-	int32_t ux = v->cx + ceil_div((int32_t)(x - v->x - v->w / 2) * 65536, v->kx);
-	int32_t uy = v->cy - ceil_div((int32_t)(y - v->y - v->h / 2) * 65536, v->ky);
-	*lat_e7 = TURKEY_MAP_LAT0_E7 + uy * TURKEY_MAP_UNIT_E7;
-	*lon_e7 = TURKEY_MAP_LON0_E7 + ux * TURKEY_MAP_UNIT_E7;
+	/* ceil: the smallest 1e-7 degree step whose floor projection is this pixel, so project(unproject(p)) == p */
+	int64_t ox = ceil_div64((int64_t)(x - v->x - v->w / 2) * E7_Q16, v->kx);
+	int64_t oy = ceil_div64((int64_t)(y - v->y - v->h / 2) * E7_Q16, v->ky);
+	*lon_e7 = TURKEY_MAP_LON0_E7 + v->cx * TURKEY_MAP_UNIT_E7 + (int32_t)ox;
+	*lat_e7 = TURKEY_MAP_LAT0_E7 + v->cy * TURKEY_MAP_UNIT_E7 - (int32_t)oy;
 }
 
 enum { OUT_L = 1, OUT_R = 2, OUT_T = 4, OUT_B = 8 };

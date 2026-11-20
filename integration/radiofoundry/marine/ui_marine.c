@@ -58,7 +58,8 @@ static void sb_freqs(sbuf_t *b, const marine_ch_t *c)
 		sb_mhz3(b, coast);
 }
 
-/* "16" and its frequencies (medium), its use (small) */
+/* "16" and its frequencies (medium), its use (small). A duplex pair ("157.100 / 161.700") is wider than the line
+ * beside the channel name in the medium font, so it drops to the small font, on the medium line's baseline. */
 static void __attribute__((noinline)) row(int y, int h, const marine_ch_t *c, bool focus)
 {
 	char buf[24], fit[40];
@@ -70,9 +71,12 @@ static void __attribute__((noinline)) row(int y, int h, const marine_ch_t *c, bo
 	bool data = c->use == MAR_DSC || c->use == MAR_AIS, warn = data || c->use == MAR_DISTRESS;
 	color_t fg = focus ? ui_col.focus_fg : warn ? ui_col.warn : ui_col.fg, dim = focus ? ui_col.focus_fg : ui_col.dim;
 	gfx_text(m, 2, y + 1, c->name, fg);
+	int room = w - 2 - (2 + gfx_text_width(m, c->name) + 6);	/* right of the name and a gap */
 	sb_init(&b, buf, sizeof buf);
 	sb_freqs(&b, c);
-	gfx_text(m, w - gfx_text_width(m, buf) - 2, y + 1, buf, fg);
+	const font_t *f = gfx_text_width(m, buf) <= room ? m : s;
+	gfx_text_fit(f, buf, room, fit, sizeof fit);
+	gfx_text(f, w - gfx_text_width(f, fit) - 2, y + 1 + m->h - f->h, fit, fg);
 	gfx_text_fit(s, use_text(c->use), w - 4, fit, sizeof fit);
 	gfx_text(s, 2, y + m->h + 2, fit, dim);
 }
