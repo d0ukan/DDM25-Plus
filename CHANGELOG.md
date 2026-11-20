@@ -3,8 +3,12 @@
 DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
 [README.md](README.md) before installing anything.
 
-## Unreleased
+## v1.0.0-beta.2 (2026-11-20)
 
+Second pre-release, the first as DDM32 Plus. Installed and checked on the author's radio (the fixes below and
+the new boot screen).
+
+- New boot screen: the author's radio-"D" mark and "DDM32+ Plus", readable on the dark and the light theme.
 - Renamed from DDM25 Plus to DDM32 Plus (repository d0ukan/DDM32-Plus). v1.0.0-beta.1 was published as DDM25 Plus;
   its program cannot update itself to a later release (new file names): download the next program zip by hand once.
   Radios running a DDM25 Plus build are still recognized, and an existing `%LOCALAPPDATA%\DDM25Plus` data folder
