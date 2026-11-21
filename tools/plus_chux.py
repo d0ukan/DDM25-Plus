@@ -28,6 +28,7 @@ def prepare_chux(transform, install):
     ])
     prepare_zone_size(transform)
     prepare_dmr_rows(transform)
+    prepare_dmon(transform)
 
 
 def prepare_zone_size(transform):
@@ -189,4 +190,28 @@ def prepare_dmr_rows(transform):
         ('\tcase CE_DMO: c->dmo = !c->dmo; break;\n',
          _if('\tcase CE_DMO:\n\t\tc->dmo = !c->dmo;\n\t\tif (c->dmo)\n\t\t\tui_toast(TR("Direct: TX on the RX frequency"));\n\t\tbreak;\n',
              '\tcase CE_DMO: c->dmo = !c->dmo; break;\n')),
+    ])
+
+
+def prepare_dmon(transform):
+    """3. Digital monitor (owner: "I turn it on and off and the screen still says DMon"). Home drew DMon for
+    v->dmr.hear_all, which a channel with RX list Any kept on whatever the user's toggle said. With item 2 hear_all is
+    the user's again (the toggle, the monitor key held); the channel's own Any gets its own chip, "AllTG" (not the
+    warning colour: nothing to turn off), and DMon wins when both are on. The toggle says in one line what it does:
+    "Digital monitor on: every call" / "Digital monitor off", and on a channel that hears every talkgroup anyway
+    "Monitor off: channel hears all TGs"."""
+    transform('core/ui/ui_screens.c', [
+        ('\t\tx = gfx_text(f, x, L->chips_y, dmon, ui_col.warn) + f->w;\t// digital monitor (FM\'s is "Mon")\n',
+         '\t\tx = gfx_text(f, x, L->chips_y, dmon, ui_col.warn) + f->w;\t// digital monitor (FM\'s is "Mon")\n'
+         + _if('\telse if (v->ch.listen_list == CODEPLUG_LIST_ANY) {\t// DDM32 Plus: the channel hears every TG on its slot\n'
+               '\t\tconst char *any = TR("AllTG");\n'
+               '\t\tif (x + gfx_text_width(f, any) <= gfx_width())\n'
+               '\t\t\tx = gfx_text(f, x, L->chips_y, any, ui_col.fg) + f->w;\n\t}\n')),
+    ])
+    transform('core/ui/ui_app.c', [
+        ('\treturn on ? TR("Digital monitor on") : TR("Digital monitor off");\n',
+         _if('\tif (on)\n\t\treturn TR("Digital monitor on: every call");\n'
+             '\treturn view != NULL && view->ch.mode == RADIO_MODE_DMR && view->ch.listen_list == CODEPLUG_LIST_ANY ?\n'
+             '\t\tTR("Monitor off: channel hears all TGs") : TR("Digital monitor off");\n',
+             '\treturn on ? TR("Digital monitor on") : TR("Digital monitor off");\n')),
     ])

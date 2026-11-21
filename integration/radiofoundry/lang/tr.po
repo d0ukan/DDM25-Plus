@@ -6154,3 +6154,15 @@ msgstr "Direkt: TX, RX frekansında"
 #: core/ui/ui_menus.c
 msgid "RX list"
 msgstr "RX listesi"
+
+#: core/ui/ui_screens.c
+msgid "AllTG"
+msgstr "TümG"
+
+#: core/ui/ui_app.c
+msgid "Digital monitor on: every call"
+msgstr "Dijital dinleme açık: tüm çağrılar"
+
+#: core/ui/ui_app.c
+msgid "Monitor off: channel hears all TGs"
+msgstr "Dinleme kapalı: kanal tüm TG'leri duyar"

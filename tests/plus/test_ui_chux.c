@@ -8,7 +8,9 @@
  *      channels", Copy here refused the same way; a position whose channel can't be read shows;
  *   2. DMR rows: a channel made DMR gets the first group contact; the RX group list picker offers Any right after
  *      None, picking it says what it hears and the row reads "All TGs TS1", None says so too; saved; an RX only DMR
- *      channel saves without a TX contact; Direct mode on says what it does. */
+ *      channel saves without a TX contact; Direct mode on says what it does;
+ *   3. digital monitor: a channel with RX list Any shows AllTG, not DMon; the monitor key's toggle shows and hides DMon
+ *      and says what it does (on: every call; off on such a channel: the channel still hears all TGs). */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -204,6 +206,30 @@ static void case_dmr_rows(void)
 	layout();
 }
 
+/* ---------------- 3. digital monitor ---------------- */
+
+static void case_dmon(void)
+{
+	start("channel Any: AllTG, the toggle says DMon on and off");
+	dmr_channel();
+	row(T("RX list", "RX listesi"), "down");
+	run("ok up ok wait:3000 long:ok back back back up down wait:200");
+	expect(T("screen=home shows=AllTG hides=DMon hearall=0", "screen=home shows=mG hides=DMon hearall=0"));
+	layout();
+	run("mon wait:200");
+	expect(T("hearall=1 shows=DMon hides=AllTG toast=Digital_monitor_on:_every_call",
+		 "hearall=1 shows=DMon hides=mG toast=Dijital_dinleme_a"));
+	run("wait:3000 mon wait:200");
+	expect(T("hearall=0 hides=DMon shows=AllTG toast=Monitor_off:_channel_hears_all_TGs",
+		 "hearall=0 hides=DMon shows=mG toast=Dinleme_kapal"));
+	layout();
+	start("a channel without Any: DMon off is just off");
+	run("mon wait:3000 mon wait:200");
+	expect(T("hearall=0 hides=DMon hides=AllTG toast=Digital_monitor_off",
+		 "hearall=0 hides=DMon hides=mG toast=Dijital_dinleme_kapal"));
+	layout();
+}
+
 typedef void (*case_fn)(void);
 
 static int run_case(case_fn fn)
@@ -223,7 +249,7 @@ static int run_case(case_fn fn)
 
 int main(void)
 {
-	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows };
+	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows, case_dmon };
 	int bad = 0, n = 0;
 	for (int lang = 0; lang < 2; lang++) {
 		turkish = lang == 1;

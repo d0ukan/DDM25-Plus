@@ -2726,3 +2726,14 @@ The VFO's RX list row (VFO settings) shows the same text. Tests: `tests/plus/tes
 fixture (Any plays another talkgroup, not a private call between others, ours yes; digital monitor plays both),
 `tests/plus/test_ui_chux.c` (made DMR, the picker order, both one-liners, the row, save, RX only without a contact,
 Direct mode; English and Turkish, the layout).
+
+### 3. Digital monitor ("I turn it on and off and the screen still says DMon")
+
+Home drew DMon for `v->dmr.hear_all || s->hear_all`, and a channel with RX list Any kept `hear_all` on whatever the
+toggle said. Since item 2 `hear_all` is the user's again (the toggle, the monitor key held, Settings > digital monitor
+by default); the channel's own Any gets its own chip on Home's DMR row, **AllTG** (Turkish "TümG"; the normal colour:
+nothing to turn off), and DMon (warning colour) wins when both are on. The toggle (monitor key, quick tile) says in one
+line what it does: "Digital monitor on: every call", "Digital monitor off", and on a channel that hears every
+talkgroup anyway "Monitor off: channel hears all TGs". Home's hint "Digital monitor  Back off" now shows only for the
+user's monitor. Tests: `tests/plus/test_ui_chux.c` (AllTG without DMon, DMon on and off with their lines, a channel
+without Any; English and Turkish, the layout).

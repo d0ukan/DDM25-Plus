@@ -565,3 +565,5 @@ unless a row says it transmits.
 | D-1 | A DMR repeater channel, Edit > RX list: OK | the picker lists None, "Any: all TGs", then the lists; on Any: "Any: every TG on this slot", the row "All TGs TS1"; hold OK saves |
 | D-2 | On that channel (DMon off) another station calls a talkgroup not in the channel's lists on TS1; then on TS2; then a private call between two other IDs | the TS1 group call plays; the TS2 call and the private call do not |
 | D-3 | Edit an FM channel: Mode to DMR, look at TX contact; RX only Yes, TX contact None, hold OK | TX contact is the codeplug's first talkgroup contact; the RX only channel saves ("Saved channel n") |
+| M-1 | On the D-1 channel (RX list Any): Home; press the monitor key; again | Home's DMR row shows "AllTG" (no DMon); first press: "DMon" (amber) and "Digital monitor on: every call"; second: DMon gone, "AllTG" back, "Monitor off: channel hears all TGs" |
+| M-2 | On a DMR channel with an ordinary RX list: monitor key on, off; the quick tile Digital monitor on, off | DMon appears and goes each time with the toggle ("Digital monitor off"); no AllTG |
