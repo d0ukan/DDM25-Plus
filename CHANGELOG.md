@@ -5,6 +5,13 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- DOTA Transfer: a typed frequency must be in the amateur bands (144-146, 430-440 MHz) and outside what the
+  cross-band refuses there (repeater inputs and outputs, the satellite segments 145.800-146.000 and 435-438 MHz, APRS
+  144.800, PMR446, the repeater list's frequencies); otherwise a toast says why ("Not an amateur band", "Repeater
+  frequency", "Satellite segment", ...) and the frequency stays. Left / Right no longer step out of the bands, Send /
+  Ready checks every source the same way, and the "Not amateur band: send?" question is gone (nothing is sent
+  outside the bands).
+
 ## v1.0.0-beta.6 (2026-11-21)
 
 With the Windows programmer 2.0.0-beta.3 and the cross-platform programmer 3.0.0-alpha.2 (Windows; alpha.1 was replaced the same day: it listed no version when only betas were published, and had no icon).

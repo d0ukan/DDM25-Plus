@@ -7,7 +7,7 @@
  * the picker reads a zone and a channel into the tool screens' shared buffer (ui_scratch.h). Installed as
  * core/ui/ui_xband.c. */
 #include "config.h"
-#if CONFIG_XBAND
+#if CONFIG_XBAND || CONFIG_DOTA	/* the band plan's refusals: DOTA's frequency check too (ui_xband_refusal) */
 #include <string.h>
 #include "ui_nav.h"
 #include "ui_screens.h"
@@ -28,15 +28,7 @@
 #include "radio/dota.h"
 #endif
 
-enum { R_A, R_B, R_MODE, R_CC, R_TS, R_POWER, R_GO, R_ROWS };
-
-static uint8_t focus, ndigits, page;	/* page 1: the attended-operation question */
-static char digits[8];			/* a frequency being typed on A / B */
-static uint16_t form_top;
-static uint16_t shown_serial;
-static uint8_t was_on;			/* the session ran at the last tick (its end is told once) */
-
-/* --- The checks before a start --- */
+/* --- The checks before a start (the band plan's part DOTA's frequency check shares) --- */
 
 #if CONFIG_REPEATERS
 /* A repeater of the list transmits or listens there (within half a 12.5 kHz channel) */
@@ -71,6 +63,32 @@ static const char *why_text(uint8_t why)
 	return why < XB_R_COUNT && text[why] != NULL ? tr(text[why]) : NULL;
 }
 
+/* One frequency: the band plan (xband_check_hz), then the repeater list's */
+static uint8_t hz_why(uint32_t hz)
+{
+	uint8_t why = xband_check_hz(hz);
+#if CONFIG_REPEATERS
+	if (why == XB_R_OK && known_repeater(hz))
+		why = XB_R_REPEATER;
+#endif
+	return why;
+}
+
+const char *ui_xband_refusal(uint32_t hz)
+{
+	return why_text(hz_why(hz));
+}
+#endif
+
+#if CONFIG_XBAND
+enum { R_A, R_B, R_MODE, R_CC, R_TS, R_POWER, R_GO, R_ROWS };
+
+static uint8_t focus, ndigits, page;	/* page 1: the attended-operation question */
+static char digits[8];			/* a frequency being typed on A / B */
+static uint16_t form_top;
+static uint16_t shown_serial;
+static uint8_t was_on;			/* the session ran at the last tick (its end is told once) */
+
 /* Everything before the question: a toast and false when refused */
 static bool checks(void)
 {
@@ -80,12 +98,8 @@ static bool checks(void)
 	if (radio_cwid_callsign(name, r->call, sizeof r->call) == 0)
 		r->call[0] = '\0';
 	uint8_t why = xband_check(r);
-	for (uint8_t k = 0; why == XB_R_OK && k < 2; k++) {
-#if CONFIG_REPEATERS
-		if (known_repeater(r->hz[k]))
-			why = XB_R_REPEATER;
-#endif
-	}
+	for (uint8_t k = 0; why == XB_R_OK && k < 2; k++)
+		why = hz_why(r->hz[k]);	/* the repeater list's (the band plan's passed in xband_check) */
 	if (why == XB_R_OK && ui_view()->dmr.own_id == 0)
 		why = XB_R_ID;
 	const char *t = why_text(why);

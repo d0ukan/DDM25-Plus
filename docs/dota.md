@@ -82,7 +82,7 @@ the function names are the stable reference. Spec names without a path (`aprs.md
 | AFSK demodulator (2 paths, integer, ~6 % CPU) | `core/aprs/afsk.c` via APRS's state `a.demod` (`aprs.c:135`) and receive loop `rx_service` (`aprs.c:1136`) | reused as is: while DOTA listens, `rx_service` runs on the DOTA frequency and `demod_frame` (`aprs.c:1104`) hands frames to DOTA instead of `aprs_rx_frame` |
 | FM receive audio (HR_C7000 RX RAM, 8 kHz, not squelch gated; 2 KB ring from the heap while listening) | `platform/hrc7000/fm_rx_audio.c:45`, `hrc_afsk.c` `rx_start` / `rx_read` | unchanged; FM caller ID yields the ring as it does for APRS (`radio_fmid_yield`) |
 | CTCSS detect | FD6818, `status()` `st->tone_ok` (`radio_dm32.c:490`); the core's tone squelch (`radio_sm.c` `tone_needed`) | the receiver tunes with the session tone: the speaker opens only on it, and a frame counts only when `tone_ok` was seen within the last 1.5 s |
-| Band and amateur checks | `board_in_band(hz, true)` (`hal/board.h:122`), `aprs_amateur_hz` (`aprs.c:175`), `aprs_callsign_ok` (`aprs.c:181`) | refuse a frequency the radio may not transmit on; warn outside 2 m / 1.25 m / 70 cm; the callsign rule is APRS's (the radio name, as "Set your callsign (the radio name) in qdmr.") |
+| Band and amateur checks | `board_in_band(hz, true)` (`hal/board.h:122`), the cross-band's band plan (`xband_check_hz`, `ui_xband_refusal`; was `aprs_amateur_hz`), `aprs_callsign_ok` (`aprs.c:181`) | refuse a frequency the radio may not transmit on; refuse outside 144-146 / 430-440 MHz and the band plan's segments (12.6, owner 2026-11-21; was a warning outside 2 m / 1.25 m / 70 cm); the callsign rule is APRS's (the radio name, as "Set your callsign (the radio name) in qdmr.") |
 
 ### 4.2 Patches
 
@@ -585,7 +585,18 @@ frequency, tone 88.5 Hz, colour code 1, slot 1, power low, import "New zone" wit
   433.500, no APRS frequency (144.800, 432.500 and the 433.800 some countries use), outside the repeater inputs and
   outputs, below the satellite segment (435-438 MHz). Like every 70 cm frequency below 434.790 it also carries LPD433
   (licence-free) devices: the CTCSS tone keeps them out of the transfer, not off the air.
-- **Current channel** is offered only when the channel (or the VFO) is simplex, may transmit and is in an amateur band.
+- **Current channel** is offered only when the channel (or the VFO) is simplex, may transmit and passes the band check
+  below.
+- **Amateur bands only** (owner, 2026-11-21): every frequency DOTA transmits on goes through the cross-band's band plan
+  (`xband_check_hz` in `radio/xband.c`, its toasts in `ui_xband.c`, shared as `ui_xband_refusal`): 144-146 MHz and
+  430-440 MHz only, and inside them not the satellite segments (145.800-146.000, 435-438 MHz), the IARU Region 1
+  repeater inputs and outputs (145.000-145.1875 and 145.600-145.7875, 431.050-431.825 and 438.650-439.425 MHz, each
+  edge widened by half a 12.5 kHz channel), APRS 144.800 MHz, nor a frequency of the repeater list (`CONFIG_REPEATERS`).
+  A typed frequency the plan refuses is not taken: the toast names why ("Not an amateur band", "PMR446: no repeaters
+  allowed", "Repeater frequency", "Satellite segment", "APRS frequency") and the frequency and its source stay as they
+  were. Left / Right do not step out of the amateur bands (the same toast); a step into a refused segment inside them is
+  taken and Send / Ready refuses it with its toast, whatever the source. APRS's own frequency (Settings > APRS) stays
+  refused too. The old "Not amateur band: send?" question is gone: outside the bands nothing is sent.
 - **Last used** is the last session's frequency, until power off (RAM only: a stored value would need a settings
   field; proposed for later if the owner wants it across power off).
 - The Receiver ID is typed. Proposal for later (not built): pick it from the last DMR stations heard (Tools > Heard

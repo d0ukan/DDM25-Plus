@@ -3,7 +3,9 @@
  * on the DM-32UV's display class (240 x 320, insets 10 x 5, key map M: Left / Right), in English and in Turkish. The
  * session engine (radio/dota.c, tests/plus/test_dota_session.c) is faked here: what the screen asks it for is recorded,
  * and the view it shows is set by the test. Covers the form (rows by role and method, digits, the power and tone
- * steps), the checks before a start, the questions in their order, the start's request, the picker, the progress
+ * steps), the frequency typed or stepped (the amateur bands only, the cross-band's band plan refusals: the real
+ * radio/xband.c and ui_xband.c), the checks before a start, the questions in their order, the start's request, the
+ * picker, the progress
  * page, Back's "Stop the transfer?", the PTT prompt (No: the transfer goes on; Yes: it stops), the results, and that
  * every page fits in both languages. Each case runs in a child process (the screens' static state starts over). */
 #include <stdio.h>
@@ -150,6 +152,7 @@ void dota_pack_answer(bool yes)
 
 /* --- What the screen reads besides: APRS's checks (aprs.c is not in the simulator), the storage jobs --- */
 static bool callsign_ok = true;
+static uint32_t aprs_hz = 144800000u;	/* the APRS frequency set in APRS's settings */
 
 void aprs_get_cfg(aprs_cfg_t *c)
 {
@@ -159,7 +162,7 @@ void aprs_get_cfg(aprs_cfg_t *c)
 uint32_t aprs_cfg_freq(const aprs_cfg_t *c)
 {
 	(void)c;
-	return 144800000u;
+	return aprs_hz;
 }
 
 bool aprs_amateur_hz(uint32_t hz)
@@ -434,23 +437,113 @@ static void start_question_no(void)
 	expect(T("shows=Method shows=Send", "shows=ntem shows=nder"));
 }
 
-static void start_band_and_battery(void)
+static void start_battery(void)
 {
-	start("start: band, battery, ready in turn");
+	start("start: battery, ready in turn");
 	ok_run("battery:5");
-	ok_run("down down down down down 4 4 6 0 0 0 up");	/* 446.000 MHz: not an amateur band here */
-	expect("shows=446");
+	ok_run("down down down down down 1 4 5 5 0 0 up");	/* 145.500 MHz */
+	expect("shows=145.500");
 	ok_run("down down down down 1 2 3 4 down ok");
-	expect(T("shows=Not_amateur_band", "shows=bant"));
+	expect(T("shows=Battery_low", "shows=Pil"));
 	layout();
 	ok_run("shot:question");
 	ok_run("ok");
-	expect(T("shows=Battery_low", "shows=Pil"));
-	layout();
-	ok_run("ok");
 	expect(T("shows=Receiver_ready?", "shows=haz"));
 	ok_run("ok");
-	check(starts == 1 && got.hz == 446000000u, "started on 446 MHz after the three questions");
+	check(starts == 1 && got.hz == 145500000u, "started on 145.500 MHz after the two questions");
+}
+
+/* A frequency typed: the amateur bands only (144-146, 430-440 MHz), and in them not where the cross-band refuses
+ * (the band plan's PMR446, repeater, satellite and APRS segments): its toast, the frequency and its source stay */
+static void freq_typed(void)
+{
+	static const struct {
+		const char *keys;
+		uint32_t hz;		/* 0: refused */
+		const char *en, *tr;
+	} t[] = {
+		{ "4 4 6 0 0 0", 0, "toast=PMR446", "toast=PMR446" },
+		{ "4 4 6 1 0 0 0", 0, "toast=PMR446", "toast=PMR446" },
+		{ "1 6 2 5 5 0", 0, "toast=Not_an_amateur_band", "toast=Amat" },
+		{ "1 4 3 9 8 7 5", 0, "toast=Not_an_amateur_band", "toast=Amat" },
+		{ "4 2 9 9 9 9 0", 0, "toast=Not_an_amateur_band", "toast=Amat" },
+		{ "4 4 0 0 1 2 5", 0, "toast=Not_an_amateur_band", "toast=Amat" },
+		{ "1 4 6 0 1 2 5", 0, "toast=Not_an_amateur_band", "toast=Amat" },
+		{ "1 4 5 6 0 0", 0, "toast=Repeater_frequency", "toast=R" },
+		{ "1 4 5 1 0 0", 0, "toast=Repeater_frequency", "toast=R" },
+		{ "4 3 1 0 5 0", 0, "toast=Repeater_frequency", "toast=R" },
+		{ "4 3 8 6 5 0", 0, "toast=Repeater_frequency", "toast=R" },
+		{ "4 3 5 5 0 0", 0, "toast=Satellite_segment", "toast=Uydu" },
+		{ "1 4 5 8 2 5", 0, "toast=Satellite_segment", "toast=Uydu" },
+		{ "1 4 4 8 0 0", 0, "toast=APRS_frequency", "toast=APRS" },
+		{ "1 4 4 0 0 0", 144000000u, "shows=144.000", "shows=144.000" },
+		{ "1 4 5 5 0 0", 145500000u, "shows=145.500", "shows=145.500" },
+		{ "4 3 0 0 0 0", 430000000u, "shows=430.000", "shows=430.000" },
+		{ "4 3 3 6 0 0", 433600000u, "shows=433.600", "shows=433.600" },
+		{ "4 4 0 0 0 0", 440000000u, "shows=440.000", "shows=440.000" },
+	};
+	for (unsigned i = 0; i < sizeof t / sizeof t[0]; i++) {
+		/* each in a child of its own: the screen's state starts over */
+		fflush(stdout);
+		pid_t pid = fork();
+		if (pid != 0) {
+			int st = 0;
+			waitpid(pid, &st, 0);
+			fails += !WIFEXITED(st) || WEXITSTATUS(st) != 0;
+			continue;
+		}
+		start("frequency: typed");
+		ok_run("down down down down down");	/* Role, Method, What, item, source: the frequency */
+		ok_run(t[i].keys);
+		ok_run("ok");
+		expect(T(t[i].en, t[i].tr));
+		if (t[i].hz == 0)
+			expect(T("shows=Default shows=433.450", "shows=Varsay shows=433.450"));
+		else
+			expect(T("shows=Manual", "shows=Elle"));
+		layout();
+		if (i == 0)
+			ok_run("shot:freq-refused");
+		/* the frequency is the one sent */
+		type_code("1 2 3 4");
+		ok_run("down ok ok");
+		uint32_t want = t[i].hz != 0 ? t[i].hz : DOTA_DEFAULT_HZ;
+		if (starts != 1 || got.hz != want) {
+			printf("FAIL %s: %s: started %d on %u Hz, not on %u\n", name, t[i].keys, starts, (unsigned)got.hz,
+			       (unsigned)want);
+			fails++;
+		}
+		fflush(stdout);
+		_exit(fails != 0);
+	}
+}
+
+/* Left / Right on the frequency: not out of the amateur bands (a toast, it stays); into a refused segment inside them
+ * it goes, and Send names it */
+static void freq_stepped(void)
+{
+	start("frequency: stepped");
+	ok_run("down down down down down 4 4 0 0 0 0 ok");
+	expect("shows=440.000");
+	ok_run("right");
+	expect(T("toast=Not_an_amateur_band shows=440.000", "toast=Amat shows=440.000"));
+	ok_run("left");
+	expect("shows=439.987");
+	ok_run("1 4 4 0 0 0 ok left");	/* 144.000, then down */
+	expect(T("toast=Not_an_amateur_band shows=144.000", "toast=Amat shows=144.000"));
+	/* 434.9875 up to 435.000: the satellite segment, refused at Send */
+	ok_run("4 3 4 9 8 7 5 ok right");
+	expect("shows=435.000");
+	type_code("1 2 3 4");
+	ok_run("down ok");
+	expect(T("toast=Satellite_segment", "toast=Uydu"));
+	check(starts == 0, "started in the satellite segment");
+	/* the receiver too */
+	ok_run("up up up up up up up up up right");
+	expect(T("shows=Receive", "shows=Al"));
+	ok_run("down down down down down down down down ok");
+	expect(T("toast=Satellite_segment", "toast=Uydu"));
+	check(starts == 0, "receiver started in the satellite segment");
 }
 
 static void start_refusals(void)
@@ -462,7 +555,9 @@ static void start_refusals(void)
 	if (!turkish)
 		expect("toast=Set_your_callsign");
 	callsign_ok = true;
-	ok_run("up up up up 1 4 4 8 0 0 ok");	/* 144.800 MHz */
+	/* APRS's own frequency set to one the band plan allows: still refused */
+	aprs_hz = 145500000u;
+	ok_run("up up up up 1 4 5 5 0 0 ok");	/* 145.500 MHz */
 	ok_run("down down down down ok");
 	expect(T("toast=APRS_frequency", "toast=APRS"));
 	check(starts == 0, "started on APRS");
@@ -760,7 +855,7 @@ typedef void (*case_fn)(void);
 static const case_fn all[] = {
 	form_send_fm, form_receive_dmr, form_sender_dmr, form_freq_source, form_freq_channel_last, start_needs_code,
 	start_asks_ready, start_question_no,
-	start_band_and_battery, start_refusals, receiver_start, receiver_dmr_id, run_page, back_stop_no, back_stop_yes,
+	start_battery, freq_typed, freq_stepped, start_refusals, receiver_start, receiver_dmr_id, run_page, back_stop_no, back_stop_yes,
 	ptt_prompt, writing_holds, results, receiver_done, picker_zone, picker_selected, pack_send, pack_yes, pack_no,
 	pack_results,
 };

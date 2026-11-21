@@ -19,9 +19,11 @@
 #include "board.h"
 #include "radio/radio.h"
 #include "radio/dota.h"
+#include "radio/xband.h"
 #include "aprs/aprs.h"
 #include "storage/storage.h"
 #include "ui/ui_dota.h"
+#include "ui/ui_xband.h"
 
 enum { PG_FORM, PG_RUN };
 enum { R_ROLE, R_METHOD, R_WHAT, R_ITEM, R_FSRC, R_FREQ, R_TONE, R_ID, R_POWER, R_CODE, R_GO, R_IMPORT, R_ZNAME,
@@ -30,10 +32,10 @@ enum { R_ROLE, R_METHOD, R_WHAT, R_ITEM, R_FSRC, R_FREQ, R_TONE, R_ID, R_POWER, 
 enum { FS_DEFAULT, FS_CHANNEL, FS_LAST, FS_MANUAL, FS_COUNT };
 /* The FM tone's short list (the first is DOTA_CTCSS_DEFAULT) */
 static const uint16_t tone_list[] = { DOTA_CTCSS_DEFAULT, 1000, 1230, 1318, 1622 };
-/* Questions before a start, asked in this order, and the transfer's own */
-#define ASK_BAND	0x01u
-#define ASK_BATT	0x02u
-#define ASK_READY	0x04u
+/* Questions before a start, asked in this order, and the transfer's own (outside the amateur bands: refused, no
+ * question; owner, 2026-11-21) */
+#define ASK_BATT	0x01u
+#define ASK_READY	0x02u
 #define ASK_STOP	0x08u
 
 /* DMR: colour code 1, slot 1 always (not on any DOTA screen) */
@@ -105,14 +107,14 @@ static uint8_t rows(uint8_t *r)
 }
 
 /* A frequency source's frequency now, 0 when it has none: the current channel only when it is simplex, may transmit
- * and is in an amateur band */
+ * and the band plan allows it (ui_xband_refusal: amateur, no repeater, satellite or APRS frequency) */
 static uint32_t src_hz(uint8_t s)
 {
 	const channel_t *c = &ui_view()->ch;
 	if (s == FS_DEFAULT)
 		return DOTA_DEFAULT_HZ;
 	if (s == FS_CHANNEL)
-		return c->rx_hz == c->tx_hz && !c->rx_only && aprs_amateur_hz(c->rx_hz) ? c->rx_hz : 0;
+		return c->rx_hz == c->tx_hz && !c->rx_only && ui_xband_refusal(c->rx_hz) == NULL ? c->rx_hz : 0;
 	return s == FS_LAST ? last_hz : rq.hz;
 }
 
@@ -250,10 +252,9 @@ static void form_item(uint16_t i, ui_item_t *it)
 /* The first question still open (by its ASK_* bit; the form never holds ASK_STOP) */
 static const char *question(void)
 {
-	static const char *const q[] = { TRN("Not amateur band: send?"), TRN("Battery low. Sure?"),
-					 TRN("Receiver ready?") };
+	static const char *const q[] = { TRN("Battery low. Sure?"), TRN("Receiver ready?") };
 	unsigned i = (unsigned)__builtin_ctz(asks);
-	return tr(q[i < 3u ? i : 2u]);
+	return tr(q[i < 2u ? i : 1u]);
 }
 
 /* n and its noun, singular or plural ("1 channel", "2 channels") */
@@ -429,24 +430,40 @@ static void step(uint8_t r, int dir)
 	case R_POWER: rq.power = (uint8_t)((rq.power + 3 + dir) % 3); break;
 	case R_IMPORT: rq.imp.mode = !rq.imp.mode; break;
 	case R_TXOK: rq.imp.tx_ok = !rq.imp.tx_ok; break;
-	case R_FREQ:
-		rq.hz = (uint32_t)((int32_t)rq.hz + dir * 12500);
+	case R_FREQ: {
+		/* within the amateur bands only: a step out of them is refused (the segments refused inside them are passed
+		 * over; Send / Ready names them) */
+		uint32_t hz = (uint32_t)((int32_t)rq.hz + dir * 12500);
+		uint8_t why = xband_check_hz(hz);
+		if (why == XB_R_BAND || why == XB_R_PMR446) {
+			ui_toast(ui_xband_refusal(hz));
+			break;
+		}
+		rq.hz = hz;
 		fsrc = FS_MANUAL;
 		break;
+	}
 	default: break;
 	}
 	estimate();
 }
 
-/* The digits typed on the focused row: 433500 / 4335125 for a frequency, the ID, the four-digit code */
+/* The digits typed on the focused row: 433500 / 4335125 for a frequency (one the band plan refuses: its toast, the
+ * frequency stays), the ID, the four-digit code */
 static void typed(uint8_t r)
 {
 	uint32_t n = 0;
 	for (uint8_t i = 0; i < ndigits; i++)
 		n = n * 10u + (uint32_t)(digits[i] - '0');
 	if (r == R_FREQ && (ndigits == 6 || ndigits == 7)) {
-		rq.hz = n * (ndigits == 6 ? 1000u : 100u);
-		fsrc = FS_MANUAL;
+		n *= ndigits == 6 ? 1000u : 100u;
+		const char *why = ui_xband_refusal(n);
+		if (why != NULL) {
+			ui_toast(why);
+		} else {
+			rq.hz = n;
+			fsrc = FS_MANUAL;
+		}
 	} else if (r == R_ID)
 		rq.peer_id = n <= 16776415u ? n : 0;
 	else if (r == R_CODE)
@@ -459,7 +476,7 @@ static void begin(void)
 {
 	const radio_view_t *v = ui_view();
 	char call[CODEPLUG_NAME_LEN + 1];
-	const char *why = NULL;
+	const char *why = NULL, *plan = ui_xband_refusal(rq.hz);
 	aprs_cfg_t c;
 	codeplug_radio_name(call);
 	call[AX25_CALL_LEN] = '\0';
@@ -468,9 +485,11 @@ static void begin(void)
 		why = TR("Set your callsign (the radio name) in qdmr.");
 	else if (dmr() && v->dmr.own_id == 0)
 		why = TR("Set your DMR ID first");
+	else if (plan != NULL)
+		why = plan;	/* the band plan's toast (the cross-band's): any source, Left / Right too */
 	else if (!board_in_band(rq.hz, true))
 		why = TR("Can't transmit there");
-	else if (rq.hz == aprs_cfg_freq(&c) || rq.hz == 145825000u)
+	else if (rq.hz == aprs_cfg_freq(&c))
 		why = TR("APRS frequency");
 	else if (sending() && (rq.code >= 10000u || (dmr() && rq.peer_id == 0)))
 		why = TR("Code / ID needed");
@@ -485,8 +504,7 @@ static void begin(void)
 		return;
 	}
 	strcpy(rq.call, call);
-	asks = (uint8_t)((aprs_amateur_hz(rq.hz) ? 0u : ASK_BAND) |
-			 (ui_st.battery_pct != 0 && ui_st.battery_pct < DOTA_LOW_BATTERY_PCT ? ASK_BATT : 0u) |
+	asks = (uint8_t)((ui_st.battery_pct != 0 && ui_st.battery_pct < DOTA_LOW_BATTERY_PCT ? ASK_BATT : 0u) |
 			 (sending() ? ASK_READY : 0u));
 	if (asks == 0)
 		asks = 0x80u;	/* no question: start at once */
