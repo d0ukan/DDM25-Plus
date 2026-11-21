@@ -101,6 +101,12 @@ backups, `.bin`/`.map`/`.csv`/`.log`, keys, signatures, RadioID/TRAC lists, stoc
   reduced build manifest without build-machine paths. It signs, verifies the signature, and writes the files to
   `--out`. **It uploads nothing**: create the GitHub release with tag `v<version>` and attach every file from
   `--out` as a separate, approved step.
+- **Other programs in the same release** (optional): `--app-net-zip ZIP --app-net-version V` (the C# Windows program,
+  `app_net`) and, once per platform, `--app-rs-zip PLATFORM=ZIP` with `--app-rs-version V` (the Rust program,
+  `app_rs`; PLATFORM `windows-x86_64`, `linux-x86_64`, `macos-aarch64`, ...; zips from
+  `rust/packaging/make_app_zip.py`, published as `DDM32Plus-V-PLATFORM.zip`). Each program updates itself only from
+  its own entry. `rust/target/.../ddm32 verify-manifest DIR --public-key <hex>` checks the release as the Rust
+  program reads it.
 - Raise `settings_format` / `codeplug_format` when the stored settings / channel layout changes, and set
   `min_compatible_version` to the oldest version that reads what the new one saves; the program warns, and asks
   twice, for a downgrade across these.
