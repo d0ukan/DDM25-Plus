@@ -54,9 +54,12 @@ uint32_t air_sim_vfo_hz(uint8_t idx)
 void ui_svc_air_vfo(uint8_t idx, uint32_t hz)
 {
 	air_sim.vfo_calls++;
+	bool atis = (idx & UI_AIR_ATIS) != 0;
+	idx = (uint8_t)(idx & ~UI_AIR_ATIS);
 	if (idx >= 6)
 		return;
 	air_sim.hz[idx] = hz;
+	air_sim.atis = (uint8_t)(atis ? air_sim.atis | 1u << idx : air_sim.atis & ~(1u << idx));
 	if (!air_kept.kept) {
 		if (view.scan == 3) {
 			sim_tune(sim_sel);	/* the radio core: a watch stops on its selected channel */

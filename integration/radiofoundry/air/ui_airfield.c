@@ -8,9 +8,9 @@
  * radio core refuses TX there whatever the VFO says (radio_sm_tx_check: TXDENY_AM). An 8.33 kHz channel name tunes its
  * grid point (air_freq_hz). The order is walked, never stored (air_next): the screen keeps the picked and the top
  * row's airfields and the picked frequency (6 B).
- * CONFIG_AIR_WATCH (DDM32 Plus, item 44b): # in the details watches them: up to 6 (each channel name once, not the
- * ATIS) on the multi-watch ring, each letter its own VFO, received in AM; one frequency is simply tuned
- * (ui_airwatch.inc).
+ * CONFIG_AIR_WATCH (DDM32 Plus, item 44b): # in the details watches them all: up to 6 (each channel name once, the
+ * ATIS last; more: the first 6 and the toast says "6/7") on the multi-watch ring, each letter its own VFO, received
+ * in AM; one frequency is simply tuned (ui_airwatch.inc).
  *
  * By province (CONFIG_AIR_PROV, DDM32 Plus round 16, as Tools > Repeaters): the screen opens on a first level, "All"
  * (the whole list as above), then the provinces that have airfields in plate order ("06 Ankara (5)": the map's names),
@@ -367,27 +367,46 @@ void ui_airfield_tune(uint16_t i, uint8_t k)
 }
 
 #if CONFIG_AIR_WATCH
-/* # in airfield i's details: its frequencies on the multi-watch ring (up to UI_MW_MAX, the first ones, each channel
- * name once, the ATIS left out: its recording never stops, so the ring would stay on it); one alone is tuned as OK
- * does (an ATIS alone too) */
+/* Whether airfield i's frequency k (hz f) is one of its frequencies before k (a channel name on two services) */
+static bool __attribute__((noinline)) seen_before(uint16_t i, uint8_t k, uint32_t f)
+{
+	for (uint8_t j = 0; j < k; j++) {
+		const air_freq_t *af = air_freq(i, j);
+		if (af != NULL && air_freq_hz(af) == f)
+			return true;
+	}
+	return false;
+}
+
+/* # in airfield i's details: all its frequencies on the multi-watch ring, each channel name once: the services in the
+ * list's order, then the ATIS (the radio core holds an ATIS letter 5 s at most, then passes it over: its recording
+ * never stops). More than UI_MW_MAX: the first UI_MW_MAX of that order, and the toast says how many of how many
+ * ("LTAI: 6/7 frequencies watched"). One alone is tuned as OK does */
 static void __attribute__((noinline)) watch_all(uint16_t i)
 {
 	const air_field_t *a = &air_fields[i];
 	uint32_t hz[UI_MW_MAX];
-	uint8_t n = 0, first = 0;
-	for (uint8_t k = 0, count = air_count(i); k < count && n < UI_MW_MAX; k++) {
-		const air_freq_t *af = air_freq(i, k);	/* the user's air band pack over the table (air_pack.h) */
-		if (af->type == AIR_ATIS)
-			continue;
-		uint32_t f = air_freq_hz(af);
-		bool twice = false;
-		for (uint8_t j = 0; j < n; j++)
-			twice = twice || hz[j] == f;
-		if (twice)
-			continue;
-		if (n == 0)
-			first = k;
-		hz[n++] = f;
+	uint8_t n = 0, first = 0, atis = 0, all = 0, count = air_count(i);
+	for (uint8_t pass = 0; pass < 2; pass++) {	/* 0: every service but the ATIS; 1: the ATIS */
+		for (uint8_t k = 0; k < count; k++) {
+			const air_freq_t *af = air_freq(i, k);	/* the user's air band pack over the table (air_pack.h) */
+			if (af == NULL || (af->type == AIR_ATIS) != (pass == 1))
+				continue;
+			uint32_t f = air_freq_hz(af);
+			bool twice = false;
+			for (uint8_t j = 0; j < n; j++)
+				twice = twice || hz[j] == f;
+			if (twice || (n == UI_MW_MAX && seen_before(i, k, f)))
+				continue;
+			all++;
+			if (n == UI_MW_MAX)
+				continue;	/* past the ring's six: only counted */
+			if (n == 0)
+				first = k;
+			if (pass == 1)
+				atis |= (uint8_t)(1u << n);
+			hz[n++] = f;
+		}
 	}
 	if (n < 2) {
 		ui_airfield_tune(i, first);
@@ -408,13 +427,21 @@ static void __attribute__((noinline)) watch_all(uint16_t i)
 		}
 	}
 	ui_go_home();
-	if (!ui_dual_air_watch(hz, n))
+	if (!ui_dual_air_watch(hz, n, atis))
 		return;
 	sbuf_t b;
 	sb_init(&b, done, sizeof done);
 	sb_str(&b, a->code);
 	sb_str(&b, ": ");
-	sb_str(&b, TR("Air watch on"));
+	if (all > n) {	/* "LTAI: 6/7 frequencies watched" */
+		sb_u32(&b, n, 1);
+		sb_chr(&b, '/');
+		sb_u32(&b, all, 1);
+		sb_chr(&b, ' ');
+		sb_str(&b, TR("frequencies watched"));
+	} else {
+		sb_str(&b, TR("Air watch on"));
+	}
 	ui_toast(done);
 }
 #endif

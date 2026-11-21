@@ -2304,10 +2304,16 @@ After the rebase onto 42a0ff4: public 84,484 B flash and **1,760 B RAM free**; o
 ### 44b. Air watch (`CONFIG_AIR_WATCH`; needs MULTI_WATCH, VFO_MODES, AIRFIELDS)
 
 - **Use**: Tools > Airfields, OK on an airfield, **#** ("OK listen  # watch all"; Turkish "OK dinle  # tümünü izle"):
-  its frequencies go on the multi-watch ring, letters A..F, **each letter its own VFO** (VFOs 0..5): up to 6, in the
-  airfield's list order, a channel name used by two services once (LTAH's TWR / APP 122.100 is one), **the ATIS left
-  out** (deviation from "all": an ATIS recording never stops, so the ring would stay on it and never reach the tower;
-  OK still tunes it). Toast "LTAI: Air watch on", Home shows the ring's rows ("VFO 121.9000" ...). The VFOs are FM
+  **all** its frequencies go on the multi-watch ring, letters A..F, **each letter its own VFO** (VFOs 0..5): the
+  services in the airfield's list order, then **the ATIS last**, a channel name used by two services once (LTAH's TWR /
+  APP 122.100 is one). Toast "LTAI: Air watch on", Home shows the ring's rows ("VFO 121.9000" ...). **More than six**
+  (Antalya: ATIS, GND, TWR x2, APP x3 = seven): the first six of that order (so the ATIS is the one left over) and the
+  toast says so: "LTAI: 6/7 frequencies watched" (Turkish "LTAI: 6/7 frekans izleniyor"). **The ATIS letter** (marked
+  for the radio core: RREQ_AIR_VFO's arg | `RADIO_AIR_ATIS`) holds the ring **5 s at most** (`AIR_ATIS_HOLD_MS`, from
+  the first poll of the hold, through the wait and its looks), then the ring goes on and every ATIS letter is
+  **passed over for 60 s** (`AIR_ATIS_COOL_MS`: nothing heard there, the ring's 50 ms quiet stop): an ATIS recording
+  never stops, so held like any signal it would keep the one receiver there for good. Any other letter is held as
+  always (a long tower exchange is heard to its end). The VFOs are FM
   VFOs in the air band, so each letter is **received in AM** (`radio_am_channel`), its squelch on the signal strength
   (`radio_am_noise`), and **never transmits** (TXDENY_AM). The ring is multi-watch's own: the one receiver hops
   (150 ms a quiet letter: 0.9 s round six), a signal holds it on its letter, the Dual watch delay's wait looks at the
@@ -2332,18 +2338,31 @@ After the rebase onto 42a0ff4: public 84,484 B flash and **1,760 B RAM free**; o
   VFO becomes a fresh VFO at the frequency (the one in use, the other of A / B, a parked one, or a C..F slot); RREQ_AIR_END
   stops the ring, reloads VFOs A / B from the settings (`restore_vfo` + `vfox_load`), empties C..F, and selects the
   saved position (`select_position`, then the VFO or the channel tuned). Requests while transmitting or in hotspot mode
-  are refused, as RREQ_MWATCH is.
+  are refused, as RREQ_MWATCH is. The ATIS limit (`air_atis_poll`, called by `scan_service` before the scan engine):
+  `sm.air_atis` (a bit per VFO, set by RREQ_AIR_VFO, cleared at the end), `sm.air_held_ms` (the hold's start on an
+  ATIS letter; any other stop or a new one starts it over) and `sm.air_cool_ms` (passed over until): 12 B with the
+  padding. The mark follows the letter's VFO for the watch.
+- **Bug fixed after beta.6** (owner: Esenboğa shows four frequencies, # watched only three, A..C): no ring limit, the
+  ATIS left out on purpose (a documented deviation from "all", made before the 5 s limit existed). Fixed as above: Esenboğa's four on
+  A..D (GND, TWR, APP, the ATIS on D). Cost: FLASH +440 B (841,104), RAM +16 B (209,584 of 211,456: 1,872 free).
 - Tests: `tests/plus/test_airwatch_radio.inc` (run by `tools/test_air.py` after upstream's radio suite, the Classic /
   Plus P25 suites, the multi-watch ring and every mode in the VFO again with it built in): four air frequencies on the
   letters' VFOs and the ring over them, each tuned on its own frequency in AM through the board's AM receiver, TX
   refused; a signal on one letter holds the ring there (2 s) and the ring moves on after; nothing noted while it runs;
   the end back on the channel and VFO A as before, C..F empty; a power off during it back as before; the user's ring
-  stopped on its selected channel and noted there; refusals (TX, off the band, a seventh VFO, an end without it).
+  stopped on its selected channel and noted there; an ATIS letter (Esenboğa's four, the ATIS on D on the air for
+  good: held 5 s, then passed over 20 s with A..C visited and D's stops quiet ones, a tower call on A held its whole
+  8 s, D held again after the 60 s; the end forgets the mark); refusals (TX, off the band, a seventh VFO, an end
+  without it).
   `tests/plus/test_ui_air.c` (English and Turkish, the radio core's side faked in `ui_sim_air.c` on the simulator's
-  VFOs): Antalya's six on A..F (each VFO's frequency, the receiver on A, E on its own), Home's rows; Back twice: the
+  VFOs): Antalya's seven: the first six on A..F (each VFO's frequency, the receiver on A, E on its own), the toast
+  "LTAI: 6/7 frequencies watched", no ATIS among them; Esenboğa's four on A..D, the ATIS on D marked, Home's four
+  rows (owner's beta.6 case); Back twice: the
   radio back on its channel, the watch off, the settings untouched throughout; the user's ring of four with C
   selected kept and back with # 5 Stop; two frequencies the pair; one tuned; a channel name on two services once;
-  refusals; a power off during it doesn't bring it back; layout of the airfield page and Home. Radio rows AW3-AW7.
+  refusals; a power off during it doesn't bring it back; layout of the airfield page and Home. `test_ui_airprov.c`
+  (Antalya from its province: 6/7) and `test_ui_datapack.c` (the pack's five for LTAB, its ATIS on E). Radio rows
+  AW3-AW9.
 
 ### 45. 3D waterfall (`CONFIG_SPECTRUM_WF3D`; needs SPECTRUM_WF)
 

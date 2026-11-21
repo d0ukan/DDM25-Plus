@@ -5,6 +5,11 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- Air watch (Tools > Airfields, #) now watches every frequency of the airfield: beta.6 left the ATIS out, so
+  Esenboğa's four became three letters. The ATIS goes last and holds the ring 5 s at most, then is passed over for
+  60 s (its recording never stops). An airfield with more than six: the first six, and the toast says
+  "LTAI: 6/7 frequencies watched" ("LTAI: 6/7 frekans izleniyor").
+
 ## v1.0.0-beta.6 (2026-11-21)
 
 With the Windows programmer 2.0.0-beta.3 and the cross-platform programmer 3.0.0-alpha.2 (Windows; alpha.1 was replaced the same day: it listed no version when only betas were published, and had no icon).

@@ -6,8 +6,9 @@ integration/radiofoundry/air/ (installed into core/radio/ and core/ui/); upstrea
 change only through the hunks below.
 
   AIR_WATCH  (item 44b) Tools > Airfields, # on an airfield's page: up to 6 of its frequencies on the multi-watch ring,
-             A..F each its own VFO (AM: the air band), hopping as multi-watch does; stopping it brings the user's watch
-             back as it was. Needs MULTI_WATCH, VFO_MODES and AIRFIELDS.
+             A..F each its own VFO (AM: the air band), hopping as multi-watch does; its ATIS last, holding the ring 5 s
+             at most and then passed over 60 s; stopping it brings the user's watch back as it was. Needs MULTI_WATCH,
+             VFO_MODES and AIRFIELDS.
   SPECTRUM_WF3D (item 45) Tools > Spectrum's third view: the waterfall's rows as a ridge plot in perspective (* cycles
              waterfall, 3D, bars alone); the waterfall's own heap rows, no new RAM. Needs SPECTRUM_WF.
 """
@@ -48,6 +49,7 @@ def prepare_air(transform, install):
          '// the first since the last end keeps the user\'s state as a power off does. The end brings it back\n'
          'void radio_req_air_vfo(uint8_t idx, uint32_t hz);\n'
          'void radio_req_air_end(void);\n'
+         '#define RADIO_AIR_ATIS\t0x80u\t// idx | this: an ATIS (its letter held 5 s at most, then passed over 60 s)\n'
          '#endif\n'),
     ])
     transform('core/radio/radio_sm.h', [
@@ -61,6 +63,8 @@ def prepare_air(transform, install):
          '\tuint8_t dual_look;\t\t// ... the one looked at last (the looks take the others in turn)\n'
          '#if CONFIG_AIR_WATCH\n'
          '\tbool air;\t\t\t// DDM32 Plus air watch: the VFOs hold an airfield\'s frequencies, nothing is noted\n'
+         '\tuint8_t air_atis;\t\t// ... the VFOs (bit 0..5) holding an ATIS (radio_airwatch.inc air_atis_poll)\n'
+         '\tuint32_t air_held_ms, air_cool_ms;\t// ... an ATIS letter held since (0: not held), passed over until\n'
          '#endif\n'),
     ])
     transform('core/radio/radio_task.c', [
@@ -86,6 +90,21 @@ def prepare_air(transform, install):
         ('void radio_sm_request(radio_sm_t *sm, const radio_req_t *req, uint32_t now_ms)\n{\n',
          '#if CONFIG_AIR_WATCH\n#include "radio/radio_airwatch.inc"\t// DDM32 Plus air watch (item 44b)\n#endif\n\n'
          'void radio_sm_request(radio_sm_t *sm, const radio_req_t *req, uint32_t now_ms)\n{\n'),
+        # An ATIS letter of the air watch holds the ring 5 s at most, then is passed over 60 s (radio_airwatch.inc)
+        ('// Every poll while scanning: pause on the monitor, what the receiver hears, move on\nstatic void scan_service(',
+         '#if CONFIG_AIR_WATCH\n'
+         'static bool air_atis_poll(radio_sm_t *sm, bool *active, bool *carrier, bool *sync, uint32_t now_ms);\n'
+         '#endif\n\n'
+         '// Every poll while scanning: pause on the monitor, what the receiver hears, move on\nstatic void scan_service('),
+        ('\tsc->cfg.carrier_hold_ms = dmr ? RADIO_SCAN_DMR_CARRIER_MS : 0;\n\tuint8_t was = sc->phase;\n',
+         '\tsc->cfg.carrier_hold_ms = dmr ? RADIO_SCAN_DMR_CARRIER_MS : 0;\n'
+         '#if CONFIG_AIR_WATCH\n'
+         '\tif (air_atis_poll(sm, &active, &carrier, &sync, now_ms)) {\n'
+         '\t\tscan_step(sm, now_ms);\t// DDM32 Plus air watch: an ATIS held its letter long enough\n'
+         '\t\treturn;\n'
+         '\t}\n'
+         '#endif\n'
+         '\tuint8_t was = sc->phase;\n'),
         ('#if CONFIG_MULTI_WATCH\n\tcase RREQ_MWATCH:\n\t\tmw_request(sm, now_ms);\n\t\tbreak;\n#endif\n',
          '#if CONFIG_MULTI_WATCH\n\tcase RREQ_MWATCH:\n\t\tmw_request(sm, now_ms);\n\t\tbreak;\n#endif\n'
          '#if CONFIG_AIR_WATCH\n\tcase RREQ_AIR_VFO:\n\tcase RREQ_AIR_END:\n\t\tair_request(sm, req, now_ms);\n'
@@ -100,6 +119,7 @@ def prepare_air(transform, install):
          '// DDM32 Plus air watch: VFO idx (0..5) takes hz, the user\'s state kept (radio_req_air_vfo); the end brings it back\n'
          'void ui_svc_air_vfo(uint8_t idx, uint32_t hz);\n'
          'void ui_svc_air_end(void);\n'
+         '#define UI_AIR_ATIS\t0x80u\t// idx | this: an ATIS (RADIO_AIR_ATIS)\n'
          '#endif\n'),
     ])
     transform('core/ui/ui_svc_stub.c', [
@@ -113,6 +133,7 @@ def prepare_air(transform, install):
     transform('core/ui/ui_svc_radio.c', [
         ('bool ui_svc_mwatch(const ui_dual_ref_t ref[], uint8_t n, uint8_t sel)\n{\n',
          '#if CONFIG_AIR_WATCH\n'
+         '_Static_assert(UI_AIR_ATIS == RADIO_AIR_ATIS, "ui_svc.h: the ATIS mark is the radio core\'s");\n'
          'void ui_svc_air_vfo(uint8_t idx, uint32_t hz)\n{\n\tradio_req_air_vfo(idx, hz);\n}\n\n'
          'void ui_svc_air_end(void)\n{\n\tradio_req_air_end();\n}\n'
          '#endif\n\n'

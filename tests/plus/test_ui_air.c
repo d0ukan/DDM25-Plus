@@ -7,7 +7,9 @@
  *     frequencies (Antalya's two towers), none with one; an airfield's every frequency in its details, the list
  *     scrolling to the last one and OK tuning it; every page fits;
  *   - item 44b, air watch (CONFIG_AIR_WATCH, ui_airwatch.inc; the radio core faked in ui_sim_air.c): # on an
- *     airfield's page puts its first six frequencies on the multi-watch ring, A..F each its own VFO; Back twice, or
+ *     airfield's page puts all its frequencies on the multi-watch ring, A..F each its own VFO, the ATIS last and
+ *     marked (Esenboga's four: four letters, owner's beta.6 report); more than six (Antalya's seven): the first six
+ *     and the toast "LTAI: 6/7 frequencies watched"; Back twice, or
  *     # 5 Stop, brings the radio and the user's watch back as they were (off, or the user's ring with its selection
  *     and channels), nothing saved meanwhile; two frequencies make dual watch's pair, one is tuned as OK does (a
  *     channel name on two services counts once); refused while transmitting and without frequencies; a power off
@@ -157,8 +159,8 @@ static void check(bool c, const char *what)
 	}
 }
 
-/* Antalya: GND 121.900, TWR 125.000, TWR 126.100, APP 119.650, APP 124.350, APP 124.425 (its ATIS 118.275 left out:
- * the recording never stops) */
+/* Antalya's seven: GND 121.900, TWR 125.000, TWR 126.100, APP 119.650, APP 124.350, APP 124.425 on the ring, its ATIS
+ * 118.275 (last in the watch's order) the seventh: left over */
 static const uint32_t lti_hz[6] = { 121900000, 125000000, 126100000, 119650000, 124350000, 124425000 };
 
 static void antalya_watch(void)
@@ -169,7 +171,8 @@ static void antalya_watch(void)
 	run("ctx");
 }
 
-/* # on Antalya's page: its six (not the ATIS) on the ring, A..F each its own VFO, received there; Home shows it */
+/* # on Antalya's page (seven frequencies): the first six on the ring, A..F each its own VFO, received there; the
+ * toast says six of seven; Home shows it */
 static void aw_watch(void)
 {
 	start("AW watch all");
@@ -179,9 +182,10 @@ static void aw_watch(void)
 	expect(T("shows=#_watch_all", "shows=#_t"));
 	layout();
 	run("ctx");
-	expect(T("screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_Air_watch_on",
-		 "screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_Hava_izleme_a"));
+	expect(T("screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_6/7_frequencies_watched",
+		 "screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_6/7_frekans_izleniyor"));
 	check(air_sim.vfo_calls == 6, "six VFOs asked for");
+	check(air_sim.atis == 0, "no ATIS among the six");
 	for (uint8_t k = 0; k < 6; k++)
 		check(air_sim.hz[k] == lti_hz[k] && air_sim_vfo_hz(k) == lti_hz[k], "each letter's VFO on its frequency");
 	expect("vfo=1 vfoidx=0 freq=121900000 shows=121.90 shows=AM_124.425 hides=FM_124 hides=118.27");
@@ -189,6 +193,31 @@ static void aw_watch(void)
 	expect("vfo=1 vfoidx=4 freq=124350000");
 	run("shot:home-air");
 	layout();
+}
+
+/* Esenboga (owner's beta.6 report: four shown, three watched): ATIS 123.600, GND 121.900, TWR 118.100, APP 119.100
+ * all on the ring: GND, TWR, APP on A..C, the ATIS last on D and marked as one */
+static void aw_four(void)
+{
+	static const uint32_t ltac_hz[4] = { 121900000, 118100000, 119100000, 123600000 };
+	start("AW Esenboga: all four");
+	pos(40.1281, 32.9951);		/* Esenboga */
+	airfields();
+	expect("shows=LTAC");
+	run("ok");
+	expect("shows=ATIS_123.600 shows=GND_121.900 shows=TWR_118.100 shows=APP_119.100");
+	run("ctx");
+	expect(T("screen=home dual=1 mwn=4 mwradion=4 mwsel=A toast=LTAC:_Air_watch_on",
+		 "screen=home dual=1 mwn=4 mwradion=4 mwsel=A toast=LTAC:_Hava_izleme_a"));
+	check(air_sim.vfo_calls == 4, "four VFOs asked for");
+	for (uint8_t k = 0; k < 4; k++)
+		check(air_sim.hz[k] == ltac_hz[k] && air_sim_vfo_hz(k) == ltac_hz[k], "each letter's VFO on its frequency");
+	check(air_sim.atis == 1u << 3, "D (the ATIS) marked, A..C not");
+	expect("shows=121.90 shows=118.10 shows=119.10 shows=123.60");
+	run("shot:home-air-four");
+	layout();
+	run("back back wait:300");
+	expect(T("dual=0 toast=Air_watch_off", "dual=0 toast=Hava_izleme_kapal"));
 }
 
 /* Back twice stops it: the radio back on the channel it was on, the watch off, nothing saved meanwhile */
@@ -293,7 +322,7 @@ typedef void (*case_fn)(void);
 static const case_fn all[] = {
 	af_more, af_one, af_none,
 #if CONFIG_AIR_WATCH
-	aw_watch, aw_stop, aw_user_ring, aw_pair, aw_one, aw_refused, aw_reboot,
+	aw_watch, aw_four, aw_stop, aw_user_ring, aw_pair, aw_one, aw_refused, aw_reboot,
 #endif
 };
 

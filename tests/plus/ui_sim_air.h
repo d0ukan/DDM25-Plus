@@ -13,6 +13,7 @@ typedef struct {
 	/* the air watch's requests (CONFIG_AIR_WATCH): VFO frequencies asked for, ends */
 	int vfo_calls, end_calls;
 	uint32_t hz[6];
+	uint8_t atis;			/* the VFOs asked for as an ATIS (UI_AIR_ATIS) */
 } air_sim_t;
 
 extern air_sim_t air_sim;
