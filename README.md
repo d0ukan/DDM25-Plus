@@ -25,14 +25,15 @@ Report firmware and P25 problems to **[Open25-DM32 issues](https://github.com/ty
 
 | Open25-DM32 Classic | Open25-DM32 Next |
 | :---: | :---: |
-| ![Classic r14 Home screen in the light theme](images/classic-home.png) | ![Next Home screen in the dark theme, without a product banner](images/next-home.png) |
+| ![Classic r14 Home screen in the light theme](images/classic-home.png) | ![Next Home screen in the light theme with the new glyphs and no product banner](images/next-home.png) |
 | RadioFoundry interface with an Open25 / CLASSIC Home band | New interface with clock and a banner-free Home screen |
-| ![Classic r14 P25 channel editor with NAC and TX contact](images/classic-settings.png) | ![Next P25 system editor with WACN and System ID](images/next-settings.png) |
+| ![Classic r14 P25 channel editor with NAC and TX contact](images/classic-settings.png) | ![Next P25 system editor in the light theme with the new glyphs, WACN and System ID](images/next-settings.png) |
 | Conventional P25: NAC, contact target and radio ID | Trunked P25: systems, sites, WACN and System ID |
 | **[0.1.0-rc1-r14 release candidate available](https://github.com/tylerwatt12/Open25-DM32/releases/tag/classic-0.1.0-rc1-r14)** | **Private development build · not publicly released** |
 
 These screen examples use synthetic programming and the current native
-renderers. Both editions have the Open25 signal-ring boot emblem. Classic keeps
+renderers. Next is shown in light mode with its new glyphs. Both editions have
+the Open25 signal-ring boot emblem. Classic keeps
 its Home identity band; Next's Home banner has been removed. Both have light
 and dark themes.
 
