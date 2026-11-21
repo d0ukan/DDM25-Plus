@@ -659,6 +659,7 @@ def main():
         "CONFIG_P25_TRUNK="+("y" if args.plus else "n"),
         "CONFIG_DMR_TRUNK="+("y" if args.plus else "n"),
         "CONFIG_DMR_SEARCH="+("y" if args.plus else "n"),
+        "CONFIG_ALL_SEARCH="+("y" if args.plus else "n"),	# DDM32 Plus all digital search (tools/plus_alldigital.py)
         "CONFIG_SFR_EDIT="+("y" if args.plus else "n"),
         "CONFIG_P25_ANY="+("y" if args.plus else "n"),
         "CONFIG_DMR_ANY="+("y" if args.plus else "n"),

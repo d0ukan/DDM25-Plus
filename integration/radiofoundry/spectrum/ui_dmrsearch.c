@@ -6,7 +6,11 @@
  * DMR with its color code and slot. Back stops the search; leaving the screen otherwise stops it after a few
  * seconds (DMRS_IDLE_MS).
  * CONFIG_FIND_SAVE (ui/findsave.h): # saves every find into a new zone "Bulunanlar N"; OK held on a picked find saves
- * that one (into the newest such zone). The list stays as it was while the save runs. */
+ * that one (into the newest such zone). The list stays as it was while the save runs.
+ * CONFIG_ALL_SEARCH (DDM32 Plus): the same screen is Tools > All digital search (ui_allsearch_screen, the flag `all`):
+ * the same ranges and keys; the probe and the call show their mode; a find shows its mode and that mode's fields (P25
+ * NAC, talkgroup and source; DMR as here; YSF DG-ID and source callsign; NXDN RAN, group and source). OK on a find puts
+ * the VFO there in that mode (every mode in the VFO: NAC / DG-ID / RAN Any). No find save there (P25 / DMR only). */
 #include "config.h"
 #if CONFIG_DMR_SEARCH
 #include <string.h>
@@ -24,6 +28,9 @@
 #if CONFIG_FIND_SAVE
 #include "ui/findsave.h"
 #endif
+#if CONFIG_ALL_SEARCH && CONFIG_VFO_MODES
+#include "radio/vfox.h"
+#endif
 
 #if CONFIG_SEARCH_RANGE
 /* The range and step (DDM32 Plus search ranges, ui_srange.h): kept while the radio is on */
@@ -34,6 +41,11 @@ static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5
 static uint8_t range_i = R_1M;
 #endif
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
+#if CONFIG_ALL_SEARCH
+static bool all;		/* the screen is Tools > All digital search (its enter sets it) */
+#else
+#define all false
+#endif
 /* The search as last copied: the tool screens' shared buffer (ui_scratch.h), refilled by snap() in each draw and key */
 #define sv	(ui_scratch.dmrs)
 
@@ -41,6 +53,12 @@ static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
  * screen has taken it since: then the save stops, ui_dmrsearch_find) */
 static bool snap(void)
 {
+#if CONFIG_ALL_SEARCH
+	if (all) {
+		ui_scratch_take(UI_SCRATCH_ALLS);
+		return dmrs_snapshot_all(&sv);
+	}
+#endif
 #if CONFIG_FIND_SAVE
 	if (ui_findsave_busy() && ui_scratch_mine(UI_SCRATCH_DMRS))
 		return true;
@@ -58,7 +76,7 @@ bool ui_dmrsearch_find(uint8_t i, findsave_item_t *out)
 	memset(out, 0, sizeof *out);
 	out->kind = FINDSAVE_DMR;
 	out->hz = f->hz;
-	out->cc = f->cc != DMRS_CC_NONE && f->cc <= 15u ? f->cc : FINDSAVE_CC_NONE;
+	out->cc = f->cc != DMRS_CC_NONE && f->cc <= 15u ? (uint8_t)f->cc : FINDSAVE_CC_NONE;
 	out->ts_mask = f->ts_mask;
 	return true;
 }
@@ -98,24 +116,112 @@ static int sel_row(void)
 	return -1;
 }
 
-/* "433.5000 CC1 TS1+2 RPT 3m" */
+/* The search's request: this screen's kind */
+static void req_search(uint32_t lo, uint32_t hi)
+{
+#if CONFIG_ALL_SEARCH
+	if (all) {
+		radio_req_all_search(lo, hi);
+		return;
+	}
+#endif
+	radio_req_dmr_search(lo, hi);
+}
+
+#if CONFIG_ALL_SEARCH
+static void sb_hex3(sbuf_t *b, uint16_t v)
+{
+	for (int d = 2; d >= 0; d--)
+		sb_chr(b, "0123456789ABCDEF"[(v >> (4 * d)) & 15u]);
+}
+
+/* The all digital search's first line after the frequency: "P25 NAC 1C8", "YSF DG 0", "NXDN RAN 1" (DMR: as the DMR
+ * search's) */
+static bool all_line(sbuf_t *b, const dmrs_found_t *f)
+{
+	if (!all || f->mode == DMRS_MODE_DMR) {
+		if (all)
+			sb_str(b, " DMR");
+		return false;
+	}
+	sb_chr(b, ' ');
+	sb_str(b, dmrs_mode_name(f->mode));
+	if (f->cc != DMRS_CC_NONE) {
+		sb_str(b, f->mode == DMRS_MODE_P25 ? " NAC " : f->mode == DMRS_MODE_YSF ? " DG " : " RAN ");
+		if (f->mode == DMRS_MODE_P25)
+			sb_hex3(b, f->cc);
+		else
+			sb_u32(b, f->cc, 1);
+	}
+	return true;
+}
+#endif
+
+/* "433.5000 CC1 TS1+2 RPT 3m" (the all digital search: "433.5000 P25 NAC 1C8 3m", "438.7125 DMR CC1 TS2 RPT 3m") */
 static void found_line(sbuf_t *b, const dmrs_found_t *f)
 {
 	sb_mhz4(b, f->hz);
-	if (f->cc != DMRS_CC_NONE) {
-		sb_str(b, " CC");
-		sb_u32(b, f->cc, 1);
+#if CONFIG_ALL_SEARCH
+	if (!all_line(b, f))
+#endif
+	{
+		if (f->cc != DMRS_CC_NONE) {
+			sb_str(b, " CC");
+			sb_u32(b, f->cc, 1);
+		}
+		if (f->ts_mask & 3u) {
+			sb_str(b, " TS");
+			sb_str(b, (f->ts_mask & 3u) == 3u ? "1+2" : (f->ts_mask & 1u) ? "1" : "2");
+		}
+		if (f->sync_mask & DMRS_SYNC_BS)
+			sb_str(b, " RPT");
+		if (f->sync_mask & DMRS_SYNC_MS)
+			sb_str(b, " DIR");
 	}
-	if (f->ts_mask & 3u) {
-		sb_str(b, " TS");
-		sb_str(b, (f->ts_mask & 3u) == 3u ? "1+2" : (f->ts_mask & 1u) ? "1" : "2");
-	}
-	if (f->sync_mask & DMRS_SYNC_BS)
-		sb_str(b, " RPT");
-	if (f->sync_mask & DMRS_SYNC_MS)
-		sb_str(b, " DIR");
 	sb_chr(b, ' ');
 	sb_age(b, ui_st.now_ms - f->heard_ms);
+}
+
+/* The second line: "   TG 2620 from 2620123", "   from TA2DOU", "   Encrypted" */
+static void more_line(sbuf_t *b, const dmrs_found_t *f)
+{
+	sb_str(b, "   ");
+#if CONFIG_ALL_SEARCH
+	if (f->mode == DMRS_MODE_YSF) {
+		char call[11];
+		dmrs_call_unpack(f->dst, f->src, call);
+		if (call[0] != '\0') {
+			sb_str(b, TR("from "));
+			sb_str(b, call);
+		}
+		return;
+	}
+#endif
+	if (f->dst != 0) {
+		sb_str(b, f->group ? "TG " : "ID ");
+		sb_u32(b, f->dst, 1);
+		sb_chr(b, ' ');
+	}
+	if (f->src != 0) {
+		sb_str(b, TR("from "));
+		sb_u32(b, f->src, 1);
+		sb_chr(b, ' ');
+	}
+	if (f->enc)
+		sb_str(b, TR("Encrypted"));
+}
+
+/* "DMR " or, on the all digital search's screen, the mode probed or played and a space */
+static void sb_mode(sbuf_t *b)
+{
+#if CONFIG_ALL_SEARCH
+	if (all) {
+		sb_str(b, dmrs_mode_name(sv.mode));
+		sb_chr(b, ' ');
+		return;
+	}
+#endif
+	sb_str(b, "DMR ");
 }
 
 static void dmrs_draw(void)
@@ -124,7 +230,7 @@ static void dmrs_draw(void)
 	sbuf_t b;
 	bool have = snap();
 	gfx_clear(ui_col.bg);
-	int y = ui_draw_top(ui_view(), &ui_st, TR("DMR search"), "") + 2;
+	int y = ui_draw_top(ui_view(), &ui_st, all ? TR("All digital search") : TR("DMR search"), "") + 2;
 	const font_t *s = ui_layout.small, *m = ui_layout.medium;
 #if CONFIG_SEARCH_RANGE
 	ui_srange_line(&rng, s, gfx_width(), buf, sizeof buf);
@@ -152,18 +258,20 @@ static void dmrs_draw(void)
 		sb_mhz4(&b, sv.at_hz);
 		c = ui_col.fg;
 	} else if (sv.playing) {
-		sb_str(&b, "DMR ");
+		sb_mode(&b);
 		sb_mhz4(&b, sv.at_hz);
 		c = ui_col.rx;
 	} else {
 		sb_str(&b, TR("Probe "));
+		if (all)
+			sb_mode(&b);
 		sb_mhz4(&b, sv.at_hz);
 		c = ui_col.warn;
 	}
 	gfx_text(m, 0, y, buf, c);
 	y += m->h + 2;
 #if CONFIG_FIND_SAVE
-	if (ui_findsave_line(buf, sizeof buf)) {
+	if (!all && ui_findsave_line(buf, sizeof buf)) {
 		gfx_text(s, 0, y, buf, ui_col.warn);
 	} else
 #endif
@@ -181,7 +289,7 @@ static void dmrs_draw(void)
 	gfx_hline(0, y, gfx_width(), ui_col.line);
 	y += 3;
 	if (!have || sv.found_n == 0)
-		gfx_text(s, 0, y, TR("No DMR found yet"), ui_col.dim);
+		gfx_text(s, 0, y, all ? TR("No digital found yet") : TR("No DMR found yet"), ui_col.dim);
 	int sel = have ? sel_row() : -1;
 	for (uint8_t i = 0; have && i < sv.found_n && y + s->h < ui_layout.hint_y; i++) {
 		const dmrs_found_t *f = &sv.found[i];
@@ -196,19 +304,7 @@ static void dmrs_draw(void)
 		y += s->h + 1;
 		if (rows == 2) {
 			sb_init(&b, buf, sizeof buf);
-			sb_str(&b, "   ");
-			if (f->dst != 0) {
-				sb_str(&b, f->group ? "TG " : "ID ");
-				sb_u32(&b, f->dst, 1);
-				sb_chr(&b, ' ');
-			}
-			if (f->src != 0) {
-				sb_str(&b, TR("from "));
-				sb_u32(&b, f->src, 1);
-				sb_chr(&b, ' ');
-			}
-			if (f->enc)
-				sb_str(&b, TR("Encrypted"));
+			more_line(&b, f);
 			gfx_text(s, 0, y, buf, picked ? ui_col.focus_fg : f->enc ? ui_col.warn : ui_col.dim);
 			y += s->h + 1;
 		}
@@ -220,7 +316,9 @@ static void dmrs_draw(void)
 		hint = TR(TEXT_ALT_OPEN "OK start  <> range  * edit" TEXT_ALT_NEXT "OK start  * range" TEXT_ALT_CLOSE);
 #endif
 #if CONFIG_FIND_SAVE
-	if (sel >= 0)
+	if (all) {
+		/* the all digital search saves nothing: the hints above */
+	} else if (sel >= 0)
 		hint = TR(TEXT_ALT_OPEN "OK tune  hold OK save  ^v pick" TEXT_ALT_NEXT "OK tune  hold OK save"
 			  TEXT_ALT_CLOSE);
 	else if (have && sv.found_n != 0)
@@ -240,21 +338,53 @@ static void restart(void)
 #else
 	range_of(range_i, ui_view()->ch.rx_hz, &lo, &hi);
 #endif
-	radio_req_dmr_search(lo, hi);
+	req_search(lo, hi);
 	ui_dirty();
 }
 
-/* OK on a find: the search stops and the VFO goes there in DMR, with the color code and the slot when known */
+#if CONFIG_ALL_SEARCH
+/* OK on a P25 / YSF / NXDN find: the VFO there in that mode, listening to every NAC / DG-ID / RAN (the VFO's defaults
+ * for the mode, radio/vfox.h); false when this build's VFO has no such mode */
+static bool tune_other(const dmrs_found_t *f)
+{
+#if CONFIG_VFO_MODES
+	static const uint8_t mode_of[DMRS_MODES] = { RADIO_MODE_DMR, RADIO_MODE_P25, RADIO_MODE_YSF, RADIO_MODE_NXDN };
+	channel_t c = ui_view()->ch;
+	c.rx_hz = c.tx_hz = f->hz;
+	c.bw = RADIO_BW_12K5;
+	vfox_set_mode(&c, mode_of[f->mode], 0);
+	c.p25_tg = 0;		/* YSF DG-ID / NXDN RAN: any; P25: every talkgroup */
+	c.p25_squelch = 0;
+	radio_req_vfo_set(f->hz);
+	radio_req_vfo_apply(&c);
+	return true;
+#else
+	(void)f;
+	return false;
+#endif
+}
+#endif
+
+/* OK on a find: the search stops and the VFO goes there in DMR, with the color code and the slot when known (the all
+ * digital search: in the find's mode) */
 static void tune_find(const dmrs_found_t *f)
 {
-	radio_req_dmr_search(0, 0);
+	req_search(0, 0);
+	sel_hz = 0;
+#if CONFIG_ALL_SEARCH
+	if (f->mode != DMRS_MODE_DMR) {
+		if (!tune_other(f))
+			ui_toast(TR("VFO: not in this build"));
+		ui_go_home();
+		return;
+	}
+#endif
 	radio_req_vfo_set(f->hz);
 	radio_req_mode(RADIO_MODE_DMR);
 	if (f->cc != DMRS_CC_NONE)
-		radio_req_dmr_color_code(f->cc);
+		radio_req_dmr_color_code((uint8_t)f->cc);
 	if ((f->ts_mask & 3u) == 1u || (f->ts_mask & 3u) == 2u)
 		radio_req_dmr_timeslot((f->ts_mask & 1u) ? 1u : 2u);
-	sel_hz = 0;
 	ui_go_home();
 	/* A repeater's output: the VFO is simplex there, so PTT would talk on the output; say so */
 	if (f->sync_mask & DMRS_SYNC_BS)
@@ -305,12 +435,12 @@ static bool dmrs_key(const input_event_t *ev)
 		return true;
 	}
 #if CONFIG_FIND_SAVE
-	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_CONTEXT) {
+	if (!all && ev->gesture == GESTURE_PRESS && ev->action == ACT_CONTEXT) {
 		ui_findsave_start(FINDSAVE_DMR, 0, have ? sv.found_n : 0, false);	/* # saves them all */
 		ui_dirty();
 		return true;
 	}
-	if (ev->gesture == GESTURE_LONG && ev->action == ACT_SELECT) {
+	if (!all && ev->gesture == GESTURE_LONG && ev->action == ACT_SELECT) {
 		int r = have ? sel_row() : -1;
 		if (r >= 0)	/* OK held on a find saves that one (OK alone tunes it) */
 			ui_findsave_start(FINDSAVE_DMR, (uint8_t)r, (uint8_t)(r + 1), true);
@@ -323,7 +453,7 @@ static bool dmrs_key(const input_event_t *ev)
 		if (r >= 0)
 			tune_find(&sv.found[r]);
 		else if (on)
-			radio_req_dmr_search(0, 0);
+			req_search(0, 0);
 		else
 			restart();
 		ui_dirty();
@@ -331,7 +461,7 @@ static bool dmrs_key(const input_event_t *ev)
 	}
 	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_BACK) {
 		sel_hz = 0;
-		radio_req_dmr_search(0, 0);	/* and the screen's own Back leaves */
+		req_search(0, 0);	/* and the screen's own Back leaves */
 	}
 	return false;
 }
@@ -341,6 +471,9 @@ static void dmrs_enter(void)
 #if CONFIG_SEARCH_RANGE
 	ui_srange_close();
 #endif
+#if CONFIG_ALL_SEARCH
+	all = false;
+#endif
 	sel_hz = 0;
 	ui_dirty();
 }
@@ -348,4 +481,16 @@ static void dmrs_enter(void)
 const ui_scr_def_t ui_dmrsearch_screen = {
 	.name = "dmrsearch", .flags = SF_FIELD, .key = dmrs_key, .draw = dmrs_draw, .enter = dmrs_enter,
 };
+
+#if CONFIG_ALL_SEARCH
+static void alls_enter(void)
+{
+	dmrs_enter();
+	all = true;
+}
+
+const ui_scr_def_t ui_allsearch_screen = {
+	.name = "allsearch", .flags = SF_FIELD, .key = dmrs_key, .draw = dmrs_draw, .enter = alls_enter,
+};
+#endif
 #endif

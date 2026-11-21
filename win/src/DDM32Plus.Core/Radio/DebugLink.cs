@@ -255,17 +255,18 @@ public static class DebugReaders
 
     public const int MaxSilentPolls = 3;
 
-    /// <summary>The search log (firmware tools/plus_searchlog.py) sends only these: GET_VIEW p25s (28) and dmrs (29).</summary>
+    /// <summary>The search log (firmware tools/plus_searchlog.py, tools/plus_alldigital.py) sends only these: GET_VIEW p25s
+    /// (28), dmrs (29) and alls (30).</summary>
     public static readonly IReadOnlySet<(byte, byte)> SearchLogAllowed = new HashSet<(byte, byte)>
     {
-        (0x09, SearchLogBook.SectionP25), (0x09, SearchLogBook.SectionDmr),
+        (0x09, SearchLogBook.SectionP25), (0x09, SearchLogBook.SectionDmr), (0x09, SearchLogBook.SectionAll),
     };
 
     /// <summary>The search log runs all night: a radio busy for a while (a menu, a restart) is waited for this many
     /// polls (about a minute at one a second) before the run ends.</summary>
     public const int SearchLogSilentPolls = 60;
 
-    /// <summary>search log: --port P [--count N]. Every second the p25s and dmrs sections, printed as the live reader
+    /// <summary>search log: --port P [--count N]. Every second the p25s, dmrs and alls sections, printed as the live reader
     /// prints a poll ("=== poll N" ... "=== end N"), until <see cref="ToolContext.Cancel"/> or N polls.</summary>
     public static void SearchLog(IReadOnlyList<string> argv, ToolContext ctx)
     {
@@ -298,7 +299,8 @@ public static class DebugReaders
             var started = ctx.Clock.Monotonic();
             ctx.Print($"=== poll {n}");
             int[] codes = [PrintView(link, "view p25s", SearchLogBook.SectionP25, ctx),
-                PrintView(link, "view dmrs", SearchLogBook.SectionDmr, ctx)];
+                PrintView(link, "view dmrs", SearchLogBook.SectionDmr, ctx),
+                PrintView(link, "view alls", SearchLogBook.SectionAll, ctx)];
             ctx.Print($"=== end {n}");
             silent = codes.All(c => c == -1) ? silent + 1 : 0;
             if (silent >= SearchLogSilentPolls)

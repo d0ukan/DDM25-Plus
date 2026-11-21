@@ -315,9 +315,13 @@ pub const HEALTH_ALLOWED: [(u8, u8); 3] = [(0x09, 0x14), (0x09, 0x15), (0x09, 0x
 pub const LIVE_ALLOWED: [(u8, u8); 6] =
     [(0x09, 0x00), (0x09, 0x14), (0x09, 0x15), (0x09, 0x17), (0x21, 0x00), (0x21, 0x0C)];
 pub const MAX_SILENT_POLLS: u32 = 3;
-/// The search log (firmware tools/plus_searchlog.py) sends only these: GET_VIEW p25s (28) and dmrs (29).
-pub const SEARCHLOG_ALLOWED: [(u8, u8); 2] =
-    [(0x09, crate::radio::searchlog::SECTION_P25), (0x09, crate::radio::searchlog::SECTION_DMR)];
+/// The search log (firmware tools/plus_searchlog.py, tools/plus_alldigital.py) sends only these: GET_VIEW p25s (28),
+/// dmrs (29) and alls (30).
+pub const SEARCHLOG_ALLOWED: [(u8, u8); 3] = [
+    (0x09, crate::radio::searchlog::SECTION_P25),
+    (0x09, crate::radio::searchlog::SECTION_DMR),
+    (0x09, crate::radio::searchlog::SECTION_ALL),
+];
 /// The search log runs all night: a radio busy for a while is waited for this many polls (about a minute).
 pub const SEARCHLOG_SILENT_POLLS: u32 = 60;
 
@@ -426,14 +430,17 @@ pub fn poll_search(
     ctx: &ToolContext<'_>,
     cancel: &AtomicBool,
 ) -> ToolResult<i32> {
-    use crate::radio::searchlog::{SECTION_DMR, SECTION_P25};
+    use crate::radio::searchlog::{SECTION_ALL, SECTION_DMR, SECTION_P25};
     let (mut n, mut silent) = (0i64, 0u32);
     while (count == 0 || n < count) && !cancel.load(Ordering::SeqCst) {
         n += 1;
         let started = ctx.clock.monotonic();
         (ctx.print)(&format!("=== poll {n}"));
-        let codes =
-            [print_view(link, "view p25s", SECTION_P25, ctx)?, print_view(link, "view dmrs", SECTION_DMR, ctx)?];
+        let codes = [
+            print_view(link, "view p25s", SECTION_P25, ctx)?,
+            print_view(link, "view dmrs", SECTION_DMR, ctx)?,
+            print_view(link, "view alls", SECTION_ALL, ctx)?,
+        ];
         (ctx.print)(&format!("=== end {n}"));
         silent = if codes.iter().all(|&c| c == -1) { silent + 1 } else { 0 };
         if silent >= SEARCHLOG_SILENT_POLLS {

@@ -373,6 +373,12 @@ static bool ysf_call, ysf_dn_open, ysf_vw_open;
 static void sink(void *ctx,const int16_t pcm[160]);
 static int start_audio(void);
 static uint8_t ysf_dgid;
+#if CONFIG_ALL_SEARCH
+/* DDM32 Plus all digital search: the DG-ID of the last frame whose FICH held (native_lab.c reads it once YSF is
+ * confirmed there) */
+static uint8_t ysf_heard_dgid;
+uint8_t p25_lab_ysf_dgid(void) { return ysf_heard_dgid; }
+#endif
 static uint32_t ysf_frames, ysf_voice, ysf_bad, ysf_other, ysf_unsupported, ysf_vw_erasures;
 /* The call's callsigns from the V/D mode 2 data channel (FN 1 source, FN 0 destination), "" until heard; the
  * sequence counts changes so the radio task can redraw Home (p25_lab_ysf_caller) */
@@ -494,6 +500,9 @@ static void ysf_frame(void)
     ysf_fich_t f;
     ysf_frames++;
     if(!ysf_fich_decode(ysf_fr.frame,&f)) { ysf_bad++;return; }
+#if CONFIG_ALL_SEARCH
+    ysf_heard_dgid=f.dgid;
+#endif
 #if CONFIG_P25_SCAN
     channel_synced();
 #endif

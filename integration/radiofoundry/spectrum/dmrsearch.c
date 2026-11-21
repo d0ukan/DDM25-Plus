@@ -1,12 +1,26 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* DM32 Plus DMR search engine (dmrsearch.h). No RTOS, no hardware. A sibling of p25search.c (the same sweep, skip
- * list and revisits) kept separate so that either search can be built without the other. */
+ * list and revisits) kept separate so that either search can be built without the other. With CONFIG_ALL_SEARCH it is
+ * the all digital search's engine too (a second kind: the probe goes through the modes in priority order). */
 #include "config.h"
 #if CONFIG_DMR_SEARCH
 #include <string.h>
 #include "radio/dmrsearch.h"
 
 static dmrs_view_t s;
+#if CONFIG_ALL_SEARCH
+/* The modes a hit is probed in, the owner's priority order (the first confirmed wins); those not built left out */
+static const uint8_t order[] = { DMRS_MODE_P25, DMRS_MODE_DMR,
+#if CONFIG_YSF
+				 DMRS_MODE_YSF,
+#endif
+#if CONFIG_NXDN
+				 DMRS_MODE_NXDN,
+#endif
+};
+static uint8_t tried;		/* 1 << mode of the modes probed on the frequency held now */
+static uint8_t epoch;		/* dmrs_regained */
+#endif
 static uint32_t tuned_ms;
 static int32_t floor_q4;		/* floor in dBm x 16 */
 static int16_t peak;			/* the step's strongest reading so far */
@@ -134,7 +148,7 @@ static void tuned(uint32_t now_ms)
 #endif
 }
 
-uint32_t dmrs_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t now_ms)
+static uint32_t start(uint8_t kind, uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t now_ms)
 {
 	if (hi_hz < lo_hz) {
 		uint32_t t = lo_hz;
@@ -142,6 +156,10 @@ uint32_t dmrs_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 		hi_hz = t;
 	}
 	begin_write();
+	if (s.kind != kind)
+		s.found_n = 0;	/* the other kind's finds: not this search's */
+	s.kind = kind;
+	s.mode = DMRS_MODE_DMR;
 	s.phase = DMRS_SWEEP;	/* the found list outlives a restart (a new range) */
 	s.playing = false;
 	s.floor_dbm = -125;
@@ -164,6 +182,64 @@ uint32_t dmrs_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 	reads_seen = reads;
 	tuned(now_ms);
 	return lo_hz;
+}
+
+uint32_t dmrs_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t now_ms)
+{
+	return start(DMRS_KIND_DMR, lo_hz, hi_hz, step_hz, now_ms);
+}
+
+#if CONFIG_ALL_SEARCH
+uint32_t dmrs_start_all(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t now_ms)
+{
+	return start(DMRS_KIND_ALL, lo_hz, hi_hz, step_hz, now_ms);
+}
+
+/* The next mode to probe on the frequency held now (DMRS_MODES: none left); it counts as tried */
+static uint8_t next_mode(void)
+{
+	for (unsigned i = 0; i < sizeof order; i++) {
+		if (!(tried & (1u << order[i]))) {
+			tried |= (uint8_t)(1u << order[i]);
+			return order[i];
+		}
+	}
+	return DMRS_MODES;
+}
+#endif
+
+/* A hit's first mode: the DMR search's is DMR; the all digital search tries the mode a find there had first (a
+ * revisit), else the priority order */
+static uint8_t first_mode(void)
+{
+#if CONFIG_ALL_SEARCH
+	tried = 0;
+	if (s.kind != DMRS_KIND_ALL)
+		return DMRS_MODE_DMR;
+	for (unsigned i = 0; i < s.found_n; i++) {
+		if (s.found[i].hz == s.at_hz) {
+			tried = (uint8_t)(1u << s.found[i].mode);
+			return s.found[i].mode;
+		}
+	}
+	return next_mode();
+#else
+	return DMRS_MODE_DMR;
+#endif
+}
+
+/* How long the probe of the mode held now waits for it */
+static uint32_t window_ms(void)
+{
+#if CONFIG_ALL_SEARCH
+	if (s.mode == DMRS_MODE_P25)
+		return DMRS_P25_PROBE_MS;
+	if (s.mode == DMRS_MODE_YSF)
+		return DMRS_YSF_PROBE_MS;
+	if (s.mode == DMRS_MODE_NXDN)
+		return DMRS_NXDN_PROBE_MS;
+#endif
+	return DMRS_PROBE_MS;
 }
 
 uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
@@ -234,6 +310,7 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	}
 	if (strong && !skipped(s.at_hz, now_ms)) {
 		s.phase = DMRS_PROBE;
+		s.mode = first_mode();
 		s.hits++;
 #if CONFIG_SEARCH_FAST
 		stage = ST_QUICK;
@@ -261,8 +338,8 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 static void note(const dmrs_heard_t *h, bool new_call, uint32_t now_ms)
 {
 	unsigned i = 0;
-	while (i < s.found_n && s.found[i].hz != s.at_hz)
-		i++;
+	while (i < s.found_n && !(s.found[i].hz == s.at_hz && s.found[i].mode == s.mode))
+		i++;	/* a frequency and its mode (a mixed mode repeater has an entry for each) */
 	dmrs_found_t f;
 	if (i < s.found_n) {
 		f = s.found[i];
@@ -270,6 +347,7 @@ static void note(const dmrs_heard_t *h, bool new_call, uint32_t now_ms)
 	} else {
 		memset(&f, 0, sizeof f);
 		f.cc = DMRS_CC_NONE;
+		f.mode = s.mode;
 		if (s.found_n < DMRS_FOUND_MAX)
 			s.found_n++;
 		memmove(&s.found[1], &s.found[0], (size_t)(s.found_n - 1u) * sizeof f);
@@ -279,12 +357,22 @@ static void note(const dmrs_heard_t *h, bool new_call, uint32_t now_ms)
 		f.cc = h->cc;
 	f.ts_mask |= h->ts_mask;
 	f.sync_mask |= h->sync_mask;
-	if (h->dst != 0) {
-		f.dst = h->dst;
-		f.group = h->group;
+#if CONFIG_ALL_SEARCH
+	if (s.mode == DMRS_MODE_YSF) {
+		if (h->src != 0) {	/* a callsign: both halves are its (a shorter one leaves no tail of the last) */
+			f.src = h->src;
+			f.dst = h->dst;
+		}
+	} else
+#endif
+	{
+		if (h->dst != 0) {
+			f.dst = h->dst;
+			f.group = h->group;
+		}
+		if (h->src != 0)
+			f.src = h->src;
 	}
-	if (h->src != 0)
-		f.src = h->src;
 	if (new_call)
 		f.calls++;
 	if (h->other)
@@ -344,10 +432,23 @@ uint32_t dmrs_probe(const dmrs_heard_t *h, uint32_t now_ms)
 				end_ms = now_ms;
 			}
 			leave = now_ms - end_ms >= DMRS_HANG_MS;	/* a reply in the hang plays too */
-		} else if (!dmr) {
-			leave = now_ms - hit_ms >= DMRS_PROBE_MS;
+		} else if (!heard_here) {
+			leave = now_ms - hit_ms >= window_ms();
+#if CONFIG_ALL_SEARCH
+			if (leave && s.kind == DMRS_KIND_ALL) {
+				uint8_t m = next_mode();
+				if (m != DMRS_MODES) {
+					s.mode = m;	/* not this mode: the next one, on the same frequency */
+					hit_ms = now_ms;
+					was_call = ended = false;
+					end_write();
+					return s.at_hz;	/* the receiver is set up for it */
+				}
+			}
+#endif
 			if (leave)
-				add_skip(s.at_hz, now_ms);	/* a carrier, not DMR (FM, P25, data of another kind) */
+				add_skip(s.at_hz, now_ms);	/* a carrier, not DMR (FM, P25, data of another kind); the all
+								 * digital search: none of its modes (FM, a beacon, data) */
 		} else {
 			leave = now_ms - hit_ms >= DMRS_LATE_MS;	/* DMR, nothing to play: idle, data, encrypted */
 		}
@@ -383,20 +484,23 @@ uint32_t dmrs_at_hz(void)
 
 /* The PC's search log (debug link section, tools/plus_searchlog.py): the state and found entry i, read like the
  * snapshot but not counted as a look, so the search still stops once its screen was left. Small on the caller's stack
- * (the host link task): one entry at a time. False when i is past the list or the copy kept changing */
-bool dmrs_peek(unsigned i, dmrs_peek_t *out)
+ * (the host link task): one entry at a time. False when i is past the list or the copy kept changing. Another kind's
+ * state reads as stopped with nothing found */
+static bool peek(uint8_t kind, unsigned i, dmrs_peek_t *out)
 {
 	for (unsigned tries = 0; tries < 8u; tries++) {
 		uint32_t a = seq;
 		__asm__ volatile("" ::: "memory");
 		if (a & 1u)
 			continue;
-		out->phase = s.phase;
+		bool mine = s.kind == kind;
+		out->phase = mine ? s.phase : (uint8_t)DMRS_OFF;
+		out->mode = s.mode;
 		out->at_hz = s.at_hz;
 		out->lo_hz = s.lo_hz;
 		out->hi_hz = s.hi_hz;
-		out->found_n = s.found_n;
-		bool have = i < s.found_n && i < DMRS_FOUND_MAX;
+		out->found_n = mine ? s.found_n : 0u;
+		bool have = i < out->found_n && i < DMRS_FOUND_MAX;
 		if (have)
 			memcpy(&out->f, &s.found[i], sizeof out->f);
 		__asm__ volatile("" ::: "memory");
@@ -406,9 +510,16 @@ bool dmrs_peek(unsigned i, dmrs_peek_t *out)
 	return false;
 }
 
-bool dmrs_snapshot(dmrs_view_t *out)
+bool dmrs_peek(unsigned i, dmrs_peek_t *out)
 {
-	reads++;
+	return peek(DMRS_KIND_DMR, i, out);
+}
+
+/* A consistent copy; a look only when it is the kind running (another kind's screen keeps nothing alive) */
+static bool snapshot(uint8_t kind, dmrs_view_t *out)
+{
+	if (s.kind == kind)
+		reads++;
 	for (unsigned tries = 0; tries < 8u; tries++) {
 		uint32_t a = seq;
 		__asm__ volatile("" ::: "memory");
@@ -416,9 +527,132 @@ bool dmrs_snapshot(dmrs_view_t *out)
 			continue;
 		memcpy(out, &s, sizeof *out);
 		__asm__ volatile("" ::: "memory");
-		if (seq == a)
+		if (seq == a) {
+			if (out->kind != kind) {
+				out->phase = DMRS_OFF;	/* the other kind's: stopped, nothing found */
+				out->playing = false;
+				out->found_n = 0;
+				out->kind = kind;
+			}
 			return true;
+		}
 	}
 	return false;
 }
+
+bool dmrs_snapshot(dmrs_view_t *out)
+{
+	return snapshot(DMRS_KIND_DMR, out);
+}
+
+#if CONFIG_ALL_SEARCH
+bool dmrs_snapshot_all(dmrs_view_t *out)
+{
+	return snapshot(DMRS_KIND_ALL, out);
+}
+
+bool dmrs_peek_all(unsigned i, dmrs_peek_t *out)
+{
+	return peek(DMRS_KIND_ALL, i, out);
+}
+
+uint8_t dmrs_kind(void)
+{
+	return s.kind;
+}
+
+uint8_t dmrs_mode(void)
+{
+	return s.mode;
+}
+
+void dmrs_retuned(uint32_t now_ms)
+{
+	if (s.phase == DMRS_SWEEP) {
+		tuned(now_ms);	/* the step settles anew, read from its start */
+#if CONFIG_SEARCH_FAST
+		stage = ST_QUICK;
+		prev_hz = 0;
+#endif
+	} else {
+		hit_ms = now_ms;	/* the probe's window (or the late wait) from now */
+	}
+}
+
+void dmrs_regained(void)
+{
+	epoch++;
+}
+
+uint8_t dmrs_epoch(void)
+{
+	return epoch;
+}
+
+uint32_t dmrs_native_hz(bool *ysf)
+{
+	bool probing = s.kind == DMRS_KIND_ALL && (s.phase == DMRS_PROBE || s.phase == DMRS_CALL);
+	*ysf = s.mode == DMRS_MODE_YSF;
+	return probing && (s.mode == DMRS_MODE_P25 || *ysf) ? s.at_hz : 0u;
+}
+
+uint32_t dmrs_nxdn_hz(void)
+{
+	bool probing = s.kind == DMRS_KIND_ALL && (s.phase == DMRS_PROBE || s.phase == DMRS_CALL);
+	return probing && s.mode == DMRS_MODE_NXDN ? s.at_hz : 0u;
+}
+
+/* Base 40: space, A-Z, 0-9, '/', '-', '.' */
+static const char call_set[41] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-.";
+
+static uint32_t call_part(const char *call, unsigned from, unsigned n, bool *done)
+{
+	uint32_t v = 0;
+	for (unsigned k = 0; k < n; k++) {
+		char c = *done ? '\0' : call[from + k];
+		if (c == '\0')
+			*done = true;
+		if (c >= 'a' && c <= 'z')
+			c = (char)(c - 'a' + 'A');
+		unsigned d = 39;	/* '.': a character the set lacks */
+		if (*done)
+			d = 0;
+		else
+			for (unsigned j = 0; j < 40u; j++)
+				if (call_set[j] == c)
+					d = j;
+		v = v * 40u + d;
+	}
+	return v;
+}
+
+void dmrs_call_pack(const char *call, uint32_t *hi, uint32_t *lo)
+{
+	bool done = call == NULL;
+	*lo = call_part(call, 0, 6, &done);
+	*hi = call_part(call, 6, 4, &done);
+}
+
+void dmrs_call_unpack(uint32_t hi, uint32_t lo, char out[11])
+{
+	for (int k = 5; k >= 0; k--) {
+		out[k] = call_set[lo % 40u];
+		lo /= 40u;
+	}
+	for (int k = 9; k >= 6; k--) {
+		out[k] = call_set[hi % 40u];
+		hi /= 40u;
+	}
+	int n = 10;
+	while (n > 0 && out[n - 1] == ' ')
+		n--;
+	out[n] = '\0';
+}
+
+const char *dmrs_mode_name(uint8_t mode)
+{
+	static const char names[DMRS_MODES][5] = { "DMR", "P25", "YSF", "NXDN" };
+	return mode < DMRS_MODES ? names[mode] : "?";
+}
+#endif
 #endif

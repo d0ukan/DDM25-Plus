@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! The search log (SearchLog.cs; firmware tools/plus_searchlog.py, docs/plus.md "Search log on the PC"): the radio's
-//! P25 and DMR searches keep 8 finds each; read every second over the debug link (GET_VIEW sections p25s = 28, dmrs =
-//! 29, read only, not counted as a look), every new call becomes a row here and in the day's CSV file. A call is new
+//! P25, DMR and all digital searches keep 8 finds each; read every second over the debug link (GET_VIEW sections p25s =
+//! 28, dmrs = 29, alls = 30, read only, not counted as a look), every new call becomes a row here and in the day's CSV
+//! file. A call is new
 //! when an entry appears, its call counter grows, or its talkgroup / source changes. A radio restart (counters back
 //! down) is a new start, not a call.
 
@@ -11,14 +12,16 @@ use std::path::{Path, PathBuf};
 
 pub const SECTION_P25: u8 = 0x1C;
 pub const SECTION_DMR: u8 = 0x1D;
-pub const CSV_HEADER: &str = "time,mode,mhz,code,slot,group,source,encrypted,calls";
+pub const SECTION_ALL: u8 = 0x1E;
+pub const CSV_HEADER: &str = "time,mode,mhz,code,slot,group,source,encrypted,calls,caller";
 
 /// A local time as seconds since the Unix epoch plus the offset the program shows (the GUI passes the local clock).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Stamp(pub i64);
 
-/// One call a search found (no audio). code: P25 NAC ("$1C8") or DMR colour code ("CC1"); slot: DMR slots seen and
-/// RPT / DIR; group: P25 talkgroup or DMR talkgroup / called ID.
+/// One call a search found (no audio). mode: "P25", "DMR", "YSF" or "NXDN"; code: P25 NAC ("$1C8"), DMR colour code
+/// ("CC1"), YSF DG-ID ("DG0") or NXDN RAN ("RAN1"); slot: DMR slots seen and RPT / DIR; group: P25 / NXDN talkgroup or
+/// DMR talkgroup / called ID; caller: the YSF source callsign (empty otherwise).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchCall {
     pub time: Stamp,
@@ -30,16 +33,24 @@ pub struct SearchCall {
     pub source: i64,
     pub encrypted: bool,
     pub calls: i64,
+    pub caller: String,
 }
+
+/// What an entry looked like at the last poll: calls, group, source, caller.
+type Seen = (i64, i64, i64, String);
 
 #[derive(Debug, Default)]
 pub struct SearchLogBook {
-    seen: HashMap<(&'static str, i64), (i64, i64, i64)>,
+    // keyed by the search too: the all digital search's list is its own (its P25 / DMR finds next to the P25 / DMR
+    // searches' own lists, which the radio keeps reporting after they stopped)
+    seen: HashMap<(&'static str, &'static str, i64), Seen>,
     calls: Vec<SearchCall>,
     pub p25_on: Option<bool>,
     pub dmr_on: Option<bool>,
+    pub all_on: Option<bool>,
     pub p25_at_hz: Option<i64>,
     pub dmr_at_hz: Option<i64>,
+    pub all_at_hz: Option<i64>,
 }
 
 fn fields(text: &str, n: usize) -> Option<Vec<i64>> {
@@ -67,6 +78,7 @@ pub fn parse_p25(text: &str, now: Stamp) -> Option<SearchCall> {
         source: v[3],
         encrypted: false,
         calls: v[4],
+        caller: String::new(),
     })
 }
 
@@ -78,33 +90,80 @@ pub fn parse_dmr(text: &str, now: Stamp) -> Option<SearchCall> {
     }
     let age = v[9].clamp(0, 86400);
     let code = if (0..=15).contains(&v[1]) { format!("CC{}", v[1]) } else { "CC?".to_string() };
-    let mut slot = match v[2] & 3 {
-        1 => "TS1",
-        2 => "TS2",
-        3 => "TS1+2",
-        _ => "",
-    }
-    .to_string();
-    let tag = if v[3] & 1 != 0 {
-        "RPT"
-    } else if v[3] & 2 != 0 {
-        "DIR"
-    } else {
-        ""
-    };
-    if !tag.is_empty() {
-        slot = format!("{slot} {tag}").trim().to_string();
-    }
     Some(SearchCall {
         time: Stamp(now.0 - age),
         mode: "DMR",
         hz: v[0],
         code,
-        slot,
+        slot: slots(v[2], v[3]),
         group: v[6],
         source: v[7],
         encrypted: v[5] != 0,
         calls: v[8],
+        caller: String::new(),
+    })
+}
+
+/// DMR slots seen and repeater / direct: "TS2 RPT", "TS1+2", "DIR".
+fn slots(ts_mask: i64, sync_mask: i64) -> String {
+    let slot = match ts_mask & 3 {
+        1 => "TS1",
+        2 => "TS2",
+        3 => "TS1+2",
+        _ => "",
+    };
+    let tag = if sync_mask & 1 != 0 {
+        "RPT"
+    } else if sync_mask & 2 != 0 {
+        "DIR"
+    } else {
+        ""
+    };
+    format!("{slot} {tag}").trim().to_string()
+}
+
+/// alls.fI=HZ,MODE,CODE,TSMASK,SYNCMASK,GROUP,ENC,DST,SRC,CALLS,AGE_S,CALL (MODE P25 / DMR / YSF / NXDN; CODE the NAC,
+/// colour code, DG-ID or RAN, 65535 not known; CALL the YSF callsign, the last field).
+pub fn parse_all(text: &str, now: Stamp) -> Option<SearchCall> {
+    let parts: Vec<&str> = text.splitn(12, ',').collect();
+    if parts.len() < 11 {
+        return None;
+    }
+    let mode: &'static str = match parts[1].trim() {
+        "P25" => "P25",
+        "DMR" => "DMR",
+        "YSF" => "YSF",
+        "NXDN" => "NXDN",
+        _ => return None,
+    };
+    let nums: Vec<&str> = std::iter::once(parts[0]).chain(parts[2..11].iter().copied()).collect();
+    let v = fields(&nums.join(","), 10)?;
+    if v[0] <= 0 {
+        return None;
+    }
+    let age = v[9].clamp(0, 86400);
+    let known = (0..65535).contains(&v[1]);
+    let code = match mode {
+        "P25" if known => format!("${:03X}", v[1]),
+        "P25" => "$?".to_string(),
+        "DMR" if (0..=15).contains(&v[1]) => format!("CC{}", v[1]),
+        "DMR" => "CC?".to_string(),
+        "YSF" if known => format!("DG{}", v[1]),
+        "YSF" => "DG?".to_string(),
+        _ if known => format!("RAN{}", v[1]),
+        _ => "RAN?".to_string(),
+    };
+    Some(SearchCall {
+        time: Stamp(now.0 - age),
+        mode,
+        hz: v[0],
+        code,
+        slot: if mode == "DMR" { slots(v[2], v[3]) } else { String::new() },
+        group: v[6],
+        source: v[7],
+        encrypted: v[5] != 0,
+        calls: v[8],
+        caller: parts.get(11).map(|c| c.trim().to_string()).unwrap_or_default(),
     })
 }
 
@@ -125,7 +184,7 @@ impl SearchLogBook {
         v.len()
     }
 
-    /// One poll's key=value lines (both sections); returns the new calls, oldest first.
+    /// One poll's key=value lines (all three sections); returns the new calls, oldest first.
     pub fn add<S: AsRef<str>>(&mut self, lines: &[S], now: Stamp) -> Vec<SearchCall> {
         let mut kv: HashMap<&str, &str> = HashMap::new();
         for l in lines {
@@ -140,15 +199,20 @@ impl SearchLogBook {
         let num = |k: &str| kv.get(k).and_then(|v| v.parse::<i64>().ok());
         self.p25_on = flag("p25s.on");
         self.dmr_on = flag("dmrs.on");
+        self.all_on = flag("alls.on");
         self.p25_at_hz = num("p25s.at");
         self.dmr_at_hz = num("dmrs.at");
+        self.all_at_hz = num("alls.at");
         let mut fresh = Vec::new();
         for i in (0..8).rev() {
             if let Some(c) = kv.get(format!("p25s.f{i}").as_str()).and_then(|t| parse_p25(t, now)) {
-                self.note(c, &mut fresh);
+                self.note("p25s", c, &mut fresh);
             }
             if let Some(c) = kv.get(format!("dmrs.f{i}").as_str()).and_then(|t| parse_dmr(t, now)) {
-                self.note(c, &mut fresh);
+                self.note("dmrs", c, &mut fresh);
+            }
+            if let Some(c) = kv.get(format!("alls.f{i}").as_str()).and_then(|t| parse_all(t, now)) {
+                self.note("alls", c, &mut fresh);
             }
         }
         fresh.sort_by_key(|c| c.time);
@@ -156,12 +220,12 @@ impl SearchLogBook {
         fresh
     }
 
-    fn note(&mut self, c: SearchCall, fresh: &mut Vec<SearchCall>) {
-        let key = (c.mode, c.hz);
-        let now = (c.calls, c.group, c.source);
+    fn note(&mut self, search: &'static str, c: SearchCall, fresh: &mut Vec<SearchCall>) {
+        let key = (search, c.mode, c.hz);
+        let now = (c.calls, c.group, c.source, c.caller.clone());
         match self.seen.insert(key, now) {
             None => {
-                if c.calls > 0 || c.group != 0 || c.source != 0 {
+                if c.calls > 0 || c.group != 0 || c.source != 0 || !c.caller.is_empty() {
                     fresh.push(c);
                 }
             }
@@ -169,7 +233,7 @@ impl SearchLogBook {
                 if c.calls < was.0 {
                     return; // the radio started again: a new baseline
                 }
-                if c.calls > was.0 || c.group != was.1 || c.source != was.2 {
+                if c.calls > was.0 || c.group != was.1 || c.source != was.2 || c.caller != was.3 {
                     fresh.push(c);
                 }
             }
@@ -210,7 +274,7 @@ fn civil(z: i64) -> (i64, i64, i64) {
 
 pub fn csv_row(c: &SearchCall) -> String {
     format!(
-        "{},{},{},{},{},{},{},{},{}",
+        "{},{},{},{},{},{},{},{},{},{}",
         format_time(c.time),
         c.mode,
         mhz(c.hz),
@@ -219,7 +283,8 @@ pub fn csv_row(c: &SearchCall) -> String {
         c.group,
         c.source,
         if c.encrypted { 1 } else { 0 },
-        c.calls
+        c.calls,
+        c.caller.replace(',', " ")
     )
 }
 

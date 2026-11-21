@@ -1368,6 +1368,14 @@ msgstr "  taban "
 msgid "No DMR found yet"
 msgstr "Henüz DMR bulunmadı"
 
+#: core/ui/ui_dmrsearch.c core/ui/ui_menus.c
+msgid "All digital search"
+msgstr "Tüm dijital arama"
+
+#: core/ui/ui_dmrsearch.c
+msgid "No digital found yet"
+msgstr "Henüz dijital bulunmadı"
+
 #: core/ui/ui_dmrsearch.c
 msgid "from "
 msgstr "kaynak "

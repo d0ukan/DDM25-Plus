@@ -355,6 +355,12 @@ def main():
     run([OUT/'test_p25trunk'],cwd=ROOT)
     run(['clang',*flags,'-DCONFIG_DMR_SEARCH=1',ROOT/'tests/plus/test_dmrsearch.c',APP/'core/radio/dmrsearch.c','-o',OUT/'test_dmrsearch'],cwd=ROOT)
     run([OUT/'test_dmrsearch'],cwd=ROOT)
+    # DDM32 Plus all digital search: the DMR search engine's second kind (with and without the faster sweep)
+    for fast in (0,1):
+        run(['clang',*flags,'-DCONFIG_DMR_SEARCH=1','-DCONFIG_ALL_SEARCH=1','-DCONFIG_YSF=1','-DCONFIG_NXDN=1',
+             f'-DCONFIG_SEARCH_FAST={fast}',ROOT/'tests/plus/test_allsearch.c',APP/'core/radio/dmrsearch.c',
+             '-o',OUT/f'test_allsearch_{fast}'],cwd=ROOT)
+        run([OUT/f'test_allsearch_{fast}'],cwd=ROOT)
     # DM32 Plus DMR Tier III trunk following: CSBK CRC, BPTC (upstream's FEC), fields, channel plan, the follower
     run(['clang',*flags,'-DCONFIG_DMR_TRUNK=1','-I'+str(ROOT/'tests/plus'),ROOT/'tests/plus/test_dmrtrunk.c',
          APP/'core/radio/dmr_csbk.c',APP/'core/radio/dmrtrunk.c',APP/'core/dmr/fec/dmrFec.c','-o',OUT/'test_dmrtrunk'],cwd=ROOT)
@@ -666,6 +672,14 @@ def main():
     argv[argv.index('-o')+1]=str(OUT/'test_radio_dmrsearch')
     run([*argv,'-DCONFIG_DMR_ANY=1','-DCONFIG_DMR_SEARCH=1','-I'+str(ROOT/'tests/plus'),str(APP/'core/radio/dmrsearch.c')],cwd=host)
     run([OUT/'test_radio_dmrsearch'],cwd=host)
+    # DDM32 Plus: the all digital search in the same suite (the P25 scan / search and DMR search built in: it is both)
+    argv[argv.index('-o')+1]=str(OUT/'test_radio_allsearch')
+    run([*argv,'-DCONFIG_P25_SCAN=1','-DCONFIG_SPECTRUM=1','-DCONFIG_FOX=1','-DCONFIG_CW_BEACON=1','-DCONFIG_P25_SEARCH=1',
+         '-DCONFIG_P25_CALLER=1','-DCONFIG_P25_ANY=1','-DCONFIG_DMR_ANY=1','-DCONFIG_DMR_SEARCH=1','-DCONFIG_ALL_SEARCH=1',
+         '-I'+str(ROOT/'tests/classic'),'-I'+str(ROOT/'tests/plus'),str(APP/'core/radio/spectrum.c'),
+         str(APP/'core/radio/fox.c'),str(APP/'core/radio/cw_beacon.c'),str(APP/'core/radio/p25search.c'),
+         str(APP/'core/radio/dmrsearch.c')],cwd=host)
+    run([OUT/'test_radio_allsearch'],cwd=host)
     # DM32 Plus: P25 trunk following in the same suite (its own build; the worker's TSBK queue is a fixture)
     argv[argv.index('-o')+1]=str(OUT/'test_radio_trunk')
     run([*argv,'-DCONFIG_P25_TRUNK=1','-I'+str(ROOT/'tests/plus'),str(APP/'core/radio/p25trunk.c')],cwd=host)

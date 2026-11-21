@@ -666,3 +666,25 @@ Spectrum in colour (Tools > Spectrum, docs/plus.md "The spectrum in colour"). Re
 | SB-3 | A DMR channel: idle, then a call from the other radio | empty while idle; filled during the call; empty after it |
 | SB-4 | A P25 channel: idle, then a call | the same as SB-3 |
 | SB-5 | Monitor key held on an empty FM channel | the bars show the noise level while the monitor is open (the receiver is open: expected) |
+
+## All digital search (tools/plus_alldigital.py)
+
+Tools > All digital search (Turkish "Tüm dijital arama", docs/plus.md "All digital search"). Receive only: nothing is
+keyed in any row. The other radio sends on 433.500 (or a free authorised frequency) as each row says.
+
+| Row | Do | Expect |
+|---|---|---|
+| AD-1 | Tools: the list's last entries | "All digital search" ("Tüm dijital arama") after CW decoder, before Battery; the other tools keep their numbers |
+| AD-2 | Open it, range +-1 MHz around 433.500, OK; nothing on air | "Sweep 432.5000 ..." steps on; "No digital found yet" ("Henüz dijital bulunmadı"); about 16 s a pass |
+| AD-3 | The other radio calls P25 (NAC 659, TG 101) | "Probe P25 433.5000", then "P25 433.5000" in green and the call plays; the find "433.5000 P25 NAC 659 ..." with "TG 101 from <ID>"; 2 s after the over the sweep goes on |
+| AD-4 | The other radio calls DMR (direct mode, CC1, TS1) | "Probe P25 ..." about 0.7 s, then "Probe DMR ...", then the call plays; the find "DMR CC1 TS1 DIR" with its talkgroup and source |
+| AD-5 | The other radio calls YSF (DN, DG-ID 0) | P25 and DMR run out (about 1.4 s), then "YSF 433.5000" plays; the find "YSF DG 0" with "from <its callsign>" |
+| AD-6 | The other radio calls NXDN48 (if it has NXDN; RAN 1) | after P25, DMR and YSF (about 2.1 s) "NXDN ..." plays; the find "NXDN RAN 1" with group and source. Note it if no NXDN radio is at hand |
+| AD-7 | The other radio sends FM (no digital) for 30 s | the four probes (about 3 s), then the sweep goes on and 433.500 is not probed again for a while; no found entry |
+| AD-8 | After AD-4: the DMR radio calls again a minute later | caught at the next revisit (a few seconds), probed as DMR first (no P25 wait) |
+| AD-9 | PTT during "Probe P25", during "Probe DMR", while sweeping | nothing transmitted (red LED off, the other radio hears nothing); the search stops; the channel is back |
+| AD-10 | Leave the screen with Back; and again leave it with the side key / Home without stopping | Back stops at once; otherwise the search stops about 5 s later, the channel back |
+| AD-11 | Up / Down to the P25 find, OK; then the YSF and DMR finds | the VFO on 433.500 in P25 (NAC Any) hears the next P25 call; YSF in YSF (DG-ID Any); DMR with CC and slot as DMR search does |
+| AD-12 | Tools > DMR search after AD-3..AD-5; then back to All digital search, OK | DMR search starts with an empty list; the all digital search's list was cleared by it (the two share one list) |
+| AD-13 | The PC programmer's search log during AD-3..AD-6 | a row per call with the mode P25 / DMR / YSF / NXDN, its code ($659, CC1, DG0, RAN1), the YSF callsign in the caller column |
+| AD-14 | Turkish: Settings > Language Türkçe, open the screen | title "Tüm dijital arama", "Durdu: OK başlatır" / "Tarama ..." / "Deneme P25 ..." texts fit the screen |

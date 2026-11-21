@@ -101,6 +101,10 @@ int p25_lab_set_ysf(int on, uint8_t dgid);
 /* The YSF call being heard: source and destination callsigns ("" until heard, or no call); returns a sequence
  * that changes whenever they do. Either pointer may be NULL */
 uint32_t p25_lab_ysf_caller(char src[11], char dst[11]);
+#if CONFIG_ALL_SEARCH
+/* DDM32 Plus all digital search: the DG-ID of the last YSF frame whose FICH held */
+uint8_t p25_lab_ysf_dgid(void);
+#endif
 #if CONFIG_YSF_TX
 /* DM32 Plus YSF transmit (docs/ysf-nxdn-tx.md): the callsign the next PTT on a YSF channel sends (up to 10
  * characters; "" = none, and then the worker refuses to transmit). The radio task sets it on PTT down, before it
