@@ -4,7 +4,7 @@
 import { ScrollView } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Tr, Label, Muted, Title, Button, Card, Notice, Check, Choice, Progress } from "widgets.slint";
-import { Radio, Fact, TableRow, HealthPage, LivePage, ChannelsPage } from "radio_pages.slint";
+import { Radio, Fact, TableRow, HealthPage, LivePage, ChannelsPage, SearchLogPage } from "radio_pages.slint";
 export { Theme, Tr, Radio, Fact, TableRow }
 
 export struct VersionRow { version: string, label: string, notes: string, local: bool }
@@ -139,6 +139,7 @@ component Home inherits VerticalLayout {
         spacing: Theme.gap;
         Button { text: Tr.t(Tr.lang, "home_health"); clicked => { App.navigate(7); } }
         Button { text: Tr.t(Tr.lang, "home_live"); clicked => { App.navigate(8); } }
+        Button { text: Tr.t(Tr.lang, "home_slog"); clicked => { App.navigate(10); } }
         Button { text: Tr.t(Tr.lang, "home_settings"); clicked => { App.navigate(4); } }
     }
     Rectangle { vertical-stretch: 1; }
@@ -490,6 +491,7 @@ export component AppWindow inherits Window {
     if App.page == 7 : HealthPage {}
     if App.page == 8 : LivePage {}
     if App.page == 9 : ChannelsPage {}
+    if App.page == 10 : SearchLogPage {}
 
     // the second confirmation of the install without backup
     if App.confirm-open : Rectangle {

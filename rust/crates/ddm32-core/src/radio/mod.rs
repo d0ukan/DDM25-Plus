@@ -15,6 +15,7 @@ pub mod monitor;
 pub mod plan;
 pub mod port;
 pub mod progress;
+pub mod searchlog;
 pub mod tools;
 pub mod unit_image;
 

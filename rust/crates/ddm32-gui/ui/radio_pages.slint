@@ -22,6 +22,11 @@ export global Radio {
     in property <[Fact]> live-facts;
     in property <string> live-raw;
     in-out property <int> live-interval: 2;
+    // search log
+    in property <bool> slog-running;
+    in property <string> slog-status;
+    in property <string> slog-searches;
+    in property <[TableRow]> slog-rows;
     // channels
     in property <string> channels-source;
     in property <[string]> table-columns;
@@ -39,6 +44,10 @@ export global Radio {
     callback read-health();
     callback live-start();
     callback live-stop();
+    callback slog-start();
+    callback slog-stop();
+    callback slog-folder();
+    callback slog-clear();
     callback choose-table(int);
     callback search-changed(string);
     callback export-csv();
@@ -280,6 +289,87 @@ export component ChannelsPage inherits VerticalLayout {
                             wrap: word-wrap;
                             vertical-alignment: center;
                             width: root.cols-w * Radio.table-widths[i];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component SearchLogPage inherits VerticalLayout {
+    // the search log: the radio's P25 / DMR search finds read every second (radio_pages.rs slog_*), newest first
+    property <[float]> widths: [0.16, 0.07, 0.12, 0.09, 0.12, 0.12, 0.2, 0.08];
+    property <length> cols-w: self.width - 3 * Theme.pad - 16px - 16px - 8px * 7 - 14px;
+    padding: Theme.pad * 1.5;
+    spacing: Theme.gap;
+    Header { heading: Tr.t(Tr.lang, "home_slog"); }
+    Muted { text: Tr.t(Tr.lang, "slog_intro"); font-size: Theme.font; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Button {
+            text: Radio.slog-running ? Tr.t(Tr.lang, "b_live_stop") : Tr.t(Tr.lang, "b_slog_start");
+            kind: Radio.slog-running ? "secondary" : "primary";
+            big: true;
+            enabled: !Radio.busy && !Radio.live-running;
+            horizontal-stretch: 0;
+            clicked => {
+                if Radio.slog-running {
+                    Radio.slog-stop();
+                } else {
+                    Radio.slog-start();
+                }
+            }
+        }
+        Button { text: Tr.t(Tr.lang, "b_slog_folder"); horizontal-stretch: 0; clicked => { Radio.slog-folder(); } }
+        Button {
+            text: Tr.t(Tr.lang, "b_slog_clear");
+            horizontal-stretch: 0;
+            enabled: !Radio.slog-running && Radio.slog-rows.length > 0;
+            clicked => { Radio.slog-clear(); }
+        }
+        Rectangle { horizontal-stretch: 1; }
+    }
+    Muted { text: Radio.slog-status; }
+    if Radio.slog-searches != "" : Muted { text: Radio.slog-searches; }
+    if Radio.message != "" : Notice { text: Radio.message; kind: Radio.message-kind; }
+    Card {
+        vertical-stretch: 1;
+        VerticalLayout {
+            padding: 8px;
+            HorizontalLayout {
+                spacing: 8px;
+                padding-left: 8px;
+                padding-right: 8px;
+                height: 32px;
+                for c[i] in [Tr.t(Tr.lang, "slog_time"), Tr.t(Tr.lang, "slog_mode"), "MHz", "NAC / CC", Tr.t(Tr.lang, "slog_slot"),
+                        Tr.t(Tr.lang, "slog_group"), Tr.t(Tr.lang, "slog_source"), Tr.t(Tr.lang, "slog_calls")] : Text {
+                    text: c;
+                    color: Theme.text-muted;
+                    font-size: Theme.font-small;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                    width: root.cols-w * root.widths[i];
+                }
+            }
+            Rectangle { height: 1px; background: Theme.border; }
+            if Radio.slog-rows.length == 0 : Notice { text: Tr.t(Tr.lang, "slog_none"); }
+            ListView {
+                vertical-stretch: 1;
+                for r[ri] in Radio.slog-rows : Rectangle {
+                    height: 30px;
+                    background: Math.mod(ri, 2) == 0 ? Theme.surface : Theme.surface-alt;
+                    HorizontalLayout {
+                        spacing: 8px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        for c[i] in r.cells : Text {
+                            text: c;
+                            color: Theme.text;
+                            font-size: Theme.font-small;
+                            vertical-alignment: center;
+                            overflow: elide;
+                            width: root.cols-w * root.widths[i];
                         }
                     }
                 }

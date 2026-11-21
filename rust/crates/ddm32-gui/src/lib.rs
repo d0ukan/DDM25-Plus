@@ -51,6 +51,11 @@ pub struct State {
     pub live_once: Vec<String>,
     pub live_poll: Vec<String>,
     pub live_in_poll: bool,
+    pub slog_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    pub slog_poll: Vec<String>,
+    pub slog_in_poll: bool,
+    pub slog_book: ddm32_core::radio::searchlog::SearchLogBook,
+    pub slog_file: Option<std::path::PathBuf>,
 }
 
 thread_local! {
@@ -160,6 +165,11 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
             live_once: vec![],
             live_poll: vec![],
             live_in_poll: false,
+            slog_cancel: None,
+            slog_poll: vec![],
+            slog_in_poll: false,
+            slog_book: Default::default(),
+            slog_file: None,
         })
     });
     wire(ui);
@@ -286,7 +296,7 @@ fn wire(ui: &AppWindow) {
     });
 }
 
-fn open_folder(dir: &Path) {
+pub(crate) fn open_folder(dir: &Path) {
     let cmd = if cfg!(windows) {
         "explorer"
     } else if cfg!(target_os = "macos") {

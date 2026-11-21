@@ -6,9 +6,10 @@
 use crate::{i18n, port, tr, trf, with, App, AppWindow, Fact, Radio, TableRow};
 use ddm32_core::codeplug::{self, Codeplug, Table};
 use ddm32_core::radio::codec::Codec;
-use ddm32_core::radio::debug::{health_tool, live_tool};
+use ddm32_core::radio::debug::{health_tool, live_tool, searchlog_tool};
 use ddm32_core::radio::live::{self, HealthSummary, LiveSummary, Verdict};
 use ddm32_core::radio::port::{RadioAccess, RawSerial, SystemClock};
+use ddm32_core::radio::searchlog::{self, SearchCall, SearchLogBook};
 use ddm32_core::radio::tools::ToolContext;
 use ddm32_core::radio::{ToolError, ToolResult};
 use ddm32_core::storage::backups;
@@ -45,6 +46,23 @@ pub fn wire(ui: &AppWindow) {
         if let Some(c) = with(|s| s.live_cancel.clone()) {
             c.store(true, Ordering::SeqCst);
         }
+    });
+    let w = ui.as_weak();
+    r.on_slog_start(move || slog_start(&w.unwrap()));
+    r.on_slog_stop(move || {
+        if let Some(c) = with(|s| s.slog_cancel.clone()) {
+            c.store(true, Ordering::SeqCst);
+        }
+    });
+    r.on_slog_folder(move || {
+        let dir = with(|s| s.paths.logs());
+        let _ = std::fs::create_dir_all(&dir);
+        crate::open_folder(&dir);
+    });
+    let w = ui.as_weak();
+    r.on_slog_clear(move || {
+        with(|s| s.slog_book = SearchLogBook::new());
+        show_slog(&w.unwrap(), None);
     });
     let w = ui.as_weak();
     r.on_choose_table(move |t| {
@@ -143,6 +161,7 @@ fn run_debug(
             ToolContext { print: &print, clock: &clock, serial: &serial, release_key_hex: None, codec: Codec::dm32() };
         let r = match tool {
             "health" => health_tool(&argv, &ctx),
+            "searchlog" => searchlog_tool(&argv, &ctx, &cancel),
             _ => live_tool(&argv, &ctx, &cancel),
         };
         let _ = slint::invoke_from_event_loop(move || {
@@ -468,4 +487,123 @@ pub fn demo(ui: &AppWindow, lang: &str) {
         .collect();
     r.set_table_count(i18n::tf(lang, "channels_count", &rows.len().to_string()).into());
     r.set_table_rows(ModelRc::new(VecModel::from(rows)));
+}
+
+// ---- search log ---------------------------------------------------------------------------------------------------------
+
+/// A table row (newest first on screen).
+pub fn slog_cells(c: &SearchCall) -> Vec<String> {
+    let t = searchlog::format_time(c.time);
+    vec![
+        format!("{}.{} {}", &t[8..10], &t[5..7], &t[11..]),
+        c.mode.to_string(),
+        searchlog::mhz(c.hz),
+        c.code.clone(),
+        c.slot.clone(),
+        if c.group == 0 { "-".into() } else { c.group.to_string() },
+        if c.source == 0 { "-".into() } else { format!("{}{}", c.source, if c.encrypted { " (enc)" } else { "" }) },
+        c.calls.to_string(),
+    ]
+}
+
+/// The searches' line: running (and where) / off / no answer, then the counts.
+pub fn slog_searches(lang: &str, book: &SearchLogBook) -> String {
+    let f2 = |key: &str, a: &str, b: &str| i18n::t(lang, key).replacen("{}", a, 1).replacen("{}", b, 1);
+    let one = |name: &str, on: Option<bool>, at: Option<i64>| match on {
+        Some(true) => f2("slog_on", name, &at.map(searchlog::mhz).unwrap_or_else(|| "-".into())),
+        Some(false) => i18n::tf(lang, "slog_off", name),
+        None => i18n::tf(lang, "slog_noanswer", name),
+    };
+    format!(
+        "{}   {}   {}",
+        one("P25", book.p25_on, book.p25_at_hz),
+        one("DMR", book.dmr_on, book.dmr_at_hz),
+        f2("slog_count", &book.calls().len().to_string(), &book.frequencies().to_string())
+    )
+}
+
+fn show_slog(ui: &AppWindow, status: Option<String>) {
+    let r = ui.global::<Radio>();
+    let (rows, searches) = with(|s| {
+        let rows: Vec<TableRow> = s
+            .slog_book
+            .calls()
+            .iter()
+            .rev()
+            .map(|c| TableRow {
+                cells: ModelRc::new(VecModel::from(
+                    slog_cells(c).into_iter().map(SharedString::from).collect::<Vec<_>>(),
+                )),
+            })
+            .collect();
+        (rows, slog_searches(&s.lang, &s.slog_book))
+    });
+    r.set_slog_rows(ModelRc::new(VecModel::from(rows)));
+    r.set_slog_searches(if r.get_slog_running() { searches.into() } else { SharedString::new() });
+    if let Some(st) = status {
+        r.set_slog_status(st.into());
+    }
+}
+
+fn slog_line(ui: &AppWindow, line: String) {
+    let done = with(|s| match live::poll_marker(&line) {
+        Some((k, _)) if k == "poll" => {
+            s.slog_in_poll = true;
+            s.slog_poll.clear();
+            None
+        }
+        Some((k, _)) if k == "end" => {
+            s.slog_in_poll = false;
+            Some(s.slog_poll.clone())
+        }
+        _ => {
+            if s.slog_in_poll {
+                s.slog_poll.push(line.trim().to_string());
+            }
+            None
+        }
+    });
+    let Some(poll) = done else { return };
+    let now = searchlog::local_stamp();
+    let (fresh, logs) = with(|s| (s.slog_book.add(&poll, now), s.paths.logs()));
+    if !fresh.is_empty() {
+        match searchlog::append(&logs, &fresh, now) {
+            Ok(p) => with(|s| s.slog_file = Some(p)),
+            Err(e) => message(ui, &trf("msg_failed", &e.to_string()), "danger"),
+        }
+    }
+    let file = with(|s| s.slog_file.clone());
+    let t = searchlog::format_time(now);
+    let mut status = trf("slog_running", &t[11..]);
+    if let Some(f) = file {
+        status = format!("{status}  {}", trf("slog_file", &f.display().to_string()));
+    }
+    show_slog(ui, Some(status));
+}
+
+fn slog_start(ui: &AppWindow) {
+    let Some(p) = port() else {
+        message(ui, &tr("radio_nocable"), "warning");
+        return;
+    };
+    let cancel = Arc::new(AtomicBool::new(false));
+    with(|s| {
+        s.slog_cancel = Some(cancel.clone());
+        s.slog_poll.clear();
+        s.slog_in_poll = false;
+    });
+    let r = ui.global::<Radio>();
+    r.set_slog_running(true);
+    r.set_slog_status(tr("slog_connecting").into());
+    message(ui, "", "info");
+    run_debug(ui, "searchlog", vec!["--port".into(), p], cancel, slog_line, |ui, err| {
+        ui.global::<Radio>().set_slog_running(false);
+        with(|s| s.slog_cancel = None);
+        show_slog(ui, Some(tr("live_stopped")));
+        match err {
+            None => {}
+            Some(e) if e.py_type == "SystemExit" && e.message == "3" => message(ui, &tr("live_silent"), "warning"),
+            Some(e) => message(ui, &trf("msg_failed", &e.record()), "danger"),
+        }
+    });
 }

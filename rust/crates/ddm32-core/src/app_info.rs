@@ -32,6 +32,8 @@ pub const BACKUPS_FOLDER: &str = "backups";
 pub const RELEASES_FOLDER: &str = "releases";
 pub const UPDATES_FOLDER: &str = "updates";
 pub const PACKS_FOLDER: &str = "packs";
+/// The search log's CSV files (one a day; kept on uninstall).
+pub const LOGS_FOLDER: &str = "logs";
 pub const SETTINGS_FILE: &str = "settings.json";
 
 /// The Turkish names up to C# 2.0.0-beta.2: moved to the English ones at start-up (`AppPaths::ensure`). The Python
@@ -51,11 +53,12 @@ pub const LEGACY_FOLDERS: [(&str, &str); 4] = [
 ];
 
 /// Names an update must never replace and an uninstaller must never remove blindly: the user's data (old names too).
-pub const RESERVED_NAMES: [&str; 11] = [
+pub const RESERVED_NAMES: [&str; 12] = [
     BACKUPS_FOLDER,
     RELEASES_FOLDER,
     UPDATES_FOLDER,
     PACKS_FOLDER,
+    LOGS_FOLDER,
     SETTINGS_FILE,
     "unins000.exe",
     "unins000.dat",

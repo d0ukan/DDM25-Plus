@@ -315,6 +315,11 @@ pub const HEALTH_ALLOWED: [(u8, u8); 3] = [(0x09, 0x14), (0x09, 0x15), (0x09, 0x
 pub const LIVE_ALLOWED: [(u8, u8); 6] =
     [(0x09, 0x00), (0x09, 0x14), (0x09, 0x15), (0x09, 0x17), (0x21, 0x00), (0x21, 0x0C)];
 pub const MAX_SILENT_POLLS: u32 = 3;
+/// The search log (firmware tools/plus_searchlog.py) sends only these: GET_VIEW p25s (28) and dmrs (29).
+pub const SEARCHLOG_ALLOWED: [(u8, u8); 2] =
+    [(0x09, crate::radio::searchlog::SECTION_P25), (0x09, crate::radio::searchlog::SECTION_DMR)];
+/// The search log runs all night: a radio busy for a while is waited for this many polls (about a minute).
+pub const SEARCHLOG_SILENT_POLLS: u32 = 60;
 
 /// bytes.decode('ascii', 'replace')
 pub fn ascii(b: &[u8]) -> String {
@@ -389,6 +394,64 @@ pub fn live_tool(argv: &[String], ctx: &ToolContext<'_>, cancel: &AtomicBool) ->
         return Err(ToolError::exit(code.to_string()));
     }
     Ok(())
+}
+
+/// search log: --port P [--count N]. Every second the p25s and dmrs sections, printed as the live reader prints a
+/// poll, until `cancel` or N polls (SearchLog.cs).
+pub fn searchlog_tool(argv: &[String], ctx: &ToolContext<'_>, cancel: &AtomicBool) -> ToolResult<()> {
+    let a = Args::new(argv, &["--port", "--count"], &[], &["--port"])?;
+    let port_name = a.get("--port").unwrap().to_string();
+    let count: i64 = a.get("--count").unwrap_or("0").trim().parse().map_err(|_| ToolError::exit("2"))?;
+    if count < 0 {
+        return Err(ToolError::exit("2"));
+    }
+    let raw = open(ctx, &port_name)?;
+    let mut guard = DebugLinkPort::new(raw, &SEARCHLOG_ALLOWED, "searchlog");
+    (ctx.print)(&format!("SEARCHLOG: {port_name} open, read only, every 1 s"));
+    let code = {
+        let mut link = DebugLinkClient::new(&mut guard, ctx.clock, &port_name);
+        poll_search(&mut link, count, ctx, cancel)
+    };
+    let _ = guard.raw.close();
+    let code = code?;
+    if code != 0 {
+        return Err(ToolError::exit(code.to_string()));
+    }
+    Ok(())
+}
+
+pub fn poll_search(
+    link: &mut DebugLinkClient<'_>,
+    count: i64,
+    ctx: &ToolContext<'_>,
+    cancel: &AtomicBool,
+) -> ToolResult<i32> {
+    use crate::radio::searchlog::{SECTION_DMR, SECTION_P25};
+    let (mut n, mut silent) = (0i64, 0u32);
+    while (count == 0 || n < count) && !cancel.load(Ordering::SeqCst) {
+        n += 1;
+        let started = ctx.clock.monotonic();
+        (ctx.print)(&format!("=== poll {n}"));
+        let codes =
+            [print_view(link, "view p25s", SECTION_P25, ctx)?, print_view(link, "view dmrs", SECTION_DMR, ctx)?];
+        (ctx.print)(&format!("=== end {n}"));
+        silent = if codes.iter().all(|&c| c == -1) { silent + 1 } else { 0 };
+        if silent >= SEARCHLOG_SILENT_POLLS {
+            (ctx.print)(&format!("No answer from the radio for {silent} polls; stopping."));
+            return Ok(3);
+        }
+        if count == 0 || n < count {
+            let end = ctx.clock.monotonic() + (1.0 - (ctx.clock.monotonic() - started)).max(0.0);
+            while !cancel.load(Ordering::SeqCst) {
+                let left = end - ctx.clock.monotonic();
+                if left <= 0.0 {
+                    break;
+                }
+                ctx.clock.sleep(left.min(0.05));
+            }
+        }
+    }
+    Ok(0)
 }
 
 /// plus_live.run on an open (guarded) link: 0 after count polls or a stop, 3 when the radio went silent.

@@ -82,6 +82,9 @@ impl AppPaths {
     pub fn updates(&self) -> PathBuf {
         self.root.join(app_info::UPDATES_FOLDER)
     }
+    pub fn logs(&self) -> PathBuf {
+        self.root.join(app_info::LOGS_FOLDER)
+    }
     pub fn packs(&self) -> PathBuf {
         self.root.join(app_info::PACKS_FOLDER)
     }
