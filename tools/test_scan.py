@@ -8,6 +8,9 @@ tools/test_classic.py after its own (the build tree prepared, ASan / UBSan flags
   built as they were (CONFIG_SEARCH_FAST=0) and faster (=1): a pass's time, hits on the signal's own frequency and
   elsewhere for readings up to 15 ms slow, the probes of a busy channel that isn't P25 / DMR; the table printed for
   docs/plus.md and the figures checked;
+- item 3, the faster multi-watch ring: the radio core's ring (tests/plus/test_mwatch_radio.inc: its period against
+  the estimate, the time to catch a call, a foreign carrier on a P25 channel) and air watch on it, built with the switch;
+  Home's ring line (tests/plus/test_ui_mwfast.c), English and Turkish;
 - the radio core with the switches on: upstream's radio suite and the Classic / Plus P25 suites (the P25 search's
   state machine among them), then the DMR search's, built with this job's switches (tests/classic/test_radio.inc;
   OUT/classic_dispatch.inc as tools/test_classic.py wrote it)."""
@@ -34,6 +37,13 @@ def ui_tests(ROOT, APP, OUT, host):
          *(str(ui / f) for f in ('ui_p25search.c', 'ui_dmrsearch.c', 'ui_srange.c', 'ui_scratch.c', 'findsave.c',
                                  'ui_findsave.c'))], cwd=host)
     run([OUT / 'test_ui_scan'], cwd=host)
+    # Item 3: Home's ring line with the faster ring (tests/plus/test_ui_mwfast.c, the simulator as it is)
+    argv[argv.index(str(tp / 'test_ui_scan.c'))] = str(tp / 'test_ui_mwfast.c')
+    argv[argv.index(str(tp / 'ui_sim_scan.c'))] = 'sim/ui_sim.c'
+    argv[argv.index('-o') + 1] = str(OUT / 'test_ui_mwfast')
+    run([*argv, '-I' + str(host), '-I' + str(tp), '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_MULTI_WATCH=1',
+         '-DCONFIG_MWATCH_FAST=1', '-DCONFIG_LANG_TR=1'], cwd=host)
+    run([OUT / 'test_ui_mwfast'], cwd=host)
 
 
 def search_model(ROOT, APP, OUT, flags):
@@ -76,7 +86,7 @@ def search_model(ROOT, APP, OUT, flags):
             assert df[2] == 0, (key, tau, df)
 
 
-SCAN_SWITCHES = ['-DCONFIG_SEARCH_RANGE=1', '-DCONFIG_SEARCH_FAST=1']
+SCAN_SWITCHES = ['-DCONFIG_SEARCH_RANGE=1', '-DCONFIG_SEARCH_FAST=1', '-DCONFIG_MWATCH_FAST=1']
 
 
 def radio_tests(ROOT, APP, OUT, host):
@@ -106,6 +116,34 @@ def radio_tests(ROOT, APP, OUT, host):
     run([*argv, '-DCONFIG_DMR_ANY=1', '-DCONFIG_DMR_SEARCH=1', '-I' + str(ROOT / 'tests/plus'),
          str(radio / 'dmrsearch.c')], cwd=host)
     run([OUT / 'test_radio_scanjob_dmr'], cwd=host)
+    # Item 3: the multi-watch ring (tests/plus/test_mwatch_radio.inc: order, dwell, hold, wait, PTT, P25, the period
+    # table, the catch time) after the whole suite with the faster ring, as tools/test_classic.py's test_radio_mwatch
+    mw = OUT / 'radioCoreScanJobMw.c'
+    mw.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n' + fixture +
+                  '\n#define main classic_radio_main\n#include "' + str(ROOT / 'tests/classic/test_radio.inc') +
+                  '"\n#undef main\n#include "' + str(ROOT / 'tests/plus/test_mwatch_radio.inc') + '"\n')
+    argv[argv.index(str(wrapper))] = str(mw)
+    argv[argv.index('-o') + 1] = str(OUT / 'test_radio_scanjob_mwatch')
+    mw_flags = ['-DCONFIG_MULTI_WATCH=1', '-DCONFIG_P25_SCAN=1', '-DCONFIG_SPECTRUM=1', '-DCONFIG_FOX=1',
+                '-DCONFIG_CW_BEACON=1', '-DCONFIG_P25_SEARCH=1', '-DCONFIG_P25_CALLER=1', '-DCONFIG_P25_ANY=1',
+                '-I' + str(ROOT / 'tests/classic')]
+    mw_src = [str(radio / f) for f in ('spectrum.c', 'fox.c', 'cw_beacon.c', 'p25search.c')]
+    run([*argv, *mw_flags, *mw_src], cwd=host)
+    run([OUT / 'test_radio_scanjob_mwatch'], cwd=host)
+    # ... and air watch on the ring (tests/plus/test_airwatch_radio.inc, AM VFOs on A..F) and every mode in the VFO
+    # (C..F's own VFOs in the ring), as tools/test_air.py builds it
+    air = OUT / 'radioCoreScanJobAir.c'
+    air.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n' +
+                   fixture.replace('\t.native_modem=&classic_ops,', '\t.native_modem=&classic_ops,\n\t.caps=CAP_AM_RX,') +
+                   '\n#define main classic_radio_main\n#include "' + str(ROOT / 'tests/classic/test_radio.inc') +
+                   '"\n#undef main\n#define main mwatch_radio_main\n#include "' + str(ROOT / 'tests/plus/test_mwatch_radio.inc') +
+                   '"\n#undef main\n#define main vfox_radio_main\n#include "' + str(ROOT / 'tests/plus/test_vfox_radio.inc') +
+                   '"\n#undef main\n#include "' + str(ROOT / 'tests/plus/test_airwatch_radio.inc') + '"\n')
+    argv[argv.index(str(mw))] = str(air)
+    argv[argv.index('-o') + 1] = str(OUT / 'test_radio_scanjob_air')
+    run([*argv, *mw_flags, '-DCONFIG_VFO_MODES=1', '-DCONFIG_YSF=1', '-DCONFIG_NXDN=1', '-DCONFIG_DPMR=1',
+         '-DCONFIG_DMR_ANY=1', '-DCONFIG_AIR_WATCH=1', *mw_src, str(radio / 'vfox.c')], cwd=host)
+    run([OUT / 'test_radio_scanjob_air'], cwd=host)
 
 
 def main(ROOT, APP, OUT, flags, host, only=None):

@@ -471,8 +471,11 @@ void ui_dual_ring_row(uint8_t k, const radio_view_t *v, ui_mw_row_t *out)
 // The ring's period with nothing heard, and what a P25 channel with a signal but no voice adds (0: no P25 letter)
 uint32_t ui_dual_ring_ms(uint32_t *p25_extra_ms)
 {
-	*p25_extra_ms = mw_has_p25() ? radio_mw_p25_extra_ms(mw_delay_ms) : 0;
-	return radio_mw_ring_ms(mw_cnt);
+	uint8_t dmr = 0;	// a quiet DMR stop takes longer on the faster ring (radio_mwatch.h)
+	for (uint8_t k = 0; k < mw_cnt; k++)
+		dmr += mw_row[k].mode == RADIO_MODE_DMR;
+	*p25_extra_ms = mw_has_p25() ? radio_mw_p25_extra_ms(mw_cnt, mw_delay_ms) : 0;
+	return radio_mw_ring_ms(mw_cnt, dmr);
 }
 
 char ui_dual_ring_sel(void) { return mw_ring() ? mw_char(mw_sel_letter()) : '-'; }

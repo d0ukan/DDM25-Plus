@@ -15,6 +15,10 @@ through the hunks below.
                 read again settled, and when it turns out quiet the step before is looked at again (a slow reading);
                 a carrier found again not to be P25 / DMR is skipped for 30 s instead of 10. In the engines
                 (spectrum/p25search.c, dmrsearch.c). Needs P25_SEARCH or DMR_SEARCH.
+  MWATCH_FAST   (item 3) the multi-watch ring of 3..6 channels goes round faster: a stop with nothing heard ends at the
+                first reading after the settle (DMR: the third), a P25 channel on it is found by its strength too and
+                given back by the zone scan's rules (no frame: 1.2 s; in its cooldown passed over). Dual watch's pair
+                keeps upstream's timing. Needs MULTI_WATCH.
 """
 
 SRANGE = 'integration/radiofoundry/srange/'
@@ -35,12 +39,19 @@ def prepare_scan(transform, install):
          'CONFIG_SEARCH_FAST ?= n\nFEATURES += SEARCH_FAST\n'
          'ifeq ($(CONFIG_SEARCH_FAST),y)\nifeq ($(CONFIG_P25_SEARCH)$(CONFIG_DMR_SEARCH),nn)\n'
          '$(error SEARCH_FAST needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'),
+        # after MULTI_WATCH's own lines
+        ('$(error MULTI_WATCH needs DUAL_WATCH=y)\nendif\nendif\n',
+         '$(error MULTI_WATCH needs DUAL_WATCH=y)\nendif\nendif\n'
+         'CONFIG_MWATCH_FAST ?= n\nFEATURES += MWATCH_FAST\n'
+         'ifeq ($(CONFIG_MWATCH_FAST),y)\nifneq ($(CONFIG_MULTI_WATCH),y)\n'
+         '$(error MWATCH_FAST needs MULTI_WATCH=y)\nendif\nendif\n'),
     ])
     transform('core/config.h', [
         ('#ifndef CONFIG_DMR_SEARCH\n#define CONFIG_DMR_SEARCH 0\n#endif\n',
          '#ifndef CONFIG_DMR_SEARCH\n#define CONFIG_DMR_SEARCH 0\n#endif\n'
          '#ifndef CONFIG_SEARCH_RANGE\n#define CONFIG_SEARCH_RANGE 0\t/* DDM32 Plus search ranges (tools/plus_scan.py) */\n'
          '#endif\n#ifndef CONFIG_SEARCH_FAST\n#define CONFIG_SEARCH_FAST 0\t/* DDM32 Plus faster searches (tools/plus_scan.py) */\n'
+         '#endif\n#ifndef CONFIG_MWATCH_FAST\n#define CONFIG_MWATCH_FAST 0\t/* DDM32 Plus faster ring (tools/plus_scan.py) */\n'
          '#endif\n'),
     ])
 
@@ -68,5 +79,41 @@ def prepare_scan(transform, install):
          '\t\t\t\t\t  srange_step_hz(srange_tag_of((uint32_t)req->arg)), now_ms);\n'
          '#else\n'
          '\t\tuint32_t hz = dmrs_start((uint32_t)req->arg, req->arg2, 12500u, now_ms);\n'
+         '#endif\n'),
+    ])
+
+    # Item 3: the faster multi-watch ring (3..6 channels; dual watch's pair keeps upstream's timing). A stop with
+    # nothing heard ends at the first reading after the settle (DMR: the third); anything heard keeps the dwell, the
+    # probe and the hold. P25 on the ring: its carrier by the strength too and the zone scan's give back and cooldown
+    # pass-over (native_lab.c scan_by_frames)
+    transform('core/radio/radio_sm.c', [
+        ('// Every poll while scanning: pause on the monitor, what the receiver hears, move on\nstatic void scan_service(',
+         '#if CONFIG_MWATCH_FAST && CONFIG_MULTI_WATCH\n'
+         '// DDM32 Plus faster ring (docs/plus.md "The multi-watch ring"): a ring of 3..6 channels, not dual watch\'s pair\n'
+         '#define MW_FAST(sm) ((sm)->scan.kind == SCAN_DUAL && dual_count(sm) > 2)\n'
+         '_Static_assert(RADIO_MW_SETTLE_MS == SCAN_SETTLE_MS, "radio_mwatch.h: the ring estimate\'s settle is the scan\'s");\n'
+         '#else\n#define MW_FAST(sm) false\n#endif\n\n'
+         '// Every poll while scanning: pause on the monitor, what the receiver hears, move on\nstatic void scan_service('),
+        ('\tif (sc->kind == SCAN_ZONE && codeplug_mode_p25(sm->view.ch.mode) && now_ms - sc->tuned_ms >= SCAN_SETTLE_MS) {\n',
+         '\tif ((sc->kind == SCAN_ZONE || MW_FAST(sm)) && codeplug_mode_p25(sm->view.ch.mode) &&\n'
+         '\t    now_ms - sc->tuned_ms >= SCAN_SETTLE_MS) {\n'),
+        ('\t\tif (native_lab_scan_stop(sm->view.zone_pos, (uint8_t)sc->steps, carrier || strong)) {\n',
+         '\t\tif (native_lab_scan_stop(native_lab_scan_key(sm), (uint8_t)sc->steps, carrier || strong)) {\n'),
+        ('\tuint8_t was = sc->phase;\n\tswitch (scan_poll(sc, now_ms, active, carrier, sync)) {\n',
+         '\tuint8_t was = sc->phase;\n'
+         '#if CONFIG_MWATCH_FAST && CONFIG_MULTI_WATCH\n'
+         '\t// The ring: nothing heard on this stop since the settle (no carrier, no sync, no signal to hold): its dwell is\n'
+         '\t// the first reading after the settle, a DMR stop\'s the third (radio_mwatch.h radio_mw_quiet_ms)\n'
+         '\tuint16_t dwell = sc->cfg.dwell_ms;\n'
+         '\tif (MW_FAST(sm) && sc->phase == SCAN_PH_LISTEN && !sc->heard && !carrier && !sync && !active) {\n'
+         '\t\tuint32_t quiet = radio_mw_quiet_ms(dual_count(sm), dmr);\n'
+         '\t\tif (quiet < dwell)\n'
+         '\t\t\tsc->cfg.dwell_ms = (uint16_t)quiet;\n'
+         '\t}\n'
+         '\tscan_act_t act = scan_poll(sc, now_ms, active, carrier, sync);\n'
+         '\tsc->cfg.dwell_ms = dwell;\n'
+         '\tswitch (act) {\n'
+         '#else\n'
+         '\tswitch (scan_poll(sc, now_ms, active, carrier, sync)) {\n'
          '#endif\n'),
     ])

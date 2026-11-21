@@ -71,11 +71,16 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 - P25 search and DMR search: any range of the radio's 2 m / 70 cm bands. * (or a digit) opens the range editor: Lower
   and Upper typed or moved by a step (held Left / Right: 1 MHz), a step of 2.5, 5, 6.25, 10, 12.5, 20, 25, 50,
   100 kHz or 1 MHz, and Move to slide the whole range; OK applies it. Each search remembers its range and step while
-  the radio is on; Left / Right still pick the presets.
+  the radio is on; Left / Right still pick the presets. **Not tried on the radio yet** (rows SR-*).
 - Faster P25 and DMR searches: a quiet step takes one radio poll (25 ms) instead of two in P25 search (430-440 MHz:
   about 20 s a pass instead of 40) and three instead of four in DMR search (60 s instead of 80); a strong reading is
   checked again before the frequency is probed, and a busy FM channel in the range is probed less often (30 s apart
   once it has been checked twice). **Not tried on the radio yet** (rows SF-*).
+- Multi-watch with 3 to 6 channels goes round up to three times faster: a quiet channel is left after 50 ms (DMR
+  100 ms) instead of the whole 150 ms dwell, so 6 FM channels take 0.3 s a round (was 0.9 s). A P25 channel with a
+  signal that isn't ours (FM on its frequency, another NAC) no longer freezes the ring: it is given back after 1.2 s
+  and passed over while the signal lasts. Dual watch (2 channels) is unchanged. **Not tried on the radio yet** (rows
+  MR-*).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

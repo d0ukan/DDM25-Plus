@@ -602,3 +602,17 @@ Faster searches (docs/plus.md "Faster searches"). Receive only.
 | SF-4 | The other radio in DMR direct mode (simplex) on 433.450, 5 s overs; DMR search +-1 MHz | found on 433.4500 with its CC and slot within one pass; repeat 5 times |
 | SF-5 | An FM signal (the other radio in FM, a long over) inside the P25 search range | probed once ("Probe" 433.xxxx), then passed: the next probe of it no sooner than 10 s, then 30 s while it stays |
 | SF-6 | A weak P25 signal (other radio at low power, far away, about -110 dBm on Home) | still found; if it is missed while the strong one of SF-3 is found, note its level (the quick reading may be slower than 25 ms) |
+
+The multi-watch ring (docs/plus.md "The multi-watch ring"). Receive only except MR-5 (PTT on the selected letter, the
+owner's channel and licence).
+
+| # | Do | Expect |
+|---|---|---|
+| MR-1 | Watch channels 6, all FM, quiet | Home "Ring 0.3 s" (before: 0.9 s); the rows' receiver marker (or the audible clicks, if any) goes round visibly faster |
+| MR-2 | Same ring with 4 DMR + 2 FM channels | "Ring 0.5 s"; watch whether the FM <-> DMR switch slows it (time 10 rounds with the debug link or by ear) |
+| MR-3 | The other radio calls on F (FM), 3 s overs, 10 times at random moments | every over caught, the first syllable at most cut (before: up to 0.9 s lost) |
+| MR-4 | The same on a DMR letter (repeater or direct) | every over played (late entry as before) |
+| MR-5 | A P25 letter (C); the other radio sends **FM** on C's frequency for 20 s, then calls on A (FM) | the ring does not stop on C for long (about 1.2 s, then C is passed over while the FM lasts); the call on A is heard (before: the ring froze on C until the FM ended) |
+| MR-6 | The other radio sends P25 on C with the right NAC and talkgroup (TG 101, NAC 659) | held, the native receiver plays it, given back 1.5 s after the last voice, the ring goes on after the wait |
+| MR-7 | Watch channels 2 (dual watch) | as before: 150 ms a stop, no "Ring" line |
+| MR-8 | A weak FM signal near the squelch on one letter | it opens there as before (a single reading at 50 ms decides a quiet stop, as the squelch itself does); note if it is missed more than with the build before |

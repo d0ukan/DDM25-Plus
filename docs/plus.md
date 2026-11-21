@@ -2780,6 +2780,11 @@ files), `integration/radiofoundry/srange/` (installed into `core/radio`, `core/u
 engines (`spectrum/ui_p25search.c`, `ui_dmrsearch.c`, `p25search.*`, `dmrsearch.*`). Host tests: `tools/test_scan.py`
 (run by `tools/test_classic.py`). Radio rows: `docs/plus-radio-test.md` "Round 15 scan".
 
+**Cost of the three** (public build on e5d8cbf, with the repeater lists of `research-data/`; the `--plus` build is the
+same): FLASH 834,352 -> 837,952 B (+3,600), static RAM 209,488 -> 209,544 B (+56), **1,912 B free**. Zero warnings,
+forced rebuilds identical, every task's stack fits. Each item's own figures below were measured on 743c1b7 with the
+sample repeater list (the flash there is about 10.7 KB lower; RAM the same).
+
 ### 1. Search ranges (`CONFIG_SEARCH_RANGE`; needs P25_SEARCH or DMR_SEARCH)
 
 Tools > P25 search and DMR search take any range of the receiver's bands and ten steps:
@@ -2886,3 +2891,47 @@ it). The revisits of found channels are unchanged (every 16 steps), so a find is
 
 Cost (public build): FLASH 822,584 -> 823,184 B (+600), static RAM 209,408 -> 209,424 B (+16: the engines' stage,
 the step before and the look back's start), free 2,032 B.
+
+### 3. The multi-watch ring (`CONFIG_MWATCH_FAST`; needs MULTI_WATCH)
+
+The owner misses calls with 6 channels. **Why** (read from the code, reproduced in the host model):
+
+| # | Cause | Change (ring of 3..6 only; dual watch's pair keeps upstream's timing) |
+|---|---|---|
+| 1 | Every quiet stop listens the whole scan dwell (150 ms, Settings: scan dwell) although the receiver's reading is ready at the settle (`SCAN_SETTLE_MS` 50 ms): 6 channels took 0.9 s a round, so a call waited up to 0.9 s (and its first syllables) before the ring came to it | a stop with nothing heard since the settle (no carrier by the noise reading, nor sync, nor a signal to hold) ends at the first reading after the settle: 50 ms; a DMR stop at the third (100 ms), as direct mode bursts are on air 30 ms in 60. Anything heard keeps the dwell, the probe and the hold as before; a signal still holds at once |
+| 2 | **A carrier on a P25 channel that brings no frame for us (an FM user on that frequency, another NAC) froze the ring**: the native receiver gave it back after 2.5 s with an 8 s cooldown, but the ring then stayed on the channel's FM path, holding on the carrier (the zone scan's pass-over of a channel in its cooldown was for zone scans only), until the carrier ended plus the wait. Host model: a 20 s carrier there, and the ring's A was visited **0 times** in those 20 s | the ring gives a P25 channel back by the zone scan's rules (`native_lab.c` `scan_by_frames`): no frame of ours in 1.2 s: back, 2 s cooldown (8 s when it repeats); frames then none for 0.6 s (a call's tail): back without a cooldown; frames without voice for us: 2.5 s and the cooldown. A channel in its cooldown is passed over at once. Host model: A visited **54 times** in the same 20 s |
+| 3 | A P25 stop was found by the FM noise reading only (on this modem the reading may stay put on C4FM, "P25 in a zone scan" cause 4) | the strength counts too, on the DMR squelch scale, as in a zone scan: the second strong poll holds |
+| 4 | The cooldown's key was the zone position only; a ring may hold VFOs (C..F) | `native_lab_scan_key`: the zone position or 0xFFF0 + the VFO's index, as the give back names it |
+
+Not changed: the hold, the wait after a signal and its looks at the others, Busy, PTT on the selected letter, a DMR
+channel's probe and late entry, the P25 hand-over to the native receiver (scan_allows: a hold on the ring), voice
+given back 1.5 s after the last. One receiver: a call on one channel is still missed while the receiver is on
+another, only for much less time.
+
+**Host model** (`tests/plus/test_mwatch_radio.inc`: the real radio state machine, native receiver and the fake
+board; run without the switch by `tools/test_classic.py`'s suites, with it by `tools/test_scan.py`):
+
+| Ring | Before | After |
+|---|---|---|
+| 2 channels (dual watch), any mode | 0.30 s | 0.30 s (unchanged) |
+| 3 / 4 / 5 / 6 channels, FM (or P25, NXDN, dPMR, AM on the FM path) | 0.45 / 0.60 / 0.75 / 0.90 s | **0.15 / 0.20 / 0.25 / 0.30 s** |
+| 3 / 4 / 5 / 6 channels, DMR | 0.45 / 0.60 / 0.75 / 0.90 s | **0.30 / 0.40 / 0.50 / 0.60 s** |
+| Time to hold on a call starting at a random moment, 3 / 4 / 6 FM channels: mean (worst) | 161 (375) / 275 (500) / 427 (825) ms | **86 (150) / 130 (200) / 163 (300) ms** |
+| A P25 channel with a 2 s signal without voice for us: the ring held there | 3.6 s | **1.3 s** |
+| A 20 s foreign carrier on a P25 channel of 6: rounds the others got | **0** (frozen) | **54** |
+
+Home's "Ring 0.3 s" follows (`radio_mwatch.h` `radio_mw_ring_ms(n, n_dmr)`: the DMR letters counted; ", P25 +2.5 s"
+for a P25 letter: the hold alone, no wait after it). On the radio each FM <-> DMR switch and each retune adds its
+own time (not modelled; rows MR-*). Air watch (AM VFOs on the ring) and cross-band (which stops any watch) are
+unchanged; air watch's suite passes with the switch (`tools/test_scan.py`).
+
+Host tests with the switch: the multi-watch suite (order, a 50 ms stop, hold and wait with looks, PTT, refusals, a
+P25 channel on the FM path, the period table against the estimate, the catch time, the foreign carrier) after
+upstream's radio suite and the Classic / Plus P25 suites; air watch's and every mode in the VFO's suites;
+`tests/plus/test_ui_mwfast.c` (Home's ring line with 4 and 6 letters, dual watch's panes without it, English and
+Turkish, the layout). The test fixture's frame time is now cleared between the multi-watch cases
+(`mw_start_radio`): a stale one from the suites before had made a take look like a call's tail.
+
+Cost (public build): FLASH 823,184 -> 823,428 B (+244), static RAM unchanged (209,424 B, free 2,032 B). In the same
+commit: the search range editor lets PTT, the monitor and the emergency key through (item 1's editor had taken every
+key while open).

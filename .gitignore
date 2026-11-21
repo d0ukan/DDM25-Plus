@@ -587,3 +587,4 @@ __pycache__/
 !/tests/plus/ui_sim_scan.h
 !/tests/plus/test_scan_radio.inc
 !/tests/plus/test_search_model.c
+!/tests/plus/test_ui_mwfast.c

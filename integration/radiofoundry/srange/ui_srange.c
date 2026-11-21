@@ -22,7 +22,7 @@ static const uint8_t step_order[SRANGE_STEPS] = { 1, 2, 3, 4, 0, 5, 6, 7, 8, 9 }
 
 enum { ROW_START, ROW_END, ROW_STEP, ROW_MOVE, ROW_COUNT };
 
-/* The editor: the range being edited, the row, the digits typed into Start or End */
+/* The editor: the range being edited, the row, the digits typed into Lower or Upper */
 static struct {
 	ui_srange_t *r;		/* NULL = closed */
 	uint32_t lo, hi;
@@ -158,7 +158,7 @@ bool ui_srange_editing(void)
 	return ed.r != NULL;
 }
 
-/* The typed digits into Start or End: false (with the entry's toast) when they make no frequency in a band */
+/* The typed digits into Lower or Upper: false (with the entry's toast) when they make no frequency in a band */
 static bool commit(void)
 {
 	if (ed.len == 0)
@@ -170,7 +170,7 @@ static bool commit(void)
 		uint32_t span = ed.hi > ed.lo ? ed.hi - ed.lo : 0u;
 		ed.lo = hz;
 		if (ed.hi <= hz || !range_ok(hz, ed.hi))
-			ed.hi = range_ok(hz, hz + span) ? hz + span : hz;	/* End follows, keeping the width when it can */
+			ed.hi = range_ok(hz, hz + span) ? hz + span : hz;	/* Upper follows, keeping the width when it can */
 	} else {
 		ed.hi = hz;
 	}
@@ -178,8 +178,8 @@ static bool commit(void)
 	return true;
 }
 
-/* Start (ROW_START), End (ROW_END) or both (ROW_MOVE) by delta Hz. Not made when an end it moves would leave the bands
- * or the end would come down to the start (one band for both is checked when the range is applied) */
+/* Lower (ROW_START), Upper (ROW_END) or both (ROW_MOVE) by delta Hz. Not made when an end it moves would leave the bands
+ * or Upper would come down to Lower (one band for both is checked when the range is applied) */
 static void move(int32_t delta)
 {
 	uint32_t lo = ed.lo, hi = ed.hi;
@@ -223,8 +223,8 @@ static int apply(void)
 
 int ui_srange_key(const input_event_t *ev)
 {
-	if (ed.r == NULL)
-		return UI_SRANGE_NONE;
+	if (ed.r == NULL || ev->action == ACT_PTT || ev->action == ACT_MONITOR || ev->action == ACT_EMERGENCY)
+		return UI_SRANGE_NONE;	/* PTT, the monitor and the emergency key act as on any screen */
 	bool press = ev->gesture == GESTURE_PRESS;
 	bool held = ev->gesture == GESTURE_LONG || ev->gesture == GESTURE_REPEAT;
 	ui_dirty();
@@ -244,7 +244,7 @@ int ui_srange_key(const input_event_t *ev)
 		return UI_SRANGE_LEFT;
 	}
 	if (press && ev->action == ACT_SELECT) {
-		/* Typing Start: OK takes it and goes on to End; otherwise OK applies the range */
+		/* Typing Lower: OK takes it and goes on to Upper; otherwise OK applies the range */
 		if (ed.len != 0 && ed.row == ROW_START) {
 			if (commit())
 				ed.row = ROW_END;

@@ -99,6 +99,20 @@ static uint16_t scan_key(const radio_sm_t *sm)
 {
     return CONFIG_VFO_MODES && sm->view.vfo ? (uint16_t)(0xFFF0u | sm->view.vfo_index) : sm->view.zone_pos;
 }
+uint16_t native_lab_scan_key(const radio_sm_t *sm)
+{
+    return scan_key(sm);
+}
+/* DDM32 Plus faster ring (CONFIG_MWATCH_FAST, docs/plus.md "The multi-watch ring"): a ring of 3..6 channels gives a P25
+ * channel back by the zone scan's rules (frames tell a call from a foreign carrier; a channel in its cooldown is
+ * passed over); dual watch's pair keeps its own */
+static bool scan_by_frames(const radio_sm_t *sm)
+{
+#if CONFIG_MWATCH_FAST && CONFIG_MULTI_WATCH
+    if(sm->scan.kind==SCAN_DUAL && sm->dual_n>2) return true;
+#endif
+    return sm->scan.kind==SCAN_ZONE;
+}
 /* Counters for the debug link (0x21 [12], read only; they wrap at 65536): zone scan stops on a P25 channel, those
  * with a carrier, those passed over in a cooldown; takes, takes that heard a frame, voice; give backs by cause (the
  * call ended, a tail, no frame, frames without voice for us); the last take's time to its first frame and voice */
@@ -138,7 +152,7 @@ static void scan_give_back(radio_sm_t *sm)
             if(!scan_sync_ms) { scan_n.synced++;scan_n.sync_ms=(uint16_t)(heard-scan_taken_ms);scan_quiet=false; }
             scan_sync_ms=heard;
         }
-        bool zone=sm->scan.kind==SCAN_ZONE;
+        bool zone=scan_by_frames(sm);
         uint32_t cool=0;
         uint16_t *cause=&scan_n.foreign;
         if(scan_voice_ms) {

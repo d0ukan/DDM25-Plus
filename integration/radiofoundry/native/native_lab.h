@@ -30,6 +30,9 @@ size_t native_lab_command(const uint8_t *, uint16_t, uint8_t *, size_t);
  * debug link (0x21 [12]). True while the channel at zone position pos is in its cooldown after a take that heard
  * nothing of ours: the scan does not stop there for now */
 bool native_lab_scan_stop(uint16_t pos, uint8_t stop, bool carrier);
+/* The channel the radio is on as the cooldown names it: its zone position, or 0xFFF0 + the VFO's index (DDM32 Plus
+ * faster ring: a ring may hold VFOs) */
+uint16_t native_lab_scan_key(const radio_sm_t *sm);
 #endif
 /* Local mic/PTT owner. Cable ARM cannot select this audio mode. */
 #define NATIVE_PHYSICAL_PTT_DOWN 3
