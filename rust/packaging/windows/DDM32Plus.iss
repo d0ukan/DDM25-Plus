@@ -5,9 +5,9 @@
 ;
 ; Saved as UTF-8 with BOM (LF): Inno Setup reads the Turkish texts correctly only with the BOM.
 ; Build (Inno Setup 6.3 or newer; 7.1 checked, https://jrsoftware.org/isinfo.php), after the publish step in win/README.md:
-;   cargo build --release -p ddm32-gui  (in rust/), then
+;   cargo build --release -p ddm32-gui --features radio  (in rust/), then
 ;   "C:\Program Files\Inno Setup 7\ISCC.exe" rust\packaging\windows\DDM32Plus.iss
-; Output: rust\target\installer\DDM32Plus-Setup-<version>.exe
+; Output: rust\dist\DDM32Plus-Setup-<version>.exe (git-ignored)
 ;
 ; Where things go:
 ;   {app} = %LOCALAPPDATA%\Programs\DDM32 Plus   DDM32Plus.exe (one file, no runtime needed)
@@ -44,7 +44,7 @@ DefaultGroupName={#AppName}
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\..\..\win\src\DDM32Plus\Assets\ddm32plus.ico
-OutputDir=..\..\target\installer
+OutputDir=..\..\dist
 OutputBaseFilename=DDM32Plus-Setup-{#AppVersion}
 Compression=lzma2/max
 SolidCompression=yes

@@ -67,6 +67,10 @@ cargo build --release -p ddm32-cli -p ddm32-gui --features ddm32-cli/radio,ddm32
 Linux: the window's font lookup links fontconfig, so a build needs `pkg-config` and `libfontconfig-dev`
 (`sudo apt install pkg-config libfontconfig-dev`); the window uses Wayland or X11 through winit (loaded at run time). The tests read the C# program's fixtures from `../win/tests/DDM32Plus.Core.Tests/Fixtures`.
 
+Windows setup (per user, over the C# program, keeps `yedekler`): build the window with `--features radio`, then
+`"C:\Program Files\Inno Setup 7\ISCC.exe" rust\packaging\windows\DDM32Plus.iss`; the setup lands in `rust/dist/`
+(git-ignored). Unsigned: SmartScreen asks "More info > Run anyway".
+
 Command line: `ddm32 version | paths | backups | detect --backup DIR | plan ... | releases | download VERSION |
 pack radioid|air|info ... | tool backup|install_plus|restore_stock|fast_install|datapack ARGS` (`ddm32 --help`).
 The window: `ddm32-gui` (`--demo` shows example contents without radio or network).
