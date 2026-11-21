@@ -62,3 +62,28 @@ fn the_health_light_and_the_live_facts() {
     assert!((sig - 0.53).abs() < 0.001);
     assert!(facts.iter().any(|(_, x)| x == "434,25000 MHz / 434,25000 MHz"));
 }
+
+#[test]
+fn the_cable_hint_follows_the_device_list() {
+    use ddm32_core::radio::cable::{evaluate, PnpDevice};
+    let dev = |name: &str, code: i32| PnpDevice {
+        device_id: r"USB\VID_1A86&PID_7523".into(),
+        name: name.into(),
+        error_code: code,
+    };
+    let (t, k) = ddm32_gui::cable_text("en", &evaluate(&[dev("USB2.0-Serial", 28)]), &[]);
+    assert!(t.contains("CH340 driver is missing (Windows code 28)") && k == "warning", "{t}");
+    let (t, k) = ddm32_gui::cable_text("tr", &evaluate(&[dev("USB-SERIAL CH340 (COM14)", 0)]), &[]);
+    assert_eq!(("Kablo bulundu: COM14. Telsiz kapalıyken takılı kalabilir.", "success"), (t.as_str(), k));
+    let (t, _) = ddm32_gui::cable_text("en", &evaluate(&[]), &["/dev/ttyUSB0".to_string()]);
+    assert!(t.contains("/dev/ttyUSB0"));
+    let (_, k) = ddm32_gui::cable_text("en", &evaluate(&[]), &[]);
+    assert_eq!("info", k);
+}
+
+#[test]
+fn listing_windows_devices_opens_nothing() {
+    // only reads the device list (SetupAPI); empty on other systems
+    let devices = ddm32_core::radio::cable::list_devices();
+    assert!(devices.iter().all(|d| d.device_id.to_uppercase().contains("VID_1A86")));
+}

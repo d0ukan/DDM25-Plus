@@ -62,3 +62,102 @@ pub fn evaluate(devices: &[PnpDevice]) -> CableStatus {
     }
     none(CableState::NoPort, 0)
 }
+
+/// The cable's devices as Windows lists them (SetupAPI with "USB" devices present, CfgMgr32 for the problem code):
+/// only reads the device list, opens no port. A cable without its driver is listed with problem code 28.
+/// Empty on other operating systems (there the CH340 driver is part of the kernel).
+pub fn list_devices() -> Vec<PnpDevice> {
+    #[cfg(windows)]
+    {
+        windows::usb_devices().into_iter().filter(|d| d.device_id.to_uppercase().contains("VID_1A86")).collect()
+    }
+    #[cfg(not(windows))]
+    {
+        Vec::new()
+    }
+}
+
+/// The cable check of this computer (Windows; elsewhere always "no cable listed", the window then lists ports).
+pub fn check() -> CableStatus {
+    evaluate(&list_devices())
+}
+
+#[cfg(windows)]
+#[allow(unsafe_code)]
+mod windows {
+    use super::PnpDevice;
+    use windows_sys::Win32::Devices::DeviceAndDriverInstallation::{
+        CM_Get_DevNode_Status, SetupDiDestroyDeviceInfoList, SetupDiEnumDeviceInfo, SetupDiGetClassDevsW,
+        SetupDiGetDeviceInstanceIdW, SetupDiGetDeviceRegistryPropertyW, CR_SUCCESS, DIGCF_ALLCLASSES, DIGCF_PRESENT,
+        DN_HAS_PROBLEM, SPDRP_DEVICEDESC, SPDRP_FRIENDLYNAME, SP_DEVINFO_DATA,
+    };
+
+    fn wide(s: &str) -> Vec<u16> {
+        s.encode_utf16().chain(std::iter::once(0)).collect()
+    }
+
+    fn from_wide(b: &[u16]) -> String {
+        let n = b.iter().position(|&c| c == 0).unwrap_or(b.len());
+        String::from_utf16_lossy(&b[..n])
+    }
+
+    /// Every present USB device: instance ID, name, problem code (0 = working).
+    pub fn usb_devices() -> Vec<PnpDevice> {
+        let mut out = Vec::new();
+        let usb = wide("USB");
+        // SAFETY: plain SetupAPI calls with buffers sized here; the list handle is destroyed at the end.
+        unsafe {
+            let set = SetupDiGetClassDevsW(
+                std::ptr::null(),
+                usb.as_ptr(),
+                std::ptr::null_mut(),
+                DIGCF_ALLCLASSES | DIGCF_PRESENT,
+            );
+            if set == -1 {
+                return out;
+            }
+            let mut i = 0u32;
+            loop {
+                let mut info =
+                    SP_DEVINFO_DATA { cbSize: std::mem::size_of::<SP_DEVINFO_DATA>() as u32, ..Default::default() };
+                if SetupDiEnumDeviceInfo(set, i, &mut info) == 0 {
+                    break;
+                }
+                i += 1;
+                let mut id = [0u16; 512];
+                if SetupDiGetDeviceInstanceIdW(set, &info, id.as_mut_ptr(), id.len() as u32, std::ptr::null_mut()) == 0
+                {
+                    continue;
+                }
+                let mut name = String::new();
+                for prop in [SPDRP_FRIENDLYNAME, SPDRP_DEVICEDESC] {
+                    let mut buf = [0u16; 512];
+                    let ok = SetupDiGetDeviceRegistryPropertyW(
+                        set,
+                        &info,
+                        prop,
+                        std::ptr::null_mut(),
+                        buf.as_mut_ptr() as *mut u8,
+                        (buf.len() * 2) as u32,
+                        std::ptr::null_mut(),
+                    );
+                    if ok != 0 {
+                        name = from_wide(&buf);
+                        break;
+                    }
+                }
+                let (mut status, mut problem) = (0u32, 0u32);
+                let code = if CM_Get_DevNode_Status(&mut status, &mut problem, info.DevInst, 0) == CR_SUCCESS
+                    && status & DN_HAS_PROBLEM != 0
+                {
+                    problem as i32
+                } else {
+                    0
+                };
+                out.push(PnpDevice { device_id: from_wide(&id), name, error_code: code });
+            }
+            SetupDiDestroyDeviceInfoList(set);
+        }
+        out
+    }
+}

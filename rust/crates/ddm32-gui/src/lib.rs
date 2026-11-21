@@ -351,16 +351,9 @@ fn refresh(ui: &AppWindow) {
         app.set_radio_text(tr("radio_disabled").into());
         app.set_radio_kind("warning".into());
     } else {
-        match cable_ports().first() {
-            Some(p) => {
-                app.set_radio_text(trf("radio_ready", p).into());
-                app.set_radio_kind("success".into());
-            }
-            None => {
-                app.set_radio_text(tr("radio_nocable").into());
-                app.set_radio_kind("info".into());
-            }
-        }
+        let (text, kind) = with(|s| cable_text(&s.lang, &ddm32_core::radio::cable::check(), &cable_ports()));
+        app.set_radio_text(text.into());
+        app.set_radio_kind(kind.into());
     }
     // versions
     let rows = with(|s| {
@@ -525,7 +518,28 @@ fn set_step(ui: &AppWindow, step: i32) {
 }
 
 pub(crate) fn port() -> Option<String> {
-    cable_ports().into_iter().next()
+    ddm32_core::radio::cable::check().port.or_else(|| cable_ports().into_iter().next())
+}
+
+/// What Home says about the cable: Windows' device list (a missing CH340 driver is found without opening a port),
+/// else the serial ports of CH340 cables. (text, notice kind)
+pub fn cable_text(
+    lang: &str,
+    status: &ddm32_core::radio::cable::CableStatus,
+    ports: &[String],
+) -> (String, &'static str) {
+    use ddm32_core::radio::cable::CableState;
+    let code = status.error_code.to_string();
+    match status.state {
+        CableState::Ok => (i18n::tf(lang, "radio_ready", status.port.as_deref().unwrap_or("")), "success"),
+        CableState::NoDriver => (i18n::tf(lang, "cable_nodriver", &code), "warning"),
+        CableState::Problem => (i18n::tf(lang, "cable_problem", &code), "warning"),
+        CableState::NoPort => (i18n::t(lang, "cable_noport"), "warning"),
+        CableState::NoCable => match ports.first() {
+            Some(p) => (i18n::tf(lang, "radio_ready", p), "success"),
+            None => (i18n::t(lang, "radio_nocable"), "info"),
+        },
+    }
 }
 
 fn wizard_next(ui: &AppWindow) {

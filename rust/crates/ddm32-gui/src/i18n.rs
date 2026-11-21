@@ -189,6 +189,12 @@ pub const TEXTS: &[(&str, &str, &str)] = &[
      "No rows to show. The channels show here after the first backup."),
     ("channels_count", "{} satır", "{} rows"),
     ("csv_saved", "CSV kaydedildi: {}", "CSV saved: {}"),
+    ("cable_nodriver", "Kablo takılı ama CH340 sürücüsü yok (Windows kodu {}). Aygıt Yöneticisi'nde sarı ünlemli bir \"USB2.0-Serial\" ya da \"Bilinmeyen aygıt\" görünür. Sürücüyü kablonun üreticisinden ya da WCH'nin sitesinden (CH341SER) indirip kurun, kabloyu çıkarıp yeniden takın.",
+     "The cable is plugged in but the CH340 driver is missing (Windows code {}). Device Manager shows a \"USB2.0-Serial\" or \"Unknown device\" with a yellow mark. Download the driver from the cable maker or from WCH's site (CH341SER), install it, then unplug and replug the cable."),
+    ("cable_problem", "Kablonun sürücüsü bir sorun bildiriyor (Windows kodu {}). Kabloyu çıkarıp takın; düzelmezse sürücüyü yeniden kurun.",
+     "The cable's driver reports a problem (Windows code {}). Unplug and replug the cable; if that does not help, install the driver again."),
+    ("cable_noport", "Kablo görünüyor ama COM portu yok. Kabloyu çıkarıp takın; düzelmezse CH340 sürücüsünü yeniden kurun.",
+     "The cable is there but has no COM port. Unplug and replug it; if that does not help, install the CH340 driver again."),
     ("msg_failed", "İşlem başarısız: {}", "The step failed: {}"),
 ];
 

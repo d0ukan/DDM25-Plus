@@ -114,6 +114,7 @@ fn every_screen_in_both_themes() {
     let screens: Vec<(&str, i32, i32, i32, &str)> = vec![
         ("first-start", 6, 0, 0, ""),
         ("home", 0, 0, 0, ""),
+        ("home-cable-no-driver", 0, 0, 0, "nodriver"),
         ("update-1-version", 1, 0, 0, ""),
         ("update-2-backup-choice", 1, 1, 0, ""),
         ("update-2-no-backup-warning", 1, 1, 2, "understood"),
@@ -157,6 +158,16 @@ fn every_screen_in_both_themes() {
                 app.set_message(if *page == 2 { i18n::t(lang, "msg_restore_plan").into() } else { "".into() });
                 app.set_selected_backup(if *page == 2 { 0 } else { -1 });
                 app.set_restore_ready(*page == 2);
+                if *extra == "nodriver" {
+                    let st = ddm32_core::radio::cable::evaluate(&[ddm32_core::radio::cable::PnpDevice {
+                        device_id: r"USB\VID_1A86&PID_7523\5&2A1B&0&4".into(),
+                        name: "USB2.0-Serial".into(),
+                        error_code: 28,
+                    }]);
+                    let (t, k) = ddm32_gui::cable_text(lang, &st, &[]);
+                    app.set_radio_text(t.into());
+                    app.set_radio_kind(k.into());
+                }
                 // switch the theme live on this very page
                 theme.set_dark(dark);
                 let buf = render(&window);
