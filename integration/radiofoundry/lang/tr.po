@@ -510,7 +510,7 @@ msgstr "Yuk/Aşa ton  # TX/RX"
 
 #: core/ui/ui_app.c
 msgid "AM only in the air band"
-msgstr "Airbandnda yalnız AM"
+msgstr "Airband'de yalnız AM"
 
 #: core/ui/ui_app.c
 msgid "FM only in the broadcast band"
@@ -5150,7 +5150,7 @@ msgstr "# atla  Geri taramayı durdur"
 
 #: core/ui/ui_screens.c
 msgid "# caller  Back end reply"
-msgstr "# arayan  Geri yanıtı bitir"
+msgstr "# arayan  Geri bitir"
 
 #: core/ui/ui_screens.c
 msgid "Digital monitor  Back off"
@@ -5606,7 +5606,7 @@ msgstr "Seçili kanallar"
 
 #: core/ui/ui_dota.c
 msgid "A zone"
-msgstr "Bir bölge"
+msgstr "Bölge"
 
 #: core/ui/ui_dota.c
 msgid "DOTA Clone (all)"
@@ -6260,3 +6260,76 @@ msgstr "OK uygula  Geri iptal"
 #: core/ui/ui_p25search.c core/ui/ui_dmrsearch.c
 msgid "{OK start  <> range  * edit|OK start  * range}"
 msgstr "{OK başlat  <> aralık  * düzenle|OK başlat  * aralık}"
+
+# --- branch r16-polish: texts the catalogue missed (.inc files, texts without TR; tools/plus_polish.py) ---
+#: core/ui/ui_mwatch.inc
+msgid "Talking on "
+msgstr "Konuşulan: "
+
+#: core/ui/ui_mwatch.inc
+msgid "{P25 slows the ring|P25 is slow}"
+msgstr "{P25 döngüyü yavaşlatır|P25 yavaş}"
+
+#: core/ui/ui_mwatch.inc
+msgid "Talk on "
+msgstr "Konuş: "
+
+#: core/ui/ui_mwatch.inc
+msgid "Stop, stay on "
+msgstr "Durdur, kal: "
+
+#: core/ui/ui_mwatch.inc
+msgid "Change "
+msgstr "Değiş: "
+
+#: core/ui/ui_mwatch.inc
+msgid "{Only a selected channel can be the VFO|Select it first}"
+msgstr "{Yalnız seçili kanal VFO olabilir|Önce onu seç}"
+
+#: core/ui/ui_mwatch_draw.inc
+msgid "Ring "
+msgstr "Döngü "
+
+#: core/ui/ui_xband.c
+msgid "Slot"
+msgstr "Slot"
+
+#: core/ui/ui_dual.c
+msgid "YSF call"
+msgstr "YSF çağrısı"
+
+#: core/ui/ui_dual.c
+msgid "P25 call"
+msgstr "P25 çağrısı"
+
+#: core/ui/ui_screens.c
+msgid "call"
+msgstr "çağrı"
+
+#: core/ui/ui_menus.c
+msgid "In Zones"
+msgstr "Bölgelerde"
+
+#: core/ui/ui_menus.c
+msgid "OK in/out  Back"
+msgstr "OK ekle/çıkar  Geri"
+
+#: core/ui/ui_menus.c
+msgid "Based on Open25-DM32 Classic"
+msgstr "Open25-DM32 Classic tabanlı"
+
+#: core/ui/ui_menus.c
+msgid "Based on RadioFoundry"
+msgstr "RadioFoundry tabanlı"
+
+#: core/ui/ui_menus.c
+msgid "sample"
+msgstr "örnek"
+
+#: core/ui/ui_battgraph.c
+msgid ">99 h"
+msgstr ">99 sa"
+
+#: core/ui/ui_battgraph.c
+msgid " h "
+msgstr " sa "

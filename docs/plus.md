@@ -2935,3 +2935,49 @@ Turkish, the layout). The test fixture's frame time is now cleared between the m
 Cost (public build): FLASH 823,184 -> 823,428 B (+244), static RAM unchanged (209,424 B, free 2,032 B). In the same
 commit: the search range editor lets PTT, the monitor and the emergency key through (item 1's editor had taken every
 key while open).
+
+## Round 16 polish (branch `r16-polish`)
+
+Small finishing work toward a near-final product. Code: `tools/plus_polish.py` (hunks into upstream files), host tests
+`tools/test_polish.py` (run by `tools/test_classic.py`).
+
+### 1. The Turkish catalogue complete
+
+**Cause.** `tools/i18n.py` (upstream) extracts `TR()` / `TRN()` texts from core's `.c` and `.h` files only. Texts in
+the `.inc` files the `.c` files include never reached `tr.po`, so `--sync` would not add them and the radio showed
+them in English; they were translated only where a `.c` file happened to use the same English. Missing were the
+multi-watch ring's line under the rows ("Ring 0.6 s", `ui_mwatch_draw.inc`), its # menu ("Talk on B", "Change C",
+"Stop, stay on B") and toasts ("Talking on C", "P25 slows the ring", "Only a selected channel can be the VFO",
+`ui_mwatch.inc`). Besides those, a few texts were drawn without `TR()` at all: upstream's zone toasts ("Zone full",
+"Give it a name first", "Couldn't save: try again") and its "In Zones" list (prefix and hint), the caller line before
+the first link control ("P25 call", "YSF call", NXDN's "call"), the battery's time left ("4 h 20 min",
+`ui_battgraph.c`), About's "Based on ..." lines and the repeater data source "sample"; and the cross-band form's new
+"Slot" row had no entry.
+
+**Change.** `plus_polish.py` makes `tools/i18n.py` read `*.inc` as well and wraps those texts in `TR()` / `TRN()`; 18
+entries appended to `tr.po` (one block, branch `r16-polish`) and one typo fixed ("Airbandnda" -> "Airband'de").
+Turkish: "Döngü 0.6 s", "Konuş: B", "Değiş: C", "Durdur, kal: B", "Konuşulan: C" (the letter after a colon, so no
+suffix has to agree with it), "4 sa 20 dk", "P25 çağrısı", "Bölgelerde", "Open25-DM32 Classic tabanlı".
+
+**Test.** `tools/test_polish.py` runs i18n.py's own extraction (with the `.inc` files) against `tr.po` in the prepared
+tree: every text the radio can show must be in the catalogue, translated, not fuzzy and drawable (`check_translation`:
+Latin-5 bytes, the `{...|...}` alternates, leading / trailing spaces, the ending colon). A new text without its
+Turkish now fails `make classic-test`. `tests/plus/test_ui_mwfast.c` checks the ring line by its number in Turkish.
+
+**Turkish fit.** The simulator writes every text it shortens with an ellipsis to `SIM_FIT_LOG` when that is set
+(`ui_sim.c` `gfx_fit_trace`). Run over every UI test (English and Turkish) the shortened Turkish texts of rounds 14-15
+were three, now shorter: the multi-watch # menu's "Değiştir: C" ("Değiş: C"), DOTA's "Bir bölge" ("Bölge") and the
+reply window hint "# arayan  Geri yanıtı bitir" ("# arayan  Geri bitir"). The rest shortened in both languages alike,
+by design: long airfield and channel names (cut in the middle), "No frequencies in the data" beside a distance. The
+layout check found nothing on any screen in either language.
+
+Cost (public build = `--plus` build, on 01e8507): FLASH 837,952 -> 838,312 B (+360: the `TR()` lookups), static
+RAM unchanged (209,544 B, 1,912 B free); stacks unchanged (UI 184, radio 760, start 348 B free). Zero warnings,
+forced rebuilds identical.
+
+### 2. `tools/datapack.py`: the aerodrome code next to underscores
+
+`code_of` searched `\bLT[A-Z]{2}\b` in the file name; in `LT_AD_2_LTAC_en.pdf` the underscore before `LTAC` is a word
+character, so there was no word boundary and the build stopped with "no aerodrome code". Now a code is any `LTxx` not
+touching a letter or digit, the last one in the file name, else the last one in the page text before its AD 2.18
+heading (as `AirText.CodeOf` in the Windows programmer). Tests in `tools/test_datapack.py`.

@@ -911,5 +911,8 @@ def main():
     # DDM32 Plus round 15 scan: search ranges and speed, the multi-watch ring (tools/test_scan.py)
     import test_scan
     test_scan.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 16 polish: the Turkish catalogue complete (tools/test_polish.py)
+    import test_polish
+    test_polish.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()
