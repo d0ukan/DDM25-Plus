@@ -8,7 +8,8 @@ plus_features.prepare(); its own module so the shared prepare list gains one lin
   first P25 / YSF / NXDN link control, About's "Based on" lines and the repeater data
   source "sample";
 - the simulator (host UI tests): with SIM_FIT_LOG set, every text gfx_text_fit shortens with an ellipsis is appended
-  to that file ("text<TAB>shown"), to find the texts a language makes too long (docs/plus.md)."""
+  to that file ("text<TAB>shown"), to find the texts a language makes too long; with SIM_TEXT_LARGE set, lists and
+  labels are drawn one font size up, to measure a larger text size (docs/plus.md, round 16 items 1 and 4)."""
 
 
 def prepare_polish(transform, install):
@@ -34,6 +35,16 @@ def prepare_polish(transform, install):
         ('sb_str(&b, "Based on RadioFoundry\\n");',
          'sb_str(&b, TR("Based on RadioFoundry"));\n\tsb_chr(&b, \'\\n\');'),
         ('rpt_info.sample ? "sample" :', 'rpt_info.sample ? TR("sample") :'),
+    ])
+    # The simulator only (FONT_BOTH; the firmware is unchanged): SIM_TEXT_LARGE=1 draws lists and labels one font size
+    # up (small 9x18 -> 12x24, tiny 8x16 -> 9x18), the measurement of a "Text size: Large" (docs/plus.md, round 16 item 4)
+    transform('core/ui/ui_screens.c', [
+        ('#include <string.h>\n', '#include <string.h>\n#ifdef FONT_BOTH\n#include <stdlib.h>\n#endif\n'),
+        ('\t\t\tL->tiny = f8; L->small = &font_aa_9x18;\n\t\t}\n#endif\n',
+         '\t\t\tL->tiny = f8; L->small = &font_aa_9x18;\n\t\t}\n#endif\n'
+         '#if CONFIG_FONT_BIG && defined(FONT_BOTH)\n'
+         '\t\tif (getenv("SIM_TEXT_LARGE") != NULL && aa) {\n'
+         '\t\t\tL->tiny = &font_aa_9x18; L->small = f12;\n\t\t}\n#endif\n'),
     ])
     transform('tests/host/sim/ui_sim.c', [
         ('void gfx_fit_trace(const char *src, const char *out)\n{\n\tsim_rec.shortened++;\n',

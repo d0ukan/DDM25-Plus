@@ -3119,3 +3119,55 @@ forced rebuilds identical.
 character, so there was no word boundary and the build stopped with "no aerodrome code". Now a code is any `LTxx` not
 touching a letter or digit, the last one in the file name, else the last one in the page text before its AD 2.18
 heading (as `AirText.CodeOf` in the Windows programmer). Tests in `tools/test_datapack.py`.
+
+### 4. Text size option (ROADMAP item 40): measured, not built
+
+Asked: Settings > Display "Text size" Normal / Large, the next larger fonts across lists and menus, built only if it
+fits (public static RAM free >= 1,500 B, the layout check clean on every screen or Large limited to the screens where
+it fits). **Not built: the layout does not fit.** The measurement and a proposal:
+
+**Fonts.** The DM-32 build has `FONT_AA`, `FONT_BIG` and `FONT_XL`: lists, labels and the status strip use JetBrains
+Mono 9x18 (`ui_layout.small`, 24 characters across the 220 px safe area), small print 8x16 (`tiny`), Home's channel
+12x24 / 16x32. "One size up" is small 12x24 (18 characters a line) and tiny 9x18. Both fonts are already in the image,
+so **no font flash**; a size between (10x20 / 11x22) would be a new 2 bpp font of about 4-5 KB.
+
+**Flash, RAM, stack (estimated from the parts, not built).** The switch is a few lines in `ui_layout_init` and a
+re-layout when the setting changes, one Display row and its Turkish: about 300-500 B flash. Static RAM: 0-1 B
+(`ui_layout` already holds the font pointers). Stack: none (no new call depth). The setting needs one stored bit:
+`settings_t.ui_flags` is full (all 8 bits used), so it would take a spare bit of another field as the Plus settings
+already do (for example `accent`'s or `dual_state`'s free bits), which is a codeplug-independent change of the settings
+record and needs its own test. The budget would fit (1,880 B free after this branch).
+
+**Layout (the deciding part).** The simulator draws one size up when `SIM_TEXT_LARGE` is set (`plus_polish.py`,
+host only: the firmware is unchanged). Every Plus UI test (about 30 binaries, English and Turkish) was run both ways:
+
+| | Normal | Large |
+|---|---:|---:|
+| Layout check problems (text outside the screen, overlaps) | 0 | **59 distinct, on about 40 screens in 14 suites** |
+| Distinct texts the screens shorten with an ellipsis | 92 | **490** |
+| UI test binaries whose own checks pass | all | none (texts they look for are cut) |
+
+Where it breaks: every page drawn line by line rather than as a list (`ui_draw_text_page` style and hand-placed
+labels): the battery page ("Time left: 4 h 40 min" runs off the right), the search range editor's key lines, the P25 /
+DMR search pages, the airfield details ("Seyrüsefer için değil"), the marine header, the clock, the GPS dashboard,
+locator, follow, SOS page, the DMR audio diagnostics, the 3D waterfall's readout and its "No room" against the range,
+the multi-watch rows ("467.375 MHz  TS1 CC1"), the cross-band and DOTA pages' "Henüz çağrı duyulmadı". List screens
+(Tools, Settings, channel editor, last calls) stay inside the screen but cut most values: "Single-f…epeater", "USB
+…work", "TX z…şımı", "dPM…321", in Turkish more than in English. Upstream's own gallery check (`uiSim --layout`) does not
+build in the Plus host tree (the Plus screens need their own simulator wrappers), so upstream's screens were seen only
+through the Plus suites that open them.
+
+**Proposal** (for the owner to decide; a round of its own):
+
+1. **Large lists only.** Apply the larger font to `ui_draw_list` rows (Tools, Settings, Zones, Channels, the editors,
+   Recent, last calls, heard list) and leave pages, Home and the status strip as they are. Lists already shorten
+   values safely; the cost is the shortened values, which need shorter Turkish for the common rows
+   and a value column that gives way to the label. Pages stay readable as now. Estimated 0.5 KB flash, one bit stored.
+2. Make each page that overflows fit its own lines (wrap or shorten through `gfx_text_fit`) before Large covers it:
+   about 40 screens, each with its layout check in both sizes; worth it only screen by screen, starting with the most
+   used (battery, search, airfield details).
+3. Alternatively a 10x20 or 11x22 anti-aliased font (+4-5 KB flash, generated with upstream's `tools/fontconv.py`
+   from the same JetBrains Mono): 20-21 characters a line instead of 18, far fewer cuts, but the same page work.
+
+Already there: Settings > Display > Large text makes Home's channel and talk target up to twice as big
+(`CONFIG_LARGE_SCALE`); the proposal above is for everything else.
