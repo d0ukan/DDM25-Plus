@@ -103,6 +103,7 @@ public partial class LivePage : UserControl, IPage
     {
         this.state = state;
         runner = new ToolRunner(Dispatcher);
+        RssiText.Text = "-";
         foreach (var s in LiveData.Intervals)
             IntervalBox.Items.Add(new ComboBoxItem { Tag = s });
         IntervalBox.SelectedIndex = Array.IndexOf(LiveData.Intervals, LiveData.DefaultInterval);

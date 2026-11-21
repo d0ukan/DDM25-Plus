@@ -43,6 +43,8 @@ public partial class HealthPage : UserControl, IPage
     {
         this.state = state;
         runner = new ToolRunner(Dispatcher);
+        foreach (var t in new[] { VUptime, VHeap, VHeapMin, VMinTask, VCrash, VReset })
+            t.Text = "-";
         timer.Tick += (_, _) =>
         {
             if (!reading && !ToolRunner.AnyBusy && state.Port is not null && state.DisclaimerAccepted)

@@ -223,4 +223,34 @@ public class CodeplugTests
             dir.Delete(true);
         }
     }
+
+    [Fact]
+    public void VerifiedBackupsNewestFirstWithTheNeededFile()
+    {
+        var root = Directory.CreateTempSubdirectory("ddm32-bk-");
+        try
+        {
+            string Make(string name, bool verified, bool q128, DateTime when)
+            {
+                var d = Path.Combine(root.FullName, name);
+                Directory.CreateDirectory(d);
+                var m = Path.Combine(d, "backup-manifest.json");
+                File.WriteAllText(m, verified ? "{\"backup_verified\": true}" : "{\"backup_verified\": false}");
+                File.WriteAllBytes(Path.Combine(d, "progmem-pass1.bin"), [1]);
+                if (q128)
+                    File.WriteAllBytes(Path.Combine(d, "q128-pass1.bin"), [1]);
+                File.SetLastWriteTimeUtc(m, when);
+                return d;
+            }
+            var old = Make("a", true, true, new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));
+            var newer = Make("b", true, false, new DateTime(2026, 11, 20, 0, 0, 0, DateTimeKind.Utc));
+            Make("c", false, true, new DateTime(2026, 11, 21, 0, 0, 0, DateTimeKind.Utc));
+            Assert.Equal([newer, old], Storage.AppPaths.VerifiedBackups([root.FullName, Path.Combine(root.FullName, "missing")]));
+            Assert.Equal([old], Storage.AppPaths.VerifiedBackups([root.FullName], "q128-pass1.bin"));
+        }
+        finally
+        {
+            root.Delete(true);
+        }
+    }
 }

@@ -65,12 +65,12 @@
                         <TextBlock Grid.Row="3" Text="{l:Tr Health_LMinTask}" Margin="0,2,12,2" />
                         <TextBlock Grid.Row="4" Text="{l:Tr Health_LCrash}" Margin="0,2,12,2" />
                         <TextBlock Grid.Row="5" Text="{l:Tr Health_LReset}" Margin="0,2,12,2" />
-                        <TextBlock x:Name="VUptime" Grid.Row="0" Grid.Column="1" Text="-" Margin="0,2" />
-                        <TextBlock x:Name="VHeap" Grid.Row="1" Grid.Column="1" Text="-" Margin="0,2" />
-                        <TextBlock x:Name="VHeapMin" Grid.Row="2" Grid.Column="1" Text="-" Margin="0,2" />
-                        <TextBlock x:Name="VMinTask" Grid.Row="3" Grid.Column="1" Text="-" Margin="0,2" />
-                        <TextBlock x:Name="VCrash" Grid.Row="4" Grid.Column="1" Text="-" Margin="0,2" TextWrapping="Wrap" />
-                        <TextBlock x:Name="VReset" Grid.Row="5" Grid.Column="1" Text="-" Margin="0,2" />
+                        <TextBlock x:Name="VUptime" Grid.Row="0" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VHeap" Grid.Row="1" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VHeapMin" Grid.Row="2" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VMinTask" Grid.Row="3" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VCrash" Grid.Row="4" Grid.Column="1" Margin="0,2" TextWrapping="Wrap" />
+                        <TextBlock x:Name="VReset" Grid.Row="5" Grid.Column="1" Margin="0,2" />
                     </Grid>
                     <Grid Margin="0,4,0,2">
                         <Grid.ColumnDefinitions>

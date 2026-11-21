@@ -48,7 +48,7 @@
                         <Grid Height="34">
                             <ProgressBar x:Name="RssiBar" Maximum="100" Foreground="#1565c0" />
                             <TextBlock x:Name="RssiText" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
-                                       FontSize="{StaticResource Size4}" Text="-" />
+                                       FontSize="{StaticResource Size4}" />
                         </Grid>
                         <TextBlock Text="{l:Tr Live_History}" Margin="0,6,0,2" Foreground="{StaticResource Grey}" />
                         <p:RssiHistory x:Name="History" Height="90" />
