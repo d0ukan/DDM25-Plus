@@ -83,6 +83,19 @@ static void start(const char *n)
 	run("wait:200");
 }
 
+/* Down (or Up) to the row whose label starts with label; false when it isn't there */
+static bool row(const char *label, const char *key)
+{
+	for (int k = 0; k < 40; k++) {
+		if (strncmp(ui_app_focus_label(), label, strlen(label)) == 0)
+			return true;
+		run(key);
+	}
+	printf("FAIL %s (%s): no row %s (focus %s)\n", name, turkish ? "tr" : "en", label, ui_app_focus_label());
+	fails++;
+	return false;
+}
+
 /* ---------------- 1. zone size ---------------- */
 
 static void case_zone_counts(void)
@@ -94,7 +107,9 @@ static void case_zone_counts(void)
 	expect(T("screen=zone focus=Add_channel shows=16/80", "screen=zone focus=Kanal_ekle shows=16/80"));
 	layout();
 	start("channel editor Zones: 12/80 beside Simplex");
-	run("ok 5 ok up up up up ok");
+	run("ok 5 ok");
+	row(T("Zones", "B\366lgeler"), "up");
+	run("ok");
 	expect("screen=chzones shows=12/80 shows=12/80");
 	expect(T("shows=In", "shows=Var"));
 	layout();
@@ -136,19 +151,6 @@ static void case_zone_unreadable(void)
 		run("up");
 	expect(T("focus=17_?_Ch_77 shows=Can't_be_read", "focus=17_?_Ch_77 shows=Okunam"));
 	layout();
-}
-
-/* Down (or Up) to the row whose label starts with label; false when it isn't there */
-static bool row(const char *label, const char *key)
-{
-	for (int k = 0; k < 40; k++) {
-		if (strncmp(ui_app_focus_label(), label, strlen(label)) == 0)
-			return true;
-		run(key);
-	}
-	printf("FAIL %s (%s): no row %s (focus %s)\n", name, turkish ? "tr" : "en", label, ui_app_focus_label());
-	fails++;
-	return false;
 }
 
 /* ---------------- 2. DMR rows ---------------- */
@@ -230,6 +232,48 @@ static void case_dmon(void)
 	layout();
 }
 
+/* ---------------- 4. Delete channel ---------------- */
+
+static void case_delete(void)
+{
+	start("zone channel menu: Delete asks, No keeps it");
+	run("ok 4 ctx down down");
+	expect("screen=zone focus=05_Metro_DMR count=18");
+	run("ctx up");
+	expect(T("screen=zchannel focus=Delete_channel", "screen=zchannel focus=Kanal"));
+	layout();
+	run("ok");
+	expect(T("screen=confirm focus=No shows=Metro_DMR shows=Leaves_zones:_1", "screen=confirm focus=Hay shows=Metro_DMR"));
+	layout();
+	run("ok");
+	expect("screen=zone writes=0 count=18");
+	start("zone channel menu: Delete, Yes: gone from the zone");
+	run("ok 4 ctx down down ctx up ok down ok wait:200");
+	expect(T("screen=zone writes=1 count=17 toast=Deleted_Metro_DMR", "screen=zone writes=1 count=17 toast=Silindi_Metro_DMR"));
+	run("wait:3000");
+	expect("hides=Metro_DMR");
+	layout();
+	start("the channel in use: refused");
+	run("ok 4 ctx ctx up ok");
+	expect(T("screen=zone writes=0 toast=In_use:_switch", "screen=zone writes=0 toast=Kullan"));
+	start("channel editor: Delete channel, the last row; Yes closes the editor");
+	run("ok 5");
+	row("5 Metro", "up");
+	run("ok");
+	expect("screen=channel shows=Metro_DMR");
+	run("up");
+	expect(T("focus=Delete_channel", "focus=Kanal"));
+	layout();
+	run("ok down ok wait:200");
+	expect(T("screen=channels writes=1 toast=Deleted_Metro_DMR", "screen=channels writes=1 toast=Silindi_Metro_DMR"));
+	layout();
+	start("a new channel's editor has no Delete row");
+	run("ok 5");
+	row(T("New from current", "Mevcuttan yeni"), "up");
+	run("ok up");
+	expect("screen=channel hides=Delete_channel writes=0");
+}
+
 typedef void (*case_fn)(void);
 
 static int run_case(case_fn fn)
@@ -249,7 +293,7 @@ static int run_case(case_fn fn)
 
 int main(void)
 {
-	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows, case_dmon };
+	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows, case_dmon, case_delete };
 	int bad = 0, n = 0;
 	for (int lang = 0; lang < 2; lang++) {
 		turkish = lang == 1;

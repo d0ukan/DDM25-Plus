@@ -63,6 +63,8 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   RX only DMR channel saves without a TX contact; Direct mode explains itself.
 - Digital monitor: DMon on Home follows the toggle again; a channel whose RX list is Any shows "AllTG" instead, and the
   toggle says what it does ("Digital monitor on: every call", "Monitor off: channel hears all TGs").
+- Delete channel: the channel editor's last row and the zone channel menu's last entry; asks first (No focused), takes
+  the channel out of every zone and frees its number; refused for the channel in use and while cross-band runs.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

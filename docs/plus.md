@@ -2737,3 +2737,22 @@ line what it does: "Digital monitor on: every call", "Digital monitor off", and 
 talkgroup anyway "Monitor off: channel hears all TGs". Home's hint "Digital monitor  Back off" now shows only for the
 user's monitor. Tests: `tests/plus/test_ui_chux.c` (AllTG without DMon, DMon on and off with their lines, a channel
 without Any; English and Turkish, the layout).
+
+### 4. Delete channel
+
+Before, a channel could only leave a zone (# > Remove from zone); its record stayed. Now **Delete channel** is the last
+row of the channel editor (Channels > OK on a channel; not on a new, unsaved one or on VFO settings) and the last entry
+of a zone's channel menu (#, after Remove from zone / Set as priority: entry 7 in the public build, the hint says
+1-7 or 1-8). It asks first, **No focused**: "Delete channel?", the name, "Leaves zones: n", "Can't be undone.". Yes
+posts one zone editor job (`ZONE_OP_DROP` -> `zone_edit_drop_channel`, so the foreign codeplug question and the
+failure toast are the zone editor's): the channel leaves every zone that holds it (a zone left empty stays: its name
+is the user's), then `codeplug_delete_channel` clears its in-use bit and its RFKV record (P25); the slot is free for
+the next new channel, which is in no zone. "Deleted <name>"; from the editor the editor closes too. Refused: the channel
+in use ("In use: switch to another channel first": the radio would have to move first) and while cross-band runs
+("Cross-band on: stop it first"; the screen is locked then anyway, and a session keeps frequencies, not channel
+numbers). A channel dual watch's other side or the scan priority holds is handled as a channel deleted by the CPS:
+the radio core moves on when it reads the codeplug again. The host simulator can delete a built-in channel for the
+flows. Tests: `tests/plus/test_zone_cap.c` (the real codeplug: out of two zones and "All channels", the P25 tag gone,
+the free slot reused in no zone, an empty zone kept, unknown numbers refused, after a power cycle),
+`tests/plus/test_ui_chux.c` (No keeps it, Yes from the zone menu and from the editor, the channel in use refused, no
+row on a new channel; English and Turkish, the layout).

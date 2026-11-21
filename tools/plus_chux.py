@@ -4,6 +4,9 @@ reports after v1.0.0-beta.3, behind CONFIG_CHAN_EXTRAS. Called last from plus_fe
 the shared prepare list gains one line. Upstream files change only through the hunks below.
 
   1. Zone size: the zone and codeplug limits shown where channels are added, a full zone refused with its number.
+  2. DMR rows: RX list Any is every talkgroup on the slot (not digital monitor), clearer rows and defaults.
+  3. Digital monitor: DMon follows the toggle; a channel's Any shows AllTG.
+  4. Delete channel: out of every zone, its slot freed (zone_edit_drop_channel, one zone_op_t kind).
 """
 
 ON = '#if CONFIG_CHAN_EXTRAS\n'
@@ -29,6 +32,7 @@ def prepare_chux(transform, install):
     prepare_zone_size(transform)
     prepare_dmr_rows(transform)
     prepare_dmon(transform)
+    prepare_drop(transform)
 
 
 def prepare_zone_size(transform):
@@ -214,4 +218,135 @@ def prepare_dmon(transform):
              '\treturn view != NULL && view->ch.mode == RADIO_MODE_DMR && view->ch.listen_list == CODEPLUG_LIST_ANY ?\n'
              '\t\tTR("Monitor off: channel hears all TGs") : TR("Digital monitor off");\n',
              '\treturn on ? TR("Digital monitor on") : TR("Digital monitor off");\n')),
+    ])
+
+
+def prepare_drop(transform):
+    """4. Delete channel: zone_edit_drop_channel takes the channel out of every zone that holds it, then deletes it
+    (codeplug_delete_channel: its in-use bit and its RFKV record); one zone_op_t kind, so the UI posts it through the
+    zone editor's queue (the storage job, the foreign codeplug question, the failure toast)."""
+    transform('core/codeplug/zone_edit.h', [
+        ('\tZONE_OP_NEW,\n} zone_op_kind_t;',
+         '\tZONE_OP_NEW,\n' + _if('\tZONE_OP_DROP,\t// DDM32 Plus: Delete channel (op->channel), zone_edit_drop_channel\n')
+         + '} zone_op_kind_t;'),
+        ('zone_edit_result_t zone_edit_delete(uint16_t zone);\n',
+         'zone_edit_result_t zone_edit_delete(uint16_t zone);\n'
+         + _if('// DDM32 Plus (Delete channel): channel number out of every zone that holds it, then deleted (its slot is\n'
+               '// free). NO_CHANNEL: no such channel. A zone left empty stays (its name is the user\'s)\n'
+               'zone_edit_result_t zone_edit_drop_channel(uint16_t number);\n')),
+    ])
+    transform('core/codeplug/zone_edit.c', [
+        ('static uint32_t applied;\nstatic uint8_t last_result;\n',
+         _if('zone_edit_result_t zone_edit_drop_channel(uint16_t number)\n{\n'
+             '\tstorage_lock();\n'
+             '\tzone_edit_result_t r = number >= 1u && number <= CODEPLUG_CHANNELS_MAX && codeplug_channel(number, &probe) ?\n'
+             '\t\t\t\t       ZONE_EDIT_OK : ZONE_EDIT_NO_CHANNEL;\n'
+             '\tfor (uint16_t zi = 0; r == ZONE_EDIT_OK && codeplug_zones_stored() && zi < codeplug_zone_count(); zi++) {\n'
+             '\t\tr = load(zi);\n'
+             '\t\tbool changed = false;\n'
+             '\t\tfor (int at; r == ZONE_EDIT_OK && (at = zone_list_find(&work, number)) >= 0; changed = true)\n'
+             '\t\t\tr = zone_list_remove(&work, (uint16_t)at);\n'
+             '\t\tif (r == ZONE_EDIT_OK && changed)\n\t\t\tr = write_back(zi);\n'
+             '\t}\n'
+             '\tif (r == ZONE_EDIT_OK && !codeplug_delete_channel(number))\n\t\tr = ZONE_EDIT_FAILED;\n'
+             '\tstorage_unlock();\n\treturn r;\n}\n\n')
+         + 'static uint32_t applied;\nstatic uint8_t last_result;\n'),
+        ('\tcase ZONE_OP_NEW: return zone_edit_new(op->name, index);\n',
+         '\tcase ZONE_OP_NEW: return zone_edit_new(op->name, index);\n'
+         + _if('\tcase ZONE_OP_DROP: return zone_edit_drop_channel(op->channel);\n')),
+    ])
+    # The UI: the channel editor's last row and the zone's channel menu (#) ask first, No focused (SCR_CONFIRM arg 2)
+    transform('core/ui/ui_menus.c', [
+        ('static void ze_full_toast(void)\n',
+         '// DDM32 Plus (Delete channel): the channel asked about (SCR_CONFIRM arg 2), its name, and whether its editor is\n'
+         '// under the question (it closes with the channel)\n'
+         'static uint16_t chdel_num;\nstatic char chdel_name[CODEPLUG_NAME_LEN + 1];\nstatic bool chdel_editor;\n'
+         '#if CONFIG_XBAND\nbool xband_on(void);\t// radio/xband.h\n#endif\n\n'
+         '// Refused for the channel in use (the radio would have to move first) and while cross-band runs\n'
+         'static void chdel_ask(uint16_t num, const char *name, bool editor)\n{\n'
+         '\tconst radio_view_t *v = ui_view();\n'
+         '\tif (!v->vfo && v->channel_number == num) {\n\t\tui_toast(TR("In use: switch to another channel first"));\n'
+         '\t\treturn;\n\t}\n'
+         '#if CONFIG_XBAND\n\tif (xband_on()) {\n\t\tui_toast(TR("Cross-band on: stop it first"));\n\t\treturn;\n\t}\n#endif\n'
+         '\tchdel_num = num;\n\tchdel_editor = editor;\n\tstr_copy(chdel_name, sizeof chdel_name, name);\n'
+         '\tui_push(SCR_CONFIRM, 2);\n}\n\n'
+         '// Yes: out of every zone, then deleted, in the zone editor\'s storage job (a failure says so there)\n'
+         'static void chdel_do(void)\n{\n\tze_op_new(ZONE_OP_DROP, 0)->channel = chdel_num;\n'
+         '\tif (ze_post())\n\t\tze_toast(TR("Deleted "), chdel_name);\n}\n\n'
+         'static void ze_full_toast(void)\n'),
+        # The channel editor: "Delete channel", the last row (a stored channel only)
+        ('CE_SAVE, CE_SAVE_NEW, CE_COUNT, CE_NONE = 0xFF };',
+         'CE_SAVE, CE_SAVE_NEW,\n#if CONFIG_CHAN_EXTRAS\n       CE_DELETE,\n#endif\n       CE_COUNT, CE_NONE = 0xFF };'),
+        ('\t\tTRN("Save"), TRN("Save as new channel") };\n',
+         '\t\tTRN("Save"), TRN("Save as new channel"),\n#if CONFIG_CHAN_EXTRAS\n\t\tTRN("Delete channel"),\n#endif\n\t};\n'),
+        ('\t\tif ((r == CE_ZONES || r == CE_GO || r == CE_SHARE || r == CE_SAVE_NEW) && fresh)\n\t\t\tcontinue;\n',
+         '\t\tif ((r == CE_ZONES || r == CE_GO || r == CE_SHARE || r == CE_SAVE_NEW) && fresh)\n\t\t\tcontinue;\n'
+         + _if('\t\tif (r == CE_DELETE && (fresh || !edit))\n\t\t\tcontinue;\n')),
+        ('\tif (r == CE_LIST)\n\t\tstr_copy(it->label, sizeof it->label, TR("RX list"));\n',
+         '\tif (r == CE_LIST)\n\t\tstr_copy(it->label, sizeof it->label, TR("RX list"));\n'
+         '\tif (r == CE_DELETE)\n\t\tit->flags |= UI_ITEM_WARN;\n'),
+        ('\tcase CE_SAVE_NEW: ced_save(true); break;\n',
+         '\tcase CE_SAVE_NEW: ced_save(true); break;\n' + _if('\tcase CE_DELETE: chdel_ask(ced_num, ced_ch.name, true); break;\n')),
+        # The zone's channel menu: "Delete channel", the last
+        ('\tZC_PRIO,\t// DM32 Plus\n#endif\n\tZC_COUNT };',
+         '\tZC_PRIO,\t// DM32 Plus\n#endif\n' + _if('\tZC_DELETE,\t// DDM32 Plus\n') + '\tZC_COUNT };'),
+        ('\t\t[ZC_PRIO] = TRN("Set as priority"),\n#endif\n\t};\n',
+         '\t\t[ZC_PRIO] = TRN("Set as priority"),\n#endif\n' + _if('\t\t[ZC_DELETE] = TRN("Delete channel"),\n') + '\t};\n'),
+        ('\tif (i == ZC_REMOVE)\n\t\tit->flags |= UI_ITEM_WARN;\n',
+         _if('\tif (i == ZC_REMOVE || i == ZC_DELETE)\n', '\tif (i == ZC_REMOVE)\n') + '\t\tit->flags |= UI_ITEM_WARN;\n'),
+        ('\t} else if (i == ZC_REMOVE) {\n\t\tze_op_new(ZONE_OP_REMOVE, pos);\n',
+         _if('\t} else if (i == ZC_DELETE) {\n\t\tui_pop();\n\t\tchdel_ask(num, zc_name, false);\n')
+         + '\t} else if (i == ZC_REMOVE) {\n\t\tze_op_new(ZONE_OP_REMOVE, pos);\n'),
+        ('.hint = CONFIG_ZONE_SHARE ? (CONFIG_SCAN_PRIO ? TRN("1-7 pick  Back") : TRN("1-6 pick  Back")) :\n'
+         '\t\t(CONFIG_SCAN_PRIO ? TRN("1-6 pick  Back") : TRN("1-5 pick  Back")),\n',
+         '\n' + _if('\t.hint = CONFIG_ZONE_SHARE + CONFIG_SCAN_PRIO == 2 ? TRN("1-8 pick  Back") :\n'
+                    '\t\tCONFIG_ZONE_SHARE + CONFIG_SCAN_PRIO == 1 ? TRN("1-7 pick  Back") : TRN("1-6 pick  Back"),\n',
+                    '\t.hint = CONFIG_ZONE_SHARE ? (CONFIG_SCAN_PRIO ? TRN("1-7 pick  Back") : TRN("1-6 pick  Back")) :\n'
+                    '\t\t(CONFIG_SCAN_PRIO ? TRN("1-6 pick  Back") : TRN("1-5 pick  Back")),\n')),
+        # The question: "Delete channel?", the name, how many zones it leaves; No focused
+        ('#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) {\n        str_copy(it->label',
+         _if('\tif (ui_frame()->arg == 2) {\n'
+             '\t\tstr_copy(it->label, sizeof it->label, i == 0 ? TR("No, keep it") : TR("Yes, delete"));\n'
+             '\t\tif (i == 1)\n\t\t\tit->flags |= UI_ITEM_WARN;\n\t\treturn;\n\t}\n')
+         + '#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) {\n        str_copy(it->label'),
+        ('    (void)hold;\n#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) {\n',
+         '    (void)hold;\n'
+         + _if('\tif (ui_frame()->arg == 2) {\n\t\tui_pop();\n\t\tif (i == 1) {\n'
+               '\t\t\tif (chdel_editor)\n\t\t\t\tui_pop();\t// the deleted channel\'s editor\n'
+               '\t\t\tchdel_do();\n\t\t}\n\t\treturn;\n\t}\n')
+         + '#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) {\n'),
+        ('#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) {\n        sbuf_t b;',
+         _if('\tif (ui_frame()->arg == 2) {\n\t\tuint16_t n = 0;\n'
+             '\t\tfor (uint16_t zi = 0; zi < codeplug_zone_count(); zi++)\n'
+             '\t\t\tif (codeplug_zone(zi, &chz_z) && zone_list_find(&chz_z, chdel_num) >= 0)\n\t\t\t\tn++;\n'
+             '\t\tsbuf_t b;\n\t\tsb_init(&b, ced_msg, sizeof ced_msg);\n'
+             '\t\tsb_str(&b, chdel_name);\n\t\tsb_chr(&b, \'\\n\');\n'
+             '\t\tsb_str(&b, TR("Leaves zones: "));\n\t\tsb_u32(&b, n, 1);\n\t\tsb_chr(&b, \'\\n\');\n'
+             '\t\tsb_str(&b, TR("Can\'t be undone."));\n\t\treturn ced_msg;\n\t}\n')
+         + '#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) {\n        sbuf_t b;'),
+        ('#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) return TR("Enable TX?");',
+         _if('\tif (ui_frame()->arg == 2)\n\t\treturn TR("Delete channel?");\n')
+         + '#if CONFIG_CHANNEL_EDIT\n    if (ui_frame()->arg == 1) return TR("Enable TX?");'),
+    ])
+    # The simulator (host UI tests): a built-in channel can be deleted too (Delete channel)
+    transform('tests/host/sim/ui_sim.c', [
+        ('\tn_edits = 0;\n', '\tn_edits = 0;\n' + _if('\tsim_gone = 0;\n')),
+        ('#define SIM_EDITS\t8\n',
+         '#define SIM_EDITS\t8\n' + _if('static uint64_t sim_gone;\t// DDM32 Plus Delete channel: channels 1-64 deleted\n')),
+        ('bool codeplug_channel(uint16_t number, channel_t *out)\n{\n\tconst channel_t *e = sim_edit(number);\n',
+         'bool codeplug_channel(uint16_t number, channel_t *out)\n{\n'
+         + _if('\tif (number >= 1u && number <= 64u && (sim_gone >> (number - 1u)) & 1u)\n\t\treturn false;\n')
+         + '\tconst channel_t *e = sim_edit(number);\n'),
+        ('\tsim_edits[i].number = number;\n\tsim_edits[i].ch = *ch;\n',
+         '\tsim_edits[i].number = number;\n\tsim_edits[i].ch = *ch;\n'
+         + _if('\tif (number >= 1u && number <= 64u)\n\t\tsim_gone &= ~(1ull << (number - 1u));\n')),
+        ('bool codeplug_delete_channel(uint16_t number)\n{\n\tfor (uint8_t i = 0; i < n_edits; i++) {\n'
+         '\t\tif (sim_edits[i].number == number) {\n\t\t\tsim_edits[i] = sim_edits[--n_edits];\n\t\t\treturn true;\n'
+         '\t\t}\n\t}\n\treturn false;\n}\n',
+         'bool codeplug_delete_channel(uint16_t number)\n{\n'
+         + _if('\tbool gone = number >= 1u && number <= 64u;\n\tif (gone)\n\t\tsim_gone |= 1ull << (number - 1u);\n',
+               '\tbool gone = false;\n')
+         + '\tfor (uint8_t i = 0; i < n_edits; i++) {\n'
+         '\t\tif (sim_edits[i].number == number) {\n\t\t\tsim_edits[i] = sim_edits[--n_edits];\n\t\t\treturn true;\n'
+         '\t\t}\n\t}\n\treturn gone;\n}\n'),
     ])

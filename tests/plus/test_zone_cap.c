@@ -4,7 +4,10 @@
  * renamed). Checks:
  *   - a zone grows one channel at a time from 26 to 80 (FM, DMR and P25 channels mixed, so the 27th on is every kind),
  *     each read back whole and readable, the 81st refused as full; the same after a power cycle;
- *   - the limits the UI reports (codeplug_zone_capacity 80, CODEPLUG_ZONES_MAX 68, CODEPLUG_CHANNELS_MAX 1024). */
+ *   - the limits the UI reports (codeplug_zone_capacity 80, CODEPLUG_ZONES_MAX 68, CODEPLUG_CHANNELS_MAX 1024);
+ *   - zone_edit_drop_channel (Delete channel): the channel leaves every zone that holds it (the other
+ *     channels in their order), its slot is free (codeplug_free_channel) and a new channel written there is in no
+ *     zone; a P25 channel's RFKV record goes with it; the virtual "All channels" zone; an unknown number refused. */
 #define main upstream_zone_main
 #include "zoneEditTest.c"
 #undef main
@@ -62,12 +65,58 @@ static void test_zone_grows(void)
 	}
 }
 
+static void test_drop_channel(void)
+{
+	fresh();
+	for (uint16_t n = 1; n <= 12; n++) {
+		channel_t c = kind_of(n);
+		CHECK(codeplug_set_channel(n, &c));
+	}
+	/* Without stored zones: "All channels" holds it until it is gone */
+	CHECK(!codeplug_zones_stored());
+	CHECK(zone_edit_drop_channel(12) == ZONE_EDIT_OK);
+	channel_t c;
+	CHECK(!codeplug_channel(12, &c) && codeplug_free_channel() == 12);
+	zone_t a = zone_of("A", (const uint16_t[]){ 1, 5, 2, 7 }, 4);
+	zone_t b = zone_of("B", (const uint16_t[]){ 5, 3 }, 2);
+	zone_t d = zone_of("C", (const uint16_t[]){ 4 }, 1);
+	uint16_t at;
+	CHECK(zone_edit_create(&a, &at) == ZONE_EDIT_OK && zone_edit_create(&b, &at) == ZONE_EDIT_OK);
+	CHECK(zone_edit_create(&d, &at) == ZONE_EDIT_OK);
+	/* A P25 channel (5) in two zones: out of both, its RFKV record gone, the others in order */
+	CHECK(codeplug_channel(5, &c) && c.mode == RADIO_MODE_P25);
+	uint32_t serial = codeplug_serial();
+	CHECK(zone_edit_drop_channel(5) == ZONE_EDIT_OK && codeplug_serial() != serial);
+	/* Zone 0 is "All channels", stored when A was made (1-11) */
+	CHECK(holds(0, (const uint16_t[]){ 1, 2, 3, 4, 6, 7, 8, 9, 10, 11 }, 10) && codeplug_zone_count() == 4);
+	CHECK(holds(1, (const uint16_t[]){ 1, 2, 7 }, 3) && holds(2, (const uint16_t[]){ 3 }, 1));
+	CHECK(holds(3, (const uint16_t[]){ 4 }, 1));
+	CHECK(!codeplug_channel(5, &c) && codeplug_free_channel() == 5);
+	uint8_t v[64];
+	CHECK(codeplug_kv_get((uint16_t)(CODEPLUG_KEY_CH_TAG + 5u - 1u), v, sizeof v) < 0);
+	/* A new channel in the freed slot is in no zone */
+	channel_t fm = make("New", 145500000);
+	CHECK(codeplug_set_channel(5, &fm));
+	CHECK(holds(1, (const uint16_t[]){ 1, 2, 7 }, 3) && holds(2, (const uint16_t[]){ 3 }, 1));
+	CHECK(holds(0, (const uint16_t[]){ 1, 2, 3, 4, 6, 7, 8, 9, 10, 11 }, 10));
+	/* The only channel of a zone: the zone stays, empty */
+	CHECK(zone_edit_drop_channel(4) == ZONE_EDIT_OK && holds(3, NULL, 0) && named(3, "C"));
+	/* In no zone; an empty slot; out of range */
+	CHECK(zone_edit_drop_channel(9) == ZONE_EDIT_OK && !codeplug_channel(9, &c));
+	CHECK(zone_edit_drop_channel(9) == ZONE_EDIT_NO_CHANNEL && zone_edit_drop_channel(0) == ZONE_EDIT_NO_CHANNEL);
+	CHECK(zone_edit_drop_channel(CODEPLUG_CHANNELS_MAX + 1u) == ZONE_EDIT_NO_CHANNEL);
+	boot_again();
+	CHECK(holds(1, (const uint16_t[]){ 1, 2, 7 }, 3) && !codeplug_channel(4, &c) && !codeplug_channel(9, &c));
+	CHECK(holds(0, (const uint16_t[]){ 1, 2, 3, 6, 7, 8, 10, 11 }, 8) && codeplug_zone_count() == 4);
+}
+
 int main(void)
 {
 	if (upstream_zone_main() != 0)
 		return 1;
 	failures = 0;
 	test_zone_grows();
-	printf("Plus zone capacity: %s\n", failures ? "FAILED" : "all passed");
+	test_drop_channel();
+	printf("Plus zone capacity and Delete channel: %s\n", failures ? "FAILED" : "all passed");
 	return failures != 0;
 }

@@ -567,3 +567,7 @@ unless a row says it transmits.
 | D-3 | Edit an FM channel: Mode to DMR, look at TX contact; RX only Yes, TX contact None, hold OK | TX contact is the codeplug's first talkgroup contact; the RX only channel saves ("Saved channel n") |
 | M-1 | On the D-1 channel (RX list Any): Home; press the monitor key; again | Home's DMR row shows "AllTG" (no DMon); first press: "DMon" (amber) and "Digital monitor on: every call"; second: DMon gone, "AllTG" back, "Monitor off: channel hears all TGs" |
 | M-2 | On a DMR channel with an ordinary RX list: monitor key on, off; the quick tile Digital monitor on, off | DMon appears and goes each time with the toggle ("Digital monitor off"); no AllTG |
+| X-1 | Menu > Zones > a zone > # on a channel that is not the one in use > Delete channel | "Delete channel?" with its name and "Leaves zones: n", "No, keep it" focused; OK: nothing changes |
+| X-2 | The same, Yes | "Deleted <name>"; the channel is gone from every zone that held it and from Channels; Channels > New from current takes its number next |
+| X-3 | Delete the channel in use (zone menu or Channels > OK > Delete channel) | "In use: switch to another channel first", nothing deleted |
+| X-4 | Channels > OK on another channel > the last row Delete channel > Yes | the editor closes, "Deleted <name>"; after a power cycle it is still gone; a P25 channel deleted this way and its number reused for an FM channel: the new one is FM (no P25 left over) |

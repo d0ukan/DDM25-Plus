@@ -6166,3 +6166,31 @@ msgstr "Dijital dinleme açık: tüm çağrılar"
 #: core/ui/ui_app.c
 msgid "Monitor off: channel hears all TGs"
 msgstr "Dinleme kapalı: kanal tüm TG'leri duyar"
+
+#: core/ui/ui_menus.c
+msgid "Delete channel"
+msgstr "Kanalı sil"
+
+#: core/ui/ui_menus.c
+msgid "Delete channel?"
+msgstr "Kanal silinsin mi?"
+
+#: core/ui/ui_menus.c
+msgid "In use: switch to another channel first"
+msgstr "Kullanımda: önce başka kanala geçin"
+
+#: core/ui/ui_menus.c
+msgid "Cross-band on: stop it first"
+msgstr "Çapraz bant açık: önce durdurun"
+
+#: core/ui/ui_menus.c
+msgid "Leaves zones: "
+msgstr "Çıktığı bölge: "
+
+#: core/ui/ui_menus.c
+msgid "Can't be undone."
+msgstr "Geri alınamaz."
+
+#: core/ui/ui_menus.c
+msgid "1-8 pick  Back"
+msgstr "1-8 seç  Geri"
