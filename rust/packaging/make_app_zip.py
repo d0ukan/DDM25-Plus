@@ -5,7 +5,7 @@
 
 Layout (what ddm32-core's self_update::safe_extract accepts): every member under DDM32Plus/, the window as
 DDM32Plus/DDM32Plus.exe (Windows) or DDM32Plus/DDM32Plus (Linux, macOS), the command line next to it, no user-data
-name (yedekler, surumler, guncelleme, paketler, settings.json) at the top. Deterministic: fixed time stamps and order,
+name (backups, releases, updates, packs, settings.json) at the top. Deterministic: fixed time stamps and order,
 so the same binaries give the same SHA-256.
 
     python rust/packaging/make_app_zip.py windows-x86_64 rust/target/release rust/dist/DDM32Plus-3.0.0-windows-x86_64.zip

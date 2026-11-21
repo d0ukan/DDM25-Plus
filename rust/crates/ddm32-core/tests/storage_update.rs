@@ -3,7 +3,7 @@
 //! The data folder per OS, the backups' fixed home and their automatic discovery, settings.json, and the self-update
 //! swap and rollback with fake processes (the C# StorageTests, SelfUpdateTests, FlowTests' backup finder, plus the
 //! owner's 2026-11-21 rules: no backup folder prompt in a release build, automatic discovery, updates and the
-//! uninstaller never delete `yedekler`).
+//! uninstaller never delete `backups`).
 mod common;
 use common::*;
 use ddm32_core::app_info::{self, EXE_FILE};
@@ -19,6 +19,28 @@ fn env_of(pairs: Vec<(&'static str, String)>) -> impl Fn(&str) -> Option<String>
 }
 
 #[test]
+fn old_turkish_folders_move_to_the_english_names() {
+    let t = tmp();
+    let root = t.path().join("Programs").join("DDM32 Plus");
+    make_backup(&root.join("yedekler").join("dm32-20261121"), true);
+    std::fs::create_dir_all(root.join("surumler").join("1.0.0-beta.4")).unwrap();
+    std::fs::create_dir_all(root.join("paketler")).unwrap();
+    std::fs::write(root.join("paketler").join("user.csv"), "x").unwrap();
+    let p = AppPaths::new(&root);
+    p.ensure().unwrap();
+    assert!(!root.join("yedekler").exists() && !root.join("surumler").exists());
+    assert!(p.backups().join("dm32-20261121").join("backup-manifest.json").is_file());
+    assert!(p.releases().join("1.0.0-beta.4").is_dir());
+    assert_eq!("x", std::fs::read_to_string(p.packs().join("user.csv")).unwrap());
+    assert_eq!(vec![p.backups()], p.own_backup_roots());
+    // both names present: the old one stays and is still searched
+    make_backup(&root.join("yedekler").join("dm32-20261120"), true);
+    p.ensure().unwrap();
+    assert_eq!(vec![p.backups(), root.join("yedekler")], p.own_backup_roots());
+    assert!(app_info::RESERVED_NAMES.contains(&"yedekler") && app_info::RESERVED_NAMES.contains(&"backups"));
+}
+
+#[test]
 fn the_data_folder_per_os() {
     let t = tmp();
     let exe = t.path().join("Programs").join("DDM 32 Plus");
@@ -26,7 +48,7 @@ fn the_data_folder_per_os() {
     // Windows: next to the program, as the C# program
     let p = AppPaths::detect(&exe, Os::Windows, &none).unwrap();
     p.ensure().unwrap();
-    assert_eq!(exe.join("yedekler"), p.backups());
+    assert_eq!(exe.join("backups"), p.backups());
     assert_eq!(exe.join("settings.json"), p.settings_file());
     assert!(p.backups().is_dir() && p.releases().is_dir() && p.updates().is_dir());
     // Linux: XDG data dir, else ~/.local/share
@@ -100,7 +122,7 @@ fn the_older_programs_backup_folders_are_found_and_left_alone() {
 
 #[test]
 fn no_backup_folder_prompt_in_a_release_build() {
-    // the release configuration (the tests) has no folder choice at all: every backup goes to the own yedekler
+    // the release configuration (the tests) has no folder choice at all: every backup goes to the own backups
     assert!(!BACKUP_FOLDER_PROMPT);
     let t = tmp();
     let p = AppPaths::new(t.path());
@@ -150,7 +172,7 @@ fn backups_are_discovered_automatically_newest_first() {
 fn the_quick_update_finds_the_last_ddm32_backup_by_itself() {
     let r = RadioInputs::new();
     let t = tmp();
-    let own = t.path().join("yedekler");
+    let own = t.path().join("backups");
     let python = t.path().join("python-yedekler");
     std::fs::create_dir_all(&own).unwrap();
     assert_eq!(None, backups::last_for_quick_update(&[own.clone(), python.clone()], Codec::dm32(), 8));
@@ -182,13 +204,13 @@ fn updates_and_the_uninstaller_never_delete_the_backups() {
     std::fs::create_dir_all(p.updates().join("app-1.0.0")).unwrap();
     su::cleanup(&p.updates(), None);
     assert!(p.backups().join("dm32-1/backup-manifest.json").is_file());
-    // the Windows setup marks yedekler uninsneveruninstall and removes only program folders
+    // the Windows setup marks backups uninsneveruninstall and removes only program folders
     let iss =
         std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../packaging/windows/DDM32Plus.iss"))
             .unwrap();
-    assert!(iss.contains(r#"Name: "{app}\yedekler"; Flags: uninsneveruninstall"#));
+    assert!(iss.contains(r#"Name: "{app}\backups"; Flags: uninsneveruninstall"#));
     let del = &iss[iss.find("[UninstallDelete]").unwrap()..iss.find("[Code]").unwrap()];
-    assert!(!del.lines().any(|l| !l.trim_start().starts_with(';') && l.contains("yedekler")));
+    assert!(!del.lines().any(|l| !l.trim_start().starts_with(';') && l.contains("backups")));
 }
 
 #[test]
@@ -258,10 +280,10 @@ impl Up {
     fn new() -> Up {
         let t = tmp();
         let app = make_app(&t.path().join("Programs").join("DDM32 Plus"), "old");
-        let staging = make_app(&app.join("guncelleme/app-9.9.9/DDM32Plus"), "new");
-        let marker = app.join("guncelleme/started.json");
-        std::fs::create_dir_all(app.join("yedekler/dm32-20261120")).unwrap();
-        std::fs::write(app.join("yedekler/dm32-20261120/backup-manifest.json"), "{}").unwrap();
+        let staging = make_app(&app.join("updates/app-9.9.9/DDM32Plus"), "new");
+        let marker = app.join("updates/started.json");
+        std::fs::create_dir_all(app.join("backups/dm32-20261120")).unwrap();
+        std::fs::write(app.join("backups/dm32-20261120/backup-manifest.json"), "{}").unwrap();
         std::fs::write(app.join("settings.json"), "{\"language\": \"tr\"}").unwrap();
         Up { t, app, staging, marker }
     }
@@ -269,7 +291,7 @@ impl Up {
         std::fs::read_to_string(self.app.join(rel)).unwrap()
     }
     fn user_data_untouched(&self) {
-        assert_eq!("{}", self.read("yedekler/dm32-20261120/backup-manifest.json"));
+        assert_eq!("{}", self.read("backups/dm32-20261120/backup-manifest.json"));
         assert_eq!("{\"language\": \"tr\"}", self.read("settings.json"));
     }
     fn swap(&self, p: &mut Procs) -> Outcome {
@@ -313,7 +335,7 @@ fn update_ok_keeps_old_for_rollback() {
     assert_eq!(Outcome::Ok, u.swap(&mut p));
     assert_eq!("exe new", u.read(EXE_FILE));
     assert_eq!("lib new", u.read("lib.dll"));
-    assert_eq!("exe old", u.read(&format!("guncelleme/rollback/{EXE_FILE}")));
+    assert_eq!("exe old", u.read(&format!("updates/rollback/{EXE_FILE}")));
     let last = p.started.last().unwrap();
     assert_eq!(vec![su::CHECK_ARG.to_string(), u.marker.to_string_lossy().into_owned()], last.1);
     assert_eq!("exe new", last.2);
@@ -327,7 +349,7 @@ fn update_rollback_when_new_does_not_start() {
     assert_eq!(Outcome::RolledBack, u.swap(&mut p));
     assert_eq!("exe old", u.read(EXE_FILE));
     assert_eq!("lib old", u.read("lib.dll"));
-    assert_eq!("exe new", u.read(&format!("guncelleme/failed/{EXE_FILE}")));
+    assert_eq!("exe new", u.read(&format!("updates/failed/{EXE_FILE}")));
     assert_eq!(vec![Some(1)], p.stopped);
     assert_eq!("exe old", p.started.last().unwrap().2);
     assert!(p.started.last().unwrap().1.is_empty());
@@ -350,7 +372,7 @@ fn update_abort_when_old_program_keeps_running() {
     assert_eq!(Outcome::Aborted, u.swap(&mut p));
     assert_eq!("exe old", u.read(EXE_FILE));
     assert!(p.started.is_empty());
-    assert!(!u.app.join("guncelleme/rollback").exists());
+    assert!(!u.app.join("updates/rollback").exists());
 }
 
 /// Windows only: a file another program holds open (no sharing) cannot be moved or read.
@@ -393,9 +415,9 @@ fn update_copy_failure_puts_old_back() {
 #[test]
 fn update_previous_rollback_copy_is_replaced() {
     let u = Up::new();
-    make_app(&u.app.join("guncelleme/rollback"), "older");
+    make_app(&u.app.join("updates/rollback"), "older");
     assert_eq!(Outcome::Ok, u.swap(&mut Procs::default()));
-    assert_eq!("exe old", u.read(&format!("guncelleme/rollback/{EXE_FILE}")));
+    assert_eq!("exe old", u.read(&format!("updates/rollback/{EXE_FILE}")));
 }
 
 #[test]
@@ -427,7 +449,7 @@ fn update_staging_that_would_touch_user_data_is_refused() {
 #[test]
 fn update_helper_main_writes_result_shown_once() {
     let u = Up::new();
-    let result = u.app.join("guncelleme/last-update.json");
+    let result = u.app.join("updates/last-update.json");
     let s = |p: &Path| p.to_string_lossy().into_owned();
     let args: Vec<String> = vec![
         "--pid".into(),
@@ -448,8 +470,8 @@ fn update_helper_main_writes_result_shown_once() {
     assert_eq!(0, code);
     let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&result).unwrap()).unwrap();
     assert_eq!("ok", v["result"]);
-    assert_eq!(Some("ok".into()), su::read_result(&u.app.join("guncelleme")));
-    assert_eq!(None, su::read_result(&u.app.join("guncelleme")));
+    assert_eq!(Some("ok".into()), su::read_result(&u.app.join("updates")));
+    assert_eq!(None, su::read_result(&u.app.join("updates")));
     assert_eq!(2, su::helper_main(&["--pid".into(), "x".into()], &mut |_| Box::new(Procs::default())));
     drop(u.t);
 }

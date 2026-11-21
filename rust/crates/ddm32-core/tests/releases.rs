@@ -211,7 +211,7 @@ struct Dl {
 impl Dl {
     fn new() -> Self {
         let t = tmp();
-        std::fs::create_dir_all(t.path().join("surumler")).unwrap();
+        std::fs::create_dir_all(t.path().join("releases")).unwrap();
         let app = release_app("1.2.0");
         let zip = release_zip(&app);
         let entry = firmware_entry(&app, "1.2.0", "stable", Some("v1.2.0"), Some(&zip));
@@ -220,7 +220,7 @@ impl Dl {
         d
     }
     fn root(&self) -> std::path::PathBuf {
-        self.t.path().join("surumler")
+        self.t.path().join("releases")
     }
     fn add_release(&mut self, tag: &str, m: &Value) {
         let (data, sig) = signed(m, None);
@@ -324,7 +324,7 @@ fn package_with_tampered_signature_is_not_installable() {
 #[test]
 fn program_download_checks_the_hash() {
     let d = Dl::new();
-    let updates = d.t.path().join("guncelleme");
+    let updates = d.t.path().join("updates");
     let program_zip = zip_of(&[("DDM32Plus/DDM32Plus.exe", b"exe")]);
     let a = AssetEntry {
         version: "3.1.0".into(),
@@ -429,7 +429,7 @@ impl Local {
         let t = tmp();
         let folder = t.path().join("release");
         std::fs::create_dir_all(&folder).unwrap();
-        std::fs::create_dir_all(t.path().join("surumler")).unwrap();
+        std::fs::create_dir_all(t.path().join("releases")).unwrap();
         let app = release_app("1.0.0-beta.3");
         let zip = release_zip(&app);
         let entry = firmware_entry(&app, "1.0.0-beta.3", "beta", Some("v1.0.0-beta.3"), Some(&zip));
@@ -441,7 +441,7 @@ impl Local {
         self.t.path().join("release")
     }
     fn root(&self) -> std::path::PathBuf {
-        self.t.path().join("surumler")
+        self.t.path().join("releases")
     }
 }
 

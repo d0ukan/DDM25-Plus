@@ -3,7 +3,7 @@
 //!
 //! Every radio step starts only from its own button (one click = one step) and runs in a worker thread; its lines
 //! come back to the window as progress. Nothing here retries a failed write. Backups always go to the program's own
-//! `yedekler` and are found by themselves (ddm32_core::storage::backups); the user never chooses a folder.
+//! `backups` and are found by themselves (ddm32_core::storage::backups); the user never chooses a folder.
 
 pub mod i18n;
 pub mod radio_pages;
@@ -170,7 +170,11 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
     }
     // the last program update's result, once; old staging folders and zips go
     let updates = with(|s| s.paths.updates());
-    if let Some(r) = ddm32_core::update::self_update::read_result(&updates) {
+    // a hand-over started by C# 2.0.0-beta.2 or older wrote its result into the old guncelleme folder
+    let legacy_updates = with(|s| s.paths.root.join(ddm32_core::app_info::LEGACY_UPDATES_FOLDER));
+    let result = ddm32_core::update::self_update::read_result(&updates)
+        .or_else(|| ddm32_core::update::self_update::read_result(&legacy_updates));
+    if let Some(r) = result {
         let key = match r.as_str() {
             "ok" => "pu_result_ok",
             "rolled_back" => "pu_result_rolled_back",
@@ -747,7 +751,7 @@ fn start_install(ui: &AppWindow) {
     };
     let (tool, argv, out) = match with(|st| -> Result<_, String> {
         st.wizard.set_port(Some(&port)).map_err(|e| e.0.to_string())?;
-        // the install log goes to yedekler too (never anywhere the user picks)
+        // the install log goes to backups too (never anywhere the user picks)
         let out = unique_folder(&st.paths.backups(), &format!("install-{}", today()));
         let plus = st.package.clone().unwrap_or_default();
         let (tool, argv) = st.wizard.install_command(&s(&plus), &s(&out)).map_err(|e| e.0.to_string())?;
@@ -946,13 +950,13 @@ pub fn demo(ui: &AppWindow) {
     app.set_backups(ModelRc::new(VecModel::from(vec![
         BackupRow {
             name: "dm32-20261121".into(),
-            detail: "…/DDM32 Plus/yedekler/dm32-20261121".into(),
+            detail: "…/DDM32 Plus/backups/dm32-20261121".into(),
             origin: "own".into(),
             kind: "".into(),
         },
         BackupRow {
             name: "dm32-20261120".into(),
-            detail: "…/DDM32 Plus/yedekler/dm32-20261120".into(),
+            detail: "…/DDM32 Plus/backups/dm32-20261120".into(),
             origin: "own".into(),
             kind: "".into(),
         },
@@ -963,7 +967,7 @@ pub fn demo(ui: &AppWindow) {
             kind: "".into(),
         },
     ])));
-    app.set_backups_folder("C:\\Users\\…\\AppData\\Local\\Programs\\DDM32 Plus\\yedekler".into());
+    app.set_backups_folder("C:\\Users\\…\\AppData\\Local\\Programs\\DDM32 Plus\\backups".into());
     app.set_pack_text(i18n::tf(&lang, "msg_pack_ready", "type 1 format 1 sequence 0 \"RadioID\" 2 IDs").into());
     app.set_pack_ready(true);
     app.set_version(ddm32_core::app_info::VERSION.into());

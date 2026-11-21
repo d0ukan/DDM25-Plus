@@ -7,6 +7,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 - Windows programmer 2.0.0-beta.2: new pages Radio health, Live panel and My channels (codeplug viewer with search
   and CSV export); one radio step at a time across all pages; read-only guard on the health and live readers.
+- Programmers (next C# version, and the Rust one): the program folder's subfolders have English names: `backups`,
+  `releases`, `updates`, `packs` (were `yedekler`, `surumler`, `guncelleme`, `paketler`). At start the program
+  renames the old ones in place (nothing copied or deleted); an old backups folder that cannot be renamed is still
+  searched, and a backup path saved by the old version still finds the moved backup.
 - Airfields by province: Tools > Airfields opens on "All airfields" and the provinces that have airfields, in plate
   order with their counts ("06 Ankara (5)"), as Tools > Repeaters does; OK lists that province's airfields nearest
   first, with the details, listening and air watch as before. Each airfield's province comes from its position (the

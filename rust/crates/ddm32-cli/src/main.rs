@@ -23,12 +23,12 @@ usage: ddm32 COMMAND [options]
 
 file-only commands (no radio):
   version                              program version and build switches
-  paths                                the data folder and its backups folder (yedekler)
+  paths                                the data folder and its backups folder (backups)
   backups                              every verified backup found on this PC, newest first
   detect --backup DIR                  what the backed-up radio runs (radio_detect)
   plan --backup DIR [--plus RELEASE] [--mode install_plus|install_plus_from_stock|install_plus_quick|restore|restore_stock]
   releases [--offline]                 the signed releases (GitHub, or the verified cache)
-  download VERSION                     download and verify a firmware release into surumler/
+  download VERSION                     download and verify a firmware release into releases/
   verify-manifest DIR [--public-key HEX]
                                        check a release folder's signed manifest, every asset's size and SHA-256,
                                        and this platform's program zip (app_rs) as the self-update unpacks it
@@ -97,7 +97,7 @@ fn run(args: &[String]) -> Result<ExitCode, String> {
         "paths" => {
             let p = paths()?;
             println!("data folder: {}", p.root.display());
-            println!("backups (yedekler): {}", p.backups().display());
+            println!("backups (backups): {}", p.backups().display());
             for o in p.find_other_data(Os::current(), &ddm32_core::storage::paths::real_env) {
                 println!("older {} program's backups (read only): {}", o.program, o.backups.display());
             }

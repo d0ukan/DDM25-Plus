@@ -82,7 +82,7 @@ public partial class RestorePage : UserControl, IPage
     private string? DefaultBackup(string kind)
     {
         var cands = kind == "previous" ? [state!.Settings.GetString("restore_previous_backup") ?? ""] : state!.StockBackups();
-        return cands.FirstOrDefault(c => c.Length > 0 && AppPaths.IsVerifiedBackup(c));
+        return cands.Select(state.Paths.MapLegacy).FirstOrDefault(c => c.Length > 0 && AppPaths.IsVerifiedBackup(c));
     }
 
     private async Task Choose(string kind, string? folder = null)

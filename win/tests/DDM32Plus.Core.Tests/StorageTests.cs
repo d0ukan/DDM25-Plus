@@ -14,11 +14,45 @@ public sealed class StorageTests : IDisposable
     public void EverythingLivesInTheInstallFolder()
     {
         var p = AppPaths.Detect(tmp.Sub("Programs", "DDM32 Plus"), _ => null).Ensure();
-        Assert.Equal(tmp.Sub("Programs", "DDM32 Plus", "yedekler"), p.Backups);
+        Assert.Equal(tmp.Sub("Programs", "DDM32 Plus", "backups"), p.Backups);
         Assert.Equal(tmp.Sub("Programs", "DDM32 Plus", "settings.json"), p.SettingsFile);
         Assert.True(Directory.Exists(p.Backups) && Directory.Exists(p.Releases) && Directory.Exists(p.Updates));
         var over = AppPaths.Detect(tmp.Path, n => n == "DDM32_DATA" ? tmp.Sub("data") : null);
         Assert.Equal(tmp.Sub("data"), over.Root);
+    }
+
+    [Fact]
+    public void OldTurkishFoldersAreMovedToTheEnglishNames()
+    {
+        var root = tmp.Sub("Programs", "DDM32 Plus");
+        MakeBackup(Path.Combine(root, "yedekler", "dm32-20261121"), true);
+        Directory.CreateDirectory(Path.Combine(root, "surumler", "1.0.0-beta.4"));
+        Directory.CreateDirectory(Path.Combine(root, "paketler"));
+        File.WriteAllText(Path.Combine(root, "paketler", "user.csv"), "x");
+        var p = AppPaths.Detect(root, _ => null).Ensure();
+        Assert.False(Directory.Exists(Path.Combine(root, "yedekler")));
+        Assert.False(Directory.Exists(Path.Combine(root, "surumler")));
+        Assert.True(AppPaths.IsVerifiedBackup(Path.Combine(p.Backups, "dm32-20261121")));
+        Assert.True(Directory.Exists(Path.Combine(p.Releases, "1.0.0-beta.4")));
+        Assert.Equal("x", File.ReadAllText(Path.Combine(p.Packs, "user.csv")));
+        Assert.Null(p.LegacyBackups);
+        Assert.Equal([p.Backups], p.OwnBackupRoots);
+        // a path saved by the old version still finds the moved backup
+        var saved = Path.Combine(root, "yedekler", "dm32-20261121");
+        Assert.Equal(Path.Combine(p.Backups, "dm32-20261121"), p.MapLegacy(saved));
+        Assert.Equal(@"E:\elsewhere\dm32", p.MapLegacy(@"E:\elsewhere\dm32"));
+    }
+
+    [Fact]
+    public void BothNamesPresentKeepsTheOldFolderAndStillOffersItsBackups()
+    {
+        var root = tmp.Sub("Programs", "DDM32 Plus");
+        MakeBackup(Path.Combine(root, "yedekler", "dm32-20261120"), true);
+        MakeBackup(Path.Combine(root, "backups", "dm32-20261121"), true);
+        var p = AppPaths.Detect(root, _ => null).Ensure();
+        Assert.True(Directory.Exists(Path.Combine(root, "yedekler", "dm32-20261120")));
+        Assert.Equal([p.Backups, Path.Combine(root, "yedekler")], p.OwnBackupRoots);
+        Assert.Equal(2, AppPaths.VerifiedBackups(p.OwnBackupRoots, "backup-manifest.json").Count);
     }
 
     private void MakeBackup(string folder, bool verified)

@@ -3,17 +3,17 @@
 //! can hand over to this program and back):
 //!
 //! 1. The program downloads the new program zip named in a signed manifest and checks its size and SHA-256
-//!    (`releases::client::download_app`), then extracts it safely into guncelleme/app-VERSION/DDM32Plus/ ([`stage`]).
+//!    (`releases::client::download_app`), then extracts it safely into updates/app-VERSION/DDM32Plus/ ([`stage`]).
 //!    Nothing in the install folder changes yet.
 //! 2. It starts the NEW program from that staging folder as the helper
 //!    `DDM32Plus --self-update --pid OLD --app-dir INSTALL --staging STAGING --marker FILE --result FILE`
 //!    and closes itself.
 //! 3. The helper ([`swap`]) waits for the old program to exit and replaces ONLY the files the new program brings:
-//!    each one that exists is moved to guncelleme/rollback/ first. The user's data (yedekler, settings.json,
-//!    surumler, guncelleme, paketler) is never moved, copied over or deleted: a zip that would touch those names is
+//!    each one that exists is moved to updates/rollback/ first. The user's data (backups, settings.json,
+//!    releases, updates, packs) is never moved, copied over or deleted: a zip that would touch those names is
 //!    refused. Then it starts the new program with --update-check FILE; the new program writes the marker once its
 //!    window is up.
-//! 4. No marker in time: the helper stops the new program, moves its files to guncelleme/failed/, puts the old files
+//! 4. No marker in time: the helper stops the new program, moves its files to updates/failed/, puts the old files
 //!    back and starts the old program. An error before the swap leaves everything as it was.
 //!
 //! In stage 1 nothing here is started by the program itself; the tests drive it with fake processes.

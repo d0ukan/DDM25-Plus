@@ -4,17 +4,17 @@
 //! The data folder ("root"):
 //! - Windows: the program's own install folder (the .exe's folder), as the C# program does: the setup installs per
 //!   user to `%LOCALAPPDATA%\Programs\DDM32 Plus`, so the folder is the user's own and writable, and the Rust
-//!   program takes over the C# program's folder (and its `yedekler`) on the self-update hand-over.
+//!   program takes over the C# program's folder (and its `backups`) on the self-update hand-over.
 //! - Linux: `$XDG_DATA_HOME/DDM32Plus`, else `~/.local/share/DDM32Plus` (an AppImage's own folder is read only).
 //! - macOS: `~/Library/Application Support/DDM32Plus` (an .app bundle must not be written to).
 //!
 //! Inside it:
 //!   settings.json   settings (language, theme, disclaimer acceptance, update check)
-//!   yedekler/       the radio's backups and every install / restore log (private: calibration, channels).
+//!   backups/       the radio's backups and every install / restore log (private: calibration, channels).
 //!                   The user never chooses this folder; program updates and the uninstaller never touch it.
-//!   surumler/       downloaded firmware releases and the verified manifest cache
-//!   guncelleme/     downloaded program updates, the self-update's staging and rollback copies
-//!   paketler/       data packs the user built
+//!   releases/       downloaded firmware releases and the verified manifest cache
+//!   updates/     downloaded program updates, the self-update's staging and rollback copies
+//!   packs/       data packs the user built
 //! `DDM32_DATA` overrides the folder (tests, screenshots).
 
 use crate::app_info;
@@ -118,12 +118,42 @@ impl AppPaths {
         AppPaths::detect(&exe_dir, Os::current(), &real_env)
     }
 
-    /// Creates the data folders (yedekler, surumler, guncelleme).
+    /// Creates the data folders (backups, releases, updates).
+    /// Moves the old Turkish folders (up to C# 2.0.0-beta.2) to the English names first: a rename on the same disk,
+    /// nothing copied or deleted. A folder whose new name already exists, or that cannot be moved, stays; the next
+    /// start tries again, and an old backups folder that stays is still searched ([`AppPaths::own_backup_roots`]).
     pub fn ensure(&self) -> std::io::Result<&AppPaths> {
+        self.migrate_legacy_folders();
         for d in [self.backups(), self.releases(), self.updates()] {
             std::fs::create_dir_all(d)?;
         }
         Ok(self)
+    }
+
+    /// The old folder names moved this time.
+    pub fn migrate_legacy_folders(&self) -> Vec<&'static str> {
+        let mut moved = Vec::new();
+        for (old, new) in app_info::LEGACY_FOLDERS {
+            let from = self.root.join(old);
+            let to = self.root.join(new);
+            if from.is_dir() && !to.exists() && std::fs::rename(&from, &to).is_ok() {
+                moved.push(old);
+            }
+        }
+        moved
+    }
+
+    /// The old `yedekler` when it is still there (a move that could not be done, or both names present).
+    pub fn legacy_backups(&self) -> Option<PathBuf> {
+        let l = self.root.join(app_info::LEGACY_BACKUPS_FOLDER);
+        l.is_dir().then_some(l)
+    }
+
+    /// This program's backup roots: `backups`, then the old `yedekler` if it is still there.
+    pub fn own_backup_roots(&self) -> Vec<PathBuf> {
+        let mut v = vec![self.backups()];
+        v.extend(self.legacy_backups());
+        v
     }
 
     /// The other programs' data folders on Windows (read only): the Python program's `%LOCALAPPDATA%\DDM32Plus` and
@@ -160,7 +190,17 @@ impl AppPaths {
             {
                 continue;
             }
-            let backups = folder.join(app_info::BACKUPS_FOLDER);
+            let backups = if program == "net" {
+                // the C# program: backups, or yedekler up to 2.0.0-beta.2
+                let new = folder.join(app_info::BACKUPS_FOLDER);
+                if new.is_dir() {
+                    new
+                } else {
+                    folder.join(app_info::LEGACY_BACKUPS_FOLDER)
+                }
+            } else {
+                folder.join(app_info::PYTHON_BACKUPS_FOLDER)
+            };
             if program == "net" && !backups.is_dir() {
                 continue;
             }
@@ -171,7 +211,7 @@ impl AppPaths {
     }
 
     /// What an uninstaller may remove from the data folder (the setup's [UninstallDelete]): everything but the
-    /// user's backups. `yedekler` is never in this list.
+    /// user's backups. `backups` is never in this list.
     pub fn removable_on_uninstall(&self) -> Vec<PathBuf> {
         vec![self.releases(), self.updates(), self.packs(), self.settings_file()]
     }

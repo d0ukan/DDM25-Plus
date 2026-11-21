@@ -16,7 +16,7 @@ rust/
     src/crypto/ed25519.rs        Ed25519 verify (a port of the RFC 8032 reference code, as the C# and Python ones)
     src/releases/                signed manifest checks, version order and labels, release list, downloads, local folder
     src/update/self_update.rs    the self-update swap and rollback (the C# program's protocol, for the hand-over)
-    src/storage/                 data folder per OS, settings.json, backups (fixed yedekler, automatic discovery)
+    src/storage/                 data folder per OS, settings.json, backups (fixed backups, automatic discovery)
     src/radio/                   RAM monitor host, guards (ReadOnlyPort, InstallPort, CpsPackPort), tools
                                  (backup, install over Plus / from stock / restore, quick update, no-backup install,
                                  restore stock, data pack writer), codec slot writer, detect, flows, progress, cable
@@ -49,8 +49,8 @@ retried. See AGENTS.md rules 1-4.
 | Linux | `$XDG_DATA_HOME/DDM32Plus`, else `~/.local/share/DDM32Plus` |
 | macOS | `~/Library/Application Support/DDM32Plus` |
 
-Inside it: `yedekler/` (every backup and every install log: the user never chooses another folder; updates and the
-uninstaller never delete it), `surumler/` (downloaded releases), `guncelleme/` (program updates), `paketler/` (data
+Inside it: `backups/` (every backup and every install log: the user never chooses another folder; updates and the
+uninstaller never delete it), `releases/` (downloaded releases), `updates/` (program updates), `packs/` (data
 packs), `settings.json`. On Windows the older programs' backup folders (`%LOCALAPPDATA%\DDM32Plus`, `DDM25Plus`, and the
 C# install folder when this program lives elsewhere) are found and read, never changed. `DDM32_DATA` overrides the
 folder (tests, screenshots).
@@ -101,7 +101,7 @@ release the way this program reads it, including unpacking this platform's zip w
 The Windows program replaces itself from its zip; on Linux and macOS the program shows the new version and opens the
 release page (an AppImage, a .deb or a .dmg is replaced by the user).
 
-**Windows** (per user, over the C# program, keeps `yedekler`): build the window with `--features radio`, then
+**Windows** (per user, over the C# program, keeps `backups`): build the window with `--features radio`, then
 `"C:\Program Files\Inno Setup 7\ISCC.exe" rust\packaging\windows\DDM32Plus.iss`, and for the update zip
 `python rust\packaging\make_app_zip.py windows-x86_64 rust	arget
 elease rust\dist\DDM32Plus-VERSION-windows-x86_64.zip`.

@@ -8,10 +8,11 @@
 ;
 ; Where things go:
 ;   {app} = %LOCALAPPDATA%\Programs\DDM32 Plus   DDM32Plus.exe (one self-contained file)
-;   {app}\yedekler                               the radio's backups: made by the program, NEVER removed by the
+;   {app}\backups                                the radio's backups: made by the program, NEVER removed by the
 ;                                                uninstaller or by a program update; the uninstaller says where it is
-;   {app}\settings.json, surumler, guncelleme    settings, downloaded versions, update staging: removed on uninstall
-;   {app}\paketler                               data pack work files (the user's downloads, built packs): removed on uninstall
+;   {app}\settings.json, releases, updates       settings, downloaded versions, update staging: removed on uninstall
+;   {app}\packs                                  data pack work files (the user's downloads, built packs): removed on uninstall
+;   Up to 2.0.0-beta.2 the folders were yedekler, surumler, guncelleme, paketler; the program moves them at start.
 ; Uninstall: Settings > Apps (per-user entry, HKCU).
 
 #define AppName "DDM32 Plus"
@@ -68,7 +69,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Dirs]
 ; Created at install so the user can find it; never removed by the uninstaller
-Name: "{app}\yedekler"; Flags: uninsneveruninstall
+Name: "{app}\backups"; Flags: uninsneveruninstall
 
 [Files]
 Source: "..\publish\win-x64\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
@@ -81,9 +82,12 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; The program's own files besides the .exe; yedekler (backups) is left alone
+; The program's own files besides the .exe; backups (and an old yedekler) are left alone
 Type: files; Name: "{app}\settings.json"
 Type: files; Name: "{app}\settings.tmp"
+Type: filesandordirs; Name: "{app}\releases"
+Type: filesandordirs; Name: "{app}\updates"
+Type: filesandordirs; Name: "{app}\packs"
 Type: filesandordirs; Name: "{app}\surumler"
 Type: filesandordirs; Name: "{app}\guncelleme"
 Type: filesandordirs; Name: "{app}\paketler"
@@ -95,7 +99,9 @@ var
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    Backups := ExpandConstant('{app}\yedekler');
+    Backups := ExpandConstant('{app}\backups');
+    if not DirExists(Backups) then
+      Backups := ExpandConstant('{app}\yedekler');
     if DirExists(Backups) and not UninstallSilent then
       MsgBox(FmtMessage(CustomMessage('BackupsKept'), [Backups]), mbInformation, MB_OK);
   end;

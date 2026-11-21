@@ -40,7 +40,7 @@ Ported module by module from `win/src/DDM32Plus.Core`, with the C# tests' fixtur
   it).
 - The radio power-cycle prompts are large and unmistakable (a big yellow box: "1. Telsizi KAPATIN …").
 - Errors say what to do ("… Kabloyu kontrol edip yeniden deneyin. Telsize bir şey yazılmadı.").
-- Backups always go to the program's own `yedekler` and are found by themselves; the user never chooses a folder.
+- Backups always go to the program's own `backups` and are found by themselves; the user never chooses a folder.
 - Pages: Update radio, Backups / going back, Data packs, Settings (language, theme, release channel Latest / Beta /
   Test), About. Self-update through the signed manifest.
 - Safety: every serial / flash step behind its own button; all AGENTS.md radio guards stay; tests use fakes only.
@@ -117,7 +117,7 @@ PLATFORM=ZIP` (repeatable) to list them in a signed release. See README "Package
 
 | OS | Package | Notes |
 |---|---|---|
-| Windows | `DDM32Plus-Setup-<version>.exe` (Inno Setup, `packaging/windows/DDM32Plus.iss`) | per user, `%LOCALAPPDATA%\Programs\DDM32 Plus`, the **same AppId** as the C# setup, so it replaces it in place; `yedekler` is `uninsneveruninstall` |
+| Windows | `DDM32Plus-Setup-<version>.exe` (Inno Setup, `packaging/windows/DDM32Plus.iss`) | per user, `%LOCALAPPDATA%\Programs\DDM32 Plus`, the **same AppId** as the C# setup, so it replaces it in place; `backups` is `uninsneveruninstall` |
 | Linux | `DDM32Plus-<version>-x86_64.AppImage` (+ optional `.deb`) | AppImage from `target/release/ddm32-gui` with a .desktop file and icon; data in XDG; serial access needs the user in `dialout` (the program explains it) |
 | macOS | `DDM32Plus-<version>.dmg` | built by GitHub Actions on macos-latest (universal: x86_64 + aarch64 via `lipo`); an .app bundle; data in Application Support |
 
@@ -138,5 +138,5 @@ Signing:
 3. The C# program downloads and stages it, then starts the staged **new** program as its helper with
    `--self-update --pid --app-dir --staging --marker --result`: the Rust program implements exactly this helper
    (`update::self_update::helper_main`) and the `--update-check FILE` marker, so the swap, the rollback and the user's
-   data rules are the same. `yedekler`, `settings.json`, `surumler`, `guncelleme` and `paketler` are never touched.
+   data rules are the same. `backups`, `settings.json`, `releases`, `updates` and `packs` are never touched.
 4. From then on the Rust program updates itself from `app_rs`.

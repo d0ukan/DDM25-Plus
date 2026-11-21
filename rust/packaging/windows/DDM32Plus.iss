@@ -1,7 +1,7 @@
 ﻿; SPDX-License-Identifier: GPL-3.0-or-later
 ; DDM32Plus-Setup.exe: per-user install of DDM32 Plus, the Rust program (no administrator prompt).
 ; The same AppId and folder as the C# program: this setup (and the self-update hand-over) replaces it in place and
-; keeps its yedekler.
+; keeps its backups.
 ;
 ; Saved as UTF-8 with BOM (LF): Inno Setup reads the Turkish texts correctly only with the BOM.
 ; Build (Inno Setup 6.3 or newer; 7.1 checked, https://jrsoftware.org/isinfo.php), after the publish step in win/README.md:
@@ -11,10 +11,10 @@
 ;
 ; Where things go:
 ;   {app} = %LOCALAPPDATA%\Programs\DDM32 Plus   DDM32Plus.exe (one file, no runtime needed)
-;   {app}\yedekler                               the radio's backups: made by the program, NEVER removed by the
+;   {app}\backups                               the radio's backups: made by the program, NEVER removed by the
 ;                                                uninstaller or by a program update; the uninstaller says where it is
-;   {app}\settings.json, surumler, guncelleme    settings, downloaded versions, update staging: removed on uninstall
-;   {app}\paketler                               data pack work files (the user's downloads, built packs): removed on uninstall
+;   {app}\settings.json, releases, updates    settings, downloaded versions, update staging: removed on uninstall
+;   {app}\packs                               data pack work files (the user's downloads, built packs): removed on uninstall
 ; Uninstall: Settings > Apps (per-user entry, HKCU).
 
 #define AppName "DDM32 Plus"
@@ -71,7 +71,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Dirs]
 ; Created at install so the user can find it; never removed by the uninstaller
-Name: "{app}\yedekler"; Flags: uninsneveruninstall
+Name: "{app}\backups"; Flags: uninsneveruninstall
 
 [Files]
 Source: "..\..\target\release\ddm32-gui.exe"; DestDir: "{app}"; DestName: "{#AppExe}"; Flags: ignoreversion
@@ -84,9 +84,12 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; The program's own files besides the .exe; yedekler (backups) is left alone
+; The program's own files besides the .exe; backups (and an old yedekler) are left alone
 Type: files; Name: "{app}\settings.json"
 Type: files; Name: "{app}\settings.tmp"
+Type: filesandordirs; Name: "{app}\releases"
+Type: filesandordirs; Name: "{app}\updates"
+Type: filesandordirs; Name: "{app}\packs"
 Type: filesandordirs; Name: "{app}\surumler"
 Type: filesandordirs; Name: "{app}\guncelleme"
 Type: filesandordirs; Name: "{app}\paketler"
@@ -98,7 +101,9 @@ var
 begin
   if CurUninstallStep = usPostUninstall then
   begin
-    Backups := ExpandConstant('{app}\yedekler');
+    Backups := ExpandConstant('{app}\backups');
+    if not DirExists(Backups) then
+      Backups := ExpandConstant('{app}\yedekler');
     if DirExists(Backups) and not UninstallSilent then
       MsgBox(FmtMessage(CustomMessage('BackupsKept'), [Backups]), mbInformation, MB_OK);
   end;

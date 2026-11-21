@@ -115,7 +115,7 @@ Priority: optional
 Homepage: https://github.com/d0ukan/DDM32-Plus
 Description: DDM32 Plus programmer for the Baofeng DM-32UV
  Installs, updates and backs up the DDM32 Plus firmware over the programming
- cable. Backups stay in ~/.local/share/DDM32Plus/yedekler; removing the
+ cable. Backups stay in ~/.local/share/DDM32Plus/backups; removing the
  package never touches them. The serial port needs the user in the "dialout"
  group (the package does not change groups).
 EOF

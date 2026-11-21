@@ -72,7 +72,7 @@
     <value>Veriler: {0}</value>
   </data>
   <data name="Status_DataTip" xml:space="preserve">
-    <value>Yedekler (yedekler klasörü), indirilen sürümler ve ayarlar program klasöründe. Program güncellemeleri ve kaldırma yedeklere dokunmaz.</value>
+    <value>Yedekler (backups klasörü), indirilen sürümler ve ayarlar program klasöründe. Program güncellemeleri ve kaldırma yedeklere dokunmaz.</value>
   </data>
   <data name="Common_Unknown" xml:space="preserve">
     <value>bilinmiyor</value>
@@ -420,7 +420,7 @@ Emin misiniz?</value>
     <value>Programı güncelle</value>
   </data>
   <data name="Ver_UpdateProgramTip" xml:space="preserve">
-    <value>Yeni programı indirir, imzasını ve özetini denetler, programı kapatıp yenisiyle değiştirir. Açılmazsa eskisine döner. Yedekleriniz (yedekler) ve ayarlarınız etkilenmez.</value>
+    <value>Yeni programı indirir, imzasını ve özetini denetler, programı kapatıp yenisiyle değiştirir. Açılmazsa eskisine döner. Yedekleriniz (backups) ve ayarlarınız etkilenmez.</value>
   </data>
   <data name="Ver_UpdateConfirmTitle" xml:space="preserve">
     <value>Programı güncelle</value>
@@ -428,7 +428,7 @@ Emin misiniz?</value>
   <data name="Ver_UpdateConfirm" xml:space="preserve">
     <value>DDM32 Plus programı {0} → {1} güncellensin mi?
 
-Yeni program indirilir, imzası ve SHA-256 özeti denetlenir. Bu pencere kapanır; yeni program açılmazsa eskisi geri gelir. Yedekleriniz (yedekler klasörü) ve ayarlarınız olduğu yerde kalır.
+Yeni program indirilir, imzası ve SHA-256 özeti denetlenir. Bu pencere kapanır; yeni program açılmazsa eskisi geri gelir. Yedekleriniz (backups klasörü) ve ayarlarınız olduğu yerde kalır.
 
 ⚠ {2}</value>
   </data>
@@ -578,7 +578,7 @@ Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz.</value>
     <value>7. Yedekler nerede?</value>
   </data>
   <data name="Help_7_B" xml:space="preserve">
-    <value>Program klasöründeki **yedekler** klasöründe: {0}
+    <value>Program klasöründeki **backups** klasöründe: {0}
 Bu klasörü **silmeyin ve kimseyle paylaşmayın**: telsizinizin kalibrasyonu ve kanalları içindedir. Program güncellemeleri ve programı kaldırmak bu klasöre dokunmaz. Önceki programın yedekleri kendi klasöründe kalır (%LOCALAPPDATA%\DDM32Plus veya DDM25Plus).</value>
   </data>
   <data name="Help_8_T" xml:space="preserve">
@@ -944,7 +944,7 @@ Yedek yok. Yazma yarıda kalırsa geri dönülecek yedek olmaz.
     <value>user.csv'yi indir</value>
   </data>
   <data name="Pack_DownloadTip" xml:space="preserve">
-    <value>Listeyi radioid.net'ten programın paketler klasörüne indirir</value>
+    <value>Listeyi radioid.net'ten programın packs klasörüne indirir</value>
   </data>
   <data name="Pack_ChooseCsv" xml:space="preserve">
     <value>CSV seç...</value>

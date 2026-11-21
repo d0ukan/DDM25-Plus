@@ -61,7 +61,10 @@ public partial class MainWindow : Window
         state.RefreshCable();
         if (!state.DisclaimerAccepted)
             ShowDisclaimer();
-        var result = SelfUpdate.ReadResult(state.Paths.Updates);
+        // An update started by 2.0.0-beta.2 or older wrote its result into the old guncelleme folder
+        var legacyUpdates = Path.Combine(state.Paths.Root, AppInfo.LegacyUpdatesFolder);
+        var result = SelfUpdate.ReadResult(state.Paths.Updates) ??
+                     (Directory.Exists(legacyUpdates) ? SelfUpdate.ReadResult(legacyUpdates) : null);
         if (result is not null)
         {
             var key = result switch
@@ -73,7 +76,10 @@ public partial class MainWindow : Window
             MessageBox.Show(this, Loc.T(key), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         if (AppState.CanSelfUpdate)
+        {
             SelfUpdate.Cleanup(state.Paths.Updates, Path.GetDirectoryName(Environment.ProcessPath));
+            SelfUpdate.RemoveLegacyUpdates(legacyUpdates, Path.GetDirectoryName(Environment.ProcessPath));
+        }
         if (state.Settings.AutoCheck)
             await state.CheckAsync();
     }

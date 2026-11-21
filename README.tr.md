@@ -135,7 +135,7 @@ Windows 10/11 için **DDM32 Plus programlayıcı**yı kullanın (başka hiçbir 
    yayıncı" uyarısı verebilir (program henüz kod imzalı değil): **Ek bilgi → Yine de çalıştır**.
 2. İlk açılışta **Türkçe** ya da **English** seçin.
 3. Programlama kablosunu (CH340) takın, **Telsizi güncelle** sekmesine geçip adımları izleyin; telsizi ne zaman
-   kapatıp açacağınızı program söyler. Yedekleriniz programın `yedekler` klasöründe durur; güncellemede ve
+   kapatıp açacağınızı program söyler. Yedekleriniz programın `backups` klasöründe durur; güncellemede ve
    kaldırmada da silinmez.
 
 Programlayıcı telsizin yedeğini alır (ya da aynı telsizin son yedeğini kullanır), neyin değişeceğini tam olarak

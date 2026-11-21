@@ -49,9 +49,11 @@ public partial class ReleaseConfigTests
     {
         var iss = File.ReadAllText(Path.Combine(WinRoot(), "installer", "DDM32Plus.iss"));
         var delete = iss[iss.IndexOf("[UninstallDelete]", StringComparison.Ordinal)..iss.IndexOf("[Code]", StringComparison.Ordinal)];
-        Assert.DoesNotContain(delete.Split('\n'), l => !l.TrimStart().StartsWith(';') && l.Contains("yedekler", StringComparison.Ordinal));
-        Assert.Contains(@"{app}\paketler", delete, StringComparison.Ordinal);
-        Assert.Contains(@"Name: ""{app}\yedekler""; Flags: uninsneveruninstall", iss, StringComparison.Ordinal);
+        foreach (var kept in new[] { "backups", "yedekler" })
+            Assert.DoesNotContain(delete.Split('\n'), l => !l.TrimStart().StartsWith(';') && l.Contains(kept, StringComparison.Ordinal));
+        foreach (var gone in new[] { "packs", "releases", "updates", "paketler", "surumler", "guncelleme" })
+            Assert.Contains($@"{{app}}\{gone}""", delete, StringComparison.Ordinal);
+        Assert.Contains(@"Name: ""{app}\backups""; Flags: uninsneveruninstall", iss, StringComparison.Ordinal);
         Assert.Contains(AppInfo.PacksFolder, AppInfo.ReservedNames);
         Assert.Contains(AppInfo.BackupsFolder, AppInfo.ReservedNames);
     }

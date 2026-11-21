@@ -10,10 +10,12 @@ public sealed record PythonDataFolder(string Folder, string Backups, int BackupF
 /// Where the program keeps things: everything in its own install folder (the owner's decision, 2026-11-20).
 /// The setup installs per user to %LOCALAPPDATA%\Programs\DDM32 Plus, so the folder is the user's own and writable.
 ///   settings.json   settings (language, disclaimer acceptance, update check)
-///   yedekler\       the radio's backups and every install / restore log (private: calibration, channels).
+///   backups\        the radio's backups and every install / restore log (private: calibration, channels).
 ///                   Program updates and the uninstaller never touch it.
-///   surumler\       downloaded firmware releases and the verified manifest cache
-///   guncelleme\     downloaded program updates, the self-update's staging and rollback copies
+///   releases\       downloaded firmware releases and the verified manifest cache
+///   updates\        downloaded program updates, the self-update's staging and rollback copies
+///   packs\          data pack files (user.csv and the packs built from it)
+/// Up to 2.0.0-beta.2 these were yedekler, surumler, guncelleme and paketler: Ensure moves them.
 /// DDM32_DATA overrides the folder (tests, screenshots).
 /// </summary>
 public sealed class AppPaths
@@ -34,11 +36,65 @@ public sealed class AppPaths
         return new AppPaths(string.IsNullOrWhiteSpace(over) ? exeDir : over);
     }
 
+    public string Packs => Path.Combine(Root, AppInfo.PacksFolder);
+
+    /// <summary>The old backups folder (yedekler) when it is still there: a move that could not be done, or both
+    /// names present. Its backups are still offered (quick update, restore, channels).</summary>
+    public string? LegacyBackups =>
+        Directory.Exists(Path.Combine(Root, AppInfo.LegacyBackupsFolder)) ? Path.Combine(Root, AppInfo.LegacyBackupsFolder) : null;
+
+    /// <summary>This program's backup roots: backups, then the old yedekler if it is still there.</summary>
+    public IReadOnlyList<string> OwnBackupRoots => LegacyBackups is { } l ? [Backups, l] : [Backups];
+
+    /// <summary>Moves the old Turkish folders to the English names (a rename on the same disk; nothing is copied or
+    /// deleted), then creates the folders. A folder whose new name already exists, or that cannot be moved (a file
+    /// open in it), stays where it is; the next start tries again.</summary>
     public AppPaths Ensure()
     {
+        MigrateLegacyFolders();
         foreach (var d in new[] { Backups, Releases, Updates })
             Directory.CreateDirectory(d);
         return this;
+    }
+
+    /// <summary>The (old, new) folders moved this time.</summary>
+    public List<string> MigrateLegacyFolders()
+    {
+        var moved = new List<string>();
+        foreach (var (oldName, newName) in AppInfo.LegacyFolders)
+        {
+            var from = Path.Combine(Root, oldName);
+            var to = Path.Combine(Root, newName);
+            if (!Directory.Exists(from) || Path.Exists(to))
+                continue;
+            try
+            {
+                Directory.Move(from, to);
+                moved.Add(oldName);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+        return moved;
+    }
+
+    /// <summary>A path saved by an older version under ROOT\yedekler (and the like) mapped to the new folder when it
+    /// was moved; any other path is returned as it is.</summary>
+    public string MapLegacy(string path)
+    {
+        if (string.IsNullOrEmpty(path) || Path.Exists(path))
+            return path;
+        foreach (var (oldName, newName) in AppInfo.LegacyFolders)
+        {
+            var oldRoot = Path.Combine(Root, oldName) + Path.DirectorySeparatorChar;
+            if (path.StartsWith(oldRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                var mapped = Path.Combine(Root, newName, path[oldRoot.Length..]);
+                return Path.Exists(mapped) ? mapped : path;
+            }
+        }
+        return path;
     }
 
     /// <summary>
@@ -57,7 +113,7 @@ public sealed class AppPaths
                 var folder = Path.GetFullPath(Path.Combine(b!, name));
                 if (!Directory.Exists(folder) || SamePath(folder, Root) || found.Any(f => SamePath(f.Folder, folder)))
                     continue;
-                var backups = Path.Combine(folder, AppInfo.BackupsFolder);
+                var backups = Path.Combine(folder, AppInfo.PythonBackupsFolder);
                 var (all, verified) = CountBackups(backups);
                 found.Add(new PythonDataFolder(folder, backups, all, verified));
             }

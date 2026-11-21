@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Where backups go and where they are found (owner, 2026-11-21):
 //!
-//! - The user never chooses the backup folder. Every new backup goes to the program's own `yedekler`
+//! - The user never chooses the backup folder. Every new backup goes to the program's own `backups`
 //!   ([`new_backup_folder`]); a release build has no other target and no folder prompt. Choosing a folder exists
 //!   only in a developer build (`--features developer`, [`developer::new_backup_folder_in`]).
-//! - At start the program finds every verified backup by itself ([`discover`]): its own `yedekler` first, then,
-//!   read only, the older Python and C# programs' `yedekler` folders on Windows. The newest verified backup that
+//! - At start the program finds every verified backup by itself ([`discover`]): its own `backups` first, then,
+//!   read only, the older Python and C# programs' `backups` folders on Windows. The newest verified backup that
 //!   holds DDM32 Plus is offered for the quick update ([`last_for_quick_update`]); the tool still checks live that it
 //!   is the same radio.
 //! - Nothing is ever written to, moved out of or deleted from a found folder; program updates (`update::self_update`,
-//!   which refuses any file under `yedekler`) and the uninstaller (`AppPaths::removable_on_uninstall`, the setup's
-//!   `uninsneveruninstall`) never delete `yedekler`.
+//!   which refuses any file under `backups`) and the uninstaller (`AppPaths::removable_on_uninstall`, the setup's
+//!   `uninsneveruninstall`) never delete `backups`.
 
 use super::paths::{is_verified_backup, unique_folder, AppPaths, Env, Os};
 use super::settings::Settings;
@@ -24,21 +24,23 @@ use std::time::SystemTime;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BackupRoot {
     pub folder: PathBuf,
-    /// "own" (this program's yedekler), "python", "net" (the older programs', read only) or "chosen" (developer).
+    /// "own" (this program's backups), "python", "net" (the older programs', read only) or "chosen" (developer).
     pub origin: &'static str,
 }
 
 impl BackupRoot {
-    /// Only the program's own `yedekler` is written to (new backups, install logs).
+    /// Only the program's own `backups` is written to (new backups, install logs).
     pub fn writable(&self) -> bool {
         self.origin == "own"
     }
 }
 
-/// Every folder searched for backups, own `yedekler` first. A release build ignores folders remembered in the
+/// Every folder searched for backups, own `backups` first. A release build ignores folders remembered in the
 /// settings (only a developer build can have chosen one).
 pub fn backup_roots(paths: &AppPaths, settings: &Settings, os: Os, env: Env<'_>) -> Vec<BackupRoot> {
-    let mut roots = vec![BackupRoot { folder: paths.backups(), origin: "own" }];
+    // own backups, then an old yedekler that could not be moved (read like any other root)
+    let mut roots: Vec<BackupRoot> =
+        paths.own_backup_roots().into_iter().map(|folder| BackupRoot { folder, origin: "own" }).collect();
     if app_info::DEVELOPER {
         for f in settings.backup_folders() {
             roots.push(BackupRoot { folder: PathBuf::from(f), origin: "chosen" });
@@ -56,7 +58,7 @@ pub fn backup_roots(paths: &AppPaths, settings: &Settings, os: Os, env: Env<'_>)
     out
 }
 
-/// The folder a new backup goes to: `yedekler/dm32-YYYYMMDD` (or -b, -c ... when it exists). There is no other
+/// The folder a new backup goes to: `backups/dm32-YYYYMMDD` (or -b, -c ... when it exists). There is no other
 /// target in a release build.
 pub fn new_backup_folder(paths: &AppPaths, today: &str) -> PathBuf {
     unique_folder(&paths.backups(), &format!("dm32-{today}"))
@@ -123,7 +125,7 @@ pub fn last_for_quick_update(roots: &[PathBuf], codec: &Codec, max: usize) -> Op
         .find(|c| FileSteps::detect_backup(c, codec).is_ok_and(|d| is_ddm32(Some(&d))))
 }
 
-/// Whether a path lies inside the own `yedekler` (the only place the program writes backups and logs to).
+/// Whether a path lies inside the own `backups` (the only place the program writes backups and logs to).
 pub fn inside_own_backups(paths: &AppPaths, p: &Path) -> bool {
     let root = std::path::absolute(paths.backups()).unwrap_or_else(|_| paths.backups());
     let p = std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf());

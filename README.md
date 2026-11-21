@@ -133,7 +133,7 @@ Use the **DDM32 Plus programmer** for Windows 10/11 (nothing else to install):
    about an unknown publisher (the program is not code-signed yet): **More info → Run anyway**.
 2. On first start pick **Türkçe** or **English**.
 3. Connect the programming cable (CH340), go to **Update the radio** and follow the steps; the program tells you when
-   to switch the radio off and on. Your backups stay in the program's `yedekler` folder, also after an update or an
+   to switch the radio off and on. Your backups stay in the program's `backups` folder, also after an update or an
    uninstall.
 
 The programmer backs the radio up (or reuses your last backup of the same radio), shows exactly what will change,

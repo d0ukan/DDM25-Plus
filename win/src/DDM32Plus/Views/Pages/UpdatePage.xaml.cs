@@ -491,7 +491,7 @@ public partial class UpdatePage : UserControl, IPage
             return;
         lookingForLast = true;
         Refresh();
-        var roots = new List<string> { state.Paths.Backups };
+        var roots = new List<string>(state.Paths.OwnBackupRoots);
         roots.AddRange(state.Settings.BackupFolders());
         roots.AddRange(state.PythonData.Select(d => d.Backups));
         var found = await Task.Run(() => BackupFinder.Last(roots, Codec.Dm32));

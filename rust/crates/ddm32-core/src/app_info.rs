@@ -23,19 +23,47 @@ pub const REPO_URL: &str = "https://github.com/d0ukan/DDM32-Plus";
 pub const PYTHON_DATA_NAME: &str = "DDM32Plus";
 pub const LEGACY_DATA_NAME: &str = "DDM25Plus";
 
-/// The C# program's per-user install folder under %LOCALAPPDATA% (its `yedekler` is read, never moved).
+/// The C# program's per-user install folder under %LOCALAPPDATA% (its `backups`, or `yedekler` up to 2.0.0-beta.2,
+/// is read, never moved).
 pub const NET_INSTALL_SUBDIR: [&str; 2] = ["Programs", "DDM32 Plus"];
 
-// Folders and files inside the program's data folder
-pub const BACKUPS_FOLDER: &str = "yedekler";
-pub const RELEASES_FOLDER: &str = "surumler";
-pub const UPDATES_FOLDER: &str = "guncelleme";
-pub const PACKS_FOLDER: &str = "paketler";
+// Folders and files inside the program's data folder (English names since C# 2.0.0-beta.3, owner 2026-11-21)
+pub const BACKUPS_FOLDER: &str = "backups";
+pub const RELEASES_FOLDER: &str = "releases";
+pub const UPDATES_FOLDER: &str = "updates";
+pub const PACKS_FOLDER: &str = "packs";
 pub const SETTINGS_FILE: &str = "settings.json";
 
-/// Names an update must never replace and an uninstaller must never remove blindly: the user's data.
-pub const RESERVED_NAMES: [&str; 7] =
-    [BACKUPS_FOLDER, RELEASES_FOLDER, UPDATES_FOLDER, PACKS_FOLDER, SETTINGS_FILE, "unins000.exe", "unins000.dat"];
+/// The Turkish names up to C# 2.0.0-beta.2: moved to the English ones at start-up (`AppPaths::ensure`). The Python
+/// program's data folder keeps `yedekler`.
+pub const LEGACY_BACKUPS_FOLDER: &str = "yedekler";
+pub const LEGACY_RELEASES_FOLDER: &str = "surumler";
+pub const LEGACY_UPDATES_FOLDER: &str = "guncelleme";
+pub const LEGACY_PACKS_FOLDER: &str = "paketler";
+pub const PYTHON_BACKUPS_FOLDER: &str = LEGACY_BACKUPS_FOLDER;
+
+/// (old, new) folder names in the data folder.
+pub const LEGACY_FOLDERS: [(&str, &str); 4] = [
+    (LEGACY_BACKUPS_FOLDER, BACKUPS_FOLDER),
+    (LEGACY_RELEASES_FOLDER, RELEASES_FOLDER),
+    (LEGACY_UPDATES_FOLDER, UPDATES_FOLDER),
+    (LEGACY_PACKS_FOLDER, PACKS_FOLDER),
+];
+
+/// Names an update must never replace and an uninstaller must never remove blindly: the user's data (old names too).
+pub const RESERVED_NAMES: [&str; 11] = [
+    BACKUPS_FOLDER,
+    RELEASES_FOLDER,
+    UPDATES_FOLDER,
+    PACKS_FOLDER,
+    SETTINGS_FILE,
+    "unins000.exe",
+    "unins000.dat",
+    LEGACY_BACKUPS_FOLDER,
+    LEGACY_RELEASES_FOLDER,
+    LEGACY_UPDATES_FOLDER,
+    LEGACY_PACKS_FOLDER,
+];
 
 /// Developer-only features (local release folder, a chosen backup folder) exist only with the `developer` feature.
 pub const DEVELOPER: bool = cfg!(feature = "developer");

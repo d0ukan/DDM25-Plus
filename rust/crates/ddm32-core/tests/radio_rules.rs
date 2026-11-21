@@ -1014,11 +1014,11 @@ fn flow_the_backup_step_keeps_its_own_result() {
     let mut w = Wizard::new();
     w.set_port(Some("COM7")).unwrap();
     w.set_package(pkg("aaaa", true)).unwrap();
-    w.start_backup(Path::new("yedekler/dm32-20261120")).unwrap();
+    w.start_backup(Path::new("backups/dm32-20261120")).unwrap();
     assert_eq!("Wiz_BackupRunning", w.backup_message.0);
     w.backup_finished(&backup_ok());
     assert_eq!("Wiz_BackupDone", w.backup_message.0);
-    assert_eq!("yedekler/dm32-20261120", w.backup_message.1[0]);
+    assert_eq!("backups/dm32-20261120", w.backup_message.1[0]);
     w.start_detect().unwrap();
     w.detect_finished(Some(classic()), "");
     w.start_plan().unwrap();

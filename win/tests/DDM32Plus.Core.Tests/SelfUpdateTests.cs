@@ -6,7 +6,7 @@ namespace DDM32Plus.Core.Tests;
 
 /// <summary>
 /// The self-update swap and rollback on temporary folders with fake processes (nothing is started); the same cases as
-/// pc/tests/test_selfupdate.py, plus: the user's data in the install folder (yedekler, settings.json) is never
+/// pc/tests/test_selfupdate.py, plus: the user's data in the install folder (backups, settings.json) is never
 /// touched.
 /// </summary>
 public sealed class SelfUpdateTests : IDisposable
@@ -19,10 +19,10 @@ public sealed class SelfUpdateTests : IDisposable
     public SelfUpdateTests()
     {
         app = MakeApp(tmp.Sub("Programs", "DDM32 Plus"), "old");
-        staging = MakeApp(Path.Combine(app, "guncelleme", "app-9.9.9", "DDM32Plus"), "new");
-        marker = Path.Combine(app, "guncelleme", "started.json");
-        Directory.CreateDirectory(Path.Combine(app, "yedekler", "dm32-20261120"));
-        File.WriteAllText(Path.Combine(app, "yedekler", "dm32-20261120", "backup-manifest.json"), "{}");
+        staging = MakeApp(Path.Combine(app, "updates", "app-9.9.9", "DDM32Plus"), "new");
+        marker = Path.Combine(app, "updates", "started.json");
+        Directory.CreateDirectory(Path.Combine(app, "backups", "dm32-20261120"));
+        File.WriteAllText(Path.Combine(app, "backups", "dm32-20261120", "backup-manifest.json"), "{}");
         File.WriteAllText(Path.Combine(app, "settings.json"), "{\"language\": \"tr\"}");
     }
 
@@ -40,7 +40,7 @@ public sealed class SelfUpdateTests : IDisposable
 
     private void AssertUserDataUntouched()
     {
-        Assert.Equal("{}", Read(app, "yedekler", "dm32-20261120", "backup-manifest.json"));
+        Assert.Equal("{}", Read(app, "backups", "dm32-20261120", "backup-manifest.json"));
         Assert.Equal("{\"language\": \"tr\"}", Read(app, "settings.json"));
     }
 
@@ -73,7 +73,7 @@ public sealed class SelfUpdateTests : IDisposable
         Assert.Equal(SelfUpdate.Outcome.Ok, Swap(p));
         Assert.Equal("exe new", Read(app, "DDM32Plus.exe"));
         Assert.Equal("lib new", Read(app, "lib.dll"));
-        Assert.Equal("exe old", Read(app, "guncelleme", "rollback", "DDM32Plus.exe"));
+        Assert.Equal("exe old", Read(app, "updates", "rollback", "DDM32Plus.exe"));
         Assert.Equal([SelfUpdate.CheckArg, marker], p.Started[^1].Args);
         Assert.Equal("exe new", p.Started[^1].Content);
         AssertUserDataUntouched();
@@ -86,7 +86,7 @@ public sealed class SelfUpdateTests : IDisposable
         Assert.Equal(SelfUpdate.Outcome.RolledBack, Swap(p));
         Assert.Equal("exe old", Read(app, "DDM32Plus.exe"));
         Assert.Equal("lib old", Read(app, "lib.dll"));
-        Assert.Equal("exe new", Read(app, "guncelleme", "failed", "DDM32Plus.exe"));
+        Assert.Equal("exe new", Read(app, "updates", "failed", "DDM32Plus.exe"));
         Assert.Equal([1], p.Stopped.Cast<int>());          // the new program was stopped
         Assert.Equal("exe old", p.Started[^1].Content);   // and the old one started again
         Assert.Empty(p.Started[^1].Args);
@@ -109,7 +109,7 @@ public sealed class SelfUpdateTests : IDisposable
         Assert.Equal(SelfUpdate.Outcome.Aborted, Swap(p));
         Assert.Equal("exe old", Read(app, "DDM32Plus.exe"));
         Assert.Empty(p.Started);
-        Assert.False(Directory.Exists(Path.Combine(app, "guncelleme", "rollback")));
+        Assert.False(Directory.Exists(Path.Combine(app, "updates", "rollback")));
     }
 
     [Fact]
@@ -139,9 +139,9 @@ public sealed class SelfUpdateTests : IDisposable
     [Fact]
     public void PreviousRollbackCopyIsReplaced()
     {
-        MakeApp(Path.Combine(app, "guncelleme", "rollback"), "older");
+        MakeApp(Path.Combine(app, "updates", "rollback"), "older");
         Assert.Equal(SelfUpdate.Outcome.Ok, Swap(new Procs()));
-        Assert.Equal("exe old", Read(app, "guncelleme", "rollback", "DDM32Plus.exe"));
+        Assert.Equal("exe old", Read(app, "updates", "rollback", "DDM32Plus.exe"));
     }
 
     [Fact]
@@ -154,6 +154,7 @@ public sealed class SelfUpdateTests : IDisposable
 
     [Theory]
     [InlineData("yedekler")]
+    [InlineData("backups")]
     [InlineData("settings.json")]
     [InlineData("YEDEKLER")]
     public void StagingThatWouldTouchUserDataIsRefused(string name)
@@ -176,13 +177,13 @@ public sealed class SelfUpdateTests : IDisposable
     public void HelperMainWritesResultShownOnce()
     {
         var p = new Procs();
-        var result = Path.Combine(app, "guncelleme", "last-update.json");
+        var result = Path.Combine(app, "updates", "last-update.json");
         var code = SelfUpdate.HelperMain(["--pid", "123", "--app-dir", app, "--staging", staging, "--marker", marker,
             "--result", result], pid => { Assert.Equal(123, pid); return p; });
         Assert.Equal(0, code);
         Assert.Equal("ok", JsonNode.Parse(File.ReadAllText(result))!["result"]!.GetValue<string>());
-        Assert.Equal("ok", SelfUpdate.ReadResult(Path.Combine(app, "guncelleme")));
-        Assert.Null(SelfUpdate.ReadResult(Path.Combine(app, "guncelleme")));
+        Assert.Equal("ok", SelfUpdate.ReadResult(Path.Combine(app, "updates")));
+        Assert.Null(SelfUpdate.ReadResult(Path.Combine(app, "updates")));
         Assert.Equal(2, SelfUpdate.HelperMain(["--pid", "x"]));
     }
 
@@ -242,5 +243,20 @@ public sealed class SelfUpdateTests : IDisposable
         Assert.True(Directory.Exists(Path.Combine(u, "app-2.0.0")));
         Assert.True(Directory.Exists(Path.Combine(u, "rollback")));
         Assert.False(File.Exists(Path.Combine(u, "x.zip")));
+    }
+
+    [Fact]
+    public void LegacyUpdatesFolderIsRemovedUnlessTheProgramRunsFromIt()
+    {
+        var legacy = Path.Combine(app, "guncelleme");
+        MakeApp(Path.Combine(legacy, "rollback"), "older");
+        SelfUpdate.RemoveLegacyUpdates(legacy, Path.Combine(legacy, "app-1.0.0", "DDM32Plus"));
+        Assert.True(Directory.Exists(legacy));
+        SelfUpdate.RemoveLegacyUpdates(legacy, app);
+        Assert.False(Directory.Exists(legacy));
+        // only a folder named guncelleme is ever removed
+        var other = Path.Combine(app, "backups");
+        SelfUpdate.RemoveLegacyUpdates(other, app);
+        Assert.True(Directory.Exists(other));
     }
 }

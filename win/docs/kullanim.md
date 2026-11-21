@@ -13,7 +13,7 @@ için Windows programı (sürüm 2.0.0-beta.2). Python veya başka bir şey kurm
 4. İlk açılışta dili (Türkçe / English) seçin, sorumluluk reddini okuyup kabul edin.
 
 Program yeni sürümleri kendisi denetler (Sürümler sayfasından kapatılabilir) ve imzası doğrulanmış güncellemeyi
-kendisi kurar. Kaldırmak için: Ayarlar > Uygulamalar. **Yedekleriniz (`yedekler` klasörü) kaldırınca da silinmez.**
+kendisi kurar. Kaldırmak için: Ayarlar > Uygulamalar. **Yedekleriniz (`backups` klasörü) kaldırınca da silinmez.**
 
 ## 2. Gerekenler
 
@@ -29,7 +29,7 @@ kendisi kurar. Kaldırmak için: Ayarlar > Uygulamalar. **Yedekleriniz (`yedekle
    (**Son sürüm** önerilir; **Beta** ve **Test / Alpha** sürümler uyarıyla gelir) ve "İndir ve doğrula"ya basın.
    Program dosyanın imzasını ve özetini (SHA-256) denetler.
 2. **Yedek:** "Yedek al"a basın; sarı yazı "Telsizi şimdi kapatıp açın" deyince telsizi açın. Program iki yongayı
-   ikişer kez okur ve karşılaştırır ("DOĞRULANDI"). Yedek, programın klasöründeki `yedekler` altına gider.
+   ikişer kez okur ve karşılaştırır ("DOĞRULANDI"). Yedek, programın klasöründeki `backups` altına gider.
    - Telsizde zaten DDM32 Plus varsa, **"Bu telsizin son yedeğini kullan"** (hızlı güncelleme) seçilebilir: program
      önce telsizin kimliğini, önyükleme alanını ve codec yuvasını yedekle karşılaştırır.
    - **"Yedeksiz yükle"** önerilmez: kırmızı uyarı, "Anladım" kutusu ve ikinci bir onay ister.
@@ -60,7 +60,7 @@ yenisi gerekir. Paketler veri yongasının yalnızca ayrılmış bölgesine (0xE
   Ayarlar > Hakkında yeni paketi gösterir.
 - **Telsizde ne var:** "Telsizdeki paketleri oku" (yalnızca okur) ya da "Yedekten göster..." (bir yedek klasörü).
 
-İndirdiğiniz listeler ve oluşan paketler programın `paketler` klasöründe durur. Bu veriler sizin kullanımınız
+İndirdiğiniz listeler ve oluşan paketler programın `packs` klasöründe durur. Bu veriler sizin kullanımınız
 içindir; başkasına dağıtmayın.
 
 ## 6. Telsizin durumu
@@ -103,10 +103,13 @@ Kanalları değiştirmek için telsizin kendi menülerini ya da CPS'i kullanın.
 
 | Klasör | Ne var |
 |---|---|
-| `yedekler` | telsizin yedekleri ve kayıtlar (durum okumaları `health-*.log`): kalibrasyon ve kanallarınız içindedir, **silmeyin, paylaşmayın** |
-| `surumler` | indirilen yazılım sürümleri |
-| `paketler` | veri paketi dosyaları |
-| `guncelleme` | programın kendi güncellemesi |
+| `backups` | telsizin yedekleri ve kayıtlar (durum okumaları `health-*.log`): kalibrasyon ve kanallarınız içindedir, **silmeyin, paylaşmayın** |
+| `releases` | indirilen yazılım sürümleri |
+| `packs` | veri paketi dosyaları |
+| `updates` | programın kendi güncellemesi |
+
+2.0.0-beta.2 ve öncesinde bu klasörlerin adı Türkçeydi (`yedekler`, `surumler`, `paketler`, `guncelleme`); yeni
+sürüm açılınca onları kendisi yeni adlara taşır, hiçbir şey silinmez.
 
 Python programının eski yedekleri (`%LOCALAPPDATA%\DDM32Plus`, `DDM25Plus`) bulunur ve gösterilir; taşınmaz,
 silinmez.
@@ -120,5 +123,5 @@ silinmez.
 - **Durum okunamadı / Canlı panel "Bağlantı kesildi":** telsiz açık mı, DDM32 Plus çalışıyor mu, kablo takılı mı?
   Başka bir sayfada telsiz işlemi sürüyorsa bitmesini bekleyin.
 - **Kanallarım "Yedek bulunamadı":** önce "Telsizi güncelle" sayfasında bir yedek alın ya da bir yedek klasörü seçin.
-- Her işlemin ayrıntılı kaydı sayfanın "Ayrıntılar" bölümünde ve `yedekler` / `paketler` klasöründeki `.log`
+- Her işlemin ayrıntılı kaydı sayfanın "Ayrıntılar" bölümünde ve `backups` / `packs` klasöründeki `.log`
   dosyalarındadır.

@@ -332,6 +332,20 @@ public static class SelfUpdate
                 TryDeleteFile(f);
     }
 
+    /// <summary>The old guncelleme folder once its result was read: only downloads, staging and an obsolete rollback
+    /// copy (the new helper keeps its rollback in updates). Left alone while this program runs from inside it.</summary>
+    public static void RemoveLegacyUpdates(string legacyDir, string? running = null)
+    {
+        if (!Directory.Exists(legacyDir) ||
+            !string.Equals(Path.GetFileName(Path.TrimEndingDirectorySeparator(legacyDir)), AppInfo.LegacyUpdatesFolder,
+                StringComparison.OrdinalIgnoreCase))
+            return;
+        var full = Path.GetFullPath(legacyDir) + Path.DirectorySeparatorChar;
+        if (running is not null && (Path.GetFullPath(running) + Path.DirectorySeparatorChar).StartsWith(full, StringComparison.OrdinalIgnoreCase))
+            return;
+        TryDelete(legacyDir);
+    }
+
     private static void TryDelete(string dir)
     {
         try

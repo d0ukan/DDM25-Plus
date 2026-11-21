@@ -46,14 +46,14 @@ public partial class DataPacksPage : UserControl, IPage
         Countries.Text = state.Settings.GetString("pack_countries") ?? "Turkey";
         RadioIdName.Text = state.Settings.GetString("pack_radioid_name") ?? "RadioID TR";
         AirName.Text = state.Settings.GetString("pack_air_name") ?? "TR aerodromes";
-        var csv = Path.Combine(state.Paths.Root, AppInfo.PacksFolder, "user.csv");
+        var csv = Path.Combine(state.Paths.Packs, "user.csv");
         if (File.Exists(csv))
             csvPath = csv;
     }
 
     private string PacksDir()
     {
-        var d = Path.Combine(state!.Paths.Root, AppInfo.PacksFolder);
+        var d = state!.Paths.Packs;
         Directory.CreateDirectory(d);
         return d;
     }

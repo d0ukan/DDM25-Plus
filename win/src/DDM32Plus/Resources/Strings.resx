@@ -72,7 +72,7 @@
     <value>Data: {0}</value>
   </data>
   <data name="Status_DataTip" xml:space="preserve">
-    <value>Backups (the yedekler folder), downloaded versions and settings are in the program folder. Program updates and uninstalling never touch the backups.</value>
+    <value>Backups (the backups folder), downloaded versions and settings are in the program folder. Program updates and uninstalling never touch the backups.</value>
   </data>
   <data name="Common_Unknown" xml:space="preserve">
     <value>unknown</value>
@@ -420,7 +420,7 @@ Are you sure?</value>
     <value>Update the program</value>
   </data>
   <data name="Ver_UpdateProgramTip" xml:space="preserve">
-    <value>Downloads the new program, checks its signature and hash, closes this program and replaces it. If the new one does not start, the old one comes back. Your backups (yedekler) and settings are not touched.</value>
+    <value>Downloads the new program, checks its signature and hash, closes this program and replaces it. If the new one does not start, the old one comes back. Your backups (backups) and settings are not touched.</value>
   </data>
   <data name="Ver_UpdateConfirmTitle" xml:space="preserve">
     <value>Update the program</value>
@@ -428,7 +428,7 @@ Are you sure?</value>
   <data name="Ver_UpdateConfirm" xml:space="preserve">
     <value>Update the DDM32 Plus program {0} → {1}?
 
-The new program is downloaded and its signature and SHA-256 are checked. This window closes; if the new program does not start, the old one comes back. Your backups (the yedekler folder) and settings stay where they are.
+The new program is downloaded and its signature and SHA-256 are checked. This window closes; if the new program does not start, the old one comes back. Your backups (the backups folder) and settings stay where they are.
 
 ⚠ {2}</value>
   </data>
@@ -578,7 +578,7 @@ The bootloader and the data chip (calibration, channels, settings) are never wri
     <value>7. Where are the backups?</value>
   </data>
   <data name="Help_7_B" xml:space="preserve">
-    <value>In the **yedekler** folder inside the program folder: {0}
+    <value>In the **backups** folder inside the program folder: {0}
 **Do not delete it and do not share it**: it holds your radio's calibration and channels. Program updates and uninstalling never touch it. The previous program's backups stay in its own folder (%LOCALAPPDATA%\DDM32Plus or DDM25Plus).</value>
   </data>
   <data name="Help_8_T" xml:space="preserve">
@@ -944,7 +944,7 @@ There is no backup. If the write stops part way there is no backup to go back to
     <value>Download user.csv</value>
   </data>
   <data name="Pack_DownloadTip" xml:space="preserve">
-    <value>Downloads the list from radioid.net into the program's paketler folder</value>
+    <value>Downloads the list from radioid.net into the program's packs folder</value>
   </data>
   <data name="Pack_ChooseCsv" xml:space="preserve">
     <value>Choose a CSV...</value>

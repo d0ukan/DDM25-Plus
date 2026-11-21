@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! The data folder, settings.json and the backups' fixed home (`yedekler`).
+//! The data folder, settings.json and the backups' fixed home (`backups`).
 pub mod backups;
 pub mod paths;
 pub mod settings;

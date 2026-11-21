@@ -55,7 +55,7 @@ from the synthetic backup. The version list is the real signed list from GitHub.
 
 Later versions: the program checks the signed release list on start (switchable in Sürümler) and updates itself
 from the manifest's `app_net` entry, after checking its Ed25519 signature, size and SHA-256. Uninstall in Settings >
-Apps; the backups folder `yedekler` stays.
+Apps; the backups folder `backups` stays.
 
 ## Layout
 
@@ -113,7 +113,7 @@ radio tool in `pc/radiotools` changes; the replay tests then show where the C# p
 Owner's decision 2026-11-20 (AGENTS.md rule 4). On the Backup step, besides "Yedek al" (the default):
 
 - **"Bu telsizin son yedeğini kullan (date)"** (quick update): the newest verified backup that holds DDM32 Plus
-  (this program's `yedekler` and the Python program's) is reused. Before anything is written the tool reads the chip
+  (this program's `backups` and the Python program's) is reused. Before anything is written the tool reads the chip
   IDs, the boot area and the codec slot from the radio (only those ranges) and they must equal the backup's; otherwise
   it stops and asks for a new backup. Every application sector below the slot is rewritten.
 - **"Yedeksiz yükle"** (install without backup): a red warning, an "Anladım" box, and a second "Emin misiniz?" before
@@ -167,7 +167,7 @@ port in [docs/porting-plan.md](docs/porting-plan.md) "Health, live panel and cha
   reset, exactly what `pc/radiotools/plus_txdiag.py --health` sends (`DebugReaders.Health`). The radio stays switched
   on and runs DDM32 Plus. A traffic light (red: crash record; amber: heap low-water under 1 KB or a stack under
   200 B; green), plain lines, the task stacks and the raw output under Details (also appended to
-  `yedekler\health-YYYYMMDD.log`). A card shows the newest verified backup and the firmware it holds (files only).
+  `backups\health-YYYYMMDD.log`). A card shows the newest verified backup and the firmware it holds (files only).
 - **Canlı panel / Live panel:** "Bağlan" opens the port and `DebugReaders.Live` (port of `plus_live.py`) reads every
   1-5 s until "Durdur": GET_VIEW core and tasks, the native modem status (0x21/0) and the P25 zone scan counters
   (0x21/12), crash and reset once. Signal (S-meter, the last 90 readings), state, mode, channel, frequency, P25
@@ -276,7 +276,7 @@ The program update zip for the signed manifest (`app_net`): `DDM32Plus-win-<vers
 
 The setup installs **per user** to `%LOCALAPPDATA%\Programs\DDM32 Plus` without an administrator prompt, adds a Start
 menu and a desktop shortcut, and appears in Settings > Apps. Uninstalling removes the program, its settings and
-downloads but **keeps `yedekler`** (the radio's backups) and tells the user where it is.
+downloads but **keeps `backups`** (the radio's backups) and tells the user where it is.
 
 ## Where the program keeps things
 
@@ -286,10 +286,14 @@ Everything in its own install folder:
 |---|---|
 | `DDM32Plus.exe` | the program |
 | `settings.json` | language, disclaimer acceptance, update check, window place |
-| `yedekler\` | the radio's backups and logs (private: calibration, channels). Updates and uninstall never touch it |
-| `surumler\` | downloaded firmware releases and the verified manifest cache |
-| `guncelleme\` | program update staging, `rollback\` (the previous program files), `failed\` |
-| `paketler\` | data packs: the RadioID list you downloaded (`user.csv`), the packs built (`*.dpk`), the logs of pack reads and writes. Removed on uninstall |
+| `backups\` | the radio's backups and logs (private: calibration, channels). Updates and uninstall never touch it |
+| `releases\` | downloaded firmware releases and the verified manifest cache |
+| `updates\` | program update staging, `rollback\` (the previous program files), `failed\` |
+| `packs\` | data packs: the RadioID list you downloaded (`user.csv`), the packs built (`*.dpk`), the logs of pack reads and writes. Removed on uninstall |
+
+Up to 2.0.0-beta.2 the folders were `yedekler`, `surumler`, `guncelleme` and `paketler`. At start the program moves
+each one to its English name (a rename on the same disk; an old folder whose new name already exists stays, and its
+backups are still offered).
 
 `DDM32_DATA=<folder>` moves all of these elsewhere (tests, screenshots).
 
@@ -316,14 +320,14 @@ The manifest's `app` entry is the Python program's zip. This program updates its
 entry (same fields as `app`: version, file, url, sha256, size, notes), so neither program can replace itself with the
 other. The release tool writes it: `pc/release/make_release.py build ... --app-net-zip ZIP --app-net-version V`
 (asset `DDM32Plus-win-V.zip`); the zip must hold `DDM32Plus/DDM32Plus.exe` and nothing named like the user's data
-(`yedekler`, `settings.json`, `surumler`, `guncelleme`, the uninstaller). `pc/radiotools/signed_manifest.py` checks
+(`backups`, `settings.json`, `releases`, `updates`, the uninstaller). `pc/radiotools/signed_manifest.py` checks
 the entry like `app`; programs from before ignore the key, so adding it breaks no published checker.
 
 Update flow: check (on start unless switched off, or the button) → download → SHA-256 and size against the signed
-manifest → safe unzip into `guncelleme\app-VERSION\` → the new exe runs as the helper (`--self-update`), waits for the
-old program to exit, moves only the files it replaces to `guncelleme\rollback\`, copies the new ones in and starts
+manifest → safe unzip into `updates\app-VERSION\` → the new exe runs as the helper (`--self-update`), waits for the
+old program to exit, moves only the files it replaces to `updates\rollback\`, copies the new ones in and starts
 the new program; if it does not report back within 90 s, the old files are put back and the old program starts.
-`yedekler` and `settings.json` are never touched.
+`backups` and `settings.json` are never touched.
 
 ## SmartScreen
 

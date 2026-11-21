@@ -60,7 +60,7 @@ public partial class ChannelsPage : UserControl, IPage
     // --- loading ------------------------------------------------------------------------------------------------------
     private List<string> Roots()
     {
-        var roots = new List<string> { state!.Paths.Backups };
+        var roots = new List<string>(state!.Paths.OwnBackupRoots);
         roots.AddRange(state.PythonData.Select(d => d.Backups));
         return roots;
     }

@@ -18,14 +18,30 @@ public static class AppInfo
     public const string PythonDataName = "DDM32Plus";
     public const string LegacyDataName = "DDM25Plus";
 
-    // Folders and files inside the install folder
-    public const string BackupsFolder = "yedekler";
-    public const string ReleasesFolder = "surumler";
-    public const string UpdatesFolder = "guncelleme";
-    public const string PacksFolder = "paketler";
+    // Folders and files inside the install folder (English names since 2.0.0-beta.3, owner 2026-11-21)
+    public const string BackupsFolder = "backups";
+    public const string ReleasesFolder = "releases";
+    public const string UpdatesFolder = "updates";
+    public const string PacksFolder = "packs";
     public const string SettingsFile = "settings.json";
 
-    /// <summary>Names an update must never replace: the user's data in the install folder.</summary>
+    /// <summary>The Turkish folder names up to 2.0.0-beta.2, moved to the English ones at start-up
+    /// (<see cref="Storage.AppPaths.Ensure"/>). The Python program's data folder keeps "yedekler".</summary>
+    public const string LegacyBackupsFolder = "yedekler";
+    public const string LegacyReleasesFolder = "surumler";
+    public const string LegacyUpdatesFolder = "guncelleme";
+    public const string LegacyPacksFolder = "paketler";
+    public const string PythonBackupsFolder = LegacyBackupsFolder;
+
+    /// <summary>(old, new) folder names in the install folder.</summary>
+    public static readonly IReadOnlyList<(string Old, string New)> LegacyFolders =
+    [
+        (LegacyBackupsFolder, BackupsFolder), (LegacyReleasesFolder, ReleasesFolder),
+        (LegacyUpdatesFolder, UpdatesFolder), (LegacyPacksFolder, PacksFolder),
+    ];
+
+    /// <summary>Names an update must never replace: the user's data in the install folder (old names too).</summary>
     public static readonly IReadOnlyList<string> ReservedNames =
-        [BackupsFolder, ReleasesFolder, UpdatesFolder, PacksFolder, SettingsFile, "unins000.exe", "unins000.dat"];
+        [BackupsFolder, ReleasesFolder, UpdatesFolder, PacksFolder, SettingsFile, "unins000.exe", "unins000.dat",
+         LegacyBackupsFolder, LegacyReleasesFolder, LegacyUpdatesFolder, LegacyPacksFolder];
 }
