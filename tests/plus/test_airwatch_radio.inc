@@ -7,7 +7,7 @@
  * tuned in AM, its own frequency, TX refused), the AM squelch per letter (a signal holds the ring on its letter, the
  * ring goes on after it), nothing noted while it runs, the end (VFOs A / B and the position back from the settings,
  * C..F's VFOs empty), a power off during it (back as before it), the user's own ring kept on its selected channel,
- * and the refusals. */
+ * an ATIS letter (held 5 s at most, then passed over 60 s) and the refusals. */
 
 static void air_req(uint8_t type, int32_t arg, uint32_t arg2)
 {
@@ -159,6 +159,82 @@ static void test_air_user_ring(void)
     printf("Plus air watch: the user's ring kept on its selected channel\n");
 }
 
+/* An ATIS letter (RADIO_AIR_ATIS; the UI puts it last): Esenboga's four, TWR, GND, APP and the ATIS on D. Its
+ * recording never stops: the ring holds on D AIR_ATIS_HOLD_MS (5 s), then goes on and passes D over (a quiet stop)
+ * for AIR_ATIS_COOL_MS (60 s) while the others are held as always (a 8 s call on A is heard to its end); then D holds
+ * again. The end forgets the mark */
+static void test_air_atis(void)
+{
+    static const uint32_t hz[4] = { 118100000, 121900000, 119100000, 123600000 };	/* TWR, GND, APP, ATIS */
+    air_user();
+    radio_dual_ref_t r[RADIO_DUAL_SLOTS];
+    for (uint8_t k = 0; k < 4; k++) {
+        radio_req_air_vfo((uint8_t)(k | (k == 3 ? RADIO_AIR_ATIS : 0u)), hz[k]);
+        r[k] = (radio_dual_ref_t){ true, 0, k };
+    }
+    radio_req_mwatch(r, 4, 0);
+    CHECK(sm.air && sm.air_atis == 1u << 3 && sm.dual_n == 4 && sm.vfo_ch.rx_hz == hz[0]);
+    /* The ATIS on the air for good: D holds the ring, then lets go after 5 s */
+    air_busy_hz = hz[3];
+    bool held = false;
+    for (int i = 0; i < 400 && !held; i++) {
+        air_poll();
+        held = sm.dual_at == 3 && sm.scan.phase == SCAN_PH_HOLD;
+    }
+    CHECK(held);
+    uint32_t t0 = now;
+    while (now - t0 < 10000u && sm.dual_at == 3)
+        air_poll();
+    uint32_t held_ms = now - t0;
+    CHECK(sm.dual_at != 3 && held_ms >= 4900u && held_ms <= 5300u);
+    /* 20 s of it: D passed over (never held, never a stop longer than the quiet one), A..C visited again and again */
+    unsigned visits[4] = { 0 }, on_d = 0, longest = 0;
+    uint8_t at = sm.dual_at;
+    t0 = now;
+    while (now - t0 < 20000u) {
+        air_poll();
+        CHECK(!(sm.dual_at == 3 && sm.scan.phase == SCAN_PH_HOLD));
+        if (sm.dual_at != at) {
+            at = sm.dual_at;
+            if (at < 4)
+                visits[at]++;
+            on_d = 0;
+        } else if (at == 3 && ++on_d > longest) {
+            longest = on_d;
+        }
+    }
+    CHECK(visits[0] > 20 && visits[1] > 20 && visits[2] > 20 && visits[3] > 20);
+    CHECK(longest * RADIO_POLL_MS <= 200u);
+    /* A call on A (the tower) meanwhile: held its whole 8 s, as any signal */
+    air_busy_hz = hz[0];
+    held = false;
+    for (int i = 0; i < 400 && !held; i++) {
+        air_poll();
+        held = sm.dual_at == 0 && sm.scan.phase == SCAN_PH_HOLD;
+    }
+    CHECK(held);
+    unsigned stayed = 0;
+    for (int i = 0; i < (int)(8000u / RADIO_POLL_MS); i++) {
+        air_poll();
+        stayed += sm.dual_at == 0;
+    }
+    CHECK(stayed == 8000u / RADIO_POLL_MS);
+    /* The ATIS again after the cooldown (60 s from its let go): D holds once more */
+    air_busy_hz = hz[3];
+    held = false;
+    for (int i = 0; i < (int)(40000u / RADIO_POLL_MS) && !held; i++) {
+        air_poll();
+        held = sm.dual_at == 3 && sm.scan.phase == SCAN_PH_HOLD;
+    }
+    CHECK(held);
+    air_busy_hz = 0;
+    radio_req_air_end();
+    CHECK(!sm.air && sm.air_atis == 0 && sm.scan.kind == SCAN_OFF && air_noted_as_before());
+    printf("Plus air watch: an ATIS letter holds the ring %u ms, then is passed over (A..C visited %u/%u/%u times, "
+           "D %u, its stops <= %u ms); a tower call held 8 s; the ATIS held again after the cooldown\n",
+           (unsigned)held_ms, visits[0], visits[1], visits[2], visits[3], longest * RADIO_POLL_MS);
+}
+
 /* Refusals: while transmitting, off the air band, a seventh VFO; an end without an air watch changes nothing */
 static void test_air_refused(void)
 {
@@ -181,6 +257,7 @@ int main(void)
     int before = failures;
     test_air_ring();
     test_air_user_ring();
+    test_air_atis();
     test_air_refused();
     printf("Plus air watch, radio core: %d failures\n", failures - before);
     return prior || failures != before ? 1 : 0;

@@ -93,8 +93,9 @@ const char *air_type_name(uint8_t type);	/* "TWR", "GND", ... */
 void ui_airfield_tune(uint16_t i, uint8_t k);
 #if CONFIG_AIR_WATCH
 /* ui_airwatch.inc (DDM32 Plus air watch, item 44b): hz[0..n-1] (2..6) on the multi-watch ring, each letter its own
- * VFO, the user's watch kept until the ring stops. False (a toast says why): it can't */
-bool ui_dual_air_watch(const uint32_t hz[], uint8_t n);
+ * VFO, the user's watch kept until the ring stops; atis: the letters (bit k) that are an ATIS (the radio core holds
+ * them 5 s at most, then passes them over a while). False (a toast says why): it can't */
+bool ui_dual_air_watch(const uint32_t hz[], uint8_t n, uint8_t atis);
 #endif
 
 #endif

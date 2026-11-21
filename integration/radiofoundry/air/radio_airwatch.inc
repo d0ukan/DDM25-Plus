@@ -9,7 +9,14 @@
 // and notes the position and VFOs A / B in the settings (persist), and nothing more is noted while the air watch runs
 // (persist returns at once). RREQ_AIR_END brings VFOs A / B and the position back from there, as the radio's start
 // does (radio_sm_init); C..F's VFOs are emptied (RAM only, as after a power off). A power off during the air watch
-// therefore comes back as before it. No RAM but the flag.
+// therefore comes back as before it.
+//
+// An ATIS (RREQ_AIR_VFO's idx | RADIO_AIR_ATIS; the UI puts it last) is watched too, but its recording never stops:
+// held as any signal, it would keep the one receiver there for good. So its letter holds the ring AIR_ATIS_HOLD_MS at
+// most (from the first poll of the hold, through the wait and its looks), then the ring goes on and every ATIS letter
+// is passed over (nothing heard there: the ring's quiet stop) for AIR_ATIS_COOL_MS. RAM: the flag, the ATIS bits and
+// two times (12 B in radio_sm_t).
+enum { AIR_ATIS_HOLD_MS = 5000, AIR_ATIS_COOL_MS = 60000 };
 
 // A VFO for an air frequency: a fresh VFO (FM, so AM in the air band), simplex
 static void air_vfo_fill(channel_t *c, uint32_t hz)
@@ -22,6 +29,8 @@ static void air_vfo_fill(channel_t *c, uint32_t hz)
 // that VFO is on view: it is tuned again
 static void __attribute__((noinline)) air_vfo(radio_sm_t *sm, uint8_t idx, uint32_t hz, uint32_t now_ms)
 {
+	bool atis = (idx & RADIO_AIR_ATIS) != 0;
+	idx = (uint8_t)(idx & ~RADIO_AIR_ATIS);
 	if (idx >= RADIO_DUAL_SLOTS || !radio_am_band(hz) || !board_in_band(hz, false))
 		return;
 	if (!sm->air) {
@@ -31,7 +40,14 @@ static void __attribute__((noinline)) air_vfo(radio_sm_t *sm, uint8_t idx, uint3
 		persist(sm, now_ms);			// the position and VFOs A / B, as a power off keeps them
 		dual_keep_drop(sm);
 		sm->air = true;
+		sm->air_atis = 0;
+		sm->air_held_ms = 0;
+		sm->air_cool_ms = now_ms;		// nothing passed over yet
 	}
+	if (atis)
+		sm->air_atis |= (uint8_t)(1u << idx);
+	else
+		sm->air_atis &= (uint8_t)~(1u << idx);
 	channel_t c;
 	if (idx == vfox_in_use(sm)) {
 		air_vfo_fill(&sm->vfo_ch, hz);
@@ -59,6 +75,7 @@ static void __attribute__((noinline)) air_end(radio_sm_t *sm, uint32_t now_ms)
 	if (!sm->air)
 		return;
 	sm->air = false;
+	sm->air_atis = 0;
 	if (scan_on(&sm->scan))
 		scan_stop(sm, false, now_ms);
 	dual_keep_drop(sm);
@@ -95,6 +112,38 @@ static void __attribute__((noinline)) air_end(radio_sm_t *sm, uint32_t now_ms)
 		tune(sm, now_ms);
 	}
 	changed(sm);
+}
+
+// Every scan poll (scan_service, before the scan engine): the ring on an ATIS letter of the air watch. Passed over
+// while it cools (nothing heard: the ring's quiet stop); held AIR_ATIS_HOLD_MS (the hold and the wait after it, looks
+// and all): true, the ring goes on and every ATIS letter cools. Any other stop, or a new one, starts the time over
+static bool air_atis_poll(radio_sm_t *sm, bool *active, bool *carrier, bool *sync, uint32_t now_ms)
+{
+	const scan_t *sc = &sm->scan;
+	if (!sm->air || sm->air_atis == 0)
+		return false;
+	const radio_dual_ref_t *r = &sm->dual[sm->dual_at];
+	bool atis = dual_running(sm) && r->vfo && r->pos < RADIO_DUAL_SLOTS && ((sm->air_atis >> r->pos) & 1u) != 0;
+	bool held = sc->phase == SCAN_PH_HOLD || sc->phase == SCAN_PH_RESUME;
+	if (!atis || !held)
+		sm->air_held_ms = 0;
+	if (!atis)
+		return false;
+	if ((int32_t)(sm->air_cool_ms - now_ms) > 0) {
+		*active = *carrier = *sync = false;	// cooling: passed over
+		return false;
+	}
+	if (!held)
+		return false;
+	if (sm->air_held_ms == 0) {
+		sm->air_held_ms = now_ms | 1u;		// 0 is "not held"
+		return false;
+	}
+	if (now_ms - sm->air_held_ms < AIR_ATIS_HOLD_MS)
+		return false;
+	sm->air_held_ms = 0;
+	sm->air_cool_ms = now_ms + AIR_ATIS_COOL_MS;
+	return true;
 }
 
 // The requests (radio_req_air_vfo / radio_req_air_end): refused, as RREQ_MWATCH is, while transmitting or in hotspot

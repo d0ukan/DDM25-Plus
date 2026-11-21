@@ -8,7 +8,7 @@
  *   - Tools > Airfields with an air band pack that names Guvercinlik (LTAB): the list line from the pack ("TWR 132.000
  *     +1": two towers in the pack, one in the table), its details list the pack's five frequencies (none of the
  *     table's alone), OK tunes a frequency only the pack has, airfields the pack doesn't name keep the table's;
- *   - air watch (# on the airfield's page) on the pack's frequencies, its ATIS left out. */
+ *   - air watch (# on the airfield's page) on the pack's five frequencies, its ATIS the last letter. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -216,7 +216,7 @@ static void dp_airfield(void)
 }
 
 #if CONFIG_AIR_WATCH
-/* # on the airfield's page: the pack's frequencies on the ring, its ATIS left out */
+/* # on the airfield's page: the pack's five frequencies on the ring, its ATIS the last letter (E) */
 static void dp_watch(void)
 {
 	start("DP air watch from an air band pack");
@@ -226,13 +226,15 @@ static void dp_watch(void)
 	run("ok");
 	expect(T("shows=#_watch_all", "shows=#_t"));
 	run("ctx");
-	expect(T("screen=home dual=1 mwn=4 mwradion=4 mwsel=A toast=LTAB:_Air_watch_on",
-		 "screen=home dual=1 mwn=4 mwradion=4 mwsel=A toast=LTAB:_Hava_izleme_a"));
-	check(air_sim.vfo_calls == 4, "four VFOs asked for");
-	for (uint8_t k = 0; k < 4; k++)
-		check(air_sim.hz[k] == ltab_khz[k + 1] * 1000u && air_sim_vfo_hz(k) == ltab_khz[k + 1] * 1000u,
-		      "each letter on the pack's frequency, the ATIS not among them");
-	expect("hides=126.30");
+	expect(T("screen=home dual=1 mwn=5 mwradion=5 mwsel=A toast=LTAB:_Air_watch_on",
+		 "screen=home dual=1 mwn=5 mwradion=5 mwsel=A toast=LTAB:_Hava_izleme_a"));
+	check(air_sim.vfo_calls == 5, "five VFOs asked for");
+	for (uint8_t k = 0; k < 5; k++) {
+		uint32_t want = ltab_khz[(k + 1u) % 5u] * 1000u;	/* GND, TWR, TWR, APP, then the ATIS */
+		check(air_sim.hz[k] == want && air_sim_vfo_hz(k) == want, "each letter on the pack's frequency, ATIS last");
+	}
+	check(air_sim.atis == 1u << 4, "only E marked as the ATIS");
+	expect("shows=126.30");
 	run("shot:home-air-pack");
 	layout();
 	run("back back wait:300");

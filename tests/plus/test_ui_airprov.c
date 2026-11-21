@@ -223,7 +223,7 @@ static void pv_antalya(void)
 }
 
 #if CONFIG_AIR_WATCH
-/* # on an airfield's page in a province: its six (not the ATIS) on the ring */
+/* # on an airfield's page in a province: the first six of its seven on the ring (the ATIS, last, left over) */
 static void pv_watch(void)
 {
 	start("AP air watch from a province");
@@ -233,8 +233,8 @@ static void pv_watch(void)
 	run("ok");
 	expect(T("shows=LTAI shows=#_watch_all", "shows=LTAI shows=#_t"));
 	run("ctx");
-	expect(T("screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_Air_watch_on",
-		 "screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_Hava_izleme_a"));
+	expect(T("screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_6/7_frequencies_watched",
+		 "screen=home dual=1 mwn=6 mwradion=6 mwsel=A toast=LTAI:_6/7_frekans_izleniyor"));
 	check(air_sim.vfo_calls == 6 && air_sim.hz[0] == 121900000, "six VFOs, GND first");
 	run("back back wait:300");
 	expect("dual=0");

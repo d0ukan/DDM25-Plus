@@ -5990,6 +5990,10 @@ msgstr "{OK dinle  # tümünü izle|OK dinle  # tümü}"
 msgid "Air watch on"
 msgstr "Hava izleme açık"
 
+#: core/ui/ui_airfield.c
+msgid "frequencies watched"
+msgstr "frekans izleniyor"
+
 #: core/ui/ui_dual.c
 msgid "Air watch off"
 msgstr "Hava izleme kapalı"

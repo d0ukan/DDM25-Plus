@@ -15,6 +15,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   frequency", "Satellite segment", ...) and the frequency stays. Left / Right no longer step out of the bands, Send /
   Ready checks every source the same way, and the "Not amateur band: send?" question is gone (nothing is sent
   outside the bands).
+- Air watch (Tools > Airfields, #) now watches every frequency of the airfield: beta.6 left the ATIS out, so
+  Esenboğa's four became three letters. The ATIS goes last and holds the ring 5 s at most, then is passed over for
+  60 s (its recording never stops). An airfield with more than six: the first six, and the toast says
+  "LTAI: 6/7 frequencies watched" ("LTAI: 6/7 frekans izleniyor").
 
 ## v1.0.0-beta.6 (2026-11-21)
 

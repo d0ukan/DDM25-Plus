@@ -2,7 +2,8 @@
 // DDM32 Plus air watch (CONFIG_AIR_WATCH, item 44b, docs/plus.md "Round 14: air band and spectrum"): Tools >
 // Airfields' "Watch all" (# on an airfield's page) puts up to UI_MW_MAX of its frequencies on the multi-watch ring,
 // letters A..F each its own VFO (VFOs 0..5), and the ring runs as multi-watch does: the one receiver hops between
-// them, a signal holds it, each received in AM because it is in the air band (and never transmitted on). Included at
+// them, a signal holds it, each received in AM because it is in the air band (and never transmitted on); an ATIS
+// letter (the last ones) holds it 5 s at most, then is passed over 60 s (radio_airwatch.inc). Included at
 // the end of core/ui/ui_dual.c, after ui_mwatch.inc (tools/plus_air.py).
 //
 // The user's watch waits in mw_keep (on or off, its letters, the selected one) and nothing of the air watch is saved:
@@ -40,7 +41,7 @@ static bool __attribute__((noinline)) mw_air_end(void)
 	return true;
 }
 
-bool ui_dual_air_watch(const uint32_t hz[], uint8_t n)
+bool ui_dual_air_watch(const uint32_t hz[], uint8_t n, uint8_t atis)
 {
 	ui_dual_t *d = dual();
 	if (n < 2 || n > UI_MW_MAX)
@@ -60,8 +61,9 @@ bool ui_dual_air_watch(const uint32_t hz[], uint8_t n)
 		ui_svc_scan(false);
 		ui_st.scanning = false;
 	}
+	// The radio core keeps the user's state first (radio_airwatch.inc); an ATIS letter is marked
 	for (uint8_t k = 0; k < n; k++)
-		ui_svc_air_vfo(k, hz[k]);	// the radio core keeps the user's state first (radio_airwatch.inc)
+		ui_svc_air_vfo((uint8_t)(k | (((atis >> k) & 1u) != 0 ? UI_AIR_ATIS : 0u)), hz[k]);
 	mw_air = true;
 	d->on = false;
 	d->back_to = UI_DUAL_NONE;
