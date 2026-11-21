@@ -5,10 +5,12 @@
 pub mod cable;
 pub mod codec;
 pub mod cps;
+pub mod debug;
 pub mod error;
 pub mod fast_install;
 pub mod flow;
 pub mod guards;
+pub mod live;
 pub mod monitor;
 pub mod plan;
 pub mod port;
