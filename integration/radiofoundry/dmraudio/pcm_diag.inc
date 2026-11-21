@@ -144,7 +144,6 @@ void hrc_audio_pcm_diag(hrc_pcm_diag_t *out)
 	out->mode = pd_mode;
 	out->chunks = play_diag[2];
 	out->full = play_diag[3];
-	out->dropped = play_diag[8] + play_diag[9];
 	out->overruns = overruns;
 	hrc_irq_restore(s);
 }

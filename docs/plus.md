@@ -2646,6 +2646,61 @@ dry after a fast first block, m1 and m3 do not, the counters match the model, a 
 mode applied while running, the reset), `tests/plus/test_ui_dmraudio.c` (the real formatter and digit handler cut out
 of the generated `diag_dm32.c`; 4 flows, English and Turkish, layout). Radio rows: `docs/plus-radio-test.md` "DMR
 receive audio", DA-*. Next: the default becomes the mode the rows show clean (one line), or the counters point at 3-5.
+**Round 2 (branch `fix-dmr-audio-2`, after DA-1..3 on v1.0.0-beta.4).** The owner's counters, each a ~30 s run after
+9 (`in` 177-219 frames: about 4 s of voice actually received):
+
+| Mode | rx | in / pl | cc / un | bd / ls / be | pk | sp gp | fu | dr | au bl / sl / ov |
+|---|---|---|---|---|---|---|---|---|---|
+| m0 | -103 dBm | 219 / 215 | 19 / 3 | 4 / 15 / 490 | 1118 | 0 | 1676 | 999 | 0.2-4.6 / 0 / 0 |
+| m1 | -99 | 177 / 177 | 3 / 3 | 0 / 3 / 331 | 1014 | 0 | 1808 | 905 | same |
+| m2 | -100 | 177 / 177 | 3 / 3 | 0 / 3 / 306 | 1064 | 2 / 2.0 ms | 0 | 577 | same |
+| m3 | -98 | 177 / 177 | 3 / 3 | 0 / 3 / 313 | 836 | 2 / 2.1 ms | 0 | 440 | same |
+
+Heard: m0 and m3 cleaner than m1 and m2, none clean. What this says:
+
+- **Candidate 1 (the FIFO running dry) is not supported**: `gp0` in m0 and m1; the block latency (0.2-4.6 ms) is well
+  inside its 20 ms; no microphone block lost. The FIFO is deeper than the model's two chunks, or the first block is not
+  the fastest; either way it does not run dry on this radio.
+- **`dr` was not a loss**: on a DMR channel the PCM stream keeps running between calls with the speaker route off; the
+  FIFO feed returns at once, the 4-slot queue fills, and every later block (50 a second) went to `play_diag[8]`
+  ("queue full"). `dr` now counts only blocks lost to a full queue while the speaker plays (`spk_routed`). **`fu`** is
+  normal for the b31 feed: each 2 ms tick pushes until the FIFO refuses once, so a refusal per tick while voice is
+  queued; the paced modes never fill it (`fu0`).
+- **The signal**: about 2 bit errors fixed per frame (`be` 306-490 over 177-219 frames) at -98..-103 dBm. The FEC fixes
+  errors only in the protected parts (C0 Golay 24,12 and C1 Golay 23,12: 47 of the 72 channel bits); 2.3 corrected
+  errors in 47 bits is a raw bit error rate near 5 %, so the 25 unprotected bits (C2, C3) carry about one error a frame
+  that nothing fixes: that alone sounds warbly / robotic on AMBE+2. A DMR receiver is usually near 5 % BER only around
+  -115..-120 dBm, so at -100 dBm either the signal is weaker than the reading says or the receiver is off frequency /
+  distorted. **This is now the first candidate.** `cc19` / `ls15` in the weakest run (m0, -103 dBm) fit it.
+- **The level**: `pk` 836-1118 of 32,767 on speech, about -30 dBFS. Nothing in our path scales the decoded samples:
+  `vocoder.c` `decode_run` copies the codec's output (flags 0, `r3 = D[0x1166]`, the stock wrapper's values,
+  `codec-dm32.md` "Calling convention"); the decoder is set up with `D[0x116A] = 128`, `D[0x116C] = -20` exactly as the
+  stock init routine does (`codec-dm32.md` C, steps 1 and 4: their meaning is not documented; the encoder gets the same
+  pair); `ambeVoice.c` and `audio_pcm.c` move the samples unchanged; the codec DAC is at 0 dB (`GCR_DACL` 0x80,
+  `hrc7000_power_on_init`; the DM-32 never changes it, its volume knob is analog after the amplifier). FM never passes
+  the DAC (the FD6818's audio goes straight to the amplifier, `hardware-dm32.md` 9), so there is no digital FM level to
+  compare. Beeps go the same digital way at `level x 160` (`beep.c`, default level 50: 8,000 peak, about -12 dBFS),
+  so decoded speech sits about 18 dB under the beeps. Whether stock plays it louder (a gain after its decoder, or other
+  `dec_set` values later) cannot be seen without reading stock code (clean room). How loud the far end's speech is also
+  matters: a quiet transmitter decodes quietly.
+
+**Added in round 2:**
+
+- Key **8** on the page: a digital gain on the decoded voice, x1 -> x2 -> x4 -> x8 -> x1, saturating at the 16-bit limits
+  (`ambeVoice.c` `rx_gain`, in the audio callback after `rx_block`, before the beeps are mixed in: the beeps keep their
+  level; it also applies to NXDN / dPMR / YSF voice on the same sink). RAM only, x1 at power-on; 9 keeps it. x1 leaves
+  every sample as it was.
+- A sixth line `dv cl<clipped> po<peak out>`: samples the gain saturated (until 9) and the latest call's peak after the
+  gain. The first line shows the gain: `dv m0 x1 in.. pl..`.
+- `dr` counts only real losses (above).
+
+Costs (public build on bb6f554, the owner profile the same): FLASH 837,952 -> 838,352 B (+400), static RAM 209,544 ->
+209,560 B (+16; 1,896 B free). Tests: `tests/plus/test_dmraudio_gain.c` (the generated `ambeVoice.c` with the
+real FEC: x1 unchanged, x2 / x4 exact, x8 saturating with every clipped sample counted, the call's peak after the gain,
+the beeps mixed after it, the reset keeping the gain); `test_dmraudio_pcm.c` gains the idle-stream case (drops not
+counted) and the held-FIFO case (counted); `test_ui_dmraudio.c` 5 flows (key 8 added), English and Turkish. Radio rows
+DA-7..DA-11.
+
 ## Round 15: channels, zones and DMR rows (branch `r15-channels`, `CONFIG_CHAN_EXTRAS`)
 
 The owner's reports after v1.0.0-beta.3 (`tools/plus_chux.py`, tests `tools/test_chux.py`). One switch for the job; it

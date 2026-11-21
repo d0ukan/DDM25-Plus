@@ -552,6 +552,21 @@ Reading the result: a mode that sounds clean with `gp0` where m0 had `gp` above 
 high -> the signal, not the audio path (move the radios, check the frequency). `pk` near 32767 on normal speech ->
 clipping. Every mode as rough as m0 with clean counters while the stock radio sounds clean on the same over -> the
 decoder call itself (candidate 4).
+
+Round 2 (after DA-1..3 on beta.4: `pk` about 1,000, about 2 bit errors fixed per frame at -100 dBm). Same source and
+over as DA-1. Stay in m0 (the shipped feed) unless a row says otherwise.
+
+| # | Do | Expect |
+|---|---|---|
+| DA-7 | Strong signal: the other radio 1-2 m away on High (or the DM-32 next to it), press 9, one over; photograph the page and note the `rx` line | `be` near 0 and `cc` / `ls` 0 at -60 dBm or stronger. If it now sounds clean, the cause was the signal (DA-10) |
+| DA-8 | Press 8 (`x2`), 9, the same over; then 8 (`x4`), 9; then 8 (`x8`), 9; photograph each | louder each step (turn the knob down to keep it comfortable); note whether the crackle / robotic sound stays the same relative to the voice, and `cl` / `po` (`po` about 2x, 4x, 8x `pk`; `cl` 0 until it clips) |
+| DA-9 | At the knob position you use, compare a key beep with the DMR voice at x1 | how much louder the beep is (the beep is about -12 dBFS, the voice about -30) |
+| DA-10 | Only if DA-7 still shows `be` well above 0 at a strong signal: Settings > Advanced > Freq trim, try -1.0 and +1.0 ppm (then back to 0), one over each after 9 | the trim with the lower `be`; if one is much lower the receiver is off frequency (measure it properly before keeping a trim) |
+| DA-11 | Power off and on | `dv m0 x1` |
+
+Reading round 2: `be` drops to about 0 at a strong signal and it sounds clean -> the signal / receiver (DA-10 decides
+which). Clean only at x4 / x8 -> the level: x2 or x4 becomes a fixed gain (or a setting). Rough at every level with
+`be` about 0 -> the decoder call itself (candidate 4), compared against a stock radio on the same over.
 ## Round 15 channels (branch `r15-channels`)
 
 Zones, DMR channel rows, digital monitor, Delete channel, P25 NAC in decimal (docs/plus.md "Round 15"). Receive only
