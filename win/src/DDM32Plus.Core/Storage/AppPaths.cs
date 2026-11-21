@@ -100,6 +100,31 @@ public sealed class AppPaths
         return (all, verified);
     }
 
+    /// <summary>The verified backup folders under the given roots that hold the file <paramref name="needs"/>, newest
+    /// first (by the manifest's time); files are only listed and read.</summary>
+    public static List<string> VerifiedBackups(IEnumerable<string> roots, string needs = "progmem-pass1.bin")
+    {
+        var found = new List<(string Dir, DateTime When)>();
+        foreach (var root in roots)
+        {
+            if (!Directory.Exists(root))
+                continue;
+            try
+            {
+                foreach (var d in Directory.EnumerateDirectories(root))
+                {
+                    var m = Path.Combine(d, "backup-manifest.json");
+                    if (File.Exists(m) && File.Exists(Path.Combine(d, needs)) && IsVerifiedBackup(d))
+                        found.Add((d, File.GetLastWriteTimeUtc(m)));
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+        return [.. found.OrderByDescending(f => f.When).ThenByDescending(f => f.Dir, StringComparer.Ordinal).Select(f => f.Dir)];
+    }
+
     /// <summary>backup-manifest.json says backup_verified: true (file read only).</summary>
     public static bool IsVerifiedBackup(string folder)
     {

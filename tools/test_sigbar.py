@@ -7,8 +7,9 @@ import subprocess
 def main(ROOT, APP, OUT, flags, host):
     ui = (APP / 'core/ui/ui_screens.c').read_text()
     i = ui.index('static uint8_t rssi_bars(int16_t dbm)\n')
-    j = ui.index('\treturn v->state == RS_RX ? rssi_bars(v->rssi_dbm) : 0;\n}\n', i)
-    (OUT / 'sigbar.inc').write_text(ui[i:j] + '\treturn v->state == RS_RX ? rssi_bars(v->rssi_dbm) : 0;\n}\n')
+    k = ui.index('static uint8_t strip_bars(const radio_view_t *v)\n', i)
+    j = ui.index('\n}\n', k) + 3
+    (OUT / 'sigbar.inc').write_text(ui[i:j])
     cmd = ['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-Wno-unused-parameter',
            '-Wno-unused-function', '-fsanitize=address,undefined', '-fno-sanitize-recover=undefined',
            '-I' + str(APP / 'core'), '-I' + str(APP / 'hal'), '-I' + str(APP / 'drivers'), '-DCONFIG_DMR=1',

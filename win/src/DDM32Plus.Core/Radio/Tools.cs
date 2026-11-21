@@ -27,6 +27,9 @@ public sealed class ToolContext
     public string? ReleaseKeyHex { get; init; }
 
     public Codec Codec { get; init; } = Codec.Dm32;
+
+    /// <summary>Ends a reader that runs until stopped (the live panel's "Durdur"); the other tools ignore it.</summary>
+    public CancellationToken Cancel { get; init; }
 }
 
 /// <summary>argparse for the tools' few options: an unknown, missing or malformed option ends the run (exit 2).</summary>

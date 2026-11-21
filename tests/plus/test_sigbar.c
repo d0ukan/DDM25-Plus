@@ -26,6 +26,12 @@ int main(void)
 	v.rssi_dbm = -105; assert(strip_bars(&v) == 2);
 	v.rssi_dbm = -115; assert(strip_bars(&v) == 1);
 	v.rssi_dbm = -125; assert(strip_bars(&v) == 0);
+	// The monitor holds the receiver open: the level shows
+	v.state = RS_IDLE;
+	v.monitor = true;
+	v.rssi_dbm = -105; assert(strip_bars(&v) == 2);
+	v.monitor = false;
+	assert(strip_bars(&v) == 0);
 	// DMR call: the call's level first, else the receiver's
 	v.state = RS_IDLE;
 	v.rssi_dbm = -125;
