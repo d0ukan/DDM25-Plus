@@ -314,6 +314,7 @@ size_t p25_lab_p25_caller_line(char *out,size_t cap,bool pane)
     line_t l={out,cap,false};
     /* Home: "P25 TG 101 ID 77285 NAC 659" | "TG101 ID77285 NAC659" | "TG101 ID77285";
      * a dual watch pane: "TG 101 ID 77285 NAC 659" | "TG101 ID77285".
+     * DM32 Plus (CONFIG_NAC_DEC): the NAC as "$293/659" in each form that has one.
      * DM32 Plus P25 extras: "EMERGENCY " leads every form (instead of "P25 "); a unit-to-unit call shows
      * "Private 77285 > 1234" | "Private 77285>1234" instead of the talkgroup and ID. When the whole does not fit cap
      * the longest forms are left out (they are the ones too wide for the screen anyway) */
@@ -341,9 +342,9 @@ size_t p25_lab_p25_caller_line(char *out,size_t cap,bool pane)
         if(heard_nac!=P25_NAC_ANY && alt<2u){
             line_str(&l,tight?" NAC":" NAC ");
 #if CONFIG_NAC_DEC
-            /* DM32 Plus: "$125" marks hex; the wide form adds the decimal some factory radios use ("$125/293") */
+            /* DM32 Plus: "$125" marks hex, then the decimal some factory radios use, in every form ("$125/293") */
             line_str(&l,"$");line_hex3(&l,heard_nac);
-            if(!tight){line_str(&l,"/");line_u32(&l,heard_nac);}
+            line_str(&l,"/");line_u32(&l,heard_nac);
 #else
             line_hex3(&l,heard_nac);
 #endif

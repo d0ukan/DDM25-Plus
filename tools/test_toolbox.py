@@ -36,7 +36,7 @@ def main(ROOT, APP, OUT, flags, host):
          '-DCONFIG_SPECTRUM=1', '-DCONFIG_SPECTRUM_WF=1', '-DCONFIG_P25_SEARCH=1', '-DCONFIG_DMR_SEARCH=1',
          '-DCONFIG_DMR_ANY=1', '-DCONFIG_FIND_SAVE=1', '-DCONFIG_P25_TRUNK=1', '-DCONFIG_DMR_TRUNK=1',
          '-DCONFIG_MSG_RX=1', '-DCONFIG_CALL_LOG=1', '-DCONFIG_HEARD=1', '-DCONFIG_VFO_MODES=1', '-DCONFIG_GPS_DASH=1',
-         '-DCONFIG_CLOCK_TOOLS=1',
+         '-DCONFIG_CLOCK_TOOLS=1', '-DCONFIG_NAC_DEC=1',
          *(str(ui / f) for f in ('ui_map.c', 'map.c', 'turkey_map_data.c', 'turkey_district_data.c', 'mapnav.c',
                                  'ui_mapnav.c', 'nav.c', 'ui_goto.c', 'rpt.c', 'ui_rpt.c', 'ui_spectrum.c',
                                  'ui_p25search.c', 'ui_dmrsearch.c', 'ui_p25trunk.c', 'ui_dmrtrunk.c', 'ui_msg.c',

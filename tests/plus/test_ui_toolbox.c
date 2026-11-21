@@ -212,8 +212,8 @@ static void rr_round_trip(void)
 	static const struct { uint8_t scr; const char *shows, *hides; } hop[] = {
 		{ SCR_P25SEARCH, "shows=433.5250_$659", "hides=Floor" },
 		{ SCR_DMRSEARCH, "shows=438.7125_CC1", "hides=$659" },
-		{ SCR_P25TRUNK, "shows=WACN_BEE00", "hides=CC1" },
-		{ SCR_DMRTRUNK, "shows=Small_Net_13", "hides=WACN" },
+		{ SCR_P25TRUNK, "shows=SYS_1C8_NAC$1C8/456", "hides=CC1" },	/* the WACN gives way on the DM-32 */
+		{ SCR_DMRTRUNK, "shows=Small_Net_13", "hides=SYS_1C8" },
 		{ SCR_PAGER, "shows=1234567:_HELLO_PAGER", "hides=Net_13" },
 	};
 	for (unsigned i = 0; i < sizeof hop / sizeof hop[0]; i++) {
@@ -228,7 +228,7 @@ static void rr_round_trip(void)
 		}
 		ok_run("back wait:200");
 		sweeps(1, 20);
-		expect("screen=spectrum shows=Floor_-120dBm hides=WACN hides=$659 hides=HELLO");
+		expect("screen=spectrum shows=Floor_-120dBm hides=SYS_1C8 hides=$659 hides=HELLO");
 		expect(hit);
 	}
 	/* one after another without the spectrum between */
@@ -236,9 +236,9 @@ static void rr_round_trip(void)
 	ok_run("wait:200");
 	ui_push(SCR_P25SEARCH, 0);
 	ok_run("wait:200");
-	expect("shows=433.5250 hides=WACN");
+	expect("shows=433.5250 hides=SYS_1C8");
 	ok_run("back wait:200");
-	expect("screen=p25trunk shows=WACN_BEE00 hides=433.5250");
+	expect("screen=p25trunk shows=SYS_1C8 hides=433.5250");
 	ok_run("back wait:200");
 	/* OK on the spectrum tunes to its own hit, whatever the others left in the buffer */
 	ui_push(SCR_DMRTRUNK, 0);
@@ -352,6 +352,7 @@ static void heard_p25_ysf(void)
 	ui_push(SCR_HEARD, 0);
 	ok_run("wait:200");
 	expect("shows=YSF_TA2DOU shows=P25_77285 shows=TG101");
+	expect("shows=TG101_x1");	/* the DM-32's row: "TG101 $659/1625 x1 0s" does not fit, the NAC gives way */
 	layout();
 	/* YSF: no tune */
 	ok_run("ok wait:200");
@@ -359,7 +360,7 @@ static void heard_p25_ysf(void)
 	ok_run("ok wait:100");
 	expect("screen=heard-one");
 	ok_run("back down ok wait:200");
-	expect("screen=heard-one shows=$659 shows=TG_101_ID_77285");
+	expect("screen=heard-one shows=$659/1625 shows=TG_101_ID_77285");
 	ok_run("ok wait:300");
 	char f[80];
 	snprintf(f, sizeof f, "screen=home vfo=1 freq=%u vmode=P25 nac=659 tg=101", (unsigned)tb_sim_freq());

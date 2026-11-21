@@ -74,7 +74,7 @@ int main(void)
 		{ 77285, 202, false, 0, false, false,
 		  { "Plus P25 group call in Recent (DM-32)", "wait:500", "ok 3",
 		    "shows=P25_77285 shows=TG_202_1s hides=NAC hides=EMERGENCY hides=Private", 2, false },
-		  { "Plus P25 group call in Recent", "wait:500", "ok 3", "shows=P25_77285 shows=TG_202_NAC_293_1s", 2,
+		  { "Plus P25 group call in Recent", "wait:500", "ok 3", "shows=P25_77285 shows=TG_202_$293/659_1s", 2,
 		    false } },
 		/* encrypted, as before the extras (on the DM-32 the label is shortened for it, as it was) */
 		{ 77285, 202, false, 0, false, true,

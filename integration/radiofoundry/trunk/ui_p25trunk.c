@@ -6,6 +6,7 @@
  * blocks that failed), the call followed now or last, and the grants heard (newest first, with why one wasn't
  * followed). Back stops; leaving the screen otherwise stops it after a few seconds (P25TK_IDLE_MS). */
 #include "config.h"
+#include <string.h>
 #if CONFIG_P25_TRUNK
 #include "ui_nav.h"
 #include "ui_screens.h"
@@ -83,12 +84,17 @@ static void tk_draw(void)
 	gfx_text(m, 0, y, buf, c);
 	y += m->h + 2;
 	if (on) {
-		/* The system: "WACN BEE00 SYS 1C8 NAC 1C8", then "Site 1-5 TSBK 22/s bad 3" */
+		/* The system: "WACN BEE00 SYS 1C8 NAC $1C8/456", then "Site 1-5 TSBK 22/s bad 3" */
 		sb_init(&b, buf, sizeof buf);
+		size_t net_len = 0;	// the WACN's part, left out where the line is too wide (Large text)
+#if CONFIG_NAC_DEC
+		char *nac_gap = NULL;	// the space in "NAC $1C8/456", left out first where the line is too wide
+#endif
 		if (tv.have_net) {
 			sb_str(&b, "WACN ");
 			hex(&b, tv.wacn, 5);
 			sb_str(&b, " ");
+			net_len = (size_t)(b.p - buf);
 		}
 		if (tv.have_net || tv.have_site) {
 			sb_str(&b, "SYS ");
@@ -97,13 +103,21 @@ static void tk_draw(void)
 		}
 		if (tv.heard_nac != 0xFFFFu) {
 			sb_str(&b, "NAC ");
+#if CONFIG_NAC_DEC
+			nac_gap = b.p - 1;
+			sb_chr(&b, '$');	// DM32 Plus: both forms, "$1C8/456"
+#endif
 			hex(&b, tv.heard_nac, 3);
 #if CONFIG_NAC_DEC
 			sb_chr(&b, '/');
 			sb_u32(&b, tv.heard_nac, 1);
 #endif
 		}
-		gfx_text(s, 0, y, buf, ui_col.dim);
+#if CONFIG_NAC_DEC
+		if (nac_gap != NULL && gfx_text_width(s, buf) > gfx_width())
+			memmove(nac_gap, nac_gap + 1, strlen(nac_gap));	// "NAC$1C8/456"
+#endif
+		gfx_text(s, 0, y, gfx_text_width(s, buf) > gfx_width() ? buf + net_len : buf, ui_col.dim);
 		y += s->h + 1;
 		sb_init(&b, buf, sizeof buf);
 		if (tv.have_site) {

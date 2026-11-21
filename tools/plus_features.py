@@ -4840,10 +4840,18 @@ static size_t p25_recent_digits(uint32_t v)
 
 static void p25_recent_part(sbuf_t *b, const ui_recent_t *r, unsigned what)
 {
-	if (what == 0) {		// " NAC 293"
+	if (what == 0) {		// " NAC 293"; CONFIG_NAC_DEC: both forms, " $125/293" (the "$" marks the NAC)
+#if CONFIG_NAC_DEC
+		sb_str(b, " $");
+#else
 		sb_str(b, " NAC ");
+#endif
 		for (int shift = 8; shift >= 0; shift -= 4)
 			sb_chr(b, "0123456789ABCDEF"[(r->nac >> shift) & 15u]);
+#if CONFIG_NAC_DEC
+		sb_chr(b, '/');
+		sb_u32(b, r->nac, 1);
+#endif
 	} else if (what == 1) {		// "Private "
 		sb_str(b, TR("Private"));
 		sb_chr(b, ' ');
@@ -4888,14 +4896,26 @@ static void p25_recent_item(const ui_recent_t *r, ui_item_t *it)
 	}
 	if (r->emerg || r->enc)
 		it->flags |= UI_ITEM_WARN;
+#if CONFIG_NAC_DEC
+	char age_text[24];	// the age as sb_age writes it: the room it really takes (the NAC's two forms need every byte)
+	sbuf_t ab;
+	sb_init(&ab, age_text, sizeof age_text);
+	sb_age(&ab, ui_st.now_ms - r->ms);
+	size_t age = strlen(age_text);
+#else
 	size_t age = 9u + strlen(TR(" ago"));	// sb_age: two alternates of up to 2 digits and a unit (49 days at most)
+#endif
 	size_t unit = (r->group ? 3u : 2u) + p25_recent_digits(r->dst);	// "TG 101" / "> 1234"
 	if (r->emerg) {
 		p25_recent_alt(&vb, r, 2, unit + 1u, age);	// with its own space before the age
 	} else if (r->group) {
 		sb_str(&vb, "TG ");
 		sb_u32(&vb, r->dst, 1);
+#if CONFIG_NAC_DEC
+		p25_recent_alt(&vb, r, 0, 6u + p25_recent_digits(r->nac), 1u + age);	// " $125/293"
+#else
 		p25_recent_alt(&vb, r, 0, 8, 1u + age);
+#endif
 		sb_chr(&vb, ' ');
 	} else {			// unit to unit: the called unit
 		p25_recent_alt(&vb, r, 1, strlen(TR("Private")) + 1u, unit + 1u + age);

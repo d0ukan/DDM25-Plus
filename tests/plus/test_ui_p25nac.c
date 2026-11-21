@@ -103,13 +103,14 @@ int main(void)
 		{ "NX VFO TX NAC, RX Any, TG Any: listens", VTX, "ok 1 6 2 5 ok", "nac=F7E txnac=659 rxonly=1", 6, false },
 		{ "NX VFO RX Any + TX $659 + TG 99: talks", TG "ok 9 9 ok down down ok 1 6 2 5 ok", "",
 		  "nac=F7E txnac=659 tg=99 rxonly=0", 0, false },
-		/* Home's row on the DM-32's width: the tight form ("NAC $293>$659 TG 99" does not fit next to the step) */
+		/* Home's row on the DM-32's width: both NAC forms ("NAC$456/1110 TG99"); with a TX NAC of its own even the tight
+		 * form "NAC$293/659>$659/1625 TG99" does not fit next to the step, so the last resort keeps the decimals */
 		{ "NX VFO Home: NAC Any>1625", TG "ok 9 9 ok down down ok 1 6 2 5 ok back back", "",
 		  "screen=home shows=NACAny>1625_TG99", 0, false },
 		{ "NX VFO Home: 659>1625", TG "ok 9 9 ok down ok 6 5 9 ok down ok 1 6 2 5 ok back back", "",
 		  "shows=NAC659>1625_TG99 nac=293 txnac=659 rxonly=0", 0, false },
 		{ "NX VFO Home: same NAC as before", TG "ok 9 9 ok down ok 1 1 1 0 ok back back", "",
-		  "shows=NAC_1110_TG_99 hides=>", 0, false },
+		  "shows=NAC$456/1110_TG99 hides=>", 0, false },
 		/* RX Any, Same as RX: Classic r13 sends $293, so the VFO with TG 99 still talks */
 		{ "NX VFO TX NAC back to Same: talks with $293", TG "ok 9 9 ok down down ok 1 6 2 5 ok", "ok ctx ok",
 		  "txnac=0 rxonly=0", 3, false },

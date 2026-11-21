@@ -77,9 +77,9 @@ int main(void)
 		{ "VX NAC Any", NAC "ok 1 1 1 0 ok", "ok ctx ok", "nac=F7E rxonly=1", 3, false },
 		{ "VX TG Any", TG "ok 9 9 ok", "ok ctx ok", "tg=0 rxonly=1", 3, false },
 		{ "VX unit ID", SET "down down down down down", "ok 1 2 3 4 5 6 7 ok", "p25id=1234567", 9, false },
-		{ "VX Home: VFO P25 NAC TG", TG "ok 9 9 ok down ok 1 1 1 0 ok back back", "", "screen=home shows=NAC_1110_TG_99", 0,
+		{ "VX Home: VFO P25 NAC TG", TG "ok 9 9 ok down ok 1 1 1 0 ok back back", "", "screen=home shows=NAC$456/1110_TG99", 0,
 		  false },
-		{ "VX Home: Any", SET "back back", "", "shows=NAC_Any_TG_Any", 0, false },
+		{ "VX Home: Any", SET "back back", "", "shows=NACAny_TGAny", 0, false },
 		{ "VX long OK says it is in effect", SET, "long:ok", "toast=VFO:_changes_apply_at_once writes=0", 1, false },
 		/* The Mode row in VFO settings: the same cycle */
 		{ "VX settings Mode row: YSF", SET, "ok", "vmode=YSF shows=DG-ID hides=NAC", 1, false },
