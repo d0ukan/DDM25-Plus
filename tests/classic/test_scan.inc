@@ -249,7 +249,9 @@ static void test_plus_p25search_sm(void)
     CHECK(native_lab_owns() && p25s_at_hz()==433600000u);
     uint32_t t0=now;
     for(int i=0;i<200 && native_lab_owns();i++){ now+=10;classic_pump(); }
-    CHECK(!native_lab_owns() && now-t0>=650u && now-t0<1000u && p25s_snapshot(&v) && v.found_n==1);
+    /* (the surer search, CONFIG_SEARCH_SURE: the zone scan's 1.2 s probe time) */
+    CHECK(!native_lab_owns() && now-t0>=(CONFIG_SEARCH_SURE?1150u:650u) && now-t0<(CONFIG_SEARCH_SURE?1500u:1000u) &&
+          p25s_snapshot(&v) && v.found_n==1);
     /* PTT during a probe: consumed, the search stops, nothing is keyed */
     for(int i=0;i<4000 && !native_lab_owns();i++) ps_step();    /* the next pass: 433.500 again */
     CHECK(native_lab_owns() && p25s_at_hz()==433500000u);

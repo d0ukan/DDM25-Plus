@@ -705,3 +705,31 @@ keyed in any row. The other radio sends on 433.500 (or a free authorised frequen
 | FL-3 | The same frequency, another NAC (e.g. $293) | its own entry; FL-1's entries unchanged |
 | FL-4 | DMR search: calls on TG 91 and TG 9 (TS1 / TS2 or one after the other) on one frequency; then All digital search with FL-1..FL-3 | DMR: one entry per talkgroup with its calls; all digital: the same per mode, a mixed P25 / DMR frequency one entry per mode and group |
 | FL-5 | More than 8 keys found | the oldest (least recently heard) entry drops, the new one on top |
+
+## Search reliability (branch `searchfix`, docs/plus.md "Search reliability")
+
+The owner's beta.7 report: the DMR search did not catch the other radio sending DMR direct mode in the same room. Receive
+only in every row: our radio keys nothing (PTT stops the search). The other radio transmits on the owner's authorised
+frequencies (the owner's licence). Rows SX (SR-1..8 are the search range rows above). Write down the search screen's
+"Sweep 436.xxxx  NN/s" (steps a second), "Pass N  hits H  floor F" before and after each row; those three figures
+settle what the host model could only assume.
+
+| # | Do | Expect |
+|---|---|---|
+| SX-1 | Nothing on air. DMR search, the range 436.000-436.500 typed in the range editor (`*`), step 12.5k; let it run 30 s | "Sweep ... 13/s" (a quiet DMR step 75 ms); Pass goes up about every 3 s; **hits stays 0**; floor steady. Write down the floor. Hits climbing on a quiet band = the floor problem this branch fixes; report the floor |
+| SX-2 | Same, P25 search | "40/s"; hits 0; floor the same as SX-1 within a few dB |
+| SX-3 | **The owner's case.** The other radio: DMR direct mode (simplex), 436.275, CC1, TS1, TG 1, LOW power, same room, a few metres away; overs of 5-10 s with 5 s pauses. DMR search 436.000-436.500 already running | found as "436.2750 CC1 TS1 DIR" with "TG 1 from <its ID>" and the call plays, normally within the first over (host model: median 2.5 s, 9 of 10 within 20 s, 195 of 200 within a minute). Never a find on 436.2625 / 436.2875. Before this branch: 21.5 s median, 15 % not within a minute (the model) |
+| SX-4 | SX-3 with the range typed 436.010-436.500 (off the channel grid) | the screen's first step is 436.0125 (the steps stay on the 12.5 kHz grid); found on 436.2750 as in SX-3 |
+| SX-5 | SX-3 on 433.200 with the range 436.000-436.500 | not found (433.200 is outside the range: correct). With the range 432.700-433.700 (or +-500 kHz around 433.200): found on 433.2000 as in SX-3 |
+| SX-6 | SX-3 with the other radio on HIGH power, 1 m away (the front end overloaded) | found on 436.2750 (the middle of the strong steps); "hits" grows by 1-3 per over at most (the steps next to it are not probed one by one) |
+| SX-7 | All digital search, SX-3's settings | "Probe DMR 436.2750" directly (no "Probe P25" first: the readings rose and fell as a direct mode carrier's), then the call plays; normally within the first over |
+| SX-8 | P25 search: the other radio P25 (NAC $659, TG 101) on 433.500, LOW power, same room, 5 s overs; range +-1 MHz | found on 433.5000 within 1-2 overs; hits small (no probes of 433.4875 / 433.5125) |
+| SX-9 | DMR search on 6.25 kHz raster: the other radio on 436.28125 (if it can), range 436.000-436.500, 12.5k | found on 436.2812 (the half step between 436.2750 and 436.2875); with 6.25k steps found on 436.2812 too |
+| SX-10 | The other radio sends FM (a long over) on 436.300 inside SX-3's range | "Probe 436.3000" once, then the sweep passes it (10 s, then 30 s while it stays); a DMR over on 436.275 meanwhile is still found |
+| SX-11 | During SX-3, key the other radio for 1-2 s only, several times | each short burst may be missed (the probe needs a DMR sync: once per 360 ms in a call), but the frequency is **never skipped** for the next over: the next 5 s over is found |
+| SX-12 | Leave the search screen during a probe; Back; PTT during "Probe" | as before: stops (5 s after leaving), Back stops at once, PTT transmits nothing |
+
+What to send back if SX-3 still misses: the three screen figures (steps/s, hits, floor) before and during the other
+radio's over, whether "Probe ..." showed and on which frequency, and how long the over was. A floor that jumps up by
+20-30 dB during the over says the receiver's level reading (FD6818 register 0x67) is desensed across the range by the
+strong signal; "Probe 436.2750" shown but no find says the DMR modem's lock in the 1.1 s window is the limit.

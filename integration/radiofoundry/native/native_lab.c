@@ -188,7 +188,14 @@ static void scan_give_back(radio_sm_t *sm)
  * NAC and any talkgroup. P25 frames within P25S_PROBE_MS: the call plays and is noted, and the frequency is given
  * back P25S_END_MS after the last frame; none: given back at once (the search skips it for a while). Receive only:
  * PTT is consumed (it stops the search), never keyed. */
+#if CONFIG_SEARCH_SURE
+/* DDM32 Plus surer search: the zone scan's probe time for this receiver (SCAN_P25_PROBE_MS: its start and a frame
+ * with a NID; 0.7 s left a slow start's P25 unheard and skipped); a carrier that went off the air meanwhile
+ * (p25s_carrier_gone) is given back at once and not skipped */
+enum { P25S_PROBE_MS=1200, P25S_END_MS=1500 };
+#else
 enum { P25S_PROBE_MS=700, P25S_END_MS=1500 };
+#endif
 static bool search_owned, search_release, search_was_p25;
 static uint32_t search_taken_ms, search_hz, search_frames0;
 #if CONFIG_ALL_SEARCH
@@ -313,7 +320,12 @@ static void search_service(radio_sm_t *sm)
             p25s_probe_found(nac,tg,src,now);
             search_was_p25=true;
         }
-        if(p25 ? now-last_ms<P25S_END_MS : now-search_taken_ms<P25S_PROBE_MS)return;
+#if CONFIG_SEARCH_SURE
+        bool gone=!p25 && p25s_carrier_gone(now);    /* off the air: given back at once (and not skipped) */
+#else
+        const bool gone=false;
+#endif
+        if(!gone && (p25 ? now-last_ms<P25S_END_MS : now-search_taken_ms<P25S_PROBE_MS))return;
         search_let_go();
     }
     if(voice_owner || test.owned || p25_lab_busy())return;    /* the worker is still letting go */

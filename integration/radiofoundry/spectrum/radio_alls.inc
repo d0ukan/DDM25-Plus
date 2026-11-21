@@ -102,6 +102,13 @@ static void __attribute__((noinline)) alls_service(radio_sm_t *sm, uint32_t now_
 		// heard, so the mode's window still runs out if it never does
 		dmrs_heard_t h;
 		alls_heard(&h, now_ms);
+#if CONFIG_SEARCH_SURE
+		if (dmrs_mode() == DMRS_MODE_DMR || dmrs_mode() == DMRS_MODE_NXDN) {
+			radio_status_t st;
+			board.radio->status(&st);
+			h.rssi_dbm = st.rssi_dbm;	// the level on the radio core's receiver (radio/searchsure.h)
+		}
+#endif
 		if (dmrs_probe(&h, now_ms) != 0)
 			alls_setup(sm, now_ms);	// the next mode on this frequency, or the sweep's next step
 	}

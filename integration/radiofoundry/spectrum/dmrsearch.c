@@ -6,6 +6,12 @@
 #if CONFIG_DMR_SEARCH
 #include <string.h>
 #include "radio/dmrsearch.h"
+#if CONFIG_SEARCH_SURE
+#if !CONFIG_SEARCH_FAST
+#error "SEARCH_SURE builds on SEARCH_FAST"
+#endif
+#include "radio/searchsure.h"
+#endif
 
 static dmrs_view_t s;
 #if CONFIG_ALL_SEARCH
@@ -45,19 +51,43 @@ static uint32_t credit_ms;
 #if CONFIG_SEARCH_FAST
 /* The faster sweep (DMRS_QUICK_MS): the step's stage, a strong first reading, the step before (read the quick way) and
  * the step a look back came from */
-enum { ST_QUICK, ST_MORE, ST_BACK };
+enum { ST_QUICK, ST_MORE, ST_BACK, ST_AIM };
 static uint8_t stage;
 static bool maybe, peaked;
 static uint32_t prev_hz, back_from;
+#endif
+#if CONFIG_SEARCH_SURE
+/* The surer search (radio/searchsure.h): the floor, the run being followed and the last probe's skirt; ST_AIM reads
+ * the run's middle before it is probed. low: the step's weakest settled reading, tdma_hint: the hit's readings rose
+ * and fell as a direct mode DMR carrier's (the all digital search probes DMR first then). The probe's readings
+ * (dmrs_heard_t.rssi_dbm): a level heard, when it was last on, ups (rises from a gap: a TDMA carrier), something of
+ * a mode heard (some: never skipped). step_q4: a sweep step's time (ms x 16, the screen's steps a second) */
+static sure_t u;
+static int16_t low;
+static uint8_t nset;		/* the step's settled readings */
+static bool tdma_hint, level_known, low_seen, tdma, some;
+static uint8_t ups;
+static uint32_t on_ms, step_ms0, step_q4;
 #endif
 
 static void begin_write(void) { seq++; __asm__ volatile("" ::: "memory"); }
 static void end_write(void) { __asm__ volatile("" ::: "memory"); seq++; }
 
+/* A skip entry's frequency: the same, or (the surer search) within half a step (a run's middle may come out a half
+ * step off from one pass to the next) */
+static bool same_hz(uint32_t a, uint32_t b)
+{
+#if CONFIG_SEARCH_SURE
+	return (a > b ? a - b : b - a) <= s.step_hz / 2u;
+#else
+	return a == b;
+#endif
+}
+
 static bool skipped(uint32_t hz, uint32_t now_ms)
 {
 	for (unsigned i = 0; i < DMRS_SKIP_MAX; i++)
-		if (skip[i].hz == hz && (int32_t)(skip[i].until_ms - now_ms) > 0)
+		if (same_hz(skip[i].hz, hz) && (int32_t)(skip[i].until_ms - now_ms) > 0)
 			return true;
 	return false;
 }
@@ -68,7 +98,7 @@ static void add_skip(uint32_t hz, uint32_t now_ms)
 	/* Its own entry (running or run out: a repeat gets the long skip), else one run out, else the one ending first */
 	unsigned pick = DMRS_SKIP_MAX;
 	for (unsigned i = 0; i < DMRS_SKIP_MAX && pick == DMRS_SKIP_MAX; i++)
-		if (skip[i].hz == hz)
+		if (same_hz(skip[i].hz, hz))
 			pick = i;
 	bool again = pick < DMRS_SKIP_MAX && (int32_t)(now_ms - skip[pick].until_ms) < (int32_t)DMRS_AGAIN_MS;
 	for (unsigned i = 0; i < DMRS_SKIP_MAX && pick == DMRS_SKIP_MAX; i++)
@@ -152,6 +182,9 @@ static void tuned(uint32_t now_ms)
 #if CONFIG_SEARCH_FAST
 	maybe = peaked = false;
 #endif
+#if CONFIG_SEARCH_SURE
+	nset = 0;
+#endif
 }
 
 static uint32_t start(uint8_t kind, uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t now_ms)
@@ -161,6 +194,15 @@ static uint32_t start(uint8_t kind, uint32_t lo_hz, uint32_t hi_hz, uint32_t ste
 		lo_hz = hi_hz;
 		hi_hz = t;
 	}
+#if CONFIG_SEARCH_SURE
+	{
+		/* The steps on the channel grid (multiples of the step), whatever start was typed: a 12.5 kHz search of
+		 * 436.010-436.500 reads 436.0125, ..., 436.2750, not 436.0100, ..., 436.2725 (3.75 kHz off every channel) */
+		uint32_t st = step_hz ? step_hz : 12500u, a = lo_hz + (st - lo_hz % st) % st;
+		if (a <= hi_hz)
+			lo_hz = a;
+	}
+#endif
 	begin_write();
 	if (s.kind != kind)
 		s.found_n = 0;	/* the other kind's finds: not this search's */
@@ -184,6 +226,13 @@ static uint32_t start(uint8_t kind, uint32_t lo_hz, uint32_t hi_hz, uint32_t ste
 #if CONFIG_SEARCH_FAST
 	stage = ST_QUICK;
 	prev_hz = 0;
+#endif
+#if CONFIG_SEARCH_SURE
+	memset(&u, 0, sizeof u);	/* the floor learned anew from the first step */
+	tdma_hint = false;
+	s.step_ms = 0;
+	step_q4 = 0;
+	step_ms0 = now_ms;
 #endif
 	read_ms = now_ms;
 	reads_seen = reads;
@@ -229,6 +278,12 @@ static uint8_t first_mode(void)
 			return s.found[i].mode;
 		}
 	}
+#if CONFIG_SEARCH_SURE
+	if (tdma_hint) {
+		tried = (uint8_t)(1u << DMRS_MODE_DMR);	/* rose and fell as a direct mode DMR carrier: P25 can't be it */
+		return DMRS_MODE_DMR;
+	}
+#endif
 	return next_mode();
 #else
 	return DMRS_MODE_DMR;
@@ -246,8 +301,148 @@ static uint32_t window_ms(void)
 	if (s.mode == DMRS_MODE_NXDN)
 		return DMRS_NXDN_PROBE_MS;
 #endif
+#if CONFIG_SEARCH_SURE
+	if (tdma || tdma_hint || some)
+		return DMRS_PROBE_LONG_MS;	/* a direct mode carrier, or DMR heard: its sync comes once a superframe */
+#endif
 	return DMRS_PROBE_MS;
 }
+
+#if CONFIG_SEARCH_SURE
+/* A sweep step done: the screen's step time (probes and the hand-offs left out) */
+static void step_note(uint32_t now_ms)
+{
+	uint32_t dt = now_ms - step_ms0;
+	step_ms0 = now_ms;
+	if (dt >= 1000u)
+		return;
+	step_q4 = step_q4 ? (uint32_t)((int32_t)step_q4 + ((int32_t)(dt * 16u) - (int32_t)step_q4) / 8) : dt * 16u;
+	s.step_ms = (uint16_t)((step_q4 + 8u) / 16u);
+}
+
+/* The frequency held now is a hit: the probe starts (within begin_write). lvl: its level */
+static void probe_here(int16_t lvl, uint32_t now_ms)
+{
+	if (!u.climbing) {
+		u.run_lo = u.run_hi = s.at_hz;	/* a hit without a run (a revisit, the range's top): its own skirt */
+		u.run_lvl = lvl;
+	}
+	u.climbing = false;
+	tdma_hint = peaked && lvl >= DMRS_HIT_MIN_DBM && lvl - low >= 15;
+	s.phase = DMRS_PROBE;
+	s.mode = first_mode();
+	s.hits++;
+	held = false;	/* a new probe: no entry of it yet */
+	stage = ST_QUICK;
+	prev_hz = 0;
+	hit_ms = on_ms = now_ms;
+	heard_here = was_call = ended = false;
+	level_known = low_seen = tdma = some = false;
+	ups = 0;
+}
+
+/* A step's readings are complete (strong against the floor; its level the peak): follow a run, probe its middle, or
+ * go on (radio/searchsure.h) */
+static uint32_t sure_step(bool strong, uint32_t now_ms, bool *hit)
+{
+	int16_t lvl = peak;
+	begin_write();
+	if (!u.floor_ok)
+		strong = false;	/* the first step teaches the floor */
+	if (stage == ST_AIM) {
+		stage = ST_QUICK;
+		if (strong && !skipped(s.at_hz, now_ms)) {
+			probe_here(lvl, now_ms);
+			end_write();
+			*hit = true;
+			return 0;
+		}
+		/* nothing there now (the over ended): on past the run, nothing skipped */
+		u.climbing = false;
+		revisiting = false;
+		s.at_hz = resume_hz;
+		end_write();
+		tuned(now_ms);
+		return s.at_hz;
+	}
+	bool skirt = strong && sure_skirt(&u, s.at_hz, lvl, now_ms, s.sweeps);
+	sure_floor(&u, &floor_q4, lvl, strong);
+	s.floor_dbm = (int16_t)(floor_q4 / 16);
+	bool cand = strong && !skirt;
+	if (revisiting && cand && !skipped(s.at_hz, now_ms)) {
+		probe_here(lvl, now_ms);	/* a find read again: its own frequency, no run */
+		end_write();
+		*hit = true;
+		return 0;
+	}
+	if (!revisiting && (u.climbing || cand)) {
+		stage = ST_QUICK;
+		prev_hz = 0;
+		int r = sure_climb(&u, s.at_hz, lvl, cand);
+		if (r == SURE_WIDE) {
+			floor_q4 = (int32_t)u.run_lvl * 16;	/* the band's level raised, no carrier: the floor */
+			s.floor_dbm = u.run_lvl;
+			sure_set_skirt(&u, now_ms, s.sweeps);
+			strong = false;
+		} else if (r == SURE_MORE && s.at_hz + s.step_hz <= s.hi_hz) {
+			s.at_hz += s.step_hz;	/* the next step (no revisit inside a run) */
+			step_note(now_ms);
+			end_write();
+			tuned(now_ms);
+			return s.at_hz;
+		} else {
+		/* The run is complete: its middle is probed; the sweep then goes on from the step after the run */
+		uint32_t t = sure_target(&u);
+		resume_hz = u.run_hi + s.step_hz <= s.hi_hz ? u.run_hi + s.step_hz : next_step(u.run_hi);
+		revisiting = true;
+		if (skipped(t, now_ms)) {
+			sure_set_skirt(&u, now_ms, s.sweeps);	/* a carrier known not to be ours: its steps passed over */
+			revisiting = false;
+			s.at_hz = resume_hz;
+			end_write();
+			tuned(now_ms);
+			return s.at_hz;
+		}
+		if (t == s.at_hz) {
+			probe_here(u.run_lvl, now_ms);
+			end_write();
+			*hit = true;
+			return 0;
+		}
+		stage = ST_AIM;
+		s.at_hz = t;
+		end_write();
+		tuned(now_ms);
+		return t;
+		}
+	}
+	if (stage == ST_BACK)
+		s.at_hz = back_from;	/* nothing there either: on from where the look back began */
+	prev_hz = stage != ST_BACK && !strong ? s.at_hz : 0u;	/* a strong (skipped) step is known: no look back to it */
+	stage = ST_QUICK;
+	s.at_hz = advance(now_ms);
+	step_note(now_ms);
+	end_write();
+	tuned(now_ms);
+	return s.at_hz;
+}
+
+/* A probe's reading (dmrs_heard_t.rssi_dbm): on (the hit's half margin) or in a gap; rises from gaps: TDMA */
+static void level_note(int16_t lvl, uint32_t now_ms)
+{
+	int16_t floor = (int16_t)(floor_q4 / 16);
+	bool on = lvl - floor >= DMRS_HIT_DB / 2 && lvl >= DMRS_HIT_MIN_DBM - DMRS_HIT_DB / 2;
+	if (on) {
+		on_ms = now_ms;
+		if (low_seen && ups < 255u && ++ups >= 2u)
+			tdma = true;
+		low_seen = false;
+	} else {
+		low_seen = true;
+	}
+	level_known = true;
+}
+#endif
 
 uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 {
@@ -262,7 +457,7 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 		return 0;
 	}
 #if CONFIG_SEARCH_FAST
-	if (now_ms - tuned_ms < (stage == ST_BACK ? DMRS_SETTLE_MS : DMRS_QUICK_MS))
+	if (now_ms - tuned_ms < (stage == ST_BACK || stage == ST_AIM ? DMRS_SETTLE_MS : DMRS_QUICK_MS))
 		return 0;
 #else
 	if (now_ms - tuned_ms < DMRS_SETTLE_MS)
@@ -281,6 +476,11 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	}
 	if (!peaked || rssi_dbm > peak)
 		peak = rssi_dbm;	/* the settled readings' peak */
+#if CONFIG_SEARCH_SURE
+	if (!peaked || rssi_dbm < low)
+		low = rssi_dbm;		/* ... and their weakest */
+	nset++;
+#endif
 	peaked = true;
 #else
 	if (nreads == 0 || rssi_dbm > peak)
@@ -288,6 +488,11 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 #endif
 	nreads++;
 	bool strong = peak >= DMRS_HIT_MIN_DBM && peak - floor >= DMRS_HIT_DB;
+#if CONFIG_SEARCH_SURE
+	if ((stage == ST_AIM || strong) && nset < DMRS_READS)
+		return 0;	/* a strong step and the run's middle: all their settled readings, so the run compares the
+				 * peaks of whole frames (a direct mode burst caught or half caught) and the gaps show */
+#endif
 #if CONFIG_SEARCH_FAST
 	if (!strong && nreads < DMRS_READS + (stage == ST_MORE ? DMRS_MORE_READS : 0u))
 		return 0;	/* a direct mode burst may still come in the other half of the frame */
@@ -309,6 +514,9 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 #else
 	if (!strong && nreads < DMRS_READS)
 		return 0;	/* a direct mode burst may still come in the other half of the frame */
+#endif
+#if CONFIG_SEARCH_SURE
+	return sure_step(strong, now_ms, hit);
 #endif
 	begin_write();
 	if (!strong) {
@@ -441,6 +649,10 @@ static uint32_t resume(uint32_t now_ms)
 	s.phase = DMRS_SWEEP;
 	s.playing = false;
 	held = false;
+#if CONFIG_SEARCH_SURE
+	sure_set_skirt(&u, now_ms, s.sweeps);	/* the probed carrier's other steps are its skirt */
+	step_ms0 = now_ms;
+#endif
 #if CONFIG_SEARCH_FAST
 	stage = ST_QUICK;
 	prev_hz = 0;	/* the last readings were the probe's */
@@ -464,6 +676,12 @@ uint32_t dmrs_probe(const dmrs_heard_t *h, uint32_t now_ms)
 	bool dmr = h->bursts >= DMRS_MIN_BURSTS || h->call || h->other;
 	uint32_t hz = 0;
 	begin_write();
+#if CONFIG_SEARCH_SURE
+	if (h->bursts != 0 || dmr)
+		some = true;	/* frames of the mode probed (one is not enough to name it): this frequency is never skipped */
+	if (h->rssi_dbm != 0)
+		level_note(h->rssi_dbm, now_ms);
+#endif
 	if (dmr) {
 		if (!heard_here) {
 			heard_here = true;
@@ -486,21 +704,38 @@ uint32_t dmrs_probe(const dmrs_heard_t *h, uint32_t now_ms)
 			}
 			leave = now_ms - end_ms >= DMRS_HANG_MS;	/* a reply in the hang plays too */
 		} else if (!heard_here) {
+#if CONFIG_SEARCH_SURE
+			/* The carrier went off the air (its level under the hit's half margin for SURE_GONE_MS): the over ended
+			 * before the mode was heard. On at once, nothing skipped, no other mode tried */
+			bool gone = level_known && now_ms - on_ms >= SURE_GONE_MS;
+			leave = gone || now_ms - hit_ms >= window_ms();
+#else
+			const bool gone = false;
+			(void)gone;
 			leave = now_ms - hit_ms >= window_ms();
+#endif
 #if CONFIG_ALL_SEARCH
-			if (leave && s.kind == DMRS_KIND_ALL) {
+			if (leave && !gone && s.kind == DMRS_KIND_ALL) {
 				uint8_t m = next_mode();
 				if (m != DMRS_MODES) {
 					s.mode = m;	/* not this mode: the next one, on the same frequency */
 					held = false;
 					hit_ms = now_ms;
 					was_call = ended = false;
+#if CONFIG_SEARCH_SURE
+					on_ms = now_ms;	/* that mode's receiver reads anew */
+					level_known = low_seen = false;
+#endif
 					end_write();
 					return s.at_hz;	/* the receiver is set up for it */
 				}
 			}
 #endif
+#if CONFIG_SEARCH_SURE
+			if (leave && !gone && !some)
+#else
 			if (leave)
+#endif
 				add_skip(s.at_hz, now_ms);	/* a carrier, not DMR (FM, P25, data of another kind); the all
 								 * digital search: none of its modes (FM, a beacon, data) */
 		} else {
@@ -625,11 +860,17 @@ void dmrs_retuned(uint32_t now_ms)
 	if (s.phase == DMRS_SWEEP) {
 		tuned(now_ms);	/* the step settles anew, read from its start */
 #if CONFIG_SEARCH_FAST
+#if CONFIG_SEARCH_SURE
+		if (stage != ST_AIM)	/* the run's middle stays aimed at */
+#endif
 		stage = ST_QUICK;
 		prev_hz = 0;
 #endif
 	} else {
 		hit_ms = now_ms;	/* the probe's window (or the late wait) from now */
+#if CONFIG_SEARCH_SURE
+		on_ms = now_ms;
+#endif
 	}
 }
 

@@ -4,6 +4,12 @@
 #if CONFIG_P25_SEARCH
 #include <string.h>
 #include "radio/p25search.h"
+#if CONFIG_SEARCH_SURE
+#if !CONFIG_SEARCH_FAST
+#error "SEARCH_SURE builds on SEARCH_FAST"
+#endif
+#include "radio/searchsure.h"
+#endif
 
 static p25s_view_t s;
 static uint32_t tuned_ms;
@@ -24,18 +30,38 @@ static uint32_t credit_ms;
 #if CONFIG_SEARCH_FAST
 /* The faster sweep (P25S_QUICK_MS): the step's stage, the step before it when only its quick reading was taken, and
  * the step a look back came from */
-enum { ST_QUICK, ST_CONFIRM, ST_BACK };
+enum { ST_QUICK, ST_CONFIRM, ST_BACK, ST_AIM };
 static uint8_t stage;
 static uint32_t prev_hz, back_from;
+#endif
+#if CONFIG_SEARCH_SURE
+/* The surer search (radio/searchsure.h): the floor, the run being followed and the last probe's skirt; ST_AIM reads
+ * the run's middle before it is probed. While the native receiver probes, the radio task still reads the level
+ * (p25s_level): when it was last on, so a carrier that went off the air during the probe is not skipped.
+ * step_q4: a sweep step's time (ms x 16, the screen's steps a second) */
+static sure_t u;
+static bool level_known;
+static uint32_t on_ms, step_ms0, step_q4;
 #endif
 
 static void begin_write(void) { seq++; __asm__ volatile("" ::: "memory"); }
 static void end_write(void) { __asm__ volatile("" ::: "memory"); seq++; }
 
+/* A skip entry's frequency: the same, or (the surer search) within half a step (a run's middle may come out a half
+ * step off from one pass to the next) */
+static bool same_hz(uint32_t a, uint32_t b)
+{
+#if CONFIG_SEARCH_SURE
+	return (a > b ? a - b : b - a) <= s.step_hz / 2u;
+#else
+	return a == b;
+#endif
+}
+
 static bool skipped(uint32_t hz, uint32_t now_ms)
 {
 	for (unsigned i = 0; i < P25S_SKIP_MAX; i++)
-		if (skip[i].hz == hz && (int32_t)(skip[i].until_ms - now_ms) > 0)
+		if (same_hz(skip[i].hz, hz) && (int32_t)(skip[i].until_ms - now_ms) > 0)
 			return true;
 	return false;
 }
@@ -46,7 +72,7 @@ static void add_skip(uint32_t hz, uint32_t now_ms)
 	/* Its own entry (running or run out: a repeat gets the long skip), else one run out, else the one ending first */
 	unsigned pick = P25S_SKIP_MAX;
 	for (unsigned i = 0; i < P25S_SKIP_MAX && pick == P25S_SKIP_MAX; i++)
-		if (skip[i].hz == hz)
+		if (same_hz(skip[i].hz, hz))
 			pick = i;
 	bool again = pick < P25S_SKIP_MAX && (int32_t)(now_ms - skip[pick].until_ms) < (int32_t)P25S_AGAIN_MS;
 	for (unsigned i = 0; i < P25S_SKIP_MAX && pick == P25S_SKIP_MAX; i++)
@@ -129,6 +155,15 @@ uint32_t p25s_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 		lo_hz = hi_hz;
 		hi_hz = t;
 	}
+#if CONFIG_SEARCH_SURE
+	{
+		/* The steps on the channel grid (multiples of the step), whatever start was typed: a 12.5 kHz search of
+		 * 436.010-436.500 reads 436.0125, ..., 436.2750, not 436.0100, ..., 436.2725 (3.75 kHz off every channel) */
+		uint32_t st = step_hz ? step_hz : 12500u, a = lo_hz + (st - lo_hz % st) % st;
+		if (a <= hi_hz)
+			lo_hz = a;
+	}
+#endif
 	begin_write();
 	uint8_t keep_n = s.found_n;
 	p25s_found_t keep[P25S_FOUND_MAX];
@@ -153,11 +188,140 @@ uint32_t p25s_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 	stage = ST_QUICK;
 	prev_hz = 0;
 #endif
+#if CONFIG_SEARCH_SURE
+	memset(&u, 0, sizeof u);	/* the floor learned anew from the first step */
+	step_q4 = 0;
+	step_ms0 = now_ms;
+#endif
 	tuned_ms = read_ms = now_ms;
 	reads_seen = reads;
 	epoch++;
 	return lo_hz;
 }
+
+#if CONFIG_SEARCH_SURE
+/* A sweep step done: the screen's step time (probes and the hand-offs left out) */
+static void step_note(uint32_t now_ms)
+{
+	uint32_t dt = now_ms - step_ms0;
+	step_ms0 = now_ms;
+	if (dt >= 1000u)
+		return;
+	step_q4 = step_q4 ? (uint32_t)((int32_t)step_q4 + ((int32_t)(dt * 16u) - (int32_t)step_q4) / 8) : dt * 16u;
+	s.step_ms = (uint16_t)((step_q4 + 8u) / 16u);
+}
+
+/* The frequency held now is a hit: the native receiver probes it (within begin_write) */
+static void probe_here(int16_t lvl, uint32_t now_ms)
+{
+	if (!u.climbing) {
+		u.run_lo = u.run_hi = s.at_hz;	/* a hit without a run (a revisit, the range's top): its own skirt */
+		u.run_lvl = lvl;
+	}
+	u.climbing = false;
+	s.phase = P25S_PROBE;
+	s.hits++;
+	held = false;
+	stage = ST_QUICK;
+	prev_hz = 0;
+	level_known = false;
+	on_ms = now_ms;
+}
+
+/* A step's reading is complete (strong against the floor): follow a run, probe its middle, or go on
+ * (radio/searchsure.h) */
+static uint32_t sure_step(bool strong, int16_t lvl, uint32_t now_ms, bool *hit)
+{
+	begin_write();
+	if (!u.floor_ok)
+		strong = false;	/* the first step teaches the floor */
+	if (stage == ST_AIM) {
+		stage = ST_QUICK;
+		if (strong && !skipped(s.at_hz, now_ms)) {
+			probe_here(lvl, now_ms);
+			end_write();
+			*hit = true;
+			return 0;
+		}
+		u.climbing = false;	/* nothing there now (the over ended): on past the run, nothing skipped */
+		revisiting = false;
+		s.at_hz = resume_hz;
+		end_write();
+		tuned_ms = now_ms;
+		return s.at_hz;
+	}
+	bool skirt = strong && sure_skirt(&u, s.at_hz, lvl, now_ms, s.sweeps);
+	sure_floor(&u, &floor_q4, lvl, strong);
+	s.floor_dbm = (int16_t)(floor_q4 / 16);
+	bool cand = strong && !skirt;
+	if (revisiting && cand && !skipped(s.at_hz, now_ms)) {
+		probe_here(lvl, now_ms);	/* a find read again: its own frequency, no run */
+		end_write();
+		*hit = true;
+		return 0;
+	}
+	if (!revisiting && (u.climbing || cand)) {
+		stage = ST_QUICK;
+		prev_hz = 0;
+		int r = sure_climb(&u, s.at_hz, lvl, cand);
+		if (r == SURE_WIDE) {
+			floor_q4 = (int32_t)u.run_lvl * 16;	/* the band's level raised, no carrier: the floor */
+			s.floor_dbm = u.run_lvl;
+			sure_set_skirt(&u, now_ms, s.sweeps);
+			strong = false;
+		} else if (r == SURE_MORE && s.at_hz + s.step_hz <= s.hi_hz) {
+			s.at_hz += s.step_hz;	/* the next step (no revisit inside a run) */
+			step_note(now_ms);
+			end_write();
+			tuned_ms = now_ms;
+			return s.at_hz;
+		} else {
+		/* The run is complete: its middle is probed; the sweep then goes on from the step after the run */
+		uint32_t t = sure_target(&u);
+		resume_hz = u.run_hi + s.step_hz <= s.hi_hz ? u.run_hi + s.step_hz : next_step(u.run_hi);
+		revisiting = true;
+		if (skipped(t, now_ms)) {
+			sure_set_skirt(&u, now_ms, s.sweeps);	/* a carrier known not to be P25: its steps passed over */
+			revisiting = false;
+			s.at_hz = resume_hz;
+			end_write();
+			tuned_ms = now_ms;
+			return s.at_hz;
+		}
+		if (t == s.at_hz) {
+			probe_here(u.run_lvl, now_ms);
+			end_write();
+			*hit = true;
+			return 0;
+		}
+		stage = ST_AIM;
+		s.at_hz = t;
+		end_write();
+		tuned_ms = now_ms;
+		return t;
+		}
+	}
+	if (!strong && stage == ST_CONFIRM && prev_hz != 0) {
+		/* Strong at once, quiet settled: the step before, read quickly, may be where the signal is */
+		back_from = s.at_hz;
+		s.at_hz = prev_hz;
+		prev_hz = 0;
+		stage = ST_BACK;
+		end_write();
+		tuned_ms = now_ms;
+		return s.at_hz;
+	}
+	if (stage == ST_BACK)
+		s.at_hz = back_from;	/* nothing there either: on from where the look back began */
+	prev_hz = stage == ST_QUICK ? s.at_hz : 0u;
+	stage = ST_QUICK;
+	s.at_hz = advance(now_ms);
+	step_note(now_ms);
+	end_write();
+	tuned_ms = now_ms;
+	return s.at_hz;
+}
+#endif
 
 uint32_t p25s_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 {
@@ -187,6 +351,9 @@ uint32_t p25s_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 		stage = ST_CONFIRM;	/* read again settled, on the same step (no retune) */
 		return 0;
 	}
+#endif
+#if CONFIG_SEARCH_SURE
+	return sure_step(strong, rssi_dbm, now_ms, hit);
 #endif
 	begin_write();
 	if (!strong) {
@@ -315,9 +482,17 @@ uint32_t p25s_probe_done(bool was_p25, uint32_t now_ms)
 {
 	if (s.phase != P25S_PROBE)
 		return 0;
+#if CONFIG_SEARCH_SURE
+	if (!was_p25 && !p25s_carrier_gone(now_ms))	/* a carrier that went off the air may have been P25 */
+#else
 	if (!was_p25)
+#endif
 		add_skip(s.at_hz, now_ms);
 	begin_write();
+#if CONFIG_SEARCH_SURE
+	sure_set_skirt(&u, now_ms, s.sweeps);	/* the probed carrier's other steps are its skirt */
+	step_ms0 = now_ms;
+#endif
 	s.playing = false;
 	s.phase = P25S_SWEEP;
 	held = false;
@@ -346,6 +521,23 @@ void p25s_retuned(uint32_t now_ms)
 		stage = ST_QUICK;	/* read anew from the start */
 #endif
 }
+
+#if CONFIG_SEARCH_SURE
+void p25s_level(int16_t rssi_dbm, uint32_t now_ms)
+{
+	if (s.phase != P25S_PROBE || rssi_dbm == 0)
+		return;
+	int16_t floor = (int16_t)(floor_q4 / 16);
+	if (rssi_dbm - floor >= P25S_HIT_DB / 2 && rssi_dbm >= P25S_HIT_MIN_DBM - P25S_HIT_DB / 2)
+		on_ms = now_ms;
+	level_known = true;
+}
+
+bool p25s_carrier_gone(uint32_t now_ms)
+{
+	return s.phase == P25S_PROBE && level_known && now_ms - on_ms >= SURE_GONE_MS;
+}
+#endif
 
 uint32_t p25s_epoch(void)
 {

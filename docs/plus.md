@@ -301,6 +301,7 @@ Tools > P25 search: finds P25 anywhere in a range whatever its NAC and talkgroup
 PTT never transmits here: it is consumed and stops the search. Any other user request ends it and tunes the
 channel; the search stops by itself 5 s after its screen was left. Code: `integration/radiofoundry/spectrum/p25search.*`,
 `ui_p25search.c`, `native_lab.c` (`search_service`), hooks in `tools/plus_features.py` (`prepare_p25_search`).
+The plus build (`CONFIG_SEARCH_SURE`) changes the hit, probe and skip rules: "Search reliability" below.
 Tests: `tests/plus/test_p25search.c` (engine) and `test_plus_p25search_sm` in `tests/classic/test_scan.inc` (the real
 state machine and native admission: sweep, any-NAC probe, found list, give back, skip, PTT never keys).
 
@@ -345,6 +346,9 @@ framing.
 | DMR | two bursts within 600 ms (a repeater sends every 60 ms; a direct mode call has a sync once per 360 ms superframe). Noted: frequency, color code (the latest burst that names one), slots with traffic (named by BS or TDMA direct sync), RPT (BS sync seen) and / or DIR (MS sync), the last call's talkgroup and source |
 | Call | a voice call plays (any talkgroup); held while it lasts and 2 s after it for a reply, then the sweep goes on from the next step. No call to play within 1.5 s of the hit (an idle repeater, data, an encrypted call, which is marked): on, probed again on the next pass |
 | Not DMR | after 600 ms; that frequency is not probed again for 10 s |
+
+The plus build (`CONFIG_SEARCH_SURE`) changes the hit, probe and skip rules of this table and of the all digital
+search: "Search reliability" below.
 
 Found list: 8 entries, newest first ("433.5000 CC1 TS2 RPT 3m", then "TG 2620 from 2620123"), kept across range
 changes; every 16 steps one find in the range is read again (round robin), so a new call there is caught in about two
@@ -438,6 +442,107 @@ What only the radio can confirm: the sweep's readings on the FM path catch a DMR
 search's readings in DMR mode; the FM / DMR board mode switch inside a probe (the DMR stack's start and its first
 bursts within 600 ms); the native receiver's lock within 700 ms for P25 and YSF; the NXDN modem's acquisition within
 900 ms (NXDN receive itself is still unverified on the radio, docs/nxdn.md).
+
+### Search reliability (`CONFIG_SEARCH_SURE`, branch `searchfix`; needs SEARCH_FAST)
+
+The owner's beta.7 report: P25, DMR and all digital search "skip a lot and miss"; a DMR search over a typed range of
+about 436.000-436.500 MHz did not catch the other radio sending DMR direct mode (436.275 or 433.200, CC1, TS1, TG 1,
+both radios on LOW power in the same room), and the stepping was slow. Audited end to end (engines, radio core
+hooks, native probe) and reproduced in a host model (`tests/plus/test_search_sure.c`, below). Nothing was measured on
+the radio: the rows SX-1.. in `docs/plus-radio-test.md` say what to read there.
+
+**Root causes, most likely first** (the model's figures before the fix in brackets):
+
+| # | Cause | Effect |
+|---|---|---|
+| 1 | **A strong nearby carrier.** A radio a few metres away reads strong 12.5-50 kHz off its frequency too (adjacent channel spill, an overloaded front end: a plateau of equal readings). The sweep goes upwards, so it met the carrier's lower skirt first and probed every strong step one by one: 0.6 s each, not DMR (off frequency), skipped 10 s / 30 s. The 8-entry skip list overflowed on a plateau, so the same steps were probed again every pass, and the real channel was reached seconds later, often after the over had ended | owner's case (436.275 in 436.000-436.500): found in 60 s 169 of 200, median 21.5 s, 57 probes a minute; all digital search 84 of 200 |
+| 2 | **The floor could lock up.** It started at -125 dBm and only quiet steps moved it. A receiver whose quiet reading sits at -115 dBm or above (the FD6818's formula has no board correction on the DM-32; other boards read 20-40 dB high) made every step a "hit" against -125: no step was ever quiet, so the floor never learned. Every step was probed and skipped: the sweep stood still ("slow"), the screen's hits climbed, the real signal was met only by chance | floor -112: P25 28 of 200, DMR 71, all digital 0; sweep 0 steps a second |
+| 3 | **Signals off the 12.5 kHz grid.** A signal on a 6.25 kHz raster (x.xx625), or any channel when the typed range starts off the grid (436.010 + n x 12.5 kHz is 2.5 kHz off every channel), reads on two steps but decodes on neither: probed off frequency, skipped | half step: P25 0 of 200, DMR 0; owner's case typed from 436.010: 59 of 200 |
+| 4 | **Probe windows short for late entry.** A direct mode voice call has a sync once per 360 ms superframe; one sync lost and the stack's start leave 600 ms short. The P25 search's native receiver had 700 ms, the zone scan gives the same receiver 1.2 s (its start is "under 700 ms", the tail is what was lost). A failed probe of a real channel skipped it 10 s, 30 s when it failed again within a minute | part of every row above |
+| 5 | **An over ending during the probe** (or before the native receiver's start) left nothing heard: the real channel was skipped for 10-30 s, so the next over there was missed too | short overs |
+| 6 | All digital: a hit is probed P25 first (0.7 s and the hand-offs), then DMR after the FM -> DMR switch: a short DMR over was often over before its DMR probe began | DMR direct 156 of 200, median 17 s |
+
+Not a cause: the reading's lag after a retune. The radio task polls every 25 ms; a step is read at the poll after
+the retune at the earliest and the FD6818's strength reading is a few ms behind (BK4819-class part); SEARCH_FAST's look
+back already covers a slower one (the model's tau 15 ms rows). The 75 ms DMR step is the floor for direct mode with
+25 ms polls (three readings so one lands in a 30 ms burst whatever its phase); a faster one would need the 10 ms tick
+to read the level (upstream's radio task), left for later.
+
+**What changed** (the engines `p25search.c` / `dmrsearch.c` with `searchsure.h`, both kinds of the DMR engine):
+
+| | Now |
+|---|---|
+| Floor | learned from the first step (that step makes no hit), falls at once to a lower reading, follows quiet steps slowly, rises only 1/4 dB per strong step (a long transmission or a cluster of strong neighbours can't lift it). A run of 16 equal strong steps (200 kHz flat) is the band's level raised, not a carrier: the floor takes it |
+| Run | a strong step is not probed at once: the sweep goes on while the next steps read as strong or stronger (within 4 dB of the run's strongest; a stronger step starts a new run) and then probes **the middle of the strongest run**: the peak of a strong carrier with its neighbours raised, the middle of an overload plateau, the half step between two equal steps (436.28125 at 12.5 kHz). The middle is read again (all three readings) before the probe; quiet there now (the over ended): on, nothing skipped |
+| Skirt | after a probe, the steps up to 50 kHz above the run that read 10 dB under it are that carrier's: not probed (4 s, the same pass) |
+| Grid | the steps are multiples of the step (436.010-436.500 at 12.5 kHz reads 436.0125 .. 436.2750 ..) |
+| DMR probe | the radio core hands the engine the level on every probe poll (`dmrs_heard_t.rssi_dbm`). A carrier whose level rises and falls as a direct mode one does, or that brought a single burst, is held `DMRS_PROBE_LONG_MS` 1.1 s (two superframes and the start); a repeater or a steady carrier 0.6 s as before |
+| P25 probe | 1.2 s (the zone scan's figure); the radio core reads the level while the native receiver probes (`p25s_level`) |
+| Skips | only a carrier that stayed on air for the whole window with nothing of the mode heard is skipped: a carrier that went off the air (its level under the hit's half margin for 200 ms) is given back at once, never skipped, no other mode tried; one burst / frame heard: never skipped. A skip covers half a step either side (a run's middle may come out half a step off next pass) |
+| All digital | a hit whose readings rose and fell (TDMA) is probed as DMR first (P25 can't be it); a steady one in the owner's order P25 > DMR > YSF > NXDN as before. P25 window 1.2 s |
+| Screen | the sweep line shows the steps a second ("Sweep 436.2750  13/s"; left out when the line has no room); "Pass N  hits H  floor F" as before. Together the three figures tell the owner's report apart: hits climbing on a quiet band = the floor; steps a second far under 13 (DMR) / 40 (P25) = probes |
+
+Unchanged: receive only (PTT stops the search, nothing keyed), the stop 5 s after the screen was left, the found list
+key, the revisits, the PC search log sections (`p25s`, `dmrs`, `alls`), and the engines without the switch (the
+model builds both).
+
+**Host model** (`tests/plus/test_search_sure.c`, run by `tools/test_searchfix.py`; the same engines built with
+SEARCH_SURE 0 and 1): the radio task's polls (25 ms +-1), the receiver (noise +-1 dB at -124 dBm or -112; selectivity
+6.25 kHz 6 dB, 12.5 kHz 30 dB, 25 kHz 45 dB, 37.5 kHz 55 dB, 50 kHz 60 dB, further 80 dB; a reading ceiling of -45 dBm
+for a radio in the room; a first-order lag tau 5 ms, 15 in one row), the DMR modem (within 1.5 kHz only; from 60 ms
+after a retune, 150 ms after the all digital search's FM -> DMR switch; three headers then a sync every 360 ms, each
+caught with probability 0.85; a repeater's every 60 ms), the native P25 receiver (start 250-1000 ms, a frame every 180
+ms). The transmitter keys 5-20 s overs with 3-10 s pauses from a random moment (TDMA phase random); 200 transmitters a
+row at a random step of +-1 MHz (433-435 MHz) unless the row says; found = in the found list within 60 s.
+
+| Row | Found of 200 | Median s to find | 90 % within s | Probes a minute | Steps a second (no transmitter) |
+|---|---|---|---|---|---|
+| p25-overs | 184 -> **200** | 8.1 -> **3.7** | 28.0 -> 10.6 | 10.1 -> 12.9 | 40.0 -> 40.0 |
+| p25-close | 89 -> **200** | 19.4 -> **4.7** | 99.0 -> 12.9 | 41.8 -> 13.1 | 40.0 -> 40.0 |
+| p25-highfloor | 28 -> **200** | 41.8 -> **4.0** | 99.0 -> 10.7 | 67.6 -> 12.3 | 0.0 -> 40.0 |
+| p25-half | 0 -> **200** | 99.0 -> **4.0** | 99.0 -> 11.2 | 6.8 -> 12.7 | 40.0 -> 40.0 |
+| p25-busy | 145 -> **195** | 18.6 -> **11.7** | 99.0 -> 31.6 | 52.8 -> 29.4 | 6.3 -> 12.7 |
+| dmr-owner-436275 | 169 -> **195** | 21.5 -> **2.5** | 99.0 -> 19.2 | 57.4 -> 17.5 | 13.3 -> 13.3 |
+| dmr-owner-offgrid | 59 -> **196** | 21.9 -> **2.5** | 99.0 -> 13.8 | 57.8 -> 16.3 | 13.3 -> 13.3 |
+| dmr-owner-433200 | 0 -> **0** | 99.0 -> **99.0** | 99.0 -> 99.0 | 57.7 -> 5.4 | 13.3 -> 13.3 |
+| dmr-direct | 186 -> **187** | 9.8 -> **9.3** | 35.2 -> 29.9 | 5.8 -> 4.0 | 13.3 -> 13.3 |
+| dmr-direct-lag15 | 184 -> **185** | 8.9 -> **9.1** | 31.1 -> 30.6 | 5.5 -> 3.8 | 13.3 -> 13.3 |
+| dmr-close | 89 -> **175** | 19.7 -> **12.5** | 99.0 -> 99.0 | 48.8 -> 5.7 | 13.3 -> 13.3 |
+| dmr-strong | 184 -> **189** | 12.4 -> **10.2** | 37.6 -> 24.3 | 12.5 -> 5.0 | 13.3 -> 13.3 |
+| dmr-highfloor | 71 -> **190** | 35.8 -> **9.5** | 99.0 -> 31.4 | 91.1 -> 4.2 | 0.0 -> 13.3 |
+| dmr-half | 0 -> **175** | 99.0 -> **11.8** | 99.0 -> 99.0 | 4.7 -> 4.0 | 13.3 -> 13.3 |
+| dmr-busy | 167 -> **186** | 16.5 -> **13.9** | 99.0 -> 39.8 | 41.7 -> 21.5 | 6.8 -> 9.9 |
+| dmr-repeater | 194 -> **194** | 9.4 -> **9.1** | 24.8 -> 24.0 | 6.9 -> 4.5 | 13.3 -> 13.3 |
+| dmr-steady | 200 -> **200** | 7.5 -> **6.8** | 11.8 -> 10.8 | 14.8 -> 9.2 | 13.3 -> 13.4 |
+| all-owner-436275 | 84 -> **197** | 29.8 -> **2.9** | 99.0 -> 26.4 | 14.1 -> 11.4 | 13.3 -> 13.3 |
+| all-dmr-direct | 156 -> **191** | 17.0 -> **10.3** | 99.0 -> 31.8 | 4.6 -> 4.2 | 13.3 -> 13.4 |
+| all-dmr-close | 22 -> **165** | 34.3 -> **14.9** | 99.0 -> 99.0 | 11.2 -> 4.6 | 13.3 -> 13.3 |
+| all-p25 | 131 -> **183** | 17.9 -> **10.0** | 99.0 -> 29.1 | 4.2 -> 3.8 | 13.3 -> 13.3 |
+| all-dmr-repeater | 156 -> **176** | 11.8 -> **10.9** | 99.0 -> 99.0 | 4.3 -> 3.5 | 13.3 -> 13.3 |
+| all-highfloor | 0 -> **188** | 99.0 -> **9.3** | 99.0 -> 34.1 | 19.0 -> 3.7 | 0.0 -> 13.3 |
+| all-busy | 75 -> **149** | 30.0 -> **26.8** | 99.0 -> 99.0 | 15.4 -> 11.2 | 2.3 -> 3.0 |
+
+99 = not within 60 s for that share. Rows: `owner` the owner's case (DMR direct, -30..-15 dBm with the -45 dBm
+ceiling, 436.000-436.500; `offgrid` typed from 436.010; `433200` outside the range: never found by either, the range
+is applied as typed); `direct` DMR direct mode -110..-60 dBm; `close` -40..-20 dBm in the room; `strong` -70..-50 dBm;
+`highfloor` a receiver reading -112 dBm quiet; `half` on a 6.25 kHz raster; `busy` six FM carriers in the range;
+`repeater` a DMR repeater; `steady` a direct mode carrier keyed all the time. What still misses: short overs whose
+rhythm matches the pass (one receiver: +-1 MHz is a 12 s pass for DMR; the owner's 500 kHz range is 3 s), and in
+`close` the band desensed far and wide (80 dB down everywhere) while the over lasts. The model's checks: never fewer
+finds than before (3 of 200 for the random overs), never a slower median or sweep, the owner's rows at least 190 of
+200 within a 4 s median, the high floor and half step rows found. Unit test of the engines step by step:
+`tests/plus/test_searchsure.c` (floor, run middle, half step, plateau, skirt, gone, long window, skips, grid, wide run,
+steps a second, all digital DMR first). The real radio state machine's P25, DMR and all digital search suites run with
+the switch (`test_radio_searchfix`).
+
+What only the radio can settle (rows SX-*): the floor the FD6818 reads on a quiet band (SX-1), how far a radio in the
+room raises the readings around it (SX-6: the run's middle assumes the strongest step is the channel), the DMR modem's
+lock within 1.1 s (SX-3, SX-11), the native P25 receiver's within 1.2 s (SX-8).
+
+Cost (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild identical, every task fits, radio task
+728 B free, the least free prvIdleTask 136 B): `ddm25` dbc0682 FLASH 846,028 B, RAM 209,688 B (1,768 free); this branch
+FLASH 848,544 B (+2,516), RAM 209,792 B (+104: the two engines' run, skirt, floor flag and probe levels, the views'
+step time; 1,664 free).
 
 ### Airband AM and broadcast FM
 

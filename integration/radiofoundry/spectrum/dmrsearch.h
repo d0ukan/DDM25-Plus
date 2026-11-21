@@ -42,6 +42,12 @@
 #define DMRS_HIT_MIN_DBM	(-115)	/* ... and at least this strong */
 #define DMRS_PROBE_MS		600u	/* a hit: bursts within this long are DMR (sync comes once per 360 ms superframe in
 					 * a voice call, every 60 ms on a repeater; the rest is the modem's lock) */
+#if CONFIG_SEARCH_SURE
+/* DDM32 Plus surer search (radio/searchsure.h, docs/plus.md "Search reliability"): a carrier whose level rises and
+ * falls as a direct mode one does (TDMA: 30 ms in 60), or that brought a burst already, is held this long: a voice
+ * call's sync comes once per 360 ms superframe, so two superframes (one sync lost) plus the stack's start fit */
+#define DMRS_PROBE_LONG_MS	1100u
+#endif
 #define DMRS_MIN_BURSTS		2u	/* bursts with a good check that make it DMR */
 #define DMRS_LATE_MS		1500u	/* DMR without a call to play: held this long from the hit for one (late entry
 					 * takes the call's LC from the second superframe at worst), then on */
@@ -64,7 +70,11 @@ enum { DMRS_MODE_DMR, DMRS_MODE_P25, DMRS_MODE_YSF, DMRS_MODE_NXDN, DMRS_MODES }
  * not on it (the next mode is tried; after the last the frequency is skipped as a non-digital carrier). P25: a frame
  * every 180 ms (LDU) and the native receiver's lock; YSF: a frame every 100 ms and the FICH; NXDN48: a frame every
  * 80 ms and the software modem's acquisition (radio_nxdn.c); DMR as DMRS_PROBE_MS */
+#if CONFIG_SEARCH_SURE
+#define DMRS_P25_PROBE_MS	1200u	/* the zone scan's figure for this native receiver (native_lab.c SCAN_P25_PROBE_MS) */
+#else
 #define DMRS_P25_PROBE_MS	700u
+#endif
 #define DMRS_YSF_PROBE_MS	700u
 #define DMRS_NXDN_PROBE_MS	900u
 #define DMRS_VOICE_MS		500u	/* native receiver: voice this recent is a call playing (native_lab.c) */
@@ -87,6 +97,7 @@ typedef struct {
 	bool group;		/* the call's: group call (else private) */
 	uint32_t dst, src;	/* the call's talkgroup (or called ID) and source, 0 = not known yet (YSF: the source
 				 * callsign, dmrs_call_pack) */
+	int16_t rssi_dbm;	/* the receiver's level now, 0 = not read (the native receiver's probes) */
 } dmrs_heard_t;
 
 typedef struct {
@@ -110,6 +121,9 @@ typedef struct {
 	uint8_t kind;		/* DMRS_KIND_*: whose state this is */
 	int16_t floor_dbm;	/* noise floor estimate (a slow average of the quiet steps) */
 	uint8_t mode;		/* DMRS_MODE_* probed or played now (PROBE / CALL) */
+#if CONFIG_SEARCH_SURE
+	uint16_t step_ms;	/* a sweep step's time, averaged (the screen's steps a second), 0 = none yet */
+#endif
 	uint32_t lo_hz, hi_hz, step_hz;
 	uint32_t at_hz;		/* the step being read, or the frequency being probed / played */
 	uint32_t sweeps, hits, found_dmr;

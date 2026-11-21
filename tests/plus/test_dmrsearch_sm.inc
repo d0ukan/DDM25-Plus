@@ -7,6 +7,21 @@
 #include "radio/dmrsearch.h"
 
 static int16_t ds_level(uint32_t hz) { return hz == 433500000u ? -80 : -124; }
+#if CONFIG_SEARCH_SURE
+/* The owner's beta.7 case (docs/plus.md "Search reliability"): the other radio in the room on 436.275 in DMR direct
+ * mode, LOW power: the reading at its ceiling there, its neighbours raised 15-55 dB over the floor, on air 30 ms in 60
+ * while it is keyed */
+static bool ds_owner_keyed;
+static int16_t ds_owner(uint32_t hz)
+{
+    if (!ds_owner_keyed || (now / 30u) % 2u != 0)
+        return -124;
+    uint32_t o = hz > 436275000u ? hz - 436275000u : 436275000u - hz;
+    return o == 0 ? -45 : o <= 12500u ? -60 : o <= 25000u ? -75 : o <= 37500u ? -90 : o <= 50000u ? -100 : -124;
+}
+static int16_t (*ds_band)(uint32_t) = ds_level;
+#define ds_level(hz) ds_band(hz)
+#endif
 
 /* One radio poll with the screen looking: the fake receiver's level follows the frequency it is on */
 static void ds_poll(void)
@@ -105,6 +120,67 @@ static void test_plus_dmrsearch_sm(void)
     for (int i = 0; i < 40 && dmrs_phase() != DMRS_SWEEP; i++) ds_poll();
     CHECK(dmrs_phase() == DMRS_SWEEP && dmrs_snapshot(&v) && v.found_n == 1 && v.found[0].calls == 1 && !v.playing);
 
+#if CONFIG_SEARCH_SURE
+    {
+        /* The owner's case in the real state machine: a typed range 436.000-436.500, the radio in the room on 436.275
+         * (direct mode, CC1, TS1, TG 1). The probe goes to 436.275 itself (not a raised neighbour), the call is found
+         * and played, the neighbours are passed over after it, and an over that ends during a probe is not skipped */
+        radio_req_t own = { .type = RREQ_DMR_SEARCH, .arg = 436000000, .arg2 = 436500000 };
+        radio_sm_request(&sm, &own, now);
+        ds_band = ds_owner;
+        ds_owner_keyed = true;
+        ds_sweep_to_hit();
+        CHECK(dmrs_phase() == DMRS_PROBE && dmrs_at_hz() == 436275000u && hw.rx_hz == 436275000u &&
+              dmrs_snapshot(&v) && v.hits == 1);
+        uint8_t olc[9];
+        mk_lc(olc, true, 1, 2869001);
+        for (int i = 0; i < 6; i++) {
+            dmr_burst_t b;
+            memset(&b, 0, sizeof b);
+            b.kind = DMR_BURST_VOICE;
+            b.voice_index = (uint8_t)i;
+            b.sync = i == 0 ? DMR_SYNC_MS : DMR_SYNC_NONE;
+            b.cc = 1;
+            b.ts = 1;
+            b.crc_ok = true;
+            b.in_step = true;
+            b.rssi_dbm = -45;
+            b.len = 27;
+            for (int f = 0; f < 3; f++) memcpy(&b.payload[f * 9], dmr_ambe_silence, 9);
+            if (i == 5) { b.lc_valid = true; memcpy(b.lc, olc, 9); }
+            sim_rx(&b);
+            ds_wait(60);
+        }
+        dmrs_view_t ov;
+        CHECK(dmrs_snapshot(&ov) && ov.found[0].hz == 436275000u && ov.found[0].cc == 1 &&
+              (ov.found[0].sync_mask & DMRS_SYNC_MS));
+        /* the over ends: after the hang, on from 436.2875; the raised neighbours above it are its skirt */
+        ds_owner_keyed = false;
+        for (int i = 0; i < 200 && dmrs_phase() != DMRS_SWEEP; i++) ds_poll();
+        CHECK(dmrs_phase() == DMRS_SWEEP && hw.rx_hz == 436287500u);
+        ds_owner_keyed = true;
+        ds_wait(400);
+        CHECK(dmrs_phase() == DMRS_SWEEP && dmrs_snapshot(&ov) && ov.hits == 1);
+        /* the next pass meets it again; this over ends 200 ms into the probe, nothing heard: given back at once (the
+         * level gone), not skipped, so the pass after finds it again */
+        ds_sweep_to_hit();
+        CHECK(dmrs_at_hz() == 436275000u);
+        ds_wait(200);
+        ds_owner_keyed = false;
+        uint32_t g0 = now;
+        for (int i = 0; i < 100 && dmrs_phase() != DMRS_SWEEP; i++) ds_poll();
+        CHECK(dmrs_phase() == DMRS_SWEEP && now - g0 < DMRS_PROBE_MS);
+        ds_owner_keyed = true;
+        ds_sweep_to_hit();
+        CHECK(dmrs_phase() == DMRS_PROBE && dmrs_at_hz() == 436275000u);
+        ds_owner_keyed = false;
+        ds_band = ds_level;
+        own.arg = 0;
+        radio_sm_request(&sm, &own, now);   /* stopped: the channel again */
+        radio_sm_request(&sm, &r, now);     /* the first search's range again */
+        ds_poll();
+    }
+#endif
     /* PTT while searching: consumed, the search ends, nothing keyed, the channel tuned again (FM) */
     ds_poll();
     radio_req_t ptt = { .type = RREQ_PTT, .arg = 1 };

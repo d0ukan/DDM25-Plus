@@ -57,6 +57,9 @@ typedef struct {
 	uint32_t lo_hz, hi_hz, step_hz;
 	uint32_t at_hz;		/* the step being read, or the frequency being probed / played */
 	int16_t floor_dbm;	/* noise floor estimate (a slow average of the quiet steps) */
+#if CONFIG_SEARCH_SURE
+	uint16_t step_ms;	/* a sweep step's time, averaged (the screen's steps a second), 0 = none yet */
+#endif
 	uint32_t sweeps, hits, probes_p25;
 	uint8_t found_n;
 	p25s_found_t found[P25S_FOUND_MAX];	/* newest first */
@@ -81,6 +84,13 @@ uint32_t p25s_at_hz(void);
  * a probe that heard no P25 marks the frequency to skip. Both return the frequency to tune next (0 when off) */
 void p25s_probe_found(uint16_t nac, uint16_t tg, uint32_t src, uint32_t now_ms);
 uint32_t p25s_probe_done(bool was_p25, uint32_t now_ms);
+#if CONFIG_SEARCH_SURE
+/* DDM32 Plus surer search (radio/searchsure.h): the level while the native receiver probes (the radio task reads it on
+ * every poll; 0 = none), and whether the probe's carrier went off the air (its level under the hit's half margin for
+ * SURE_GONE_MS): the probe is given back at once then and the frequency is not skipped */
+void p25s_level(int16_t rssi_dbm, uint32_t now_ms);
+bool p25s_carrier_gone(uint32_t now_ms);
+#endif
 /* A consistent copy for the UI */
 bool p25s_snapshot(p25s_view_t *out);
 /* The PC's search log: the state and found entry i, not counted as a look (p25search.c) */

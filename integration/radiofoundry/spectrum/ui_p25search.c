@@ -155,6 +155,17 @@ static void p25s_draw(void)
 	} else if (sv.phase == P25S_SWEEP) {
 		sb_str(&b, TR("Sweep "));
 		sb_mhz4(&b, sv.at_hz);
+#if CONFIG_SEARCH_SURE
+		if (sv.step_ms != 0) {
+			/* DDM32 Plus: the steps a second (searchfix), when the line has room for them */
+			size_t n = strlen(buf);
+			sb_str(&b, "  ");
+			sb_u32(&b, (1000u + sv.step_ms / 2u) / sv.step_ms, 1);
+			sb_str(&b, "/s");
+			if (gfx_text_width(m, buf) > gfx_width())
+				buf[n] = '\0';
+		}
+#endif
 		c = ui_col.fg;
 	} else if (sv.playing) {
 		sb_str(&b, TR("P25 "));

@@ -19,6 +19,13 @@ through the hunks below.
                 first reading after the settle (DMR: the third), a P25 channel on it is found by its strength too and
                 given back by the zone scan's rules (no frame: 1.2 s; in its cooldown passed over). Dual watch's pair
                 keeps upstream's timing. Needs MULTI_WATCH.
+  SEARCH_SURE   (searchfix, docs/plus.md "Search reliability") the P25, DMR and all digital searches catch a real
+                signal surely: the floor learned from the first step and kept down (it never deadlocks above the
+                noise), a strong step followed to the middle of its run before it is probed (the peak of a radio
+                close by, a plateau, a half step), the carrier's skirt not probed again, a direct mode carrier held
+                1.1 s (DMR) and P25 1.2 s, a carrier that went off the air during its probe never skipped, the
+                steps a second on the search screen. The radio core hands the engines the level while they probe.
+                In the engines (spectrum/p25search.c, dmrsearch.c, searchsure.h). Needs SEARCH_FAST.
 """
 
 SRANGE = 'integration/radiofoundry/srange/'
@@ -26,6 +33,7 @@ SRANGE = 'integration/radiofoundry/srange/'
 
 def prepare_scan(transform, install):
     install('core/radio/srange.h', SRANGE + 'srange.h')
+    install('core/radio/searchsure.h', 'integration/radiofoundry/spectrum/searchsure.h')
     for f in ('ui_srange.c', 'ui_srange.h'):
         install('core/ui/' + f, SRANGE + f)
 
@@ -38,7 +46,10 @@ def prepare_scan(transform, install):
          '$(error SEARCH_RANGE needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'
          'CONFIG_SEARCH_FAST ?= n\nFEATURES += SEARCH_FAST\n'
          'ifeq ($(CONFIG_SEARCH_FAST),y)\nifeq ($(CONFIG_P25_SEARCH)$(CONFIG_DMR_SEARCH),nn)\n'
-         '$(error SEARCH_FAST needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'),
+         '$(error SEARCH_FAST needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'
+         'CONFIG_SEARCH_SURE ?= n\nFEATURES += SEARCH_SURE\n'
+         'ifeq ($(CONFIG_SEARCH_SURE),y)\nifneq ($(CONFIG_SEARCH_FAST),y)\n'
+         '$(error SEARCH_SURE needs SEARCH_FAST=y)\nendif\nendif\n'),
         # after MULTI_WATCH's own lines
         ('$(error MULTI_WATCH needs DUAL_WATCH=y)\nendif\nendif\n',
          '$(error MULTI_WATCH needs DUAL_WATCH=y)\nendif\nendif\n'
@@ -52,7 +63,30 @@ def prepare_scan(transform, install):
          '#ifndef CONFIG_SEARCH_RANGE\n#define CONFIG_SEARCH_RANGE 0\t/* DDM32 Plus search ranges (tools/plus_scan.py) */\n'
          '#endif\n#ifndef CONFIG_SEARCH_FAST\n#define CONFIG_SEARCH_FAST 0\t/* DDM32 Plus faster searches (tools/plus_scan.py) */\n'
          '#endif\n#ifndef CONFIG_MWATCH_FAST\n#define CONFIG_MWATCH_FAST 0\t/* DDM32 Plus faster ring (tools/plus_scan.py) */\n'
+         '#endif\n#ifndef CONFIG_SEARCH_SURE\n#define CONFIG_SEARCH_SURE 0\t/* DDM32 Plus surer searches (tools/plus_scan.py) */\n'
          '#endif\n'),
+    ])
+
+    # SEARCH_SURE: the engines get the level while they probe (a carrier that went off the air is not skipped; a direct
+    # mode DMR carrier's rise and fall holds the probe longer). The DMR search's probe reads it with what the stack
+    # heard; the P25 search's while the native receiver has the frequency (the radio core reads the status on every
+    # poll for a P25 channel's receive too)
+    transform('core/radio/radio_sm.c', [
+        ('\t\tdmrs_heard_t h;\n\t\tdmrs_heard_read(&h);\n\t\thz = dmrs_probe(&h, now_ms);\n',
+         '\t\tdmrs_heard_t h;\n\t\tdmrs_heard_read(&h);\n'
+         '#if CONFIG_SEARCH_SURE\n'
+         '\t\tradio_status_t st;\n\t\tboard.radio->status(&st);\n'
+         '\t\th.rssi_dbm = st.rssi_dbm;\t// DDM32 Plus: the level while probing (radio/searchsure.h)\n'
+         '#endif\n'
+         '\t\thz = dmrs_probe(&h, now_ms);\n'),
+        ('\t\tif (now_ms - p25s_shown_ms >= 250u) {\n',
+         '#if CONFIG_SEARCH_SURE\n'
+         '\t\telse if (p25s_phase() == P25S_PROBE) {\n'
+         '\t\t\tboard.radio->status(&st);\t// DDM32 Plus: the level while the native receiver probes\n'
+         '\t\t\tp25s_level(st.rssi_dbm, now_ms);\n'
+         '\t\t}\n'
+         '#endif\n'
+         '\t\tif (now_ms - p25s_shown_ms >= 250u) {\n'),
     ])
 
     # Item 1: * on the two search screens opens their range editor, not quick settings

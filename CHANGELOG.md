@@ -5,6 +5,14 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- P25, DMR and All digital search catch a real signal surely (the owner's beta.7 report: a DMR radio in the same room
+  on 436.275 was not found and the stepping was slow). A strong carrier is now probed on its strongest step (or the
+  middle of an overloaded plateau, or the half step of a 6.25 kHz channel) instead of one neighbour after the other;
+  the noise floor is learned from the first step (a receiver reading high made every step a probe); the steps stay on
+  the channel grid whatever start was typed; a direct mode DMR carrier gets 1.1 s, P25 1.2 s; a carrier that went off
+  the air during its probe, or brought a burst, is never skipped; the All digital search probes a direct mode carrier
+  as DMR first. The search screen shows the steps a second. Host model of the owner's case: found in a median 2.5 s
+  instead of 21.5 s.
 - Search found lists (P25 search, DMR search, All digital search): one entry per frequency + mode + NAC / colour code
   / DG-ID / RAN + talkgroup, with a call counter, the most recently heard on top; another talkgroup or NAC on the same
   frequency is an entry of its own. The beta.7 candidate listed 159.125 twice (calls 1 and 2): the native receiver's
