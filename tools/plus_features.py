@@ -193,6 +193,7 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_dmraudio", fromlist=["x"]).prepare_dmraudio(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_chux", fromlist=["x"]).prepare_chux(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_scan", fromlist=["x"]).prepare_scan(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_sigbar", fromlist=["x"]).prepare_sigbar(transform, install)
 
 
 def prepare_large_scale(transform):

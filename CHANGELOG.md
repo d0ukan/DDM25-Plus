@@ -5,6 +5,8 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- The status strip's signal bars light only while something is heard (squelch open, or a DMR call at its own level).
+  Before, they followed the receiver's noise floor and climbed and fell on any channel as if a call or data came in.
 - DMR receive audio diagnostics, round 2: on Tools > Diagnostics key 8 steps a digital gain on the decoded voice
   (x1, x2, x4, x8, saturating; beeps keep their level) and a sixth line shows the samples it clipped and the peak after
   it; the dropped-blocks counter counts only blocks lost while the speaker plays (the idle stream between calls filled

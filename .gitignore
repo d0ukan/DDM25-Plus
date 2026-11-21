@@ -619,3 +619,7 @@ __pycache__/
 /win/publish-dev/
 /win/publish-dev-write/
 /win/publish-dev-write-next/
+# status strip signal bars filled only while something is heard (tools/plus_sigbar.py)
+!/tools/plus_sigbar.py
+!/tools/test_sigbar.py
+!/tests/plus/test_sigbar.c
