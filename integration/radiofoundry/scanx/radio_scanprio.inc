@@ -42,9 +42,16 @@ void radio_scan_prio_set(uint32_t word)
 	scx_word = word;
 }
 
-// A zone scan, or a watch on one receiver (CONFIG_DUAL_WATCH: its channels have their changes for now kept)
+// A zone scan, or a watch on one receiver (CONFIG_DUAL_WATCH: its channels have their changes for now kept). Never
+// the air watch's ring (DDM32 Plus, radio_airwatch.inc): only the airfield's letters, all in AM; a priority stop there
+// was the user's FM channel in the middle of it (owner's beta.7 report)
 static bool scx_kind_ok(const radio_sm_t *sm)
 {
+#if CONFIG_AIR_WATCH
+	if (sm->air) {
+		return false;
+	}
+#endif
 	if (sm->scan.kind == SCAN_ZONE) {
 		return true;
 	}

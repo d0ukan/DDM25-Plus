@@ -6,7 +6,8 @@ tools/test_classic.py after its own (the build tree prepared, ASan / UBSan flags
   (removed by code and channel name whatever the type, counted, a small field left without a frequency not listed,
   one that matches nothing reported), and none of them in the committed table;
 - item 44b, the air watch in the radio core (tests/plus/test_airwatch_radio.inc), after upstream's radio suite, the
-  Classic / Plus P25 suites, the multi-watch ring and every mode in the VFO run again with it built in;
+  Classic / Plus P25 suites, the multi-watch ring and every mode in the VFO run again with it built in (and the
+  priority channel: never a stop of the air watch's ring);
 - item 45, the 3D waterfall's drawing into a test frame buffer (tests/plus/test_wf3d.c);
 - the screens' UI flows in upstream's simulator, English and Turkish (tests/plus/test_ui_air.c; the spectrum's views
   with the toolbox job's simulator, tests/plus/test_ui_wf3d.c)."""
@@ -103,7 +104,7 @@ def radio_tests(ROOT, APP, OUT, host):
          '-DCONFIG_MULTI_WATCH=1', '-DCONFIG_P25_SCAN=1', '-DCONFIG_SPECTRUM=1', '-DCONFIG_FOX=1', '-DCONFIG_CW_BEACON=1',
          '-DCONFIG_P25_SEARCH=1', '-DCONFIG_P25_CALLER=1', '-DCONFIG_P25_ANY=1', '-DCONFIG_VFO_MODES=1', '-DCONFIG_YSF=1',
          '-DCONFIG_NXDN=1', '-DCONFIG_DPMR=1', '-DCONFIG_DMR_ANY=1', '-DCONFIG_AIR_WATCH=1',
-         str(ROOT / 'src/modem/native_test.c'), str(ROOT / 'integration/radiofoundry/native/native_lab.c'),
+         '-DCONFIG_SCAN_PRIO=1', str(ROOT / 'src/modem/native_test.c'), str(ROOT / 'integration/radiofoundry/native/native_lab.c'),
          *(str(APP / 'core/radio' / f) for f in ('spectrum.c', 'fox.c', 'cw_beacon.c', 'p25search.c', 'vfox.c'))],
         cwd=host)
     run([OUT / 'test_radio_air'], cwd=host)
