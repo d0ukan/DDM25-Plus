@@ -27,7 +27,7 @@ version; `cargo tree -e normal --format "{p} {l}"` lists all of them (about 380 
 | hex, base64 | encodings | MIT OR Apache-2.0 |
 | serialport (feature `radio` only) | the serial port | MPL-2.0 (file-level copyleft; unchanged, used as a library) |
 | slint, slint-build (window) | the user interface | GPL-3.0-only OR Slint Royalty-free 2.0 OR Slint Software 3.0; used under **GPL-3.0** (this program is GPL-3.0-or-later, so the combined program is distributed under GPL-3.0); "Made with Slint" is shown in About |
-| rfd (window) | file pickers for data pack inputs | MIT |
+| rfd (window; xdg-portal + async-std on Linux) | file pickers for data pack inputs | MIT |
 | tempfile, png (tests only) | temporary folders, screenshots | MIT OR Apache-2.0 |
 
 Indirect dependencies of note: clipboard-win and error-code (Windows clipboard in winit) BSL-1.0; ICU4X data
