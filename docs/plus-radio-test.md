@@ -576,3 +576,18 @@ unless a row says it transmits.
 | N-3 | RX NAC: OK, #, OK; TX NAC: OK, 3 9 6 6, OK | RX reads "Any 3966 ($F7E)"; TX: "TX NAC can't be 3966 or 3967", the row stays open; Back x4, 1 6 2 5, OK: "1625 ($659)" |
 | N-4 | RX NAC: OK, # #, then the knob / digits | "NAC: type it in hex", the hex digits with the cursor ("$2[9]3 (659)") as before; # again: decimal |
 | N-5 | VFO in P25 (Quick > Mode), VFO settings: RX NAC 1110, TX NAC 1625, back to Home | Home's VFO row "P25 NAC 1110>1625 TG .." (or the shorter forms) |
+
+## Round 15 scan (branch `r15-scan`)
+
+Search ranges (Tools > P25 search and DMR search, docs/plus.md "Search ranges"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SR-1 | Tools > P25 search; Left / Right through the presets | "Range +-1 MHz  12.5k", then +-2.5 MHz, 430-440, 144-146, +-500 kHz; no "Manual" yet |
+| SR-2 | 4 3 3 (the editor opens), 5, OK, 4 3 4, OK | the editor "Search range, MHz": Lower 433.5, then "Range 433.5-434  12.5k" on the search screen; OK starts the sweep there ("Sweep 433.5000" counting up to 434.0000) |
+| SR-3 | * , Down Down (Step), Left Left (6.25 kHz), OK, OK | "433.5-434  6.25k"; the sweep shows 433.50625 steps (the screen shows 4 decimals: 433.5062, 433.5125); the other radio's P25 on 433.5125 or 433.50625 is found |
+| SR-4 | * , Down x3 (Move), Right, then hold Right (DM-32: long Right) | Lower / Upper +6.25 kHz, then +1 MHz per repeat; hold Left: -1 MHz |
+| SR-5 | * , type Lower 173, Upper 401 | toast "Range must lie in one band", the editor stays; Upper below Lower: "Upper must be above Lower" |
+| SR-6 | Leave the search (Back), open it again; then power off and on | the manual range and step are kept on return; after the power cycle the default "+-1 MHz  12.5k" |
+| SR-7 | DMR search: a 1 MHz range around the other radio's DMR frequency, step 25 kHz, then 12.5 kHz | the find on 25 kHz steps only when the frequency is on the 25 kHz grid; on 12.5 kHz always |
+| SR-8 | On the search screen with the editor closed, press * | the editor opens (not quick settings); on any other screen * opens quick settings as before |

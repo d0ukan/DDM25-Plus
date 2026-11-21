@@ -6206,3 +6206,57 @@ msgstr "3967 ($F7F) NAC değil: # Tümü"
 #: core/ui/ui_menus.c
 msgid "TX NAC can't be 3966 or 3967"
 msgstr "TX NAC 3966 ya da 3967 olamaz"
+
+# --- branch r15-scan: search ranges and speed, multi-watch ring (tools/plus_scan.py) ---
+
+#: core/ui/ui_srange.c
+msgid "Lower"
+msgstr "Alt"
+
+#: core/ui/ui_srange.c
+msgid "Upper"
+msgstr "Üst"
+
+#: core/ui/ui_srange.c
+msgid "Step"
+msgstr "Adım"
+
+#: core/ui/ui_srange.c
+msgid "Move"
+msgstr "Kaydır"
+
+#: core/ui/ui_srange.c
+msgid "Search range, MHz"
+msgstr "Arama aralığı, MHz"
+
+#: core/ui/ui_srange.c
+msgid "Upper must be above Lower"
+msgstr "Üst, alttan büyük olmalı"
+
+#: core/ui/ui_srange.c
+msgid "Range must lie in one band"
+msgstr "Aralık tek bantta olmalı"
+
+#: core/ui/ui_srange.c
+msgid "<> step, hold <> 1 MHz"
+msgstr "<> adım, basılı <> 1 MHz"
+
+#: core/ui/ui_srange.c
+msgid "0-9 type Lower / Upper"
+msgstr "0-9 Alt / Üst yazar"
+
+#: core/ui/ui_srange.c
+msgid "OK next  Back delete"
+msgstr "OK sonraki  Geri sil"
+
+#: core/ui/ui_srange.c
+msgid "OK apply  Back delete"
+msgstr "OK uygula  Geri sil"
+
+#: core/ui/ui_srange.c
+msgid "OK apply  Back cancel"
+msgstr "OK uygula  Geri iptal"
+
+#: core/ui/ui_p25search.c core/ui/ui_dmrsearch.c
+msgid "{OK start  <> range  * edit|OK start  * range}"
+msgstr "{OK başlat  <> aralık  * düzenle|OK başlat  * aralık}"

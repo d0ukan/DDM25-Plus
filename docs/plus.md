@@ -2772,3 +2772,59 @@ $F7F: "TX NAC can't be 3966 or 3967") and keeps the row open; before, those reac
 Upstream's own builds (no `NAC_DEC`) are unchanged. Updated with it: `tests/plus/test_ui_any.c`, `test_ui_vfox.c`,
 `test_ui_p25nac.c` (their typed NACs and expected rows now decimal), and `integration/radiofoundry/vfox/ui_vfox.inc`
 (the flag is `ced_nac_hex` now). New flows in `tests/plus/test_ui_chux.c` (English and Turkish).
+
+## Round 15: search ranges and speed, the multi-watch ring (branch `r15-scan`)
+
+The owner's requests after using v1.0.0-beta.3 on the radio. Code: `tools/plus_scan.py` (the hunks into upstream
+files), `integration/radiofoundry/srange/` (installed into `core/radio`, `core/ui`), and our own search screens and
+engines (`spectrum/ui_p25search.c`, `ui_dmrsearch.c`, `p25search.*`, `dmrsearch.*`). Host tests: `tools/test_scan.py`
+(run by `tools/test_classic.py`). Radio rows: `docs/plus-radio-test.md` "Round 15 scan".
+
+### 1. Search ranges (`CONFIG_SEARCH_RANGE`; needs P25_SEARCH or DMR_SEARCH)
+
+Tools > P25 search and DMR search take any range of the receiver's bands and ten steps:
+
+| Key (search screen) | Does |
+|---|---|
+| Left / Right | the presets as before (+-500 kHz, +-1 MHz, +-2.5 MHz around the frequency in use, 430-440, 144-146 MHz), then the manual range once one is set |
+| * | opens the range editor ("Search range, MHz") on the range swept now |
+| 0-9 | opens it typing Lower |
+
+| Editor row | Left / Right (and the knob) | Held Left / Right (DM-32: long Left / Right) | Digits |
+|---|---|---|---|
+| Lower | - / + one step | - / + 1 MHz | type it (positional, as the VFO entry: "4 3 3 5" = 433.5); OK goes on to Upper |
+| Upper | - / + one step | - / + 1 MHz | type it; OK applies the range |
+| Step | 2.5, 5, 6.25, 10, 12.5, 20, 25, 50, 100 kHz, 1 MHz (round) | | |
+| Move (the width shown) | the whole range - / + one step | - / + 1 MHz | |
+
+OK applies (the range becomes the manual one; a running search starts again on it, a stopped one waits for OK);
+Back deletes the last digit typed, else leaves the editor unchanged; Up / Down move between rows (a typed value is
+taken first). Refused, with a toast and the editor kept: Upper not above Lower; a range not inside one of the
+transmit bands (136-174, 400-480 MHz: the FD6818 the searches step; the air and broadcast bands are other receivers);
+an end moved out of the bands is simply not moved. The range line shows "Range +-1 MHz  12.5k" (shorter forms when it
+is too wide: without "Range ", or a long manual range alone).
+
+**Remembered**: each search keeps its own preset, manual range and step in RAM while the radio is on (leaving the
+screen and coming back finds them). Not across a power off: `settings_t` has no room (docs above, "Settings record"),
+and the owner's request did not need a stored record; a later round can add it to a data pack style record.
+
+**How the step reaches the radio**: `radio_req_p25_search(lo, hi)` and `radio_req_dmr_search(lo, hi)` keep their
+form (no change for the simulators and other callers): the start frequency's last decimal digit carries the step
+(`radio/srange.h`; every frequency the FD6818 takes is a multiple of 10 Hz). Digit 0 is 12.5 kHz, the step the
+searches always had, so an untagged request sweeps as before. The radio core (`RREQ_P25_SEARCH`,
+`RREQ_DMR_SEARCH`) passes the decoded start and step to `p25s_start` / `dmrs_start`; the engines already took any
+step. * on the two search screens opens the editor instead of quick settings (`ui_app.c`'s QUICK exceptions).
+
+Host tests: `tests/plus/test_ui_scan.c` (`tests/plus/ui_sim_scan.c` records the requests and decodes them as the
+radio core does), 8 flows in English and Turkish with the layout checked on the screen and the editor: the presets and
+the range line; typing (a digit opens the editor, OK on, OK applies, nothing asked before OK); Back deleting digits
+and leaving; every step both ways, 6.25 kHz and 1 MHz in the request; one step, held Left / Right and the DM-32's
+long Left / Right on Lower, Upper and Move; the refusals; a running search started again on an applied range, the
+range kept across leaving the screen and then among the presets; the DMR search's range and step.
+`tests/plus/test_scan_radio.inc`, after upstream's radio suite and the Classic / Plus P25 suites (the searches' own
+state machines among them) built with the switch: the P25 search requested with a tagged start steps the receiver
+by 25 kHz, 1 MHz (round to the start), 6.25 kHz, and by 12.5 kHz untagged.
+
+Cost (public build): FLASH 819,832 -> 822,584 B (+2,752), static RAM 209,368 -> 209,408 B (+40: the two ranges
+2 x 12 B, the editor 16 B), free 2,048 B. The ID database build (`--plus`) is the same size (the database is a data
+pack since round 14).

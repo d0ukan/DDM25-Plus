@@ -576,3 +576,13 @@ __pycache__/
 !/tests/plus/test_zone_radio.inc
 !/tests/plus/test_ui_chux.c
 !/tests/plus/test_any_group.c
+# branch r15-scan: search ranges and speed, multi-watch ring (tools/plus_scan.py)
+!/tools/plus_scan.py
+!/integration/radiofoundry/srange/srange.h
+!/integration/radiofoundry/srange/ui_srange.c
+!/integration/radiofoundry/srange/ui_srange.h
+!/tools/test_scan.py
+!/tests/plus/test_ui_scan.c
+!/tests/plus/ui_sim_scan.c
+!/tests/plus/ui_sim_scan.h
+!/tests/plus/test_scan_radio.inc

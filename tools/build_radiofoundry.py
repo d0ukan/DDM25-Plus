@@ -719,6 +719,7 @@ def main():
         "CONFIG_XBAND="+("y" if args.plus else "n"),	# DDM32 Plus cross-band store and forward (docs/plus.md, item 46)
         "CONFIG_DMR_AUDIO_DIAG="+("y" if args.plus else "n"),	# DDM32 Plus DMR receive audio diagnostics (tools/plus_dmraudio.py)
         "CONFIG_CHAN_EXTRAS="+("y" if args.plus else "n"),	# DDM32 Plus r15 channels (tools/plus_chux.py)
+        "CONFIG_SEARCH_RANGE="+("y" if args.plus else "n"),	# DDM32 Plus search ranges (round 15 item 1, tools/plus_scan.py)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

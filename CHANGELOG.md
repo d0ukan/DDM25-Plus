@@ -68,6 +68,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 - P25 NAC in decimal first: the editor and VFO settings show "659 ($293)" and take the decimal value (0-4095, the
   knob steps by one); # is Any / Same as RX as before, # # the hex digits; 3967 on RX and 3966 / 3967 on TX are refused
   with a reason; Home's VFO row shows the NACs in decimal.
+- P25 search and DMR search: any range of the radio's 2 m / 70 cm bands. * (or a digit) opens the range editor: Lower
+  and Upper typed or moved by a step (held Left / Right: 1 MHz), a step of 2.5, 5, 6.25, 10, 12.5, 20, 25, 50,
+  100 kHz or 1 MHz, and Move to slide the whole range; OK applies it. Each search remembers its range and step while
+  the radio is on; Left / Right still pick the presets.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

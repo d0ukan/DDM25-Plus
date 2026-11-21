@@ -18,13 +18,21 @@
 #include "radio/radio.h"
 #include "radio/dmrsearch.h"
 #include "ui/ui_scratch.h"
+#if CONFIG_SEARCH_RANGE
+#include "ui/ui_srange.h"
+#endif
 #if CONFIG_FIND_SAVE
 #include "ui/findsave.h"
 #endif
 
+#if CONFIG_SEARCH_RANGE
+/* The range and step (DDM32 Plus search ranges, ui_srange.h): kept while the radio is on */
+static ui_srange_t rng = UI_SRANGE_INIT;
+#else
 enum { R_500K, R_1M, R_2M5, R_UHF, R_VHF, R_COUNT };
 static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5 MHz", "430-440 MHz", "144-146 MHz" };
 static uint8_t range_i = R_1M;
+#endif
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
 /* The search as last copied: the tool screens' shared buffer (ui_scratch.h), refilled by snap() in each draw and key */
 #define sv	(ui_scratch.dmrs)
@@ -56,6 +64,7 @@ bool ui_dmrsearch_find(uint8_t i, findsave_item_t *out)
 }
 #endif
 
+#if !CONFIG_SEARCH_RANGE
 static void range_of(uint8_t r, uint32_t center, uint32_t *lo, uint32_t *hi)
 {
 	static const uint32_t half[3] = { 500000u, 1000000u, 2500000u };
@@ -71,6 +80,7 @@ static void range_of(uint8_t r, uint32_t center, uint32_t *lo, uint32_t *hi)
 		*hi = 146000000u;
 	}
 }
+#endif
 
 static void sb_mhz4(sbuf_t *b, uint32_t hz)
 {
@@ -116,11 +126,23 @@ static void dmrs_draw(void)
 	gfx_clear(ui_col.bg);
 	int y = ui_draw_top(ui_view(), &ui_st, TR("DMR search"), "") + 2;
 	const font_t *s = ui_layout.small, *m = ui_layout.medium;
+#if CONFIG_SEARCH_RANGE
+	ui_srange_line(&rng, s, gfx_width(), buf, sizeof buf);
+	gfx_text(s, 0, y, buf, ui_col.dim);
+	y += s->h + 3;
+	if (ui_srange_editing()) {	/* the range editor has the page */
+		ui_srange_draw(y);
+		ui_draw_bottom(&ui_st, ui_srange_hint());
+		ui_draw_banner(&ui_st);
+		return;
+	}
+#else
 	sb_init(&b, buf, sizeof buf);
 	sb_str(&b, TR("Range "));
 	sb_str(&b, range_names[range_i]);
 	gfx_text(s, 0, y, buf, ui_col.dim);
 	y += s->h + 3;
+#endif
 	sb_init(&b, buf, sizeof buf);
 	color_t c = ui_col.dim;
 	if (!have || sv.phase == DMRS_OFF) {
@@ -193,6 +215,10 @@ static void dmrs_draw(void)
 	}
 	const char *hint = sel >= 0 ? TR("OK tune  ^v pick") :
 			   have && sv.phase != DMRS_OFF ? TR("OK stop  ^v pick") : TR("OK start  <> range");
+#if CONFIG_SEARCH_RANGE
+	if (sel < 0 && !(have && sv.phase != DMRS_OFF))
+		hint = TR(TEXT_ALT_OPEN "OK start  <> range  * edit" TEXT_ALT_NEXT "OK start  * range" TEXT_ALT_CLOSE);
+#endif
 #if CONFIG_FIND_SAVE
 	if (sel >= 0)
 		hint = TR(TEXT_ALT_OPEN "OK tune  hold OK save  ^v pick" TEXT_ALT_NEXT "OK tune  hold OK save"
@@ -209,7 +235,11 @@ static void dmrs_draw(void)
 static void restart(void)
 {
 	uint32_t lo, hi;
+#if CONFIG_SEARCH_RANGE
+	lo = ui_srange_request(&rng, ui_view()->ch.rx_hz, &hi);	/* the step rides on lo (srange.h) */
+#else
 	range_of(range_i, ui_view()->ch.rx_hz, &lo, &hi);
+#endif
 	radio_req_dmr_search(lo, hi);
 	ui_dirty();
 }
@@ -236,8 +266,28 @@ static bool dmrs_key(const input_event_t *ev)
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
 	bool have = snap();
 	bool on = have && sv.phase != DMRS_OFF;
+#if CONFIG_SEARCH_RANGE
+	/* The range editor: it takes every key while open; an applied range restarts a running search on it */
+	int ek = ui_srange_key(ev);
+	if (ek != UI_SRANGE_NONE) {
+		if (ek == UI_SRANGE_APPLIED && on)
+			restart();
+		return true;
+	}
+	/* * opens it; a digit opens it typing Start */
+	if (ev->gesture == GESTURE_PRESS && (ev->action == ACT_QUICK ||
+					      (ev->action >= ACT_DIGIT_0 && ev->action <= ACT_DIGIT_9))) {
+		ui_srange_open(&rng, ui_view()->ch.rx_hz,
+			       ev->action == ACT_QUICK ? 0 : (char)('0' + (ev->action - ACT_DIGIT_0)));
+		return true;
+	}
+#endif
 	if (press && (ev->action == ACT_NAV_LEFT || ev->action == ACT_NAV_RIGHT)) {
+#if CONFIG_SEARCH_RANGE
+		ui_srange_turn(&rng, ev->action == ACT_NAV_RIGHT ? 1 : -1);
+#else
 		range_i = (uint8_t)((range_i + (ev->action == ACT_NAV_RIGHT ? 1u : R_COUNT - 1u)) % R_COUNT);
+#endif
 		if (on)
 			restart();
 		ui_dirty();
@@ -288,6 +338,9 @@ static bool dmrs_key(const input_event_t *ev)
 
 static void dmrs_enter(void)
 {
+#if CONFIG_SEARCH_RANGE
+	ui_srange_close();
+#endif
 	sel_hz = 0;
 	ui_dirty();
 }

@@ -908,5 +908,8 @@ def main():
     # DDM32 Plus r15 channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/test_chux.py)
     import test_chux
     test_chux.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 15 scan: search ranges and speed, the multi-watch ring (tools/test_scan.py)
+    import test_scan
+    test_scan.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()
