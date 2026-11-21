@@ -8,6 +8,7 @@
 #![forbid(unsafe_code)]
 
 pub mod app_info;
+pub mod codeplug;
 pub mod crypto;
 pub mod datapacks;
 pub mod pyjson;
