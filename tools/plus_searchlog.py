@@ -24,11 +24,14 @@ def prepare_searchlog(transform, install):
     transform('core/debuglink/debuglink.h', [(ENUM_OLD, ENUM_NEW)])
     transform('core/debuglink/debuglink_view.c', [
         ('#include "net/ppp.h"\n#endif\n#endif\n',
-         '#include "net/ppp.h"\n#endif\n#endif\n#include "radio/searchlog_view.h"\t// DDM32 Plus search log\n'),
+         '#include "net/ppp.h"\n#endif\n#endif\n'
+         '#if CONFIG_PC_LIVE\n#include "radio/searchlog_view.h"\t// DDM32 Plus search log\n#endif\n'),
         ('\t\t\t\t\t\t  "net_link", "cps" };\n',
          '\t\t\t\t\t\t  "net_link", "cps", "p25s", "dmrs" };\n'),
         ('\tcase DL_VIEW_CPS:\n\t\tcps_section(t);\n\t\tbreak;\n',
          '\tcase DL_VIEW_CPS:\n\t\tcps_section(t);\n\t\tbreak;\n'
+         # the plus build only: the classic build installs no searchlog_view.c (its sections then stay empty)
+         '#if CONFIG_PC_LIVE\n'
          '\tcase DL_VIEW_P25S:\n\t\tsearchlog_view_p25(t);\t// DDM32 Plus search log\n\t\tbreak;\n'
-         '\tcase DL_VIEW_DMRS:\n\t\tsearchlog_view_dmr(t);\n\t\tbreak;\n'),
+         '\tcase DL_VIEW_DMRS:\n\t\tsearchlog_view_dmr(t);\n\t\tbreak;\n#endif\n'),
     ])
