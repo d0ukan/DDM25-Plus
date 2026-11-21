@@ -106,7 +106,15 @@ lone worker (ses, DMR acil veya APRS SOS), QSO işaretli çağrı geçmişi, kal
 
 | Araçlar | Havalimanları | Deniz VHF | Pil |
 | :---: | :---: | :---: | :---: |
-| ![Araçlar menüsü simgeleri](images/ddm32/tools.png) | ![Havalimanı listesi](images/ddm32/airfields.png) | ![Deniz VHF tablosu](images/ddm32/marine.png) | ![Pil grafiği](images/ddm32/battery.png) |
+| ![Araçlar menüsü](images/ddm32/tools.png) | ![Havalimanı listesi](images/ddm32/airfields.png) | ![Deniz VHF tablosu](images/ddm32/marine.png) | ![Pil grafiği](images/ddm32/battery.png) |
+
+| Son çağrılar | APRS istasyonu | Hakkında: veri paketleri | DOTA frekansı |
+| :---: | :---: | :---: | :---: |
+| ![Her moddan son çağrılar](images/ddm32/lastcalls.png) | ![APRS istasyon sayfası](images/ddm32/aprs-station.png) | ![Ayarlar > Hakkında, veri paketleriyle](images/ddm32/about-packs.png) | ![DOTA Aktarım frekans kaynağı](images/ddm32/dota-freq.png) |
+
+| Arama aralığı | Kanal silme | Desimal NAC |
+| :---: | :---: | :---: |
+| ![P25 arama aralığı düzenleyici](images/ddm32/search-range.png) | ![Kanal silme sorusu](images/ddm32/delete-channel.png) | ![Desimal P25 NAC satırı](images/ddm32/nac-decimal.png) |
 
 *Ekran görüntüleri firmware'in kendi ekran simülatöründen alındı (İngilizce arayüz; telsiz varsayılan olarak
 Türkçe). Gerçek telsiz fotoğrafları eklenecek.*
@@ -114,6 +122,9 @@ Türkçe). Gerçek telsiz fotoğrafları eklenecek.*
 ### Önce Türkçe
 
 Arayüzün tamamı Türkçeye çevrildi (İngilizce de seçilebilir). Teknik adlar (RX, TX, NAC, VFO, …) olduğu gibi kalır.
+
+Telsizde kullanım için kısa Türkçe kılavuz (tuşlar, bölge ve kanallar, çoklu izleme, modlar, arama, harita /
+APRS / havalimanları, DOTA, veri paketleri, çapraz bant, tanılama): [`docs/kullanim-telsiz.md`](docs/kullanim-telsiz.md).
 
 ## Kurulum
 

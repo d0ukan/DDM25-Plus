@@ -102,13 +102,13 @@ static void __attribute__((noinline)) time_left(sbuf_t *b, const char **why)
 		return;
 	}
 	if (min > 99 * 60) {
-		sb_str(b, ">99 h");
+		sb_str(b, TR(">99 h"));
 		return;
 	}
 	sb_u32(b, (uint32_t)min / 60u, 1);
-	sb_str(b, " h ");
+	sb_str(b, TR(" h "));
 	sb_u32(b, (uint32_t)min % 60u, 2);
-	sb_str(b, " min");
+	sb_str(b, TR(" min"));
 }
 
 static void battgraph_draw(void)

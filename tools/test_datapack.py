@@ -88,6 +88,17 @@ def builder_tests(ROOT, OUT):
         raise AssertionError('a repeated ID was taken')
     except dp.PackError:
         pass
+    # the aerodrome code: in the file name (underscores around it, as the AIP names its files), else in the page text
+    assert dp.code_of('LT_AD_2_LTAC_en.pdf') == 'LTAC' and dp.code_of('pdf/LTFM.pdf') == 'LTFM'
+    assert dp.code_of('LTBA-AD2.pdf') == 'LTBA' and dp.code_of('LT_AD_2_LTAC_LTFJ_en.pdf') == 'LTFJ'
+    assert dp.code_of('LT_AD_2_LTACX.pdf', 'LTAI AD 2.1\nLTAC AD 2.18 ATS\nLTBJ\n') == 'LTAC'
+    assert dp.code_of('ad2.pdf', 'aerodrome LTAC\n') == 'LTAC'
+    for name, text in (('ad2.pdf', None), ('XLTACX.pdf', 'no code here AD 2.18')):
+        try:
+            dp.code_of(name, text)
+            raise AssertionError(f'a code in {name!r}')
+        except dp.PackError:
+            pass
     fields = {'LTAC': dp.parse_ad218(AD218)}
     t = dp.airfields.TYPES
     assert fields['LTAC'] == [(t.index('ATIS'), 123600), (t.index('TWR'), 118100), (t.index('TWR'), 121500),

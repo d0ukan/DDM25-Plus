@@ -917,5 +917,8 @@ def main():
     # DDM32 Plus round 16 airprov: airfields by province, the spectrum in colour (tools/test_airprov.py)
     import test_airprov
     test_airprov.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 16 polish: the Turkish catalogue complete (tools/test_polish.py)
+    import test_polish
+    test_polish.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

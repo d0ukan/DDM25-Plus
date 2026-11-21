@@ -631,3 +631,7 @@ __pycache__/
 !/tests/plus/test_ui_airprov.c
 !/tests/plus/test_wfcolor.c
 !/tests/plus/test_ui_wfcolor.c
+# branch r16-polish: the Turkish catalogue complete, text size, user guide (tools/plus_polish.py)
+!/tools/plus_polish.py
+!/tools/test_polish.py
+!/docs/kullanim-telsiz.md

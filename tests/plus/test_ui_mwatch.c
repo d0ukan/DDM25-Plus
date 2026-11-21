@@ -10,11 +10,14 @@
 #include "uiFlowTest.c"
 #undef main
 #include "ui/ui_svc.h"
+#include <stdlib.h>
 
 #define MW4 "mwatch:4 quick 7 "
 int main(void)
 {
     upstream_ui_main();   /* its own result: tools/test_classic.py compares its failures with the build without */
+    if (getenv("MW_SHOTS") != NULL)	/* a directory: the "shot:" tokens save the screens there */
+        sim_set_shot_dir(getenv("MW_SHOTS"), "mw-");
     int before = fails, run_before = flows_run;
     const flow_t checks[] = {
         /* 2 watch channels: dual watch's two panes, no ring */
@@ -38,7 +41,7 @@ int main(void)
         { "MW Up skips the other letters", MW4 "abkey abkey", "up", "mwsel=C mwposc=7 uipos=7", 1, false },
         /* A call on C: its row receives, the caller is named, the line under the rows says so */
         { "MW a call on C", MW4 "tune:c", "rx:3101234,91,g", "mwrx=C shows=Receiving_on_C shows=K1ABC_Joe", 0, false },
-        { "MW the call ends", MW4 "tune:c rx:3101234,91,g", "rxend wait:2000", "mwrx=- shows=Heard", 0, false },
+        { "MW the call ends", MW4 "tune:c rx:3101234,91,g", "wait:2500 shot:call rxend wait:2000", "mwrx=- shows=Heard", 0, false },
         /* PTT on the selected one (C), the ring goes on after */
         { "MW PTT on C", MW4 "abkey abkey", "pttdown wait:500 pttup wait:500", "dual=1 mwn=4 mwsel=C pos=5", 1, false },
         /* Back twice stops it on the selected one */

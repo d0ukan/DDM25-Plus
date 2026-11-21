@@ -351,6 +351,7 @@ static void form_freq_source(void)
 	ok_run("down down down down");	/* Role, Method, What, item: the source */
 	expect(T("shows=Frequency shows=Default shows=433.450", "shows=Frekans shows=Varsay shows=433.450"));
 	layout();
+	ok_run("shot:freq-source");
 	/* the radio is on a DMR channel outside the amateur bands, no session yet: Default, then Manual */
 	ok_run("right");
 	expect(T("shows=Manual shows=433.450 hides=Current_channel hides=Last_used", "shows=Elle"));
@@ -730,7 +731,7 @@ static void picker_zone(void)
 {
 	start("picker: a zone");
 	ok_run("down down right right");	/* What: A zone */
-	expect(T("shows=A_zone", "shows=Bir"));
+	expect(T("shows=A_zone", "shows=lge"));	/* "Bölge" */
 	ok_run("down ok");
 	expect("screen=dota-pick");
 	layout();

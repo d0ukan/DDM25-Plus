@@ -58,7 +58,9 @@ static void expect_ring(uint32_t ms)
 {
 	char e[64];
 	uint32_t tenths = (ms + 50u) / 100u;
-	snprintf(e, sizeof e, "expect:shows=Ring_%u.%u_s", (unsigned)(tenths / 10u), (unsigned)(tenths % 10u));
+	/* Turkish: "Döngü 0.3 s" (the catalogue has the .inc files' texts since round 16); the number is enough there */
+	snprintf(e, sizeof e, turkish ? "expect:shows=_%u.%u_s" : "expect:shows=Ring_%u.%u_s", (unsigned)(tenths / 10u),
+		 (unsigned)(tenths % 10u));
 	run(e);
 }
 
@@ -67,7 +69,7 @@ static void ring4(void)
 {
 	start("ring of 4");
 	run("mwatch:4 quick 7 wait:500");
-	run("expect:dual=1 expect:mwn=4 shot:ring4");
+	run("expect:dual=1 expect:mwn=4 wait:2500 shot:ring4");	/* the shot after the toast */
 	expect_ring(radio_mw_ring_ms(4, 3));	/* three DMR channels */
 	layout();
 }

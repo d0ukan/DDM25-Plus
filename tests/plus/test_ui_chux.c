@@ -245,6 +245,7 @@ static void case_delete(void)
 	run("ok");
 	expect(T("screen=confirm focus=No shows=Metro_DMR shows=Leaves_zones:_1", "screen=confirm focus=Hay shows=Metro_DMR"));
 	layout();
+	run("shot:delete-confirm");
 	run("ok");
 	expect("screen=zone writes=0 count=18");
 	start("zone channel menu: Delete, Yes: gone from the zone");
@@ -291,6 +292,7 @@ static void case_nac(void)
 	p25_nac_row();
 	expect("shows=659_($293)");
 	layout();
+	run("shot:nac-decimal");
 	run("ok 2 9 3");
 	expect("shows=[293]_($125)");
 	run("ok");

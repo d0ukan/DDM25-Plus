@@ -11,6 +11,12 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   (x1, x2, x4, x8, saturating; beeps keep their level) and a sixth line shows the samples it clipped and the peak after
   it; the dropped-blocks counter counts only blocks lost while the speaker plays (the idle stream between calls filled
   it before). Power-on is x1: nothing changes until the owner presses 8. For the radio rows DA-7..DA-11.
+- Turkish: the texts the catalogue missed are translated: the multi-watch ring line ("Döngü 0.6 s"), its # menu
+  ("Konuş: B", "Değiş: C", "Durdur, kal: B") and toasts, the cross-band form's Slot row, the caller line before the
+  first P25 / YSF / NXDN link control, the battery's time left ("4 sa 20 dk"), upstream's zone toasts and "In Zones"
+  list, About's "Based on" lines. A host test now fails when any text the radio can show has no Turkish.
+- tools/datapack.py finds the aerodrome code in AIP file names such as LT_AD_2_LTAC_en.pdf (an underscore before
+  the code hid it), else in the page text before AD 2.18, as the Windows programmer does.
 
 ## v1.0.0-beta.4 (2026-11-21)
 

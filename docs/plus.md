@@ -3073,3 +3073,101 @@ Cost (public build): FLASH 838,908 -> 839,056 B (+148), static RAM 209,560 -> 20
 The `--plus` build: the same figures. **Both items** (public build on bb6f554): FLASH 837,952 -> 839,056 B
 (+1,104), static RAM 209,544 -> 209,560 B (+16), **1,896 B free**. Zero warnings, forced rebuilds identical,
 every task's stack fits.
+
+## Round 16 polish (branch `r16-polish`)
+
+Small finishing work toward a near-final product. Code: `tools/plus_polish.py` (hunks into upstream files), host tests
+`tools/test_polish.py` (run by `tools/test_classic.py`).
+
+### 1. The Turkish catalogue complete
+
+**Cause.** `tools/i18n.py` (upstream) extracts `TR()` / `TRN()` texts from core's `.c` and `.h` files only. Texts in
+the `.inc` files the `.c` files include never reached `tr.po`, so `--sync` would not add them and the radio showed
+them in English; they were translated only where a `.c` file happened to use the same English. Missing were the
+multi-watch ring's line under the rows ("Ring 0.6 s", `ui_mwatch_draw.inc`), its # menu ("Talk on B", "Change C",
+"Stop, stay on B") and toasts ("Talking on C", "P25 slows the ring", "Only a selected channel can be the VFO",
+`ui_mwatch.inc`). Besides those, a few texts were drawn without `TR()` at all: upstream's zone toasts ("Zone full",
+"Give it a name first", "Couldn't save: try again") and its "In Zones" list (prefix and hint), the caller line before
+the first link control ("P25 call", "YSF call", NXDN's "call"), the battery's time left ("4 h 20 min",
+`ui_battgraph.c`), About's "Based on ..." lines and the repeater data source "sample"; and the cross-band form's new
+"Slot" row had no entry.
+
+**Change.** `plus_polish.py` makes `tools/i18n.py` read `*.inc` as well and wraps those texts in `TR()` / `TRN()`; 18
+entries appended to `tr.po` (one block, branch `r16-polish`) and one typo fixed ("Airbandnda" -> "Airband'de").
+Turkish: "Döngü 0.6 s", "Konuş: B", "Değiş: C", "Durdur, kal: B", "Konuşulan: C" (the letter after a colon, so no
+suffix has to agree with it), "4 sa 20 dk", "P25 çağrısı", "Bölgelerde", "Open25-DM32 Classic tabanlı".
+
+**Test.** `tools/test_polish.py` runs i18n.py's own extraction (with the `.inc` files) against `tr.po` in the prepared
+tree: every text the radio can show must be in the catalogue, translated, not fuzzy and drawable (`check_translation`:
+Latin-5 bytes, the `{...|...}` alternates, leading / trailing spaces, the ending colon). A new text without its
+Turkish now fails `make classic-test`. `tests/plus/test_ui_mwfast.c` checks the ring line by its number in Turkish.
+
+**Turkish fit.** The simulator writes every text it shortens with an ellipsis to `SIM_FIT_LOG` when that is set
+(`ui_sim.c` `gfx_fit_trace`). Run over every UI test (English and Turkish) the shortened Turkish texts of rounds 14-15
+were three, now shorter: the multi-watch # menu's "Değiştir: C" ("Değiş: C"), DOTA's "Bir bölge" ("Bölge") and the
+reply window hint "# arayan  Geri yanıtı bitir" ("# arayan  Geri bitir"). The rest shortened in both languages alike,
+by design: long airfield and channel names (cut in the middle), "No frequencies in the data" beside a distance. The
+layout check found nothing on any screen in either language.
+
+Cost (public build = `--plus` build, on 01e8507): FLASH 837,952 -> 838,312 B (+360: the `TR()` lookups), static
+RAM unchanged (209,544 B, 1,912 B free); stacks unchanged (UI 184, radio 760, start 348 B free). Zero warnings,
+forced rebuilds identical.
+
+### 2. `tools/datapack.py`: the aerodrome code next to underscores
+
+`code_of` searched `\bLT[A-Z]{2}\b` in the file name; in `LT_AD_2_LTAC_en.pdf` the underscore before `LTAC` is a word
+character, so there was no word boundary and the build stopped with "no aerodrome code". Now a code is any `LTxx` not
+touching a letter or digit, the last one in the file name, else the last one in the page text before its AD 2.18
+heading (as `AirText.CodeOf` in the Windows programmer). Tests in `tools/test_datapack.py`.
+
+### 4. Text size option (ROADMAP item 40): measured, not built
+
+Asked: Settings > Display "Text size" Normal / Large, the next larger fonts across lists and menus, built only if it
+fits (public static RAM free >= 1,500 B, the layout check clean on every screen or Large limited to the screens where
+it fits). **Not built: the layout does not fit.** The measurement and a proposal:
+
+**Fonts.** The DM-32 build has `FONT_AA`, `FONT_BIG` and `FONT_XL`: lists, labels and the status strip use JetBrains
+Mono 9x18 (`ui_layout.small`, 24 characters across the 220 px safe area), small print 8x16 (`tiny`), Home's channel
+12x24 / 16x32. "One size up" is small 12x24 (18 characters a line) and tiny 9x18. Both fonts are already in the image,
+so **no font flash**; a size between (10x20 / 11x22) would be a new 2 bpp font of about 4-5 KB.
+
+**Flash, RAM, stack (estimated from the parts, not built).** The switch is a few lines in `ui_layout_init` and a
+re-layout when the setting changes, one Display row and its Turkish: about 300-500 B flash. Static RAM: 0-1 B
+(`ui_layout` already holds the font pointers). Stack: none (no new call depth). The setting needs one stored bit:
+`settings_t.ui_flags` is full (all 8 bits used), so it would take a spare bit of another field as the Plus settings
+already do (for example `accent`'s or `dual_state`'s free bits), which is a codeplug-independent change of the settings
+record and needs its own test. The budget would fit (1,880 B free after this branch).
+
+**Layout (the deciding part).** The simulator draws one size up when `SIM_TEXT_LARGE` is set (`plus_polish.py`,
+host only: the firmware is unchanged). Every Plus UI test (about 30 binaries, English and Turkish) was run both ways:
+
+| | Normal | Large |
+|---|---:|---:|
+| Layout check problems (text outside the screen, overlaps) | 0 | **59 distinct, on about 40 screens in 14 suites** |
+| Distinct texts the screens shorten with an ellipsis | 92 | **490** |
+| UI test binaries whose own checks pass | all | none (texts they look for are cut) |
+
+Where it breaks: every page drawn line by line rather than as a list (`ui_draw_text_page` style and hand-placed
+labels): the battery page ("Time left: 4 h 40 min" runs off the right), the search range editor's key lines, the P25 /
+DMR search pages, the airfield details ("Seyrüsefer için değil"), the marine header, the clock, the GPS dashboard,
+locator, follow, SOS page, the DMR audio diagnostics, the 3D waterfall's readout and its "No room" against the range,
+the multi-watch rows ("467.375 MHz  TS1 CC1"), the cross-band and DOTA pages' "Henüz çağrı duyulmadı". List screens
+(Tools, Settings, channel editor, last calls) stay inside the screen but cut most values: "Single-f…epeater", "USB
+…work", "TX z…şımı", "dPM…321", in Turkish more than in English. Upstream's own gallery check (`uiSim --layout`) does not
+build in the Plus host tree (the Plus screens need their own simulator wrappers), so upstream's screens were seen only
+through the Plus suites that open them.
+
+**Proposal** (for the owner to decide; a round of its own):
+
+1. **Large lists only.** Apply the larger font to `ui_draw_list` rows (Tools, Settings, Zones, Channels, the editors,
+   Recent, last calls, heard list) and leave pages, Home and the status strip as they are. Lists already shorten
+   values safely; the cost is the shortened values, which need shorter Turkish for the common rows
+   and a value column that gives way to the label. Pages stay readable as now. Estimated 0.5 KB flash, one bit stored.
+2. Make each page that overflows fit its own lines (wrap or shorten through `gfx_text_fit`) before Large covers it:
+   about 40 screens, each with its layout check in both sizes; worth it only screen by screen, starting with the most
+   used (battery, search, airfield details).
+3. Alternatively a 10x20 or 11x22 anti-aliased font (+4-5 KB flash, generated with upstream's `tools/fontconv.py`
+   from the same JetBrains Mono): 20-21 characters a line instead of 18, far fewer cuts, but the same page work.
+
+Already there: Settings > Display > Large text makes Home's channel and talk target up to twice as big
+(`CONFIG_LARGE_SCALE`); the proposal above is for everything else.

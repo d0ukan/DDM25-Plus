@@ -127,8 +127,7 @@ public static partial class AirText
     }
 
     /// <summary>The aerodrome code (LTxx) in a file name, else in the page text before its AD 2.18 heading, or null.
-    /// (datapack.code_of looks for \bLTxx\b in the name only: an underscore before the code, as in LT_AD_2_LTAC_en.pdf,
-    /// is a word character there and hides it.)</summary>
+    /// (datapack.code_of does the same: an underscore around the code, as in LT_AD_2_LTAC_en.pdf, is no letter.)</summary>
     public static string? CodeOf(string fileName, string? text = null)
     {
         var name = Path.GetFileNameWithoutExtension(fileName);
