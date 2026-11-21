@@ -98,8 +98,10 @@ public partial class UpdatePage : UserControl, IPage
             pages[i].Visibility = i == page ? Visibility.Visible : Visibility.Collapsed;
         }
         var gate = state.DisclaimerAccepted;
-        AccessTitle.Text = Loc.T(RadioAccess.WritesOn ? "Dev_NoteWriteTitle" : RadioAccess.IsOn ? "Dev_NoteTitle" : "Radio_DisabledTitle");
-        AccessText.Text = Loc.T(RadioAccess.WritesOn ? "Dev_NoteWrite" : RadioAccess.IsOn ? "Dev_Note" : "Radio_Disabled");
+        var accessNote = AccessNotes.Current();
+        AccessNote.Visibility = accessNote is null ? Visibility.Collapsed : Visibility.Visible;
+        AccessTitle.Text = accessNote is null ? "" : Loc.T(accessNote.Value.Title);
+        AccessText.Text = accessNote is null ? "" : Loc.T(accessNote.Value.Text);
         CableText.Text = CableScanner.Text(state.Cable);
         CableText.Foreground = (System.Windows.Media.Brush)FindResource(state.Cable.State == CableState.Ok ? "Green" : "Red");
         PortCombo.Visibility = state.Cable.Ports.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -319,7 +321,7 @@ public partial class UpdatePage : UserControl, IPage
         var note = FirmwareNote.Text.Trim();
         state.Settings.Save("installed_firmware", note);
         var parent = state.Paths.Backups;
-        if (RadioAccess.IsOn)
+        if (BuildFlags.IsDeveloper)
         {
             // developer build: the backup goes where the owner chooses (to compare it with the Python tool's)
             var dlg = new Microsoft.Win32.OpenFolderDialog { InitialDirectory = parent, Title = Loc.T("Dev_ChooseFolder") };

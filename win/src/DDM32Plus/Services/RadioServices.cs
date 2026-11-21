@@ -52,6 +52,17 @@ public static class CableScanner
     };
 }
 
+/// <summary>The note a radio page shows about this build's radio access (string keys), or null for none.</summary>
+public static class AccessNotes
+{
+    /// <summary>The release build (radio access and writes on, no developer features) shows none; a developer build
+    /// says so; a build without radio access says that no port is opened.</summary>
+    public static (string Title, string Text)? Current() =>
+        !RadioAccess.IsOn ? ("Radio_DisabledTitle", "Radio_Disabled")
+        : BuildFlags.IsDeveloper ? RadioAccess.WritesOn ? ("Dev_NoteWriteTitle", "Dev_NoteWrite") : ("Dev_NoteTitle", "Dev_Note")
+        : RadioAccess.WritesOn ? null : ("Dev_NoteTitle", "Dev_Note");
+}
+
 /// <summary>How a tool run ended: its error (null when it passed), or that radio access is off in this build.</summary>
 public sealed record RunEnd(ToolError? Error, bool AccessOff);
 

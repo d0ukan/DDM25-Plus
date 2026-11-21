@@ -30,7 +30,7 @@ public partial class App : Application
             show = args[si + 1];
         string? releaseFolder = null;
         var ri = args.IndexOf("--release-folder");
-        if (ri >= 0 && ri + 1 < args.Count && Core.Radio.RadioAccess.IsOn)      // developer builds only
+        if (ri >= 0 && ri + 1 < args.Count && Core.Radio.BuildFlags.IsDeveloper)      // developer builds only
             releaseFolder = args[ri + 1];
         string? marker = null;
         var i = args.IndexOf(SelfUpdate.CheckArg);

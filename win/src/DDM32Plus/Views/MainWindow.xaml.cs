@@ -40,8 +40,9 @@ public partial class MainWindow : Window
 
     private void RefreshAll()
     {
-        Title = $"{AppInfo.Name} {AppState.ProgramVersion}" + (Core.Radio.RadioAccess.WritesOn ? Loc.T("Dev_TitleWrite") : Core.Radio.RadioAccess.IsOn ? Loc.T("Dev_Title") : "");
-        LocalButton.Visibility = Core.Radio.RadioAccess.IsOn ? Visibility.Visible : Visibility.Collapsed;
+        Title = $"{AppInfo.Name} {AppState.ProgramVersion}" + (!Core.Radio.BuildFlags.IsDeveloper ? "" :
+            Core.Radio.RadioAccess.WritesOn ? Loc.T("Dev_TitleWrite") : Core.Radio.RadioAccess.IsOn ? Loc.T("Dev_Title") : "");
+        LocalButton.Visibility = Core.Radio.BuildFlags.IsDeveloper ? Visibility.Visible : Visibility.Collapsed;
         MenuTr.IsChecked = Loc.Instance.Language == "tr";
         MenuEn.IsChecked = Loc.Instance.Language == "en";
         StatusCable.Text = Loc.F("Status_Cable", CableScanner.Short(state.Cable, state.Port));
@@ -129,7 +130,7 @@ public partial class MainWindow : Window
     /// <summary>--release-folder PATH or the toolbar's local release entry: developer builds only.</summary>
     public async void LoadLocalRelease(string folder)
     {
-        if (!Core.Radio.RadioAccess.IsOn)
+        if (!Core.Radio.BuildFlags.IsDeveloper)
             return;
         var (error, versions) = await state.LoadLocalAsync(folder);
         MessageBox.Show(this, error is null ? Loc.F("Local_Loaded", string.Join(", ", versions)) : Loc.F("Local_Failed", error),

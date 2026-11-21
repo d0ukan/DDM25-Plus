@@ -82,11 +82,12 @@ public sealed class VirtualClock(string stamp = "2026-11-20T00:00:00Z") : IClock
 }
 
 /// <summary>
-/// The switch in front of every serial port: a tool gets a port only through <see cref="Factory"/>, and that
-/// refuses while radio access is off. It is off in every build unless the program is compiled with the developer
-/// flag (dotnet build -p:RadioAccess=true, which defines DDM32_RADIO_ACCESS); nothing at run time can turn it on.
-/// The first real run needs the owner's approval for that step (AGENTS.md, hard safety rules). Even with radio access
-/// the tools that write (install, restore) get no port: <see cref="WriteFactory"/> stays off.
+/// The switch in front of every serial port: a tool gets a port only through <see cref="Factory"/> (read-only tools)
+/// or <see cref="WriteFactory"/> (the tools that write). Both are compile-time switches. Owner's decision 2026-11-21:
+/// the release build and the setup are made with both on (Directory.Build.props defaults RadioAccess and RadioWrite
+/// to true), because installs are done with this program; -p:RadioAccess=false gives a build that opens no port at
+/// all. Nothing at run time can turn either on. In either build every guard (ReadOnlyPort, InstallPort, CpsPackPort)
+/// sits between the tool and the port, and every radio step starts only from its own button after its confirmation.
 /// </summary>
 public static class RadioAccess
 {
@@ -112,8 +113,8 @@ public static class RadioAccess
     public static bool WritesOn => WritesEnabled;
 
     /// <summary>The port factory for the tools that write (install, quick update, install without backup,
-    /// restore): only in the developer build made with both -p:RadioAccess=true and -p:RadioWrite=true (the
-    /// owner's approval 2026-11-20 for their install); never in the release build or the setup.</summary>
+    /// restore, data packs): only when both RadioAccess and RadioWrite are compiled in (the release default since
+    /// 2026-11-21).</summary>
     public static SerialFactory WriteFactory =>
 #pragma warning disable CS0162
         WritesEnabled ? name => new SerialRadioPort(name) : _ => throw new DisabledException();
@@ -124,4 +125,18 @@ public static class RadioAccess
 #pragma warning disable CS0162 // one branch is unreachable, by the build flag
         Enabled ? name => new SerialRadioPort(name) : _ => throw new DisabledException();
 #pragma warning restore CS0162
+}
+
+/// <summary>Build flags that are not about the radio.</summary>
+public static class BuildFlags
+{
+#if DDM32_DEVELOPER
+    public const bool Developer = true;
+#else
+    public const bool Developer = false;
+#endif
+
+    /// <summary>Developer, read at run time: the developer-only features (local release folder, --release-folder,
+    /// the developer title) exist only in a build made with -p:Developer=true, never in the release build.</summary>
+    public static bool IsDeveloper => Developer;
 }

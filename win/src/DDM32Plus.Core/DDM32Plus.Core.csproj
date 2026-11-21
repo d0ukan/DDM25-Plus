@@ -10,18 +10,23 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(RadioAccess)' == 'true'">
-    <!-- Developer flag: compiles the serial port in (RadioAccess.Enabled). Never in a release build; the first real
-         run needs the owner's approval for that step. -->
+    <!-- On by default (Directory.Build.props): compiles the serial port in (RadioAccess.Enabled). -->
     <DefineConstants>$(DefineConstants);DDM32_RADIO_ACCESS</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(RadioWrite)' == 'true'">
-    <!-- Developer flag for the owner's install (needs RadioAccess too): the writing tools get a port. Never in a
-         release build or the setup. -->
+    <!-- On by default (Directory.Build.props; needs RadioAccess too): the writing tools get a port. -->
     <DefineConstants>$(DefineConstants);DDM32_RADIO_WRITES</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Developer)' == 'true'">
+    <!-- Developer-only features (BuildFlags.Developer): local release folder, the developer title. Never in the
+         release build or the setup. -->
+    <DefineConstants>$(DefineConstants);DDM32_DEVELOPER</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="PdfPig" Version="0.1.16" />
     <PackageReference Include="System.IO.Ports" Version="10.0.3" />
   </ItemGroup>
 

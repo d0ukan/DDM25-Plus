@@ -9,14 +9,19 @@ namespace DDM32Plus.Core.Radio;
 
 /// <summary>
 /// What a tool run gets from its caller: where its lines go, the clock, the only way to a serial port, the release
-/// key and the codec tables. The program passes RadioAccess.Factory (off unless the build allows radio access); the
-/// tests pass a replay of a recorded run.
+/// key and the codec tables. The program passes RadioAccess.Factory or RadioAccess.WriteFactory explicitly; the tests
+/// pass a replay of a recorded run or a fake radio. Without one the tool gets no port at all (NoPortGiven), so a
+/// caller that forgets it can never reach a real radio, in any build.
 /// </summary>
 public sealed class ToolContext
 {
+    public sealed class NoPortGivenException() : InvalidOperationException("No serial port factory was given to this tool run");
+
+    public static readonly SerialFactory NoPort = _ => throw new NoPortGivenException();
+
     public Action<string> Print { get; init; } = _ => { };
     public IClock Clock { get; init; } = SystemClock.Instance;
-    public SerialFactory Serial { get; init; } = RadioAccess.Factory;
+    public SerialFactory Serial { get; init; } = NoPort;
 
     /// <summary>The release key to check a release folder with; null: the embedded one.</summary>
     public string? ReleaseKeyHex { get; init; }

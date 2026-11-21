@@ -97,9 +97,10 @@ public sealed class LocalReleaseTests : IDisposable
     }
 
     [Fact]
-    public void WritesAreOffInThisBuild()
+    public void TheLocalReleaseFolderIsDeveloperOnly()
     {
-        Assert.False(RadioAccess.WritesEnabled);
-        Assert.Throws<RadioAccess.DisabledException>(() => RadioAccess.WriteFactory("COM14"));
+        // the release build (and the tests) have no developer features: the program ignores --release-folder and
+        // hides the local release entry unless BuildFlags.Developer
+        Assert.False(BuildFlags.IsDeveloper);
     }
 }

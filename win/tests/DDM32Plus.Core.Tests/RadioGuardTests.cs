@@ -215,18 +215,40 @@ public sealed class RadioGuardTests
     }
 
     [Fact]
-    public void RadioAccessIsOffInThisBuild()
+    public void RadioAccessFollowsTheBuildFlags()
     {
-        Assert.False(RadioAccess.Enabled);
-        Assert.Throws<RadioAccess.DisabledException>(() => RadioAccess.Factory("COM14"));
-        using var p = new SerialRadioPort("COM14");
-        Assert.Throws<RadioAccess.DisabledException>(p.Open);
-        // a tool with the program's own context stops before any port is opened
+        // The release build has radio access and writes on (owner, 2026-11-21); -p:RadioAccess=false builds one that
+        // opens no port. No test ever opens a real port: a factory's port is only created here, never opened.
+        if (!RadioAccess.IsOn)
+        {
+            Assert.False(RadioAccess.WritesOn);
+            Assert.Throws<RadioAccess.DisabledException>(() => RadioAccess.Factory("COM14"));
+            Assert.Throws<RadioAccess.DisabledException>(() => RadioAccess.WriteFactory("COM14"));
+            using var p = new SerialRadioPort("COM14");
+            Assert.Throws<RadioAccess.DisabledException>(p.Open);
+        }
+        else
+        {
+            Assert.IsType<SerialRadioPort>(RadioAccess.Factory("COM14"));
+            if (RadioAccess.WritesOn)
+                Assert.IsType<SerialRadioPort>(RadioAccess.WriteFactory("COM14"));
+            else
+                Assert.Throws<RadioAccess.DisabledException>(() => RadioAccess.WriteFactory("COM14"));
+        }
+        Assert.False(BuildFlags.IsDeveloper);         // the tests run the release configuration
+    }
+
+    [Fact]
+    public void AToolWithoutAGivenPortOpensNothing()
+    {
+        // a tool run whose caller gave no port factory stops before any port is opened, in every build
         using var tmp = new TempDir();
         var lines = new List<string>();
         var ctx = new ToolContext { Print = lines.Add, Clock = new VirtualClock() };
-        Assert.Throws<RadioAccess.DisabledException>(() =>
+        Assert.Throws<ToolContext.NoPortGivenException>(() =>
             BackupTool.Run(["--port", "COM14", "--out", tmp.Sub("b"), "--installed-firmware", "x", "--wait", "5"], ctx));
+        Assert.Throws<ToolContext.NoPortGivenException>(() =>
+            DataPackTool.Run(["read", "--port", "COM14"], ctx));
         Assert.Empty(lines);
     }
 

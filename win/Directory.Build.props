@@ -1,7 +1,7 @@
 <Project>
   <!-- Shared settings for every project in win/: one version, zero warnings (warnings are errors). -->
   <PropertyGroup>
-    <Version>2.0.0-alpha.1</Version>
+    <Version>2.0.0-beta.1</Version>
     <Authors>d0ukan</Authors>
     <Company>d0ukan · TA2DOU</Company>
     <Product>DDM32 Plus</Product>
@@ -16,5 +16,16 @@
     <SatelliteResourceLanguages>en;tr</SatelliteResourceLanguages>
     <NeutralLanguage>en</NeutralLanguage>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <!-- Build flags (owner's decision 2026-11-21: installs are done with this program). The release build and the setup
+       reach the radio: RadioAccess (the read-only backup) and RadioWrite (install, quick update, install without backup,
+       restore, data packs) are ON unless switched off with -p:RadioAccess=false / -p:RadioWrite=false. Every guard and
+       every per-step confirmation stays the same in either build. Developer=true adds the developer-only features
+       (local release folder, the developer title); never in the release build or the setup. -->
+  <PropertyGroup>
+    <RadioAccess Condition="'$(RadioAccess)' == ''">true</RadioAccess>
+    <RadioWrite Condition="'$(RadioWrite)' == ''">true</RadioWrite>
+    <Developer Condition="'$(Developer)' == ''">false</Developer>
   </PropertyGroup>
 </Project>
