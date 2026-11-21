@@ -72,8 +72,11 @@ def main(ROOT, APP, OUT, flags, host):
     argv = shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))
     argv[argv.index('uiFlowTest.c')] = str(tp / 'test_ui_dota.c')
     argv[argv.index('-o') + 1] = str(OUT / 'test_ui_dota')
-    run([*argv, '-I' + str(host), '-Wno-unused-function', '-DCONFIG_DOTA=1', '-DCONFIG_APRS_MSG=1', '-DCONFIG_APRS=1',
-         '-DCONFIG_DATAPACK=1',
+    # (the frequency's checks are the cross-band's band plan: radio/xband.c and ui_xband.c built without CONFIG_XBAND
+    # hold just those)
+    run([*argv, '-I' + str(host), '-I' + str(core), '-Wno-unused-function', '-DCONFIG_DOTA=1', '-DCONFIG_APRS_MSG=1',
+         '-DCONFIG_APRS=1', '-DCONFIG_DATAPACK=1',
          '-DCONFIG_P25_CHANNELS=1', '-DCONFIG_LANG_TR=1', str(core / 'ui/ui_dota.c'), str(core / 'ui/ui_aprsmsg.c'),
+         str(core / 'ui/ui_xband.c'), str(core / 'radio/xband.c'),
          *(str(core / 'aprs' / f) for f in ('aprs_plus.c', 'aprs_fmt.c', 'ax25.c')), '-lm'], cwd=host)
     run([OUT / 'test_ui_dota'], cwd=host)

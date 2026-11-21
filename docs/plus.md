@@ -3257,3 +3257,45 @@ through the Plus suites that open them.
 
 Already there: Settings > Display > Large text makes Home's channel and talk target up to twice as big
 (`CONFIG_LARGE_SCALE`); the proposal above is for everything else.
+
+## DOTA frequency: amateur bands only (branch `dotafreq`)
+
+Owner, 2026-11-21: on Tools > DOTA Transfer a frequency can still be typed (Frequency source Manual), but only an
+amateur band frequency is accepted, with the same rules as the cross-band (section "Cross-band store and forward").
+One definition serves both: the band plan `xband_check_hz` (`radio/xband.c`) and its toasts with the repeater list's
+check (`ui_xband_refusal`, `ui_xband.c`), built with `CONFIG_XBAND` or `CONFIG_DOTA` (the rest of the cross-band only
+with `CONFIG_XBAND`). Design text: [dota.md](dota.md) 12.6.
+
+| Frequency | DOTA (typed, stepped, any source at Send / Ready) | Toast (Turkish) |
+|---|---|---|
+| 144.000-146.000, 430.000-440.000 MHz (edges included), outside the rows below | accepted | |
+| below 144, 146-430, above 440 MHz (162.550, 143.9875, 429.990, 440.0125, 146.0125) | refused | "Not an amateur band" ("Amatör bant değil") |
+| 446.000-446.200 MHz (PMR446) | refused | "PMR446: no repeaters allowed" ("PMR446: röle yasak") |
+| 144.800 MHz +- 6.25 kHz (APRS) | refused | "APRS frequency" ("APRS frekansı") |
+| 145.000-145.1875 and 145.600-145.7875 MHz (RV48-RV63 inputs / outputs), 431.050-431.825 and 438.650-439.425 MHz (RU inputs / outputs), each +- 6.25 kHz; a frequency of the repeater list | refused | "Repeater frequency" ("Röle frekansı") |
+| 145.800-146.000 and 435.000-438.000 MHz (satellites; 145.825 ISS APRS among them) | refused | "Satellite segment" ("Uydu bölümü") |
+| APRS's own frequency (Settings > APRS), when the plan allows it | refused at Send / Ready | "APRS frequency" |
+
+- **Typed** (6 digits kHz or 7 digits with 100 Hz, OK or Up / Down): a refused frequency is not taken; the toast says
+  why and the frequency and its source stay as they were.
+- **Left / Right** on the frequency: never out of the amateur bands (the toast, the frequency stays); a step into a
+  refused segment inside them is taken, so the user can step across it, and Send / Ready refuses it.
+- **Current channel** is offered only when it passes the same check (it was the upstream `aprs_amateur_hz`, 144-148,
+  222-225 and 420-450 MHz). Default 433.450 and Last used pass by construction; Send / Ready checks every source.
+- **The question "Not amateur band: send?" is gone** (its Turkish entry too): outside the bands DOTA sends nothing.
+  The receiver (it answers on the air) is checked the same way.
+- Host tests: `tests/plus/test_ui_dota.c` (`freq_typed`: 19 typed frequencies, each refused or started on exactly
+  that frequency; `freq_stepped`: the band edges, a step into the satellite segment refused at Send for sender and
+  receiver; `start_refusals`: APRS's own frequency), built with the real `xband.c` / `ui_xband.c`; the band plan's own
+  table stays in `tests/plus/test_xband.c`. Radio rows D-B1 to D-B3 in [plus-radio-test.md](plus-radio-test.md).
+
+Budget (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild identical, every task inside its
+stack, the least free prvIdleTask 136 B as before):
+
+| | FLASH B | RAM B (free) |
+|---|---:|---:|
+| `ddm25` 6d846e3 | 840,656 | 209,568 (1,888) |
+| this branch | 840,656 (+0: the shared check's code is about what the question, its Turkish and the ISS compare took) | 209,568 (1,888) |
+
+Also fixed on the way: `tests/plus/test_dmrsearch.c` expected the search log's range from an earlier search
+(433.000 MHz); the search running there starts at 432.500 MHz.

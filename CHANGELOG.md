@@ -9,6 +9,12 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   carrier in the order P25 > DMR > YSF > NXDN (each with its own receiver; the first confirmed wins); found list with
   the mode and its fields (NAC / colour code / DG-ID / RAN, talkgroup, source, YSF callsign), the call played, receive
   only. The PC search log reads it as a third section `alls` (the CSV gains a `caller` column).
+- DOTA Transfer: a typed frequency must be in the amateur bands (144-146, 430-440 MHz) and outside what the
+  cross-band refuses there (repeater inputs and outputs, the satellite segments 145.800-146.000 and 435-438 MHz, APRS
+  144.800, PMR446, the repeater list's frequencies); otherwise a toast says why ("Not an amateur band", "Repeater
+  frequency", "Satellite segment", ...) and the frequency stays. Left / Right no longer step out of the bands, Send /
+  Ready checks every source the same way, and the "Not amateur band: send?" question is gone (nothing is sent
+  outside the bands).
 
 ## v1.0.0-beta.6 (2026-11-21)
 

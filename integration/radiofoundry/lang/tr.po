@@ -5689,10 +5689,6 @@ msgid "Stop the transfer?"
 msgstr "Aktarım durdurulsun mu?"
 
 #: core/ui/ui_dota.c
-msgid "Not amateur band: send?"
-msgstr "Amatör bant değil: gönderilsin mi?"
-
-#: core/ui/ui_dota.c
 msgid "Battery low. Sure?"
 msgstr "Pil zayıf. Emin misiniz?"
 

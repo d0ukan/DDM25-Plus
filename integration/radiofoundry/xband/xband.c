@@ -3,7 +3,7 @@
  * core/radio/xband.c. The UI writes the request and reads the view (as DOTA's dota.c does: plain copies, the radio
  * task owns everything else); the radio task runs the rest. */
 #include "config.h"
-#if CONFIG_XBAND
+#if CONFIG_XBAND || CONFIG_DOTA	/* the band plan: DOTA's frequency check is this one too (ui_xband_refusal) */
 #include <string.h>
 #include "radio/xband.h"
 
@@ -40,7 +40,9 @@ uint8_t xband_check_hz(uint32_t hz)
 			return XB_R_OK;
 	return XB_R_BAND;
 }
+#endif
 
+#if CONFIG_XBAND
 uint8_t xband_check(const xband_req_t *r)
 {
 	if (r->mode != XB_MODE_DMR)
