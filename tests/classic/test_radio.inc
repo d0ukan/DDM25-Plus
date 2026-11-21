@@ -305,6 +305,9 @@ static void test_plus_hotspot_p25(void)
 #if CONFIG_DMR_SEARCH
 #include "test_dmrsearch_sm.inc"
 #endif
+#if CONFIG_ALL_SEARCH
+#include "test_allsearch_sm.inc"
+#endif
 #if CONFIG_P25_TRUNK
 #include "test_trunk_sm.inc"
 #endif
@@ -326,6 +329,9 @@ int main(void)
 #endif
 #if CONFIG_DMR_SEARCH
     test_plus_dmrsearch_sm();
+#endif
+#if CONFIG_ALL_SEARCH
+    test_plus_allsearch_sm();
 #endif
 #if CONFIG_P25_TRUNK
     test_plus_trunk_sm();

@@ -191,16 +191,41 @@ static void scan_give_back(radio_sm_t *sm)
 enum { P25S_PROBE_MS=700, P25S_END_MS=1500 };
 static bool search_owned, search_release, search_was_p25;
 static uint32_t search_taken_ms, search_hz, search_frames0;
+#if CONFIG_ALL_SEARCH
+/* DDM32 Plus all digital search (radio/dmrsearch.h): the same take and give back for its P25 and YSF probes. The
+ * engine decides (dmrs_probe, as for its DMR and NXDN probes in the radio core): this reports what the receiver heard
+ * since it took the frequency and hands it back when the engine moves on (the next mode, the sweep, a stop). The
+ * caller's sequence at the take (a call heard before is not this frequency's) */
+static bool search_all;
+static uint32_t search_seq0;
+#endif
 static void search_take(radio_sm_t *sm)
 {
     (void)sm;
+    uint32_t hz=p25s_at_hz();
+    bool ysf=false;
+    (void)ysf;
+#if CONFIG_ALL_SEARCH
+    if(dmrs_on())hz=dmrs_native_hz(&ysf);
+#endif
 #if CONFIG_YSF
-    if(!p25_lab_set_ysf(0,0))return;
+    if(!p25_lab_set_ysf(ysf,0))return;  /* the all digital search's YSF probe: any DG-ID */
 #endif
     if(!p25_lab_set_channel(0xF7Eu,0xF7Eu,0,0,0))return;    /* any NAC, any talkgroup, receive only */
-    search_hz=p25s_at_hz();
+    search_hz=hz;
     search_frames0=p25_lab_channel_frames(NULL,NULL);
     search_taken_ms=hal_millis();
+#if CONFIG_ALL_SEARCH
+    search_all=dmrs_on();
+    if(search_all) {
+#if CONFIG_YSF
+        search_seq0=ysf?p25_lab_ysf_caller(NULL,NULL):p25_lab_p25_caller(NULL,NULL);
+#else
+        search_seq0=p25_lab_p25_caller(NULL,NULL);
+#endif
+        dmrs_retuned(search_taken_ms);    /* the mode's window starts now */
+    }
+#endif
     search_owned=true;search_release=search_was_p25=false;
     channel_selected=live_enabled=live_rx_pending=true;
     live_tx_pending=false;channel_denial=0;
@@ -213,10 +238,62 @@ static void search_let_go(void)
     p25_lab_channel_stop();
     if(voice_owner){pending_start=0;nt_stop(&test,test.session,NT_USER_STOP);}
 }
+#if CONFIG_ALL_SEARCH
+/* What the native receiver heard since the take, for the engine: P25 frames (any NAC) or YSF frames whose FICH held,
+ * the NAC / DG-ID, the call's talkgroup and source (P25) or source callsign (YSF), voice playing. Not inlined: its
+ * locals stay off the radio task's deepest path */
+static uint32_t __attribute__((noinline)) all_heard(uint32_t now)
+{
+    dmrs_heard_t h={.cc=DMRS_CC_NONE};
+    bool ysf;
+    (void)dmrs_native_hz(&ysf);
+#if CONFIG_YSF
+    if(ysf) {
+        uint32_t s=p25_lab_channel_last_sync_ms();
+        if(s && (int32_t)(s-search_taken_ms)>=0) {
+            char src[11];
+            h.bursts=DMRS_MIN_BURSTS;
+            h.cc=p25_lab_ysf_dgid();
+            p25_lab_ysf_caller(src,NULL);
+            dmrs_call_pack(src,&h.dst,&h.src);
+        }
+    } else
+#endif
+    {
+        uint16_t nac=0;
+        uint32_t n=p25_lab_channel_frames(NULL,&nac)-search_frames0;
+        if(n) {
+            uint16_t tg=0;
+            uint32_t src=0;
+            h.bursts=(uint16_t)(n<0xFFFFu?n:0xFFFFu);
+            h.cc=nac;
+            if(p25_lab_p25_caller(&tg,&src)!=search_seq0) { h.dst=tg;h.src=src;h.group=tg!=0; }
+        }
+    }
+    uint32_t v=p25_lab_channel_last_voice_ms();
+    h.call=v && (int32_t)(v-search_taken_ms)>=0 && now-v<DMRS_VOICE_MS;
+    return dmrs_probe(&h,now);
+}
+#endif
 static void search_service(radio_sm_t *sm)
 {
     uint32_t now=hal_millis(),last_ms=0;
     uint16_t nac=0;
+#if CONFIG_ALL_SEARCH
+    if(search_all) {
+        /* The all digital search: held while the engine stays on this mode here, given back when it moves on */
+        if(!search_release && dmrs_on() && all_heard(now)==0 && dmrs_on())return;
+        if(!search_release)search_let_go();
+        if(voice_owner || test.owned || p25_lab_busy())return;    /* the worker is still letting go */
+        search_owned=search_release=search_all=false;
+        channel_selected=channel_handoff=false;
+        live_restore_pending=false;channel_denial=0;
+        sm->audio_out=sm->green_out=sm->red_out=-1;
+        if(dmrs_on())dmrs_regained();     /* the radio core sets the receiver up for what comes next */
+        else restore_channel(sm);         /* stopped meanwhile: the channel again */
+        return;
+    }
+#endif
     if(!search_release) {
         bool p25=p25_lab_channel_frames(&last_ms,&nac)!=search_frames0;
         if(p25) {
@@ -349,6 +426,14 @@ static bool selected_rx_stale(const channel_t *ch)
 static void channel_service(radio_sm_t *sm)
 {
 #if CONFIG_DMR_SEARCH
+#if CONFIG_ALL_SEARCH
+    /* The all digital search: only its P25 / YSF probe may take the receiver (the rest is the radio core's) */
+    if(dmrs_on() && search_owned) { search_service(sm);return; }
+    bool all_ysf;
+    if(dmrs_on() && dmrs_native_hz(&all_ysf) && !channel_selected && !channel_handoff && !voice_owner && !test.owned &&
+       !p25_lab_busy() && !sm->power_off_req && !sm->view.power_off)
+        search_take(sm);
+#endif
     if(dmrs_on())return;    /* the DMR search has the receiver (radio_sm.c): the P25 channel waits for its end */
 #endif
 #if CONFIG_P25_SEARCH
@@ -653,6 +738,17 @@ int native_lab_request(radio_sm_t *sm, const radio_req_t *r)
         sm->ptt=r->arg!=0;
         channel_denial=sm->ptt?TXDENY_RX_ONLY:0;
         if(channel_selected)channel_view(sm);
+        return 1;
+    }
+#endif
+#if CONFIG_ALL_SEARCH
+    /* PTT while the all digital search's P25 / YSF probe has the receiver: consumed, it stops the search and the
+     * receiver is handed back (then the channel again), never keyed */
+    if(r->type==RREQ_PTT && search_owned && search_all) {
+        if(r->arg) {
+            dmrs_stop();
+            if(!search_release) search_let_go();
+        }
         return 1;
     }
 #endif

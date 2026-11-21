@@ -54,7 +54,8 @@ typedef struct {
 
 /* Who filled the buffer last */
 enum { UI_SCRATCH_NONE, UI_SCRATCH_SPECTRUM, UI_SCRATCH_DMRS, UI_SCRATCH_P25S, UI_SCRATCH_DMRTK, UI_SCRATCH_P25TK,
-       UI_SCRATCH_MSG, UI_SCRATCH_APRSX, UI_SCRATCH_XBAND };
+       UI_SCRATCH_MSG, UI_SCRATCH_APRSX, UI_SCRATCH_XBAND,
+       UI_SCRATCH_ALLS };	/* DDM32 Plus all digital search: its own tag on the DMR search's copy (dmrs_view_t) */
 
 typedef union {
 #if CONFIG_SPECTRUM

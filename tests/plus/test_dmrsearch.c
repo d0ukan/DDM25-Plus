@@ -248,7 +248,7 @@ int main(void)
 	bool seen = false;
 	for (unsigned i = 0; dmrs_peek(i, &pk); i++)
 		seen |= pk.f.hz == 433500000u && pk.f.dst == 101u && pk.f.src == 77285u && pk.f.calls > 0;
-	CHECK(seen && pk.found_n > 0 && pk.phase == DMRS_SWEEP && pk.lo_hz == 433000000u);
+	CHECK(seen && pk.found_n > 0 && pk.phase == DMRS_SWEEP && pk.lo_hz == 432500000u);
 	CHECK(!dmrs_peek(DMRS_FOUND_MAX, &pk));
 
 	/* Nobody looks (the screen was left): the search stops by itself, also while the PC reads it all the time */

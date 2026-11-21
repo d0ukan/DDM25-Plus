@@ -339,6 +339,83 @@ takes the channel back after it. Code: `integration/radiofoundry/spectrum/dmrsea
 simulated modem: hear-all stack, sweep, found list, call played, hang, resume, PTT never keys, stops, P25 channel
 kept off; built without the P25 search).
 
+### All digital search (`CONFIG_ALL_SEARCH`, ours; receive only)
+
+Tools > All digital search (Turkish "Tüm dijital arama"; the last tool before Battery, so no other tool's number moves):
+finds P25, DMR, YSF and NXDN anywhere in a range. Same ranges, step and keys as P25 / DMR search (Left / Right, `*`
+and digits open the range editor, OK start / stop, Up / Down pick a find, Back stops). On a hit it probes the modes
+in the owner's priority order **P25 > DMR > YSF > NXDN**; the first mode confirmed wins.
+
+It is the DMR search's engine with a second kind (`dmrsearch.c`: the sweep, the hit rule, skip list, revisits, found
+list, call, hang and resume are the DMR search's, unchanged) and the DMR search's screen with a flag
+(`ui_dmrsearch.c`). The two kinds share the engine's RAM: starting the other kind clears the found list, and a
+snapshot or peek of the kind not running reads as stopped with nothing found (so the other screen keeps nothing
+alive). Each mode is probed with the receiver this tree already has for it; there is no receiver that hears all four
+at once:
+
+| Stage | How |
+|---|---|
+| Sweep | on the FM path (as P25 search), read as the DMR search reads (three readings a step, so a direct mode DMR burst is caught; with `CONFIG_SEARCH_FAST` its quick first reading) |
+| P25 (first) | the native C4FM receiver takes the frequency with NAC and talkgroup Any (the P25 search's take and give back in `native_lab.c`); confirmed by a valid P25 frame (any NAC) within 700 ms of the take |
+| DMR | the board in DMR mode, the call stack hearing every color code, slot and talkgroup (the DMR search's `dmr_configure` while `dmrs_on`); confirmed by two bursts with a good check within 600 ms of the setup |
+| YSF | the native receiver again, in YSF mode with DG-ID Any (`p25_lab_set_ysf`); confirmed by a frame whose FICH held within 700 ms of the take |
+| NXDN | the FM path with the software 4FSK modem (`radio_nxdn_poll` on the probe's frequency, RAN Any); confirmed by frames with a good LICH within 900 ms |
+| None | the frequency is skipped as a non-digital carrier (10 s, 30 s when found again soon after with the faster sweep), the sweep goes on |
+| Found | as the DMR search: a voice call plays (any NAC / talkgroup / DG-ID / RAN), held while it lasts and 2 s after it; nothing to play within 1.5 s of the confirmation (an idle repeater, a control channel, data, encrypted): on |
+
+A carrier that is none of the four costs the four windows plus the hand-offs, about 3 s, then it is skipped; one of
+them is found within its own window after the earlier modes ran out (DMR after about 0.7 s, YSF about 1.4 s, NXDN
+about 2.1 s). A frequency already in the found list is probed in its own mode first (the rest in order after it), so
+revisits of a DMR, YSF or NXDN find don't wait for P25. A mixed mode frequency gets an entry for each mode.
+
+Found list: 8 entries, newest first, with the mode as a field:
+
+| Mode | First line | Second line |
+|---|---|---|
+| P25 | `433.5000 P25 NAC 1C8 3m` | `TG 655 from 1234567` |
+| DMR | `438.7125 DMR CC1 TS2 RPT 3m` | `TG 2620 from 2620123` / Encrypted |
+| YSF | `439.1000 YSF DG 0 3m` | `from TA2DOU` (the header's source callsign, packed base 40 into the entry's two numbers: no extra RAM) |
+| NXDN | `438.8000 NXDN RAN 5 3m` | `TG 101 from 1234` / Encrypted |
+
+OK on a find stops the search and puts the VFO there in the find's mode (every mode in the VFO): DMR with its color code
+and slot as the DMR search does; P25, YSF and NXDN with NAC / DG-ID / RAN Any. No find save on this screen (the find
+save writes P25 and DMR channels only).
+
+Receive only, as the DMR search: `radio_sm_tx_check` refuses everything while it runs and no APRS job starts; PTT is
+consumed and stops it (during a native P25 / YSF probe `native_lab.c` hands the receiver back first); any other user
+request ends it and tunes the channel again, including the DMR search's request (that one then starts with its own
+list); it stops by itself 5 s after its screen was left. The FM path's listeners (FM caller ID, pager, dPMR, the
+channel's own NXDN) keep off while it runs.
+
+PC search log: a third debug link section `alls` (30), read like `p25s` / `dmrs` (read only, not counted as a look):
+
+```
+alls.on=0|1 alls.phase=N alls.mode=P25|DMR|YSF|NXDN alls.at=HZ alls.lo=HZ alls.hi=HZ alls.n=N
+alls.fI=HZ,MODE,CODE,TSMASK,SYNCMASK,GROUP,ENC,DST,SRC,CALLS,AGE_S,CALL
+```
+
+CODE is the P25 NAC, DMR color code, YSF DG-ID or NXDN RAN (65535 = not known); TSMASK / SYNCMASK as `dmrs` (DMR only);
+DST / SRC the talkgroup and source (YSF: 0); CALL the YSF callsign (the last field, empty otherwise). The PC programmers
+(C# `SearchLogBook`, Rust `searchlog.rs`) poll all three sections and log a row per new call; the CSV gains a last
+column `caller`. The `dmrs` section still prints CC 255 for a color code not named yet.
+
+Cost (plus build): flash 840,664 -> 844,360 B (+3,696), static RAM 209,568 -> 209,592 B (+24; 1,864 B free,
+the 1,500 B rule kept; radio task stack 728 B free) (two engine bytes, the native take's kind and caller sequence, the
+YSF DG-ID, the screen's flag; the found entry stays 24 bytes: the NAC widened the code to 16 bits, the flags became
+bits). Code: `integration/radiofoundry/spectrum/dmrsearch.*` (the kind, the order, the windows), `radio_alls.inc` (the
+radio core's side, included into `radio_sm.c`), `ui_dmrsearch.c` (`ui_allsearch_screen`), `native_lab.c` (`all_heard`,
+the PTT guard), `p25_lab.c` (`p25_lab_ysf_dgid`), `searchlog_view.c`; hooks in `tools/plus_alldigital.py`. Tests:
+`tests/plus/test_allsearch.c` (engine: order and windows, every mode's find, call and hang, skip, the find's mode first,
+mixed mode, hand-offs, kinds, callsigns; with and without the faster sweep) and `tests/plus/test_allsearch_sm.inc` (the
+real state machine and native admission: FM sweep, native P25 probe found / played / hang / give back, DMR after P25 on
+the board's DMR mode, PTT never keys, the other search's request, the idle stop). Radio test rows AD-1.. in
+`docs/plus-radio-test.md`.
+
+What only the radio can confirm: the sweep's readings on the FM path catch a DMR direct mode carrier as well as the DMR
+search's readings in DMR mode; the FM / DMR board mode switch inside a probe (the DMR stack's start and its first
+bursts within 600 ms); the native receiver's lock within 700 ms for P25 and YSF; the NXDN modem's acquisition within
+900 ms (NXDN receive itself is still unverified on the radio, docs/nxdn.md).
+
 ### Airband AM and broadcast FM
 
 The DM-32 glue exists upstream but is unverified on the radio (hardware-dm32.md 8.7): AM is the

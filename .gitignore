@@ -665,3 +665,8 @@ __pycache__/
 !/tests/plus/test_searchlog.c
 !/integration/radiofoundry/spectrum/searchlog_view.c
 !/integration/radiofoundry/spectrum/searchlog_view.h
+# all digital search: the DMR search engine's second kind, its radio core side (tools/plus_alldigital.py)
+!/tools/plus_alldigital.py
+!/integration/radiofoundry/spectrum/radio_alls.inc
+!/tests/plus/test_allsearch.c
+!/tests/plus/test_allsearch_sm.inc

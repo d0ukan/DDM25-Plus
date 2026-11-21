@@ -1,12 +1,19 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* DDM32 Plus search log (tools/plus_searchlog.py, docs/plus.md "Search log on the PC"): the debug link sections
  * "p25s" and "dmrs" carry the P25 and DMR searches' state and found lists, so the PC programmer can keep every call a
- * search finds all night (the radio keeps 8). Read only and not counted as a look (p25s_peek, dmrs_peek): a search
+ * search finds all night (the radio keeps 8); "alls" the all digital search's. Read only and not counted as a look
+ * (p25s_peek, dmrs_peek, dmrs_peek_all): a search
  * still stops 5 s after its screen was left. Keys (new keys may be added; the meaning of these stays):
  *   X.on=0|1 X.phase=N X.at=HZ X.lo=HZ X.hi=HZ X.n=N
  *   p25s.fI=HZ,NAC,TG,SRC,CALLS,AGE_S             (I = 0 newest .. n-1)
  *   dmrs.fI=HZ,CC,TSMASK,SYNCMASK,GROUP,ENC,DST,SRC,CALLS,AGE_S   (CC 255 = not named yet)
- * AGE_S: seconds since the entry was last heard. */
+ *   alls.mode=P25|DMR|YSF|NXDN   (the mode probed or played now)
+ *   alls.fI=HZ,MODE,CODE,TSMASK,SYNCMASK,GROUP,ENC,DST,SRC,CALLS,AGE_S,CALL
+ *     MODE P25 / DMR / YSF / NXDN; CODE the P25 NAC, DMR color code, YSF DG-ID or NXDN RAN (65535 = not known);
+ *     TSMASK / SYNCMASK as dmrs (DMR only); DST / SRC the talkgroup (or called ID) and source (YSF: 0); CALL the YSF
+ *     source callsign (empty otherwise; the line's last field, it has no comma)
+ * AGE_S: seconds since the entry was last heard. The all digital search ("alls", DDM32 Plus) shares the DMR search's
+ * engine: whichever of the two ran last has the list, the other reads as off with nothing found. */
 #include "config.h"
 #include "hal_time.h"
 #include "debuglink/debuglink.h"
@@ -57,11 +64,38 @@ void searchlog_view_dmr(dl_text_t *t)
 	for (unsigned i = 0; i < DMRS_FOUND_MAX; i++) {
 		if (!dmrs_peek(i, &p))
 			break;
-		dl_text(t, "dmrs.f%u=%lu,%u,%u,%u,%u,%u,%lu,%lu,%u,%u\n", i, (unsigned long)p.f.hz, (unsigned)p.f.cc,
-			(unsigned)p.f.ts_mask, (unsigned)p.f.sync_mask, p.f.group ? 1u : 0u, p.f.enc ? 1u : 0u,
+		dl_text(t, "dmrs.f%u=%lu,%u,%u,%u,%u,%u,%lu,%lu,%u,%u\n", i, (unsigned long)p.f.hz,
+			p.f.cc == DMRS_CC_NONE ? 255u : (unsigned)p.f.cc,			(unsigned)p.f.ts_mask, (unsigned)p.f.sync_mask, p.f.group ? 1u : 0u, p.f.enc ? 1u : 0u,
 			(unsigned long)p.f.dst, (unsigned long)p.f.src, (unsigned)p.f.calls, age_s(now, p.f.heard_ms));
 	}
 #else
 	dl_text(t, "dmrs.built=0\n");
+#endif
+}
+
+void searchlog_view_all(dl_text_t *t)
+{
+#if CONFIG_ALL_SEARCH
+	dmrs_peek_t p;
+	uint32_t now = hal_millis();
+
+	(void)dmrs_peek_all(0u, &p);
+	dl_text(t, "alls.on=%u\nalls.phase=%u\nalls.mode=%s\nalls.at=%lu\nalls.lo=%lu\nalls.hi=%lu\nalls.n=%u\n",
+		p.phase != DMRS_OFF ? 1u : 0u, (unsigned)p.phase, dmrs_mode_name(p.mode), (unsigned long)p.at_hz,
+		(unsigned long)p.lo_hz, (unsigned long)p.hi_hz, (unsigned)p.found_n);
+	for (unsigned i = 0; i < DMRS_FOUND_MAX; i++) {
+		if (!dmrs_peek_all(i, &p))
+			break;
+		char call[11] = "";
+		bool ysf = p.f.mode == DMRS_MODE_YSF;
+		if (ysf)
+			dmrs_call_unpack(p.f.dst, p.f.src, call);
+		dl_text(t, "alls.f%u=%lu,%s,%u,%u,%u,%u,%u,%lu,%lu,%u,%u,%s\n", i, (unsigned long)p.f.hz,
+			dmrs_mode_name(p.f.mode), (unsigned)p.f.cc, (unsigned)p.f.ts_mask, (unsigned)p.f.sync_mask,
+			p.f.group ? 1u : 0u, p.f.enc ? 1u : 0u, ysf ? 0ul : (unsigned long)p.f.dst,
+			ysf ? 0ul : (unsigned long)p.f.src, (unsigned)p.f.calls, age_s(now, p.f.heard_ms), call);
+	}
+#else
+	dl_text(t, "alls.built=0\n");
 #endif
 }

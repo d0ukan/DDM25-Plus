@@ -5,6 +5,11 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- Tools > All digital search (Turkish "Tüm dijital arama"): sweeps a range like P25 / DMR search and probes each
+  carrier in the order P25 > DMR > YSF > NXDN (each with its own receiver; the first confirmed wins); found list with
+  the mode and its fields (NAC / colour code / DG-ID / RAN, talkgroup, source, YSF callsign), the call played, receive
+  only. The PC search log reads it as a third section `alls` (the CSV gains a `caller` column).
+
 ## v1.0.0-beta.6 (2026-11-21)
 
 With the Windows programmer 2.0.0-beta.3 and the cross-platform programmer 3.0.0-alpha.2 (Windows; alpha.1 was replaced the same day: it listed no version when only betas were published, and had no icon).

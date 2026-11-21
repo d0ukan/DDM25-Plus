@@ -197,6 +197,7 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_airprov", fromlist=["x"]).prepare_airprov(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_polish", fromlist=["x"]).prepare_polish(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_searchlog", fromlist=["x"]).prepare_searchlog(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_alldigital", fromlist=["x"]).prepare_alldigital(transform, install)
 
 
 def prepare_large_scale(transform):
@@ -1478,6 +1479,29 @@ static void dmrs_tune(radio_sm_t *sm, uint32_t hz)
 	dmr_call_heard_reset();
 }
 
+// What the call stack heard since the search tuned (dmr_call_heard) and the call it plays, for the engine
+static void dmrs_heard_read(dmrs_heard_t *h)
+{
+	dmr_call_heard_t mh;
+	dmr_call_heard(&mh);
+	const dmr_call_view_t *cv = dmr_call_view();
+	memset(h, 0, sizeof *h);
+	h->bursts = mh.bursts;
+	h->cc = mh.cc != 0xFFu ? mh.cc : DMRS_CC_NONE;
+	h->ts_mask = mh.ts_mask;
+	if (mh.sync_mask & (1u << DMR_SYNC_BS))
+		h->sync_mask |= DMRS_SYNC_BS;
+	if (mh.sync_mask & ((1u << DMR_SYNC_MS) | (1u << DMR_SYNC_TS1) | (1u << DMR_SYNC_TS2)))
+		h->sync_mask |= DMRS_SYNC_MS;
+	h->call = cv->phase == DMR_CALL_PHASE_RX_VOICE;
+	h->other = cv->phase == DMR_CALL_PHASE_RX_BUSY;
+	if (h->call || h->other) {
+		h->dst = cv->caller.dst;
+		h->src = cv->caller.src;
+		h->group = cv->caller.group;
+	}
+}
+
 // Every poll while searching: the sweep's reading, or what the probe heard; retune when the engine moves on
 static void __attribute__((noinline)) dmrs_service(radio_sm_t *sm, uint32_t now_ms)
 {
@@ -1489,25 +1513,8 @@ static void __attribute__((noinline)) dmrs_service(radio_sm_t *sm, uint32_t now_
 		board.radio->status(&st);
 		hz = dmrs_sweep(st.rssi_dbm, now_ms, &hit);
 	} else {
-		dmr_call_heard_t mh;
-		dmr_call_heard(&mh);
-		const dmr_call_view_t *cv = dmr_call_view();
 		dmrs_heard_t h;
-		memset(&h, 0, sizeof h);
-		h.bursts = mh.bursts;
-		h.cc = mh.cc;
-		h.ts_mask = mh.ts_mask;
-		if (mh.sync_mask & (1u << DMR_SYNC_BS))
-			h.sync_mask |= DMRS_SYNC_BS;
-		if (mh.sync_mask & ((1u << DMR_SYNC_MS) | (1u << DMR_SYNC_TS1) | (1u << DMR_SYNC_TS2)))
-			h.sync_mask |= DMRS_SYNC_MS;
-		h.call = cv->phase == DMR_CALL_PHASE_RX_VOICE;
-		h.other = cv->phase == DMR_CALL_PHASE_RX_BUSY;
-		if (h.call || h.other) {
-			h.dst = cv->caller.dst;
-			h.src = cv->caller.src;
-			h.group = cv->caller.group;
-		}
+		dmrs_heard_read(&h);
 		hz = dmrs_probe(&h, now_ms);
 	}
 	if (!dmrs_on()) {
