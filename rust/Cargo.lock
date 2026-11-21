@@ -1139,6 +1139,7 @@ name = "ddm32-gui"
 version = "3.0.0-alpha.1"
 dependencies = [
  "ddm32-core",
+ "hex",
  "png 0.18.1",
  "regex",
  "rfd",

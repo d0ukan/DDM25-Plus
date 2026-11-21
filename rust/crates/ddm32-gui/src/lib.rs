@@ -65,13 +65,27 @@ pub fn install_texts(ui: &AppWindow) {
 }
 
 fn label_text(l: ReleaseLabel) -> String {
-    tr(match l {
-        ReleaseLabel::Latest => "label_latest",
-        ReleaseLabel::Stable => "label_stable",
-        ReleaseLabel::Beta => "label_beta",
-        ReleaseLabel::TestAlpha => "label_test",
-        ReleaseLabel::Legacy => "label_legacy",
-    })
+    with(|s| label_in(&s.lang, l))
+}
+
+/// The label's text in a language (Latest / Stable / Beta / Test / Alpha / Old).
+pub fn label_in(lang: &str, l: ReleaseLabel) -> String {
+    i18n::t(
+        lang,
+        match l {
+            ReleaseLabel::Latest => "label_latest",
+            ReleaseLabel::Stable => "label_stable",
+            ReleaseLabel::Beta => "label_beta",
+            ReleaseLabel::TestAlpha => "label_test",
+            ReleaseLabel::Legacy => "label_legacy",
+        },
+    )
+}
+
+/// A version as the home screen names it: the full version with its prerelease and its label,
+/// e.g. "1.0.0-beta.5 (Beta)".
+pub fn version_line(fv: &catalog::FirmwareVersion, all: &[catalog::FirmwareVersion], lang: &str) -> String {
+    format!("{} ({})", fv.version(), label_in(lang, catalog::label_for(fv, all)))
 }
 
 /// Sets up the window: the state, every callback, the first contents. `fetch` loads the release list in the
@@ -302,7 +316,7 @@ fn refresh(ui: &AppWindow) {
         })
         .collect();
     app.set_update_text(match rows.first() {
-        Some(f) => trf("update_available", f.version()).into(),
+        Some(f) => trf("update_available", &version_line(f, &all, &lang)).into(),
         None => tr("update_none").into(),
     });
     if app.get_selected_version() as usize >= model.len() {
@@ -749,7 +763,7 @@ pub fn demo(ui: &AppWindow) {
     app.set_radio_text(i18n::tf(&lang, "radio_ready", "COM14").into());
     app.set_radio_kind("success".into());
     app.set_radio_access(true);
-    app.set_update_text(i18n::tf(&lang, "update_available", "1.0.0").into());
+    app.set_update_text(i18n::tf(&lang, "update_available", "1.0.0-beta.5 (Beta)").into());
     app.set_backups_text(i18n::tf(&lang, "backups_found", "3").into());
     app.set_versions(ModelRc::new(VecModel::from(vec![
         VersionRow {
