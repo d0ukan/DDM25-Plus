@@ -12,7 +12,8 @@ Ed25519 signature. Uploads NOTHING: the files land in --out; publishing them on 
   build --version V --channel beta|stable --build-dir DIR --settings-format N --codeplug-format N
         --min-compatible V --notes-tr TEXT --notes-en TEXT [--app-zip ZIP --app-version V
         [--app-notes-tr TEXT --app-notes-en TEXT]] [--app-net-zip ZIP --app-net-version V
-        [--app-net-notes-tr TEXT --app-net-notes-en TEXT]] [--tag TAG] --out NEWDIR [--key PATH]
+        [--app-net-notes-tr TEXT --app-net-notes-en TEXT]] [--app-rs-zip PLATFORM=ZIP ... --app-rs-version V
+        [--app-rs-notes-tr TEXT --app-rs-notes-en TEXT]] [--tag TAG] --out NEWDIR [--key PATH]
       DIR is a public DDM32 Plus build (tools/build_radiofoundry.py --plus --public: rfoundry_dm32.bin/.json/.map).
       Checks it like the installer does (reproducible Plus build, hashes, codec layout, size) and requires
       public_enabled. The release zip carries the application, a reduced linker map (the __codec_* symbol lines the
@@ -20,6 +21,12 @@ Ed25519 signature. Uploads NOTHING: the files land in --out; publishing them on 
       signature with the key's public half before it finishes.
       --app-zip is the Python program (manifest "app"); --app-net-zip the Windows (.NET) program (manifest
       "app_net", win/). Each program updates itself only from its own entry, never from the other one.
+      --app-rs-zip PLATFORM=ZIP (repeat it, one per platform) is the Rust program (rust/, manifest "app_rs":
+      {PLATFORM: entry}); PLATFORM is the program's own key, windows|linux|macos-ARCH as Rust names the CPU
+      (windows-x86_64, linux-x86_64, linux-aarch64, macos-aarch64, macos-x86_64). The zip is what
+      rust/packaging/make_app_zip.py makes: DDM32Plus/DDM32Plus.exe (Windows) or DDM32Plus/DDM32Plus (Linux,
+      macOS), everything under DDM32Plus/, no name of the user's data; it is published as
+      DDM32Plus-VERSION-PLATFORM.zip. Older programs ignore "app_rs".
 
   verify DIR [--public-key HEX]
       Verifies DIR/ddm32-manifest.json(.sig) and every asset in DIR against the manifest's sizes and hashes.
@@ -188,6 +195,73 @@ def check_app_net_zip(path):
     return data
 
 
+# The Rust program's update zips (app_rs): the rules of rust/crates/ddm32-core/src/update/self_update.rs safe_extract
+# and app_info.rs RESERVED_NAMES, so a zip this tool accepts is one the program unpacks.
+RS_PLATFORM = re.compile(r'^(windows|linux|macos)-[0-9A-Za-z_]{1,32}$')
+RS_RESERVED = {'yedekler', 'surumler', 'guncelleme', 'paketler', 'settings.json', 'unins000.exe', 'unins000.dat'}
+
+
+def _private_files(names):
+    """Same rules as pc/bundle.py: a backup folder, a backup manifest, raw images or logs anywhere"""
+    private_dirs = {'backups', 'backup', 'yedekler'}
+    return [n for n in names if Path(n).suffix.lower() in ('.bin', '.log')
+            or private_dirs & {p.lower() for p in n.split('/')[:-1]}
+            or Path(n).name.lower() == 'backup-manifest.json']
+
+
+def parse_app_rs(values):
+    """--app-rs-zip PLATFORM=ZIP values -> [(platform, Path)], in the order given; one zip per platform"""
+    out = []
+    for v in values or []:
+        platform, sep, path = v.partition('=')
+        if not sep or not path:
+            raise SystemExit(f'--app-rs-zip takes PLATFORM=ZIP, not {v!r}')
+        if not RS_PLATFORM.match(platform) or not sm.RE_FILE.match(platform):
+            raise SystemExit(f'--app-rs-zip: platform {platform!r} is not windows-ARCH, linux-ARCH or macos-ARCH')
+        if any(p == platform for p, _ in out):
+            raise SystemExit(f'--app-rs-zip: platform {platform} given twice')
+        out.append((platform, Path(path)))
+    return out
+
+
+def check_app_rs_zip(path, platform):
+    """The Rust program's zip for one platform, as its self-update unpacks it"""
+    exe = f'{EXE}/{EXE}.exe' if platform.startswith('windows-') else f'{EXE}/{EXE}'
+    with zipfile.ZipFile(path) as z:
+        # the names as stored: on Windows zipfile shows a stored backslash as "/" (the program would see it raw)
+        names = [i.orig_filename for i in z.infolist()]
+    if exe not in names:
+        raise SystemExit(f'The {platform} program zip must hold {exe}')
+    for n in names:
+        parts = [p for p in n.split('/') if p not in ('', '.')]
+        if (not parts or parts[0] != EXE or n.startswith('/') or '\\' in n
+                or any(p == '..' or ':' in p for p in parts)
+                or (len(parts) > 1 and parts[1].lower() in RS_RESERVED)):
+            raise SystemExit(f"The {platform} program zip holds a path outside {EXE}/ or a name of the user's data: "
+                             f'{n}')
+    bad = _private_files(names)
+    if bad:
+        raise SystemExit('The program zip holds files that must not be published: ' + ', '.join(bad[:5]))
+    return Path(path).read_bytes()
+
+
+def check_app_rs(m):
+    """The "app_rs" part of a manifest as the Rust program checks it (signed_manifest.rs): an object of
+    {platform: asset}, each platform a safe name, each asset the same fields as "app" (notes optional)"""
+    rs = m.get('app_rs')
+    if rs is None:
+        return m
+    if not isinstance(rs, dict):
+        raise sm.ManifestError('Manifest field invalid: app_rs')
+    for platform, e in rs.items():
+        if not (isinstance(platform, str) and sm.RE_FILE.match(platform) and RS_PLATFORM.match(platform)):
+            raise sm.ManifestError('Manifest field invalid: app_rs')
+        sm._asset(e, f'app_rs.{platform}')
+        if 'notes' in e and not isinstance(e['notes'], dict):
+            raise sm.ManifestError(f'Manifest field invalid: app_rs.{platform}.notes')
+    return m
+
+
 def _app_entry(tag, name, version, data, notes_tr, notes_en):
     return {'version': version, 'file': name, 'url': f'{sm.URL_PREFIX}{tag}/{name}', 'sha256': sha256(data),
             'size': len(data), 'notes': {'tr': notes_tr or '', 'en': notes_en or ''}}
@@ -230,7 +304,22 @@ def build(args, secret):
         manifest['app_net'] = _app_entry(tag, net_name, args.app_net_version, data, args.app_net_notes_tr,
                                          args.app_net_notes_en)
         assets[net_name] = data
+    rs_zips = parse_app_rs(getattr(args, 'app_rs_zip', None))
+    if rs_zips:
+        if not args.app_rs_version:
+            raise SystemExit('--app-rs-zip needs --app-rs-version')
+        sm.parse_version(args.app_rs_version)
+        manifest['app_rs'] = {}
+        for platform, path in rs_zips:
+            data = check_app_rs_zip(path, platform)
+            rs_name = f'{EXE}-{args.app_rs_version}-{platform}.zip'
+            manifest['app_rs'][platform] = _app_entry(tag, rs_name, args.app_rs_version, data, args.app_rs_notes_tr,
+                                                      args.app_rs_notes_en)
+            assets[rs_name] = data
+    elif getattr(args, 'app_rs_version', None):
+        raise SystemExit('--app-rs-version needs at least one --app-rs-zip PLATFORM=ZIP')
     sm.check_manifest(manifest)
+    check_app_rs(manifest)
     data = (json.dumps(manifest, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
     sig = sm.sign_bytes(data, secret)
     public = ed25519.secret_to_public(secret).hex()
@@ -245,8 +334,9 @@ def build(args, secret):
 
 def verify(folder, public_hex=None):
     folder = Path(folder)
-    m = sm.verify_files(folder, public_hex)
-    for e in m['firmware'] + [m[k] for k in ('app', 'app_net') if m.get(k)]:
+    m = check_app_rs(sm.verify_files(folder, public_hex))
+    for e in (m['firmware'] + [m[k] for k in ('app', 'app_net') if m.get(k)] +
+              list((m.get('app_rs') or {}).values())):
         body = (folder / e['file']).read_bytes()
         if len(body) != e['size'] or sha256(body) != e['sha256']:
             raise SystemExit(f'{e["file"]}: size or SHA-256 differs from the manifest')
@@ -275,6 +365,11 @@ def main(argv=None):
     b.add_argument('--app-net-version')
     b.add_argument('--app-net-notes-tr')
     b.add_argument('--app-net-notes-en')
+    b.add_argument('--app-rs-zip', action='append', metavar='PLATFORM=ZIP',
+                   help='the Rust program for one platform (repeat per platform), e.g. windows-x86_64=DDM32Plus.zip')
+    b.add_argument('--app-rs-version')
+    b.add_argument('--app-rs-notes-tr')
+    b.add_argument('--app-rs-notes-en')
     b.add_argument('--tag')
     b.add_argument('--out', type=Path, required=True)
     b.add_argument('--key', dest='build_key', type=Path, default=None)
@@ -301,7 +396,8 @@ def main(argv=None):
     if args.cmd == 'verify':
         m = verify(args.folder, args.public_key)
         print(f'OK: {m["release"]}, {len(m["firmware"])} firmware' + (', program' if m.get('app') else '') +
-              (', Windows program' if m.get('app_net') else ''))
+              (', Windows program' if m.get('app_net') else '') +
+              (', Rust program: ' + ', '.join(m['app_rs']) if m.get('app_rs') else ''))
         return 0
     ap.print_help()
     return 2
