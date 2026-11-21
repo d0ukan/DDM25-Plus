@@ -656,3 +656,13 @@ Spectrum in colour (Tools > Spectrum, docs/plus.md "The spectrum in colour"). Re
 | SC-3 | Settings > Display > Theme: Light, back to Tools > Spectrum | a pale blue for the weakest, darker blue, teal, green, dark yellow, orange, red on white; every colour distinct |
 | SC-4 | Look closely at the texts on the spectrum screen (title, frequency, Hit / Floor, the key hint) in both themes | readable; their edges may look a little harder than on other screens (the palette's entries go to the colours first) |
 | SC-5 | * again (bars alone), then *: waterfall | bars alone without colours; the waterfall back in colour |
+
+## Status strip signal bars (tools/plus_sigbar.py)
+
+| Row | Do | Expect |
+|---|---|---|
+| SB-1 | An FM channel with nothing on it, squelch at its usual level; watch the top right for a minute | the signal bars stay empty (they climbed and fell before) |
+| SB-2 | The other radio sends FM on that channel, near and then far | the bars fill while the squelch is open (more when near), empty again after the over |
+| SB-3 | A DMR channel: idle, then a call from the other radio | empty while idle; filled during the call; empty after it |
+| SB-4 | A P25 channel: idle, then a call | the same as SB-3 |
+| SB-5 | Monitor key held on an empty FM channel | the bars show the noise level while the monitor is open (the receiver is open: expected) |
