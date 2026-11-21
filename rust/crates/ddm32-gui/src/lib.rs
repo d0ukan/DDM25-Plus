@@ -82,6 +82,29 @@ pub fn label_in(lang: &str, l: ReleaseLabel) -> String {
     )
 }
 
+/// What the radio runs, read from a backup's program image: the DDM32 Plus release whose signed application is in it
+/// (with its label), or the kind of firmware.
+pub fn installed_line(program: &[u8], all: &[catalog::FirmwareVersion], lang: &str) -> String {
+    use ddm32_core::releases::signed_manifest::sha256_hex;
+    const START: usize = 0xC000;
+    for fv in all {
+        let n = fv.application_size() as usize;
+        if program.len() >= START + n && sha256_hex(&program[START..START + n]) == fv.application_sha256() {
+            return i18n::tf(lang, "installed", &format!("DDM32 Plus {}", version_line(fv, all, lang)));
+        }
+    }
+    let what = match ddm32_core::radio::unit_image::detect(program, Codec::dm32()) {
+        Ok(d) => match (d.str("layout"), d.str("firmware")) {
+            (Some("stock"), _) => i18n::tf(lang, "fw_stock", d.str("stock_version").unwrap_or("")),
+            (_, Some("ddm32")) => i18n::t(lang, "fw_ddm32_unlisted"),
+            (_, Some("classic")) => i18n::t(lang, "fw_classic"),
+            _ => i18n::t(lang, "fw_unknown"),
+        },
+        Err(_) => i18n::t(lang, "fw_unknown"),
+    };
+    i18n::tf(lang, "installed", &what)
+}
+
 /// A version as the home screen names it: the full version with its prerelease and its label,
 /// e.g. "1.0.0-beta.5 (Beta)".
 pub fn version_line(fv: &catalog::FirmwareVersion, all: &[catalog::FirmwareVersion], lang: &str) -> String {
@@ -332,6 +355,13 @@ fn refresh(ui: &AppWindow) {
         (s.found.clone(), s.quick.clone())
     });
     app.set_backups_text(trf("backups_found", &found.len().to_string()).into());
+    // what the radio runs, by the newest verified backup (files only)
+    let installed = found
+        .iter()
+        .find_map(|b| ddm32_core::radio::unit_image::saved_images(&b.folder).ok())
+        .map(|imgs| installed_line(&imgs["progmem-pass1.bin"], &all, &lang))
+        .unwrap_or_else(|| tr("installed_none"));
+    app.set_installed_text(installed.into());
     app.set_quick_available(quick.is_some());
     app.set_quick_backup(
         quick.map(|q| q.file_name().unwrap_or_default().to_string_lossy().into_owned()).unwrap_or_default().into(),
@@ -765,6 +795,7 @@ pub fn demo(ui: &AppWindow) {
     app.set_radio_access(true);
     app.set_update_text(i18n::tf(&lang, "update_available", "1.0.0-beta.5 (Beta)").into());
     app.set_backups_text(i18n::tf(&lang, "backups_found", "3").into());
+    app.set_installed_text(i18n::tf(&lang, "installed", "DDM32 Plus 1.0.0-beta.4 (Beta)").into());
     app.set_versions(ModelRc::new(VecModel::from(vec![
         VersionRow {
             version: "1.0.0".into(),

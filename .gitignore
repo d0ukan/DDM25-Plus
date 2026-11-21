@@ -636,6 +636,7 @@ __pycache__/
 !/rust/crates/*/data/*
 !/rust/packaging/**/*.iss
 !/rust/packaging/**/*.sh
+!/rust/packaging/**/*.py
 !/rust/packaging/**/*.desktop
 !/rust/packaging/**/*.plist
 !/.github/workflows/rust.yml

@@ -64,3 +64,19 @@ fn every_list_is_in_the_csharp_order() {
         names(2)
     );
 }
+
+#[test]
+fn home_names_what_the_radio_runs_by_its_backup() {
+    let cat = catalog(&[("1.0.0-beta.5", "beta"), ("0.9.0", "stable")]);
+    let mut program = vec![0xFFu8; 0x100000];
+    let app = b"app 1.0.0-beta.5";
+    program[0xC000..0xC000 + app.len()].copy_from_slice(app);
+    assert_eq!(
+        "The radio runs (by the last backup): DDM32 Plus 1.0.0-beta.5 (Beta)",
+        ddm32_gui::installed_line(&program, &cat.firmware, "en")
+    );
+    assert_eq!(
+        "Telsizdeki yazılım (son yedeğe göre): Bilinmeyen yazılım",
+        ddm32_gui::installed_line(&vec![0xFFu8; 0x100000], &cat.firmware, "tr")
+    );
+}

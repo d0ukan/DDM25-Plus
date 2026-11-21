@@ -17,6 +17,7 @@ export global App {
     in property <string> radio-kind: "info";
     in property <string> update-text;
     in property <string> backups-text;
+    in property <string> installed-text;
     // the wizard: 0 version, 1 backup choice, 2 backup, 3 check, 4 install, 5 done
     in-out property <int> step: 0;
     in property <[VersionRow]> versions;
@@ -93,18 +94,34 @@ component Page inherits VerticalLayout {
     @children
 }
 
-component Home inherits Page {
-    heading: "DDM32 Plus";
-    back: false;
-    Notice { text: App.radio-text; kind: App.radio-kind; }
+component Home inherits VerticalLayout {
+    padding: Theme.pad * 1.5;
+    spacing: Theme.gap;
+    // the owner's mark, in the theme's own variant
+    HorizontalLayout {
+        spacing: Theme.gap * 1.5;
+        Image {
+            source: Theme.dark ? @image-url("logo-dark.png") : @image-url("logo-light.png");
+            height: 104px;
+            width: 102px;
+            image-fit: contain;
+            accessible-role: image;
+            accessible-label: "DDM32+";
+        }
+        VerticalLayout {
+            alignment: center;
+            spacing: 8px;
+            Notice { text: App.radio-text; kind: App.radio-kind; }
+            if App.update-text != "" : Muted { text: App.update-text; font-size: Theme.font; }
+        }
+    }
     Button {
         text: Tr.t(Tr.lang, "home_update");
         kind: "primary";
         big: true;
-        min-height: 96px;
+        min-height: 92px;
         clicked => { App.navigate(1); }
     }
-    if App.update-text != "" : Muted { text: App.update-text; font-size: Theme.font; }
     HorizontalLayout {
         spacing: Theme.gap;
         Button { text: Tr.t(Tr.lang, "home_backups"); clicked => { App.navigate(2); } }
@@ -115,8 +132,29 @@ component Home inherits Page {
         Button { text: Tr.t(Tr.lang, "home_settings"); clicked => { App.navigate(4); } }
         Button { text: Tr.t(Tr.lang, "home_about"); clicked => { App.navigate(5); } }
     }
-    Muted { text: App.backups-text; }
-    Rectangle {}
+    Rectangle { vertical-stretch: 1; }
+    // calm facts, at the bottom: what the radio runs (by the last backup) and where the backups are
+    Card {
+        vertical-stretch: 0;
+        min-height: facts.preferred-height;
+        facts := VerticalLayout {
+            padding: Theme.pad;
+            spacing: 6px;
+            Muted { text: App.installed-text; font-size: Theme.font; color: Theme.text; }
+            HorizontalLayout {
+                spacing: Theme.gap;
+                Muted { text: App.backups-text + "  " + App.backups-folder; vertical-alignment: center; }
+                Button {
+                    text: Tr.t(Tr.lang, "b_open");
+                    horizontal-stretch: 0;
+                    min-width: 90px;
+                    max-height: 40px;
+                    min-height: 36px;
+                    clicked => { App.open-backups-folder(); }
+                }
+            }
+        }
+    }
 }
 
 component StepBar inherits HorizontalLayout {

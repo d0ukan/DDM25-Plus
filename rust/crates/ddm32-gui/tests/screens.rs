@@ -187,6 +187,9 @@ fn no_colour_outside_the_theme_and_every_text_exists() {
     let key = regex_lite(r#"Tr\.t\(Tr\.lang, "([a-z_0-9]+)"\)"#);
     for entry in std::fs::read_dir(&ui_dir).unwrap() {
         let p = entry.unwrap().path();
+        if p.extension().is_none_or(|e| e != "slint") {
+            continue;
+        }
         let text = std::fs::read_to_string(&p).unwrap();
         let name = p.file_name().unwrap().to_string_lossy().into_owned();
         if name != "theme.slint" {

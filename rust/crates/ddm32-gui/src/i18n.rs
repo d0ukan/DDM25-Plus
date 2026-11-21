@@ -123,6 +123,13 @@ pub const TEXTS: &[(&str, &str, &str)] = &[
     ("msg_pack_ready", "Paket hazır: {}", "The pack is ready: {}"),
     ("msg_pack_failed", "Paket yapılamadı: {}", "The pack could not be made: {}"),
     ("msg_pack_written", "Paket telsize yüklendi ve doğrulandı.", "The pack is loaded into the radio and verified."),
+    ("b_open", "Aç", "Open"),
+    ("installed", "Telsizdeki yazılım (son yedeğe göre): {}", "The radio runs (by the last backup): {}"),
+    ("installed_none", "Telsizdeki yazılım ilk yedekten sonra burada görünür.", "What the radio runs shows here after the first backup."),
+    ("fw_stock", "Fabrika yazılımı {}", "Factory firmware {}"),
+    ("fw_classic", "Open25-DM32 Classic", "Open25-DM32 Classic"),
+    ("fw_ddm32_unlisted", "DDM32 Plus (sürüm listede yok)", "DDM32 Plus (version not in the list)"),
+    ("fw_unknown", "Bilinmeyen yazılım", "Unknown firmware"),
     ("msg_failed", "İşlem başarısız: {}", "The step failed: {}"),
 ];
 
