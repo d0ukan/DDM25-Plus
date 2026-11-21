@@ -10,7 +10,7 @@
 
 [![Lisans: GPL-3.0-or-later](https://img.shields.io/badge/lisans-GPL--3.0--or--later-blue)](LICENSING.md)
 [![Temel: Open25-DM32](https://img.shields.io/badge/temel-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
-[![Sürüm: v1.0.0-beta.3](https://img.shields.io/badge/s%C3%BCr%C3%BCm-v1.0.0--beta.3-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.3)
+[![Sürüm: v1.0.0-beta.4](https://img.shields.io/badge/s%C3%BCr%C3%BCm-v1.0.0--beta.4-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)
 
 [English README](README.md)
 
@@ -39,9 +39,8 @@
 
 ## Durum
 
-DDM32 Plus **beta** aşamasındadır. En son ön sürüm **[v1.0.0-beta.3](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.3)** (2026-11-20); yazarın
-telsizine kurulup denendi (açılış ekranı, temalar, frekanslı ana ekran, Large text, Marine, harita, çoklu izleme,
-DOTA Transfer ekranları).
+DDM32 Plus **beta** aşamasındadır. En son ön sürüm **[v1.0.0-beta.4](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)** (2026-11-21), yeni Windows programı
+2.0.0-beta.1 ile birlikte. İkisi de yazarın telsizinde denendi (beta.3 ve beta.4 yeni programla kuruldu).
 Aşağıdaki her özellik yazıldı ve bilgisayarda testlerden geçti (telsizin ekran, radyo çekirdeği ve modemlerinin
 simülatörü), ama **birçok özellik henüz havada denenmedi**. Telsiz test notları:
 [`docs/plus-radio-test.md`](docs/plus-radio-test.md); sürüm değişiklikleri: [CHANGELOG.md](CHANGELOG.md).
@@ -97,8 +96,11 @@ Upstream'in README'si [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md) için
 
 ### Araçlar
 
-**DOTA Transfer**: kanalları, bölgeleri ya da tümünü başka bir DDM32 Plus telsize FM veya DMR ile gönderir (beta,
-henüz iki telsiz arasında denenmedi). Ton bulucu (CTCSS/DCS), DTMF / SelCall çözücü, CW çözücü ve pratik, pager (POCSAG) ve ACARS, SSTV alma, CW beacon,
+**DOTA Transfer**: kanalları, bölgeleri, tümünü ya da bir veri paketini başka bir DDM32 Plus telsize FM veya DMR ile
+gönderir (beta, henüz iki telsiz arasında denenmedi). Tüm modlarda ve izlenen kanallarda **son çağrılar**, **çapraz
+bant kaydet-ilet** (DMR, yalnızca başındayken), **hava bandı izleme** (bir meydanın frekansları birlikte), **3D
+şelale**, **Mic-E** beacon, Go-To ve haritayla **APRS istasyon sayfası**, **veri paketleri** (RadioID isimleri, hava
+bandı frekansları), kendi aralık ve adımınızla daha hızlı P25 / DMR arama, **kanal silme**. Ton bulucu (CTCSS/DCS), DTMF / SelCall çözücü, CW çözücü ve pratik, pager (POCSAG) ve ACARS, SSTV alma, CW beacon,
 lone worker (ses, DMR acil veya APRS SOS), QSO işaretli çağrı geçmişi, kalan süreli pil grafiği, programlama kablosu
 üzerinden MMDVM hotspot, FM arayan kimliği, sinyal kalitesi.
 
@@ -115,32 +117,31 @@ Arayüzün tamamı Türkçeye çevrildi (İngilizce de seçilebilir). Teknik adl
 
 ## Kurulum
 
-Windows için **DDM32 Plus programlayıcı**yı kullanın (Python gerekmez):
+Windows 10/11 için **DDM32 Plus programlayıcı**yı kullanın (başka hiçbir şey kurmanız gerekmez):
 
-1. [v1.0.0-beta.2 sürümünden](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.2) `DDM32Plus-1.0.0-beta.2.zip` dosyasını (programlayıcı; en yeni
-   firmware'i, v1.0.0-beta.3'ü listeler ve kurar) indirip açın.
-2. `DDM32Plus.exe`yi çalıştırın. Windows "bilinmeyen yayıncı" uyarısı verebilir (program henüz kod imzalı
-   değil): **Ek bilgi → Yine de çalıştır**.
-3. Programlama kablosunu (CH340) takın ve adımları izleyin; telsizi ne zaman kapatıp açacağınızı program söyler.
+1. [Son sürümden](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4) `DDM32Plus-Setup-2.0.0-beta.1.exe` dosyasını indirip çalıştırın. Yalnızca sizin
+   kullanıcınıza kurulur (yönetici izni istemez), Başlat menüsü ve masaüstü kısayolu oluşturur. Windows "bilinmeyen
+   yayıncı" uyarısı verebilir (program henüz kod imzalı değil): **Ek bilgi → Yine de çalıştır**.
+2. İlk açılışta **Türkçe** ya da **English** seçin.
+3. Programlama kablosunu (CH340) takın, **Telsizi güncelle** sekmesine geçip adımları izleyin; telsizi ne zaman
+   kapatıp açacağınızı program söyler. Yedekleriniz programın `yedekler` klasöründe durur; güncellemede ve
+   kaldırmada da silinmez.
 
-v1.0.0-beta.1'den (DDM25 Plus adıyla yayınlanan) mi geliyorsunuz? O program ad değişikliği yüzünden kendini
-güncelleyemez: yukarıdaki zip'i bir kez indirin. Yedekleriniz ve ayarlarınız bulunur ve korunur.
+Programlayıcı telsizin yedeğini alır (ya da aynı telsizin son yedeğini kullanır), neyin değişeceğini tam olarak
+gösterir, yükler (telsizin kendi codec'iyle stok yazılımdan da), kendi yedeğinizden önceki sürüme veya stok yazılıma
+geri döner, imzalı güncellemeleri denetler, kendini günceller ve kendi indirdiğiniz dosyalardan bilgisayarınızda
+oluşturduğu **veri paketlerini** (RadioID isimleri, hava bandı frekansları) telsize yükler. Rehber:
+[`win/docs/kullanim.md`](win/docs/kullanim.md). Her şey **sizin sorumluluğunuzdadır** (yukarıdaki sorumluluk reddine
+bakın).
 
-Programlayıcı telsizin yedeğini alır, neyin
-değişeceğini tam olarak gösterir, yükler (telsizin kendi codec'iyle stok yazılımdan da), kendi yedeğinizden önceki
-sürüme veya stok yazılıma geri döner, imzalı güncellemeleri denetler ve tüm sürümleri listeler.
-Rehber: [`pc/README.md`](pc/README.md) · kaynak: [`pc/`](pc/). Her şey **sizin sorumluluğunuzdadır** (yukarıdaki
-sorumluluk reddine bakın).
+Eski Python programı (`DDM32Plus-1.0.0-beta.2.zip`, [`pc/`](pc/)) çalışmaya devam eder; `%LOCALAPPDATA%\DDM32Plus`
+(ya da `DDM25Plus`) içindeki yedekleri yeni program da bulur.
 
 ## Geliştirilmekte olanlar
 
-- **DOTA Transfer** (Araçlar, v1.0.0-beta.3'te): telsizden telsize kanal, bölge ya da tüm kanal setinin (DOTA Clone) FM (AFSK,
-  CTCSS tonlu) veya DMR veri ile aktarımı; eşleşme kodu, iki telsizde de ilerleme, her şey eksiksiz gelmedikçe
-  alıcıda hiçbir şey değişmez. Bilgisayarda test edildi; iki telsizle deneme bekliyor.
-- **Yeni Windows programlayıcı** (C# / .NET, tek exe, kurulum programı, Türkçe / English, kendini güncelleme, son
-  yedekle hızlı güncelleme). Yedek alma ve kurulum tarafı gerçek telsizde doğrulandı (v1.0.0-beta.3 onunla kuruldu).
-- Tüm modlarda son çağrılar, aynı anda birden fazla hava bandı frekansı, 3D şelale, APRS istasyon sayfaları, Mic-E,
-  kaydet-ilet çapraz bant röle (yalnızca başındayken).
+- DOTA Transfer'in (kanallar ve veri paketleri) ve DMR çapraz bant kaydet-ilet'in iki telsizle denenmesi.
+- DMR alım sesi: tanılama v1.0.0-beta.4'te (Araçlar > Tanılama); ses seviyesi inceleniyor.
+- İl il havalimanları, renkli 3D spektrum ve şelale.
 
 ## Derleme
 

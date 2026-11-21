@@ -10,7 +10,7 @@ by **d0ukan · TA2DOU**
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSING.md)
 [![Based on Open25-DM32](https://img.shields.io/badge/based%20on-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
-[![Release: v1.0.0-beta.3](https://img.shields.io/badge/release-v1.0.0--beta.3-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.3)
+[![Release: v1.0.0-beta.4](https://img.shields.io/badge/release-v1.0.0--beta.4-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)
 
 [Türkçe README](README.tr.md)
 
@@ -37,9 +37,9 @@ by **d0ukan · TA2DOU**
 
 ## Status
 
-DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.3](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.3)** (2026-11-20). It was
-installed and checked on the author's radio (boot screen, themes, Home with its frequency, Large text, Marine, map,
-multi-watch, the DOTA Transfer screens).
+DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.4](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)** (2026-11-21), with the new Windows
+programmer 2.0.0-beta.1. Both were installed and checked on the author's radio (beta.3 and beta.4 were
+installed with the new programmer).
 Every feature below is built and covered by host tests (a simulator of the radio's screens, radio core and
 modems), but **many features have not yet been tried on the air**. Radio test notes live in
 [`docs/plus-radio-test.md`](docs/plus-radio-test.md); changes per release in [CHANGELOG.md](CHANGELOG.md).
@@ -96,8 +96,11 @@ README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
 
 ### Tools
 
-**DOTA Transfer**: send channels, zones or everything to another DDM32 Plus radio over FM or DMR (beta, not yet
-tried between two radios). Tone finder (CTCSS/DCS), DTMF / SelCall decoder, CW decoder and practice, pager (POCSAG) and ACARS, SSTV receive,
+**DOTA Transfer**: send channels, zones, everything, or a data pack to another DDM32 Plus radio over FM or DMR (beta,
+not yet tried between two radios). **Last calls** of every mode and watched channel, **cross-band store-and-forward**
+(DMR, attended only), **air watch** (an airfield's frequencies at once), a **3D waterfall**, **Mic-E** beacons, an
+**APRS station page** with Go-To and the map, **data packs** (RadioID names, air band frequencies), faster P25 / DMR
+search with your own range and step, **delete channel**. Tone finder (CTCSS/DCS), DTMF / SelCall decoder, CW decoder and practice, pager (POCSAG) and ACARS, SSTV receive,
 CW beacon, lone worker (sound, DMR emergency or APRS SOS), call history with QSO marks, battery graph with time
 left, MMDVM hotspot over the programming cable, FM caller ID, signal quality.
 
@@ -115,34 +118,31 @@ The whole interface is translated to Turkish (and remains available in English).
 
 ## Installing
 
-Use the **DDM32 Plus programmer** for Windows (no Python needed):
+Use the **DDM32 Plus programmer** for Windows 10/11 (nothing else to install):
 
-1. Download `DDM32Plus-1.0.0-beta.2.zip` (the programmer; it lists and installs the newest firmware, v1.0.0-beta.3)
-   from the [v1.0.0-beta.2 release](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.2) and unzip it.
-2. Run `DDM32Plus.exe`. Windows may warn about an unknown publisher (the program is not code-signed yet):
-   **More info → Run anyway**.
-3. Connect the programming cable (CH340) and follow the steps; the program tells you when to switch the radio off
-   and on.
+1. Download `DDM32Plus-Setup-2.0.0-beta.1.exe` from the [latest release](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4) and run it.
+   It installs for your user only (no administrator prompt), with a Start menu and desktop shortcut. Windows may warn
+   about an unknown publisher (the program is not code-signed yet): **More info → Run anyway**.
+2. On first start pick **Türkçe** or **English**.
+3. Connect the programming cable (CH340), go to **Update the radio** and follow the steps; the program tells you when
+   to switch the radio off and on. Your backups stay in the program's `yedekler` folder, also after an update or an
+   uninstall.
 
-Coming from v1.0.0-beta.1 (published as DDM25 Plus)? That program cannot update itself across the rename:
-download the zip above once. Your backups and settings are found and kept.
-
-The programmer backs the radio up,
-shows exactly what will change, installs (also from the radio's stock firmware, using the radio's own codec), goes
-back to the previous version or to stock from your own backup, checks signed updates and lists every version.
-Guide: [`pc/README.en.md`](pc/README.en.md) · source: [`pc/`](pc/). Everything **at your own risk** (see the
+The programmer backs the radio up (or reuses your last backup of the same radio), shows exactly what will change,
+installs (also from the radio's stock firmware, using the radio's own codec), goes back to the previous version or to
+stock from your own backup, checks signed updates, updates itself, and loads **data packs** (RadioID names, air band
+frequencies) that it builds on your PC from files you download yourself. Guide: [`win/README.md`](win/README.md),
+Turkish user guide [`win/docs/kullanim.md`](win/docs/kullanim.md). Everything **at your own risk** (see the
 disclaimer above).
+
+The older Python programmer (`DDM32Plus-1.0.0-beta.2.zip`, [`pc/`](pc/)) still works; existing backups in
+`%LOCALAPPDATA%\DDM32Plus` (or `DDM25Plus`) are found by the new program.
 
 ## In development
 
-- **DOTA Transfer** (Tools, in v1.0.0-beta.3): radio-to-radio transfer of channels, zones or the whole channel set
-  (DOTA Clone) over FM (AFSK, with a CTCSS tone) or DMR data, with a pairing code, progress on both radios, and
-  nothing changed on the receiver unless everything arrived. Host-tested; two-radio tests pending.
-- **New Windows programmer** (C# / .NET, one exe, installer, Turkish / English, self-update, quick update from
-  your last backup). Its backup and its install have been checked on a real radio (v1.0.0-beta.3 was installed
-  with it).
-- Last calls of every mode, several air frequencies at once, a 3D waterfall, APRS station pages, Mic-E, a
-  store-and-forward cross-band repeater (attended only).
+- Two-radio tests of DOTA Transfer (channels and data packs) and of the DMR cross-band store-and-forward.
+- DMR receive audio: diagnostics are in v1.0.0-beta.4 (Tools > Diagnostics); the level is being looked at.
+- Airfields by province, colour 3D spectrum and waterfall.
 
 ## Building
 

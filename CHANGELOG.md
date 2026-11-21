@@ -3,7 +3,9 @@
 DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
 [README.md](README.md) before installing anything.
 
-## Unreleased
+## v1.0.0-beta.4 (2026-11-21)
+
+Installed and checked on the author's radio with the new Windows programmer, published with it (2.0.0-beta.1: `DDM32Plus-Setup-2.0.0-beta.1.exe`).
 
 - DOTA Transfer pairs without typing: both roles start on the same frequency (Default 433.450 MHz, a 70 cm FM
   simplex channel) and tone (88.5 Hz); the frequency can also come from the current channel (when it is a simplex
