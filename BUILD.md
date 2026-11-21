@@ -3,6 +3,17 @@
 
 # Building Classic r14
 
+The [project README](README.md) describes the editions, installation, programming
+and current release status. This file covers source preparation and building.
+
+Classic is a small, explicit source overlay on the public RadioFoundry revision
+pinned in [sources.lock.json](sources.lock.json). The preparation helper fetches
+that exact upstream tree and FreeRTOS revision, verifies their identities, and
+applies the reviewed Classic product preset, band policy, retained repairs and
+tests. Source preparation does not copy private Next implementation into the
+public tree. Generated source, dependencies, binaries, logs and test images stay
+under ignored `build/`; build and test commands do not connect to a radio.
+
 Use Python 3.11+, Git, GNU Make, a host C compiler and an existing CK803S C-SKY
 toolchain. Preparing sources requires access to the two public Git repositories
 pinned in `sources.lock.json`.
