@@ -5,6 +5,14 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- Search log on the PC: the Windows programmer 2.0.0-beta.4 and the programmer 3.0.0-alpha.3 have a Search log page.
+  With P25 search, DMR search or All digital search running on the radio and the cable in, it reads the search's
+  finds every second (read only: two / three debug link views, not counted as a look, so the search still stops once
+  its screen is left) and keeps every call, also all night: time, mode, frequency, NAC / colour code / DG-ID / RAN,
+  slot, group, source or YSF callsign, in a table and in `logs\search-YYYYMMDD.csv`. No audio is recorded.
+- Programmer 3.0.0-alpha.3: the backup and install progress bar fills over the whole run and the percent line stays
+  (other tool lines go under it); a plain desktop look in both themes; "DDM32 Plus - TA2DOU" in the title (both
+  programmers).
 - Tools > All digital search (Turkish "Tüm dijital arama"): sweeps a range like P25 / DMR search and probes each
   carrier in the order P25 > DMR > YSF > NXDN (each with its own receiver; the first confirmed wins); found list with
   the mode and its fields (NAC / colour code / DG-ID / RAN, talkgroup, source, YSF callsign), the call played, receive

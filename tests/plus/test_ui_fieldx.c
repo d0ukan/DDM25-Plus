@@ -121,7 +121,7 @@ static void p25_find(uint32_t hz, uint16_t nac, uint16_t tg, uint32_t src)
 		v->found_n++;
 }
 
-static void dmr_find(uint32_t hz, uint8_t cc, uint8_t ts, uint8_t sync)
+static void dmr_find(uint32_t hz, uint16_t cc, uint8_t ts, uint8_t sync)
 {
 	dmrs_view_t *v = &fx_sim.dmr;
 	memmove(&v->found[1], &v->found[0], sizeof v->found[0] * (DMRS_FOUND_MAX - 1u));
