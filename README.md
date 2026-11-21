@@ -106,7 +106,15 @@ left, MMDVM hotspot over the programming cable, FM caller ID, signal quality.
 
 | Tools | Airfields | Marine VHF | Battery |
 | :---: | :---: | :---: | :---: |
-| ![Tools menu icons](images/ddm32/tools.png) | ![Airfields list](images/ddm32/airfields.png) | ![Marine VHF table](images/ddm32/marine.png) | ![Battery graph](images/ddm32/battery.png) |
+| ![Tools menu](images/ddm32/tools.png) | ![Airfields list](images/ddm32/airfields.png) | ![Marine VHF table](images/ddm32/marine.png) | ![Battery graph](images/ddm32/battery.png) |
+
+| Last calls | APRS station | Data packs in About | DOTA frequency |
+| :---: | :---: | :---: | :---: |
+| ![Last calls of every mode](images/ddm32/lastcalls.png) | ![APRS station page](images/ddm32/aprs-station.png) | ![Settings > About with the data packs](images/ddm32/about-packs.png) | ![DOTA Transfer frequency source](images/ddm32/dota-freq.png) |
+
+| Search range | Delete channel | NAC in decimal |
+| :---: | :---: | :---: |
+| ![P25 search range editor](images/ddm32/search-range.png) | ![Delete channel question](images/ddm32/delete-channel.png) | ![P25 NAC row in decimal](images/ddm32/nac-decimal.png) |
 
 *Screenshots come from the firmware's own screen simulator (English UI; the radio runs Turkish by default). Photos
 from a real radio will follow.*

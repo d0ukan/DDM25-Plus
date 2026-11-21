@@ -319,6 +319,7 @@ static void large_text_home(void)
 	expect("screen=home shows=467.37");	/* the channel's frequency under the chips (CONFIG_HOME_FREQ) */
 	run("shot:home");
 	layout();
+	run("ok 6 wait:200 shot:tools long:back wait:200");	/* the Tools menu (README picture) */
 	ui_svc_setting_set(UI_SET_LARGE_TEXT, 1);
 	run("reboot wait:200");
 	expect("screen=home shows=COUNTY shows=467.37");	/* Large text: name, frequency, talk target */

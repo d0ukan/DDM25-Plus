@@ -69,7 +69,7 @@ static void ring4(void)
 {
 	start("ring of 4");
 	run("mwatch:4 quick 7 wait:500");
-	run("expect:dual=1 expect:mwn=4 shot:ring4");
+	run("expect:dual=1 expect:mwn=4 wait:2500 shot:ring4");	/* the shot after the toast */
 	expect_ring(radio_mw_ring_ms(4, 3));	/* three DMR channels */
 	layout();
 }
