@@ -99,6 +99,7 @@ export component HealthPage inherits VerticalLayout {
         text: Tr.t(Tr.lang, "b_read_health");
         kind: "primary";
         big: true;
+        default-focus: true;
         enabled: !Radio.busy;
         clicked => { Radio.read-health(); }
     }

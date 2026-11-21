@@ -26,7 +26,8 @@ rust/
   crates/ddm32-cli/          `ddm32`: a small command line (tests, the owner's first real runs)
   crates/ddm32-gui/          the window (Slint): ui/*.slint, src/lib.rs (controller), src/i18n.rs (tr / en)
   docs/plan.md               stage 2 (GUI) design and stage 3 (packaging) plan
-  docs/screenshots/          every screen in the light and the dark theme (written by crates/ddm32-gui/tests/screens.rs)
+  docs/screenshots/          every screen in the light and the dark theme (written by crates/ddm32-gui/tests/screens.rs;
+                             the 150 % / 200 % ones by tests/hidpi.rs)
   packaging/windows/         Inno Setup script (per-user install over the C# program, same AppId and folder)
 ```
 
@@ -50,6 +51,20 @@ uninstaller never delete it), `surumler/` (downloaded releases), `guncelleme/` (
 packs), `settings.json`. On Windows the older programs' backup folders (`%LOCALAPPDATA%\DDM32Plus`, `DDM25Plus`, and the
 C# install folder when this program lives elsewhere) are found and read, never changed. `DDM32_DATA` overrides the
 folder (tests, screenshots).
+
+## Keyboard, screen readers, high DPI
+
+- **Keyboard**: Tab / Shift+Tab walk every page in reading order with a 3 px focus ring (`Theme.focus`, AA contrast in
+  both themes). The page's safe primary button takes the focus when the page opens, so **Enter** runs it (Home: update,
+  wizard: Next, first start: Türkçe, the no-backup confirmation: Cancel). Buttons that write to the radio never take
+  the focus on their own. Enter or Space runs a focused button or choice; Space toggles a check box.
+- **Screen readers** (UI Automation / AT-SPI / NSAccessibility through Slint's AccessKit): every button, choice, check
+  box and field has a role and a name in both languages; notices read as text, the progress bar reports 0-100.
+- **Scaling**: the layout is held at 150 % and 200 % at the default window and at the smallest one (640 x 560 logical),
+  so text wraps and buttons, choices and notices grow with it; pages that do not fit scroll. Screenshots:
+  `docs/screenshots/*-150.png`, `*-200.png`.
+- Tests: `crates/ddm32-gui/tests/a11y.rs` (names, Enter / Tab / Shift+Tab / Space, focus ring on every page) and
+  `tests/hidpi.rs` (no control overlaps another or leaves the window, every target at least 44 x 44).
 
 ## Build and test
 

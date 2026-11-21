@@ -34,12 +34,15 @@ export component Button {
     in property <string> kind: "secondary";
     in property <bool> enabled: true;
     in property <bool> big: false;
+    // takes the keyboard focus when the page opens, so Enter runs it
+    in property <bool> default-focus: false;
     callback clicked;
-    min-height: root.big ? 64px : 46px;
-    max-height: root.big ? 120px : 56px;
+    init => { if root.default-focus && root.enabled { fs.focus(); } }
+    // grows with a label that wraps (large scaling, narrow window), so no line is ever cut
+    min-height: max(root.big ? 64px : 46px, lbl.preferred-height + 16px);
+    max-height: max(root.big ? 120px : 56px, lbl.preferred-height + 16px);
     vertical-stretch: 0;
     min-width: 120px;
-    forward-focus: fs;
     accessible-role: button;
     accessible-label: root.text;
     accessible-action-default => { if root.enabled { root.clicked(); } }
@@ -59,7 +62,7 @@ export component Button {
             : (ta.has-hover ? Theme.button-hover : Theme.button);
         border-width: fs.has-focus ? 3px : (root.kind == "secondary" ? 1px : 0px);
         border-color: fs.has-focus ? Theme.focus : Theme.border;
-        Text {
+        lbl := Text {
             text: root.text;
             color: !root.enabled ? Theme.disabled-text
                 : root.kind == "primary" ? Theme.primary-text
@@ -98,6 +101,8 @@ export component Notice inherits Rectangle {
     border-radius: Theme.radius;
     border-width: kind == "danger" ? 2px : 0px;
     border-color: Theme.danger;
+    accessible-role: AccessibleRole.text;
+    accessible-label: root.text;
     min-height: t.preferred-height + 2 * Theme.pad;
     preferred-height: self.min-height;
     vertical-stretch: 0;
@@ -152,7 +157,7 @@ export component Choice {
     in property <bool> danger: false;
     in property <bool> enabled: true;
     callback clicked;
-    min-height: root.detail == "" ? 52px : 72px;
+    min-height: max(root.detail == "" ? 52px : 72px, cl.preferred-height);
     vertical-stretch: 0;
     accessible-role: button;
     accessible-label: root.title;
@@ -168,7 +173,7 @@ export component Choice {
         border-radius: Theme.radius;
         border-width: fs.has-focus ? 3px : (root.selected ? 3px : 1px);
         border-color: fs.has-focus ? Theme.focus : root.selected ? (root.danger ? Theme.danger : Theme.primary) : Theme.border;
-        VerticalLayout {
+        cl := VerticalLayout {
             padding: 14px; spacing: 4px;
             Text {
                 text: (root.selected ? "● " : "○ ") + root.title;
@@ -184,6 +189,10 @@ export component Choice {
 export component Progress inherits Rectangle {
     in property <float> value; // 0..1
     height: 14px;
+    accessible-role: progress-indicator;
+    accessible-value-minimum: 0;
+    accessible-value-maximum: 100;
+    accessible-value: round(clamp(root.value, 0, 1) * 100);
     vertical-stretch: 0;
     border-radius: 7px;
     background: Theme.surface-alt;
