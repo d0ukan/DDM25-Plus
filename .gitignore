@@ -670,3 +670,5 @@ __pycache__/
 !/integration/radiofoundry/spectrum/radio_alls.inc
 !/tests/plus/test_allsearch.c
 !/tests/plus/test_allsearch_sm.inc
+# the release version the plus build carries (About, splash): tools/build_radiofoundry.py
+!/VERSION

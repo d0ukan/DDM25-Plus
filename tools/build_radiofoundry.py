@@ -628,7 +628,11 @@ def main():
         args.classic=True
     if args.classic:
         suffix=('plus-public' if args.public else 'plus') if args.plus else 'classic'
-        identity='plus-0.1.0-dev' if args.plus else 'classic-0.1.0-rc1-r13'
+        # the plus build carries the release version (VERSION; About and the splash show it), not a dev tag
+        release=(ROOT/'VERSION').read_text(encoding='ascii').strip() if (ROOT/'VERSION').is_file() else '0.1.0-dev'
+        if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?', release):
+            ap.error(f'VERSION is not a version: {release!r}')
+        identity='plus-'+release if args.plus else 'classic-0.1.0-rc1-r13'
     for item in args.feature:
         if not re.fullmatch(r'[A-Z0-9_]+=[yn]', item):
             ap.error('--feature takes NAME=y or NAME=n')
@@ -638,7 +642,7 @@ def main():
     command = ["make", "-j8", "BOARD=dm32", f"CROSS={ROOT}/toolchain/bin/csky-elf-", f"BUILD={b}",
         "CONFIG_P25=" + ("n" if args.disable else "y"), "CONFIG_P25_NATIVE="+("y" if native else "n"), "CONFIG_DMR_IP_GATEWAY=n", "CONFIG_NET_PPP=n",
         "CONFIG_APRS=n", "CONFIG_SFR=n", "CONFIG_HOTSPOT=n", "CONFIG_ZONE_SHARE=n",
-        'RFOUNDRY_VERSION='+(('dm32-'+identity if args.plus else 'open25-'+identity) if args.classic else 'dfbaf20c-p25-'+identity), f"RFOUNDRY_GIT_TIME={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}",
+        'RFOUNDRY_VERSION='+(('ddm32-'+identity if args.plus else 'open25-'+identity) if args.classic else 'dfbaf20c-p25-'+identity), f"RFOUNDRY_GIT_TIME={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}",
         "RFOUNDRY_GIT_DIRTY=1",
         "CONFIG_FIRSTBOOT="+("y" if args.first_boot else "n"),
         "CONFIG_P25_BENCH="+("n" if args.lean else "y"),
