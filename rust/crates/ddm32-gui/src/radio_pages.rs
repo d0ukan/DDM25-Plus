@@ -501,7 +501,13 @@ pub fn slog_cells(c: &SearchCall) -> Vec<String> {
         c.code.clone(),
         c.slot.clone(),
         if c.group == 0 { "-".into() } else { c.group.to_string() },
-        if c.source == 0 { "-".into() } else { format!("{}{}", c.source, if c.encrypted { " (enc)" } else { "" }) },
+        if !c.caller.is_empty() {
+            c.caller.clone()
+        } else if c.source == 0 {
+            "-".into()
+        } else {
+            format!("{}{}", c.source, if c.encrypted { " (enc)" } else { "" })
+        },
         c.calls.to_string(),
     ]
 }
@@ -515,9 +521,10 @@ pub fn slog_searches(lang: &str, book: &SearchLogBook) -> String {
         None => i18n::tf(lang, "slog_noanswer", name),
     };
     format!(
-        "{}   {}   {}",
+        "{}   {}   {}   {}",
         one("P25", book.p25_on, book.p25_at_hz),
         one("DMR", book.dmr_on, book.dmr_at_hz),
+        one(&i18n::t(lang, "slog_all"), book.all_on, book.all_at_hz),
         f2("slog_count", &book.calls().len().to_string(), &book.frequencies().to_string())
     )
 }

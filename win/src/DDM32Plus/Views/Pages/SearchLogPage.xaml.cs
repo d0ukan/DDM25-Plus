@@ -79,6 +79,7 @@ public partial class SearchLogPage : UserControl, IPage
             _ => Loc.F("SLog_SearchNone", name),
         };
         return One("P25", book.P25On, book.P25AtHz) + "   " + One("DMR", book.DmrOn, book.DmrAtHz) + "   " +
+               One(Loc.T("SLog_All"), book.AllOn, book.AllAtHz) + "   " +
                Loc.F("SLog_Count", book.Calls.Count, book.Frequencies);
     }
 
@@ -179,6 +180,6 @@ public partial class SearchLogPage : UserControl, IPage
     private static SearchRow Row(SearchCall c) => new(
         c.Time.ToString("dd.MM HH:mm:ss", CultureInfo.InvariantCulture), c.Mode, SearchLogBook.Mhz(c.Hz), c.Code, c.Slot,
         c.Group == 0 ? "-" : c.Group.ToString(CultureInfo.InvariantCulture),
-        c.Source == 0 ? "-" : c.Source.ToString(CultureInfo.InvariantCulture) + (c.Encrypted ? " (enc)" : ""),
+        c.Caller.Length > 0 ? c.Caller : c.Source == 0 ? "-" : c.Source.ToString(CultureInfo.InvariantCulture) + (c.Encrypted ? " (enc)" : ""),
         c.Calls.ToString(CultureInfo.InvariantCulture));
 }

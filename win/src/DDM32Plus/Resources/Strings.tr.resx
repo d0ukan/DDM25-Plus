@@ -1446,7 +1446,7 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
     <value>Arama kaydı</value>
   </data>
   <data name="SLog_Text" xml:space="preserve">
-    <value>Telsizde **P25 arama** ya da **DMR arama**yı başlatın (Araçlar), kabloyu takıp **Kaydı başlat**a basın. Program her saniye aramanın bulduklarını okur (yalnızca okur; telsize hiçbir şey göndermez) ve her konuşmayı burada ve günlük bir CSV dosyasında tutar; açık bırakırsanız bütün gece. Ses kaydedilmez.</value>
+    <value>Telsizde **P25 arama**, **DMR arama** ya da **Tüm dijital arama**yı başlatın (Araçlar), kabloyu takıp **Kaydı başlat**a basın. Program her saniye aramanın bulduklarını okur (yalnızca okur; telsize hiçbir şey göndermez) ve her konuşmayı burada ve günlük bir CSV dosyasında tutar; açık bırakırsanız bütün gece. Ses kaydedilmez.</value>
   </data>
   <data name="SLog_Start" xml:space="preserve">
     <value>Kaydı başlat</value>
@@ -1504,5 +1504,8 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
   </data>
   <data name="SLog_Calls" xml:space="preserve">
     <value>Çağrı</value>
+  </data>
+  <data name="SLog_All" xml:space="preserve">
+    <value>Tüm dijital</value>
   </data>
 </root>

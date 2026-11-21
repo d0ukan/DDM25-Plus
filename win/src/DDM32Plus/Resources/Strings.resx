@@ -1446,7 +1446,7 @@ The pack the radio had is still in force.</value>
     <value>Search log</value>
   </data>
   <data name="SLog_Text" xml:space="preserve">
-    <value>Start **P25 search** or **DMR search** on the radio (Tools), connect the cable and press **Start log**. Every second the program reads what the search found (read only; nothing is sent to the radio) and keeps every call here and in a CSV file per day, all night if you leave it on. No audio is recorded.</value>
+    <value>Start **P25 search**, **DMR search** or **All digital search** on the radio (Tools), connect the cable and press **Start log**. Every second the program reads what the search found (read only; nothing is sent to the radio) and keeps every call here and in a CSV file per day, all night if you leave it on. No audio is recorded.</value>
   </data>
   <data name="SLog_Start" xml:space="preserve">
     <value>Start log</value>
@@ -1504,5 +1504,8 @@ The pack the radio had is still in force.</value>
   </data>
   <data name="SLog_Calls" xml:space="preserve">
     <value>Calls</value>
+  </data>
+  <data name="SLog_All" xml:space="preserve">
+    <value>All digital</value>
   </data>
 </root>
