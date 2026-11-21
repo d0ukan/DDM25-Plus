@@ -3,6 +3,11 @@
 DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See the disclaimer in
 [README.md](README.md) before installing anything.
 
+## Unreleased
+
+- tools/datapack.py finds the aerodrome code in AIP file names such as LT_AD_2_LTAC_en.pdf (an underscore before
+  the code hid it), else in the page text before AD 2.18, as the Windows programmer does.
+
 ## v1.0.0-beta.4 (2026-11-21)
 
 Installed and checked on the author's radio with the new Windows programmer, published with it (2.0.0-beta.1: `DDM32Plus-Setup-2.0.0-beta.1.exe`).

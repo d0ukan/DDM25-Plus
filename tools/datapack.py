@@ -184,11 +184,20 @@ def pdf_text(path):
         return '\n'.join(page.get_text() for page in doc)
 
 
-def code_of(path):
-    m = re.search(r'\b(LT[A-Z]{2})\b', Path(path).name)
-    if not m:
-        raise PackError(f'{path}: no aerodrome code (LTxx) in the file name')
-    return m.group(1)
+CODE = re.compile(r'(?<![A-Za-z0-9])(LT[A-Z]{2})(?![A-Za-z0-9])')
+
+
+def code_of(path, text=None):
+    """The aerodrome code (LTxx) in a file name, its last one (LT_AD_2_LTAC_en.pdf -> LTAC: an underscore counts as a
+    separator here, unlike for \\b), else the last one in the page text before its AD 2.18 heading (as AirText.CodeOf
+    in win/ does)."""
+    found = CODE.findall(Path(path).stem)
+    if not found and text is not None:
+        sec = SECTION.search(text)
+        found = CODE.findall(text[:sec.start()] if sec else text)
+    if not found:
+        raise PackError(f'{path}: no aerodrome code (LTxx) in the file name or the page text')
+    return found[-1]
 
 
 def info(image):
@@ -234,7 +243,8 @@ def main(argv=None):
         else:
             fields = {}
             for p in args.pdf:
-                fields[code_of(p)] = parse_ad218(pdf_text(p))
+                text = pdf_text(p)
+                fields[code_of(p, text)] = parse_ad218(text)
             for t in args.text:
                 code, _, f = t.partition('=')
                 fields[code.strip().upper()] = parse_ad218(Path(f).read_text(encoding='utf-8', errors='replace'))
