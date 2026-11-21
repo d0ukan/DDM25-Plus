@@ -11,12 +11,35 @@ namespace DDM32Plus.Core.Radio;
 public sealed record SearchCall(DateTime Time, string Mode, long Hz, string Code, string Slot, long Group, long Source,
     bool Encrypted, int Calls, string Caller = "");
 
+/// <summary>One line of the log: every call heard on one mode + frequency + code (NAC / CC / DG-ID / RAN) + group,
+/// counted (owner 2026-11-21: "how many frequencies, which NAC, which group have traffic"). First / Last: when it was
+/// first and last heard; Source / Caller / Slot: the last call's; Calls: every call heard there since the log started.</summary>
+public sealed class SearchGroup
+{
+    public required string Mode { get; init; }
+    public required long Hz { get; init; }
+    public required string Code { get; init; }
+    public required long Group { get; init; }
+    public DateTime First { get; set; }
+    public DateTime Last { get; set; }
+    public string Slot { get; set; } = "";
+    public long Source { get; set; }
+    public string Caller { get; set; } = "";
+    public bool Encrypted { get; set; }
+    /// <summary>Calls counted before the radio's counter last went down (a restart, an entry dropped and found again).</summary>
+    internal int Base { get; set; }
+    /// <summary>The radio's own counter for this group now (the highest of its entries).</summary>
+    internal int Current { get; set; }
+    public int Calls => Base + Current;
+}
+
 /// <summary>
 /// The search log (firmware tools/plus_searchlog.py, docs/plus.md "Search log on the PC"): the radio's P25, DMR and all
 /// digital searches keep 8 finds each; read every second over the debug link (GET_VIEW sections p25s = 28, dmrs = 29,
-/// alls = 30, read only, not counted as a look), every new call becomes a row here and in the day's CSV file. A call is new when an
-/// entry appears, its call counter grows, or its talkgroup / source changes. A radio restart (counters back down) is
-/// taken as a new start, not as calls.
+/// alls = 30, read only, not counted as a look). The log keeps ONE line per mode + frequency + code + group with a call
+/// counter: the radio's entries for the same group (the list may hold a frequency twice) count once, by their highest
+/// call counter; a counter that goes down (a restart, an entry dropped from the radio's 8 and found again) starts a new
+/// base, so no call is lost and none is counted twice. The day's CSV file holds the same lines, rewritten on a change.
 /// </summary>
 public sealed class SearchLogBook
 {
@@ -24,14 +47,10 @@ public sealed class SearchLogBook
     public const byte SectionDmr = 0x1D;
     public const byte SectionAll = 0x1E;
 
-    private sealed record Seen(int Calls, long Group, long Source, string Caller);
+    private readonly Dictionary<(string Mode, long Hz, string Code, long Group), SearchGroup> groups = [];
 
-    // keyed by the search too: the all digital search's list is its own (its P25 / DMR finds next to the P25 / DMR
-    // searches' own lists, which the radio keeps reporting after they stopped)
-    private readonly Dictionary<(string Search, string Mode, long Hz), Seen> seen = [];
-    private readonly List<SearchCall> calls = [];
-
-    public IReadOnlyList<SearchCall> Calls => calls;
+    /// <summary>Every line, the most recently heard first.</summary>
+    public IReadOnlyList<SearchGroup> Groups => [.. groups.Values.OrderByDescending(g => g.Last).ThenBy(g => g.Hz)];
 
     /// <summary>Whether the radio reported each search running at the last poll (null = no answer / not built).</summary>
     public bool? P25On { get; private set; }
@@ -42,10 +61,13 @@ public sealed class SearchLogBook
     public long? AllAtHz { get; private set; }
 
     /// <summary>Distinct frequencies with a call.</summary>
-    public int Frequencies => calls.Select(c => (c.Mode, c.Hz)).Distinct().Count();
+    public int Frequencies => groups.Values.Select(g => (g.Mode, g.Hz)).Distinct().Count();
 
-    /// <summary>One poll's key=value lines (all three sections); returns the new calls, oldest first.</summary>
-    public List<SearchCall> Add(IEnumerable<string> lines, DateTime now)
+    /// <summary>Every call counted.</summary>
+    public int TotalCalls => groups.Values.Sum(g => g.Calls);
+
+    /// <summary>One poll's key=value lines (all three sections); true when a line was added or changed.</summary>
+    public bool Add(IEnumerable<string> lines, DateTime now)
     {
         var kv = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var raw in lines)
@@ -61,39 +83,60 @@ public sealed class SearchLogBook
         P25AtHz = Num(kv, "p25s.at");
         DmrAtHz = Num(kv, "dmrs.at");
         AllAtHz = Num(kv, "alls.at");
-        var fresh = new List<SearchCall>();
-        // oldest entry first, so the rows come in the order the radio heard them
-        for (var i = 7; i >= 0; i--)
+        // every entry of the three lists, grouped; a group's counter is its entries' highest (the lists overlap: the
+        // all digital search may find what the P25 search found, the radio may list a frequency twice)
+        var heard = new Dictionary<(string, long, string, long), (int Calls, SearchCall Last)>();
+        for (var i = 0; i < 8; i++)
         {
-            if (kv.TryGetValue($"p25s.f{i}", out var p) && ParseP25(p, now) is { } pc)
-                Note("p25s", pc, fresh);
-            if (kv.TryGetValue($"dmrs.f{i}", out var d) && ParseDmr(d, now) is { } dc)
-                Note("dmrs", dc, fresh);
-            if (kv.TryGetValue($"alls.f{i}", out var a) && ParseAll(a, now) is { } ac)
-                Note("alls", ac, fresh);
+            foreach (var call in new[]
+                     {
+                         kv.TryGetValue($"p25s.f{i}", out var p) ? ParseP25(p, now)?.Call : null,
+                         kv.TryGetValue($"dmrs.f{i}", out var d) ? ParseDmr(d, now)?.Call : null,
+                         kv.TryGetValue($"alls.f{i}", out var x) ? ParseAll(x, now)?.Call : null,
+                     })
+            {
+                if (call is null || (call.Calls == 0 && call.Group == 0 && call.Source == 0 && call.Caller.Length == 0))
+                    continue;
+                var key = (call.Mode, call.Hz, call.Code, call.Group);
+                var calls = Math.Max(1, call.Calls);
+                if (!heard.TryGetValue(key, out var h) || calls > h.Calls || (calls == h.Calls && call.Time > h.Last.Time))
+                    heard[key] = (Math.Max(calls, h.Calls), call.Time >= (h.Last?.Time ?? DateTime.MinValue) ? call : h.Last!);
+            }
         }
-        fresh.Sort((a, b) => a.Time.CompareTo(b.Time));
-        calls.AddRange(fresh);
-        return fresh;
-    }
-
-    private void Note(string search, (SearchCall Call, int Age) e, List<SearchCall> fresh)
-    {
-        var c = e.Call;
-        var key = (search, c.Mode, c.Hz);
-        var now = new Seen(c.Calls, c.Group, c.Source, c.Caller);
-        if (!seen.TryGetValue(key, out var was))
+        var changed = false;
+        foreach (var (key, h) in heard)
         {
-            seen[key] = now;
-            if (c.Calls > 0 || c.Group != 0 || c.Source != 0 || c.Caller.Length > 0)
-                fresh.Add(c);
-            return;
+            var c = h.Last;
+            if (!groups.TryGetValue(key, out var g))
+            {
+                groups[key] = new SearchGroup
+                {
+                    Mode = c.Mode, Hz = c.Hz, Code = c.Code, Group = c.Group, First = c.Time, Last = c.Time, Slot = c.Slot,
+                    Source = c.Source, Caller = c.Caller, Encrypted = c.Encrypted, Current = h.Calls,
+                };
+                changed = true;
+                continue;
+            }
+            if (h.Calls < g.Current)
+            {
+                g.Base += g.Current;	// the radio's counter went down: what it counted stays
+                g.Current = h.Calls;
+                g.Last = c.Time > g.Last ? c.Time : g.Last;
+                changed = true;
+            }
+            else if (h.Calls > g.Current || c.Source != g.Source || c.Caller != g.Caller)
+            {
+                g.Current = h.Calls;
+                if (c.Time > g.Last)
+                    g.Last = c.Time;
+                g.Source = c.Source;
+                g.Caller = c.Caller;
+                g.Slot = c.Slot.Length > 0 ? c.Slot : g.Slot;
+                g.Encrypted |= c.Encrypted;
+                changed = true;
+            }
         }
-        seen[key] = now;
-        if (c.Calls < was.Calls)
-            return;	// the radio started again: a new baseline
-        if (c.Calls > was.Calls || c.Group != was.Group || c.Source != was.Source || c.Caller != was.Caller)
-            fresh.Add(c);
+        return changed;
     }
 
     private static bool? Flag(Dictionary<string, string> kv, string key) =>
@@ -178,24 +221,26 @@ public sealed class SearchLogBook
 
     public static string Mhz(long hz) => (hz / 1e6).ToString("0.0000", CultureInfo.InvariantCulture);
 
-    public const string CsvHeader = "time,mode,mhz,code,slot,group,source,encrypted,calls,caller";
+    public const string CsvHeader = "first_heard,last_heard,mode,mhz,code,slot,group,last_source,caller,encrypted,calls";
 
-    public static string CsvRow(SearchCall c) => string.Join(",",
-        c.Time.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture), c.Mode, Mhz(c.Hz), c.Code, c.Slot,
-        c.Group.ToString(CultureInfo.InvariantCulture), c.Source.ToString(CultureInfo.InvariantCulture),
-        c.Encrypted ? "1" : "0", c.Calls.ToString(CultureInfo.InvariantCulture), c.Caller.Replace(',', ' '));
+    public static string CsvRow(SearchGroup g) => string.Join(",",
+        g.First.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+        g.Last.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture), g.Mode, Mhz(g.Hz), g.Code, g.Slot,
+        g.Group.ToString(CultureInfo.InvariantCulture), g.Source.ToString(CultureInfo.InvariantCulture),
+        g.Caller.Replace(',', ' '), g.Encrypted ? "1" : "0", g.Calls.ToString(CultureInfo.InvariantCulture));
 
-    /// <summary>Appends rows to folder/search-YYYYMMDD.csv (the header once per file); the file is the night's log.</summary>
-    public static string Append(string folder, IEnumerable<SearchCall> rows, DateTime day)
+    /// <summary>Writes folder/search-YYYYMMDD.csv with every line of the log (rewritten whole, through a temporary file,
+    /// so a crash never leaves half a file). The day is the day the log started.</summary>
+    public static string Write(string folder, IEnumerable<SearchGroup> lines, DateTime day)
     {
         Directory.CreateDirectory(folder);
         var path = Path.Combine(folder, $"search-{day:yyyyMMdd}.csv");
-        var sb = new StringBuilder();
-        if (!File.Exists(path))
-            sb.Append(CsvHeader).Append('\n');
-        foreach (var r in rows)
-            sb.Append(CsvRow(r)).Append('\n');
-        File.AppendAllText(path, sb.ToString(), new UTF8Encoding(false));
+        var sb = new StringBuilder().Append(CsvHeader).Append('\n');
+        foreach (var g in lines)
+            sb.Append(CsvRow(g)).Append('\n');
+        var tmp = path + ".tmp";
+        File.WriteAllText(tmp, sb.ToString(), new UTF8Encoding(false));
+        File.Move(tmp, path, overwrite: true);
         return path;
     }
 }

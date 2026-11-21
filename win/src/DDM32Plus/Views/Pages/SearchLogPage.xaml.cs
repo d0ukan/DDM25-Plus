@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using DDM32Plus.Core;
 using DDM32Plus.Core.Radio;
 using DDM32Plus.Localization;
 using DDM32Plus.Services;
@@ -12,7 +13,7 @@ using DDM32Plus.Services;
 namespace DDM32Plus.Views.Pages;
 
 /// <summary>A row of the table (strings in the page's language).</summary>
-public sealed record SearchRow(string Time, string Mode, string Mhz, string Code, string Slot, string Group, string Source,
+public sealed record SearchRow(string First, string Time, string Mode, string Mhz, string Code, string Slot, string Group, string Source,
     string Calls);
 
 /// <summary>
@@ -33,6 +34,7 @@ public partial class SearchLogPage : UserControl, IPage
     private SearchLogBook book = new();
     private readonly ObservableCollection<SearchRow> rows = [];
     private string? csvPath;
+    private DateTime day = DateTime.Now;
 
     public SearchLogPage() => InitializeComponent();
 
@@ -49,7 +51,7 @@ public partial class SearchLogPage : UserControl, IPage
     private void Columns()
     {
         Grid.Columns.Clear();
-        foreach (var (key, path) in new[] { ("SLog_Time", "Time"), ("SLog_Mode", "Mode"), ("SLog_Mhz", "Mhz"), ("SLog_Code", "Code"),
+        foreach (var (key, path) in new[] { ("SLog_First", "First"), ("SLog_Time", "Time"), ("SLog_Mode", "Mode"), ("SLog_Mhz", "Mhz"), ("SLog_Code", "Code"),
                      ("SLog_Slot", "Slot"), ("SLog_Group", "Group"), ("SLog_Source", "Source"), ("SLog_Calls", "Calls") })
             Grid.Columns.Add(new DataGridTextColumn { Header = Loc.T(key), Binding = new Binding(path) });
     }
@@ -63,7 +65,7 @@ public partial class SearchLogPage : UserControl, IPage
         var busy = Running;
         StartButton.IsEnabled = !busy && !ToolRunner.AnyBusy && state.Port is not null && state.DisclaimerAccepted;
         StopButton.IsEnabled = busy && !stopping;
-        ClearButton.IsEnabled = !busy && rows.Count > 0;
+        ClearButton.IsEnabled = rows.Count > 0 || (csvPath is not null && File.Exists(csvPath));
         StatusText.Text = status.Length > 0 ? status : Loc.T("SLog_NotRunning");
         SearchText.Text = Running ? Searches() : "";
         ErrorText.Text = error;
@@ -80,7 +82,7 @@ public partial class SearchLogPage : UserControl, IPage
         };
         return One("P25", book.P25On, book.P25AtHz) + "   " + One("DMR", book.DmrOn, book.DmrAtHz) + "   " +
                One(Loc.T("SLog_All"), book.AllOn, book.AllAtHz) + "   " +
-               Loc.F("SLog_Count", book.Calls.Count, book.Frequencies);
+               Loc.F("SLog_Count", book.TotalCalls, book.Frequencies);
     }
 
     private async void OnStart(object sender, RoutedEventArgs e)
@@ -121,10 +123,26 @@ public partial class SearchLogPage : UserControl, IPage
         Refresh();
     }
 
+    /// <summary>"Kayıtları temizle": after a confirmation, the table and the day's CSV file are emptied; a running log goes
+    /// on from nothing (what the radio still lists counts again as found).</summary>
     private void OnClear(object sender, RoutedEventArgs e)
     {
+        if (MessageBox.Show(Window.GetWindow(this), Loc.T("SLog_ClearAsk"), AppInfo.Name, MessageBoxButton.YesNo,
+                MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
         rows.Clear();
         book = new SearchLogBook();
+        try
+        {
+            if (csvPath is not null && File.Exists(csvPath))
+                File.Delete(csvPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            error = ex.Message;
+        }
+        csvPath = null;
+        day = DateTime.Now;
         Refresh();
     }
 
@@ -158,27 +176,29 @@ public partial class SearchLogPage : UserControl, IPage
     private void Take(List<string> lines)
     {
         var now = DateTime.Now;
-        var fresh = book.Add(lines, now);
-        if (fresh.Count > 0 && state is not null)
+        if (book.Add(lines, now) && state is not null)
         {
+            var groups = book.Groups;
             try
             {
-                csvPath = SearchLogBook.Append(state.Paths.Logs, fresh, now);
+                csvPath = SearchLogBook.Write(state.Paths.Logs, groups, day);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 error = ex.Message;
             }
-            foreach (var c in fresh)
-                rows.Insert(0, Row(c));
+            rows.Clear();
+            foreach (var g in groups)
+                rows.Add(Row(g));
         }
         status = Loc.F("SLog_Running", now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)) +
                  (csvPath is null ? "" : "  " + Loc.F("SLog_File", csvPath));
         Refresh();
     }
 
-    private static SearchRow Row(SearchCall c) => new(
-        c.Time.ToString("dd.MM HH:mm:ss", CultureInfo.InvariantCulture), c.Mode, SearchLogBook.Mhz(c.Hz), c.Code, c.Slot,
+    private static SearchRow Row(SearchGroup c) => new(
+        c.First.ToString("dd.MM HH:mm:ss", CultureInfo.InvariantCulture),
+        c.Last.ToString("dd.MM HH:mm:ss", CultureInfo.InvariantCulture), c.Mode, SearchLogBook.Mhz(c.Hz), c.Code, c.Slot,
         c.Group == 0 ? "-" : c.Group.ToString(CultureInfo.InvariantCulture),
         c.Caller.Length > 0 ? c.Caller : c.Source == 0 ? "-" : c.Source.ToString(CultureInfo.InvariantCulture) + (c.Encrypted ? " (enc)" : ""),
         c.Calls.ToString(CultureInfo.InvariantCulture));

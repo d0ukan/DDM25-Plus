@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 pub const SECTION_P25: u8 = 0x1C;
 pub const SECTION_DMR: u8 = 0x1D;
 pub const SECTION_ALL: u8 = 0x1E;
-pub const CSV_HEADER: &str = "time,mode,mhz,code,slot,group,source,encrypted,calls,caller";
+pub const CSV_HEADER: &str = "first_heard,last_heard,mode,mhz,code,slot,group,last_source,caller,encrypted,calls";
 
 /// A local time as seconds since the Unix epoch plus the offset the program shows (the GUI passes the local clock).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -37,14 +37,41 @@ pub struct SearchCall {
 }
 
 /// What an entry looked like at the last poll: calls, group, source, caller.
-type Seen = (i64, i64, i64, String);
+/// One line of the log: every call heard on one mode + frequency + code (NAC / CC / DG-ID / RAN) + group, counted
+/// (owner 2026-11-21). first / last: when it was first and last heard; source / caller / slot: the last call's.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchGroup {
+    pub mode: &'static str,
+    pub hz: i64,
+    pub code: String,
+    pub group: i64,
+    pub first: Stamp,
+    pub last: Stamp,
+    pub slot: String,
+    pub source: i64,
+    pub caller: String,
+    pub encrypted: bool,
+    /// Calls counted before the radio's counter last went down (a restart, an entry dropped and found again).
+    base: i64,
+    /// The radio's own counter for this group now (the highest of its entries).
+    current: i64,
+}
 
+impl SearchGroup {
+    pub fn calls(&self) -> i64 {
+        self.base + self.current
+    }
+}
+
+type GroupKey = (&'static str, i64, String, i64);
+
+/// The search log (SearchLog.cs): ONE line per mode + frequency + code + group with a call counter. The radio's entries
+/// for the same group (its list may hold a frequency twice; the all digital search may list what the P25 search found)
+/// count once, by their highest call counter; a counter that goes down starts a new base, so no call is lost and none
+/// is counted twice. The day's CSV holds the same lines, rewritten on a change.
 #[derive(Debug, Default)]
 pub struct SearchLogBook {
-    // keyed by the search too: the all digital search's list is its own (its P25 / DMR finds next to the P25 / DMR
-    // searches' own lists, which the radio keeps reporting after they stopped)
-    seen: HashMap<(&'static str, &'static str, i64), Seen>,
-    calls: Vec<SearchCall>,
+    groups: HashMap<GroupKey, SearchGroup>,
     pub p25_on: Option<bool>,
     pub dmr_on: Option<bool>,
     pub all_on: Option<bool>,
@@ -172,20 +199,28 @@ impl SearchLogBook {
         Self::default()
     }
 
-    pub fn calls(&self) -> &[SearchCall] {
-        &self.calls
+    /// Every line, the most recently heard first.
+    pub fn groups(&self) -> Vec<SearchGroup> {
+        let mut v: Vec<SearchGroup> = self.groups.values().cloned().collect();
+        v.sort_by(|a, b| b.last.cmp(&a.last).then(a.hz.cmp(&b.hz)).then(a.group.cmp(&b.group)));
+        v
     }
 
     /// Distinct frequencies with a call.
     pub fn frequencies(&self) -> usize {
-        let mut v: Vec<(&str, i64)> = self.calls.iter().map(|c| (c.mode, c.hz)).collect();
+        let mut v: Vec<(&str, i64)> = self.groups.values().map(|g| (g.mode, g.hz)).collect();
         v.sort();
         v.dedup();
         v.len()
     }
 
-    /// One poll's key=value lines (all three sections); returns the new calls, oldest first.
-    pub fn add<S: AsRef<str>>(&mut self, lines: &[S], now: Stamp) -> Vec<SearchCall> {
+    /// Every call counted.
+    pub fn total_calls(&self) -> i64 {
+        self.groups.values().map(SearchGroup::calls).sum()
+    }
+
+    /// One poll's key=value lines (all three sections); true when a line was added or changed.
+    pub fn add<S: AsRef<str>>(&mut self, lines: &[S], now: Stamp) -> bool {
         let mut kv: HashMap<&str, &str> = HashMap::new();
         for l in lines {
             let l = l.as_ref().trim();
@@ -203,41 +238,77 @@ impl SearchLogBook {
         self.p25_at_hz = num("p25s.at");
         self.dmr_at_hz = num("dmrs.at");
         self.all_at_hz = num("alls.at");
-        let mut fresh = Vec::new();
-        for i in (0..8).rev() {
-            if let Some(c) = kv.get(format!("p25s.f{i}").as_str()).and_then(|t| parse_p25(t, now)) {
-                self.note("p25s", c, &mut fresh);
-            }
-            if let Some(c) = kv.get(format!("dmrs.f{i}").as_str()).and_then(|t| parse_dmr(t, now)) {
-                self.note("dmrs", c, &mut fresh);
-            }
-            if let Some(c) = kv.get(format!("alls.f{i}").as_str()).and_then(|t| parse_all(t, now)) {
-                self.note("alls", c, &mut fresh);
-            }
-        }
-        fresh.sort_by_key(|c| c.time);
-        self.calls.extend(fresh.iter().cloned());
-        fresh
-    }
-
-    fn note(&mut self, search: &'static str, c: SearchCall, fresh: &mut Vec<SearchCall>) {
-        let key = (search, c.mode, c.hz);
-        let now = (c.calls, c.group, c.source, c.caller.clone());
-        match self.seen.insert(key, now) {
-            None => {
-                if c.calls > 0 || c.group != 0 || c.source != 0 || !c.caller.is_empty() {
-                    fresh.push(c);
+        // every entry of the three lists, grouped; a group's counter is its entries' highest
+        let mut heard: HashMap<GroupKey, (i64, SearchCall)> = HashMap::new();
+        for i in 0..8 {
+            let found = [
+                kv.get(format!("p25s.f{i}").as_str()).and_then(|t| parse_p25(t, now)),
+                kv.get(format!("dmrs.f{i}").as_str()).and_then(|t| parse_dmr(t, now)),
+                kv.get(format!("alls.f{i}").as_str()).and_then(|t| parse_all(t, now)),
+            ];
+            for c in found.into_iter().flatten() {
+                if c.calls == 0 && c.group == 0 && c.source == 0 && c.caller.is_empty() {
+                    continue;
                 }
-            }
-            Some(was) => {
-                if c.calls < was.0 {
-                    return; // the radio started again: a new baseline
-                }
-                if c.calls > was.0 || c.group != was.1 || c.source != was.2 || c.caller != was.3 {
-                    fresh.push(c);
+                let key = (c.mode, c.hz, c.code.clone(), c.group);
+                let calls = c.calls.max(1);
+                match heard.get_mut(&key) {
+                    None => {
+                        heard.insert(key, (calls, c));
+                    }
+                    Some(h) => {
+                        h.0 = h.0.max(calls);
+                        if c.time >= h.1.time {
+                            h.1 = c;
+                        }
+                    }
                 }
             }
         }
+        let mut changed = false;
+        for (key, (calls, c)) in heard {
+            match self.groups.get_mut(&key) {
+                None => {
+                    self.groups.insert(
+                        key,
+                        SearchGroup {
+                            mode: c.mode,
+                            hz: c.hz,
+                            code: c.code.clone(),
+                            group: c.group,
+                            first: c.time,
+                            last: c.time,
+                            slot: c.slot.clone(),
+                            source: c.source,
+                            caller: c.caller.clone(),
+                            encrypted: c.encrypted,
+                            base: 0,
+                            current: calls,
+                        },
+                    );
+                    changed = true;
+                }
+                Some(g) => {
+                    if calls < g.current {
+                        g.base += g.current; // the radio's counter went down: what it counted stays
+                        g.current = calls;
+                        g.last = g.last.max(c.time);
+                        changed = true;
+                    } else if calls > g.current || c.source != g.source || c.caller != g.caller {
+                        g.current = calls;
+                        g.last = g.last.max(c.time);
+                        g.source = c.source;
+                        g.caller = c.caller.clone();
+                        if !c.slot.is_empty() {
+                            g.slot = c.slot.clone();
+                        }
+                        g.encrypted |= c.encrypted;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        changed
     }
 }
 
@@ -277,37 +348,41 @@ fn civil(z: i64) -> (i64, i64, i64) {
     (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
-pub fn csv_row(c: &SearchCall) -> String {
+pub fn csv_row(g: &SearchGroup) -> String {
     format!(
-        "{},{},{},{},{},{},{},{},{},{}",
-        format_time(c.time),
-        c.mode,
-        mhz(c.hz),
-        c.code,
-        c.slot,
-        c.group,
-        c.source,
-        if c.encrypted { 1 } else { 0 },
-        c.calls,
-        c.caller.replace(',', " ")
+        "{},{},{},{},{},{},{},{},{},{},{}",
+        format_time(g.first),
+        format_time(g.last),
+        g.mode,
+        mhz(g.hz),
+        g.code,
+        g.slot,
+        g.group,
+        g.source,
+        g.caller.replace(',', " "),
+        if g.encrypted { 1 } else { 0 },
+        g.calls()
     )
 }
 
-/// Appends rows to folder/search-YYYYMMDD.csv (the header once per file); the file is the night's log.
-pub fn append(folder: &Path, rows: &[SearchCall], day: Stamp) -> std::io::Result<PathBuf> {
+/// Writes folder/search-YYYYMMDD.csv with every line of the log (rewritten whole through a temporary file, so a crash
+/// never leaves half a file). The day is the day the log started.
+pub fn write(folder: &Path, lines: &[SearchGroup], day: Stamp) -> std::io::Result<PathBuf> {
     std::fs::create_dir_all(folder)?;
     let date = format_time(day);
     let path = folder.join(format!("search-{}.csv", date[..10].replace('-', "")));
-    let mut text = String::new();
-    if !path.exists() {
-        text.push_str(CSV_HEADER);
+    let mut text = String::from(CSV_HEADER);
+    text.push('\n');
+    for g in lines {
+        text.push_str(&csv_row(g));
         text.push('\n');
     }
-    for r in rows {
-        text.push_str(&csv_row(r));
-        text.push('\n');
+    let tmp = path.with_extension("csv.tmp");
+    {
+        let mut f = std::fs::File::create(&tmp)?;
+        f.write_all(text.as_bytes())?;
+        f.sync_all()?;
     }
-    let mut f = std::fs::OpenOptions::new().create(true).append(true).open(&path)?;
-    f.write_all(text.as_bytes())?;
+    std::fs::rename(&tmp, &path)?;
     Ok(path)
 }

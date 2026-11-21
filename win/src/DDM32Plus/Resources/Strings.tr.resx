@@ -1458,7 +1458,7 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
     <value>Kayıt klasörünü aç</value>
   </data>
   <data name="SLog_Clear" xml:space="preserve">
-    <value>Tabloyu temizle</value>
+    <value>Kayıtları temizle</value>
   </data>
   <data name="SLog_NotRunning" xml:space="preserve">
     <value>Kayıt yapılmıyor.</value>
@@ -1482,7 +1482,7 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
     <value>{1} frekansta {0} konuşma</value>
   </data>
   <data name="SLog_Time" xml:space="preserve">
-    <value>Zaman</value>
+    <value>Son duyulma</value>
   </data>
   <data name="SLog_Mode" xml:space="preserve">
     <value>Mod</value>
@@ -1507,5 +1507,11 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
   </data>
   <data name="SLog_All" xml:space="preserve">
     <value>Tüm dijital</value>
+  </data>
+  <data name="SLog_First" xml:space="preserve">
+    <value>İlk duyulma</value>
+  </data>
+  <data name="SLog_ClearAsk" xml:space="preserve">
+    <value>Kayıtlar temizlensin mi? Tablo ve bugünün CSV dosyası boşaltılır; geri alınamaz.</value>
   </data>
 </root>

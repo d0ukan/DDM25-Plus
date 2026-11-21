@@ -35,41 +35,53 @@ public sealed class SearchLogTests : IDisposable
     }
 
     [Fact]
-    public void OnlyNewCallsBecomeRows()
+    public void OneLinePerFrequencyCodeAndGroupWithACounter()
     {
         var b = new SearchLogBook();
         // first poll: what the radio already found
-        var r = b.Add(Poll("p25s.f0=433500000,456,655,1234567,1,30", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,5"), T0);
-        Assert.Equal(2, r.Count);
-        Assert.Equal("P25", r[0].Mode);	// heard earlier (30 s ago) comes first
+        Assert.True(b.Add(Poll("p25s.f0=433500000,456,655,1234567,1,30", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,5"), T0));
+        Assert.Equal(2, b.Groups.Count);
+        Assert.Equal("DMR", b.Groups[0].Mode);	// heard last comes first
+        Assert.Equal((1, 2), (b.Groups[1].Calls, b.Groups[0].Calls));
         Assert.True(b.P25On);
         Assert.Equal(433512500L, b.P25AtHz);
-        // the same counters again: nothing new
-        Assert.Empty(b.Add(Poll("p25s.f0=433500000,456,655,1234567,1,31", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,6"), T0.AddSeconds(1)));
-        // a new call on the P25 frequency, another source on the DMR one
-        r = b.Add(Poll("p25s.f0=433500000,456,655,7654321,2,0", "dmrs.f0=438612500,1,1,1,1,0,2620,2620999,2,0"), T0.AddSeconds(2));
-        Assert.Equal(2, r.Count);
-        Assert.Equal(4, b.Calls.Count);
+        // the same counters again: nothing changes
+        Assert.False(b.Add(Poll("p25s.f0=433500000,456,655,1234567,1,31", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,6"), T0.AddSeconds(1)));
+        // a new call on the same frequency, NAC and group: the same line, counted, the last source kept
+        Assert.True(b.Add(Poll("p25s.f0=433500000,456,655,7654321,2,0"), T0.AddSeconds(2)));
+        var p = b.Groups.Single(g => g.Mode == "P25");
+        Assert.Equal((2, 7654321L, T0.AddSeconds(-30), T0.AddSeconds(2)), (p.Calls, p.Source, p.First, p.Last));
+        // another talkgroup on that frequency: its own line
+        Assert.True(b.Add(Poll("p25s.f0=433500000,456,101,1111,3,0"), T0.AddSeconds(3)));
+        Assert.Equal(3, b.Groups.Count);
         Assert.Equal(2, b.Frequencies);
-        // the radio restarted (counters back down): a new baseline, not a call
-        Assert.Empty(b.Add(Poll("p25s.f0=433500000,456,655,7654321,1,0"), T0.AddSeconds(3)));
+        // the radio lists the frequency twice (the owner's screen: a new line every second before): counted once
+        for (var i = 0; i < 5; i++)
+            Assert.False(b.Add(["p25s.f0=433500000,456,101,1111,3,0", "p25s.f1=433500000,456,101,1111,2,4"], T0.AddSeconds(4 + i)));
+        Assert.Equal(3, b.Groups.Single(g => g.Group == 101).Calls);
+        // the radio restarted (counter back to 1): what was counted stays, the new call adds one
+        Assert.True(b.Add(["p25s.f0=433500000,456,101,2222,1,0"], T0.AddSeconds(10)));
+        Assert.Equal(4, b.Groups.Single(g => g.Group == 101).Calls);
+        Assert.Equal(2 + 2 + 4, b.TotalCalls);	// DMR 2 + P25/655 2 + P25/101 4
         // no answer: the searches are unknown, nothing changes
-        Assert.Empty(b.Add([], T0.AddSeconds(4)));
+        Assert.False(b.Add([], T0.AddSeconds(11)));
         Assert.Null(b.DmrOn);
     }
 
     [Fact]
-    public void TheDaysCsvGetsOneHeader()
+    public void TheDaysCsvIsTheLogItself()
     {
         var b = new SearchLogBook();
-        var rows = b.Add(Poll("p25s.f0=433500000,456,655,1234567,1,0"), T0);
-        var path = SearchLogBook.Append(dir, rows, T0);
-        SearchLogBook.Append(dir, rows, T0);
+        b.Add(Poll("p25s.f0=433500000,456,655,1234567,1,0"), T0);
+        var path = SearchLogBook.Write(dir, b.Groups, T0);
+        b.Add(Poll("p25s.f0=433500000,456,655,7654321,2,0"), T0.AddSeconds(5));
+        Assert.Equal(path, SearchLogBook.Write(dir, b.Groups, T0));
         var lines = File.ReadAllLines(path);
         Assert.Equal(Path.Combine(dir, "search-20261121.csv"), path);
         Assert.Equal(SearchLogBook.CsvHeader, lines[0]);
-        Assert.Equal(3, lines.Length);
-        Assert.Equal("2026-11-21 22:00:00,P25,433.5000,$1C8/456,,655,1234567,0,1,", lines[1]);
+        Assert.Equal(2, lines.Length);	// one line, not one per call
+        Assert.Equal("2026-11-21 22:00:00,2026-11-21 22:00:05,P25,433.5000,$1C8/456,,655,7654321,,0,2", lines[1]);
+        Assert.False(File.Exists(path + ".tmp"));
     }
 
     [Fact]
@@ -103,26 +115,27 @@ public sealed class SearchLogTests : IDisposable
     }
 
     [Fact]
-    public void AllDigitalCallsAreTheirOwnRows()
+    public void AllDigitalFindsJoinTheSameLines()
     {
         var b = new SearchLogBook();
-        // the P25 search's list and the all digital search's P25 find on the same frequency: two rows, kept apart
-        var r = b.Add(["p25s.on=0", "p25s.f0=433500000,456,655,1234567,2,30",
-                       "alls.on=1", "alls.mode=P25", "alls.at=433512500", "alls.n=2",
-                       "alls.f0=433500000,P25,456,0,0,1,0,655,1234567,1,0,",
-                       "alls.f1=439100000,YSF,0,0,0,0,0,0,0,1,4,TA2DOU"], T0);
-        Assert.Equal(3, r.Count);
+        // the P25 search's list and the all digital search's P25 find of the same frequency, NAC and group: one line
+        Assert.True(b.Add(["p25s.on=0", "p25s.f0=433500000,456,655,1234567,2,30",
+                           "alls.on=1", "alls.mode=P25", "alls.at=433512500", "alls.n=2",
+                           "alls.f0=433500000,P25,456,0,0,1,0,655,1234567,1,0,",
+                           "alls.f1=439100000,YSF,0,0,0,0,0,0,0,1,4,TA2DOU"], T0));
+        Assert.Equal(2, b.Groups.Count);
         Assert.True(b.AllOn);
         Assert.False(b.P25On);
         Assert.Equal(433512500L, b.AllAtHz);
-        Assert.Equal("TA2DOU", r.Single(c => c.Mode == "YSF").Caller);
-        // the same again: nothing new; another YSF caller (same counter): a new row
-        Assert.Empty(b.Add(["alls.f0=433500000,P25,456,0,0,1,0,655,1234567,1,1,", "alls.f1=439100000,YSF,0,0,0,0,0,0,0,1,5,TA2DOU",
+        Assert.Equal(2, b.Groups.Single(g => g.Mode == "P25").Calls);
+        Assert.Equal("TA2DOU", b.Groups.Single(g => g.Mode == "YSF").Caller);
+        // the same again: nothing; another YSF caller: the same line, the caller updated
+        Assert.False(b.Add(["alls.f0=433500000,P25,456,0,0,1,0,655,1234567,1,1,", "alls.f1=439100000,YSF,0,0,0,0,0,0,0,1,5,TA2DOU",
                             "p25s.f0=433500000,456,655,1234567,2,31"], T0.AddSeconds(1)));
-        r = b.Add(["alls.f0=439100000,YSF,0,0,0,0,0,0,0,1,0,YM2KDZ"], T0.AddSeconds(2));
-        Assert.Single(r);
-        Assert.Equal("YM2KDZ", r[0].Caller);
-        var path = SearchLogBook.Append(dir, r, T0);
-        Assert.EndsWith(",YSF,439.1000,DG0,,0,0,0,1,YM2KDZ", File.ReadAllLines(path)[1]);
+        Assert.True(b.Add(["alls.f0=439100000,YSF,0,0,0,0,0,0,0,2,0,YM2KDZ"], T0.AddSeconds(2)));
+        var y = b.Groups.Single(g => g.Mode == "YSF");
+        Assert.Equal(("YM2KDZ", 2), (y.Caller, y.Calls));
+        var path = SearchLogBook.Write(dir, b.Groups, T0);
+        Assert.Contains(File.ReadAllLines(path), l => l.EndsWith(",YSF,439.1000,DG0,,0,0,YM2KDZ,0,2", StringComparison.Ordinal));
     }
 }

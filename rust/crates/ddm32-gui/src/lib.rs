@@ -56,6 +56,7 @@ pub struct State {
     pub slog_in_poll: bool,
     pub slog_book: ddm32_core::radio::searchlog::SearchLogBook,
     pub slog_file: Option<std::path::PathBuf>,
+    pub slog_day: Option<ddm32_core::radio::searchlog::Stamp>,
 }
 
 thread_local! {
@@ -170,6 +171,7 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
             slog_in_poll: false,
             slog_book: Default::default(),
             slog_file: None,
+            slog_day: None,
         })
     });
     wire(ui);

@@ -27,6 +27,7 @@ export global Radio {
     in property <string> slog-status;
     in property <string> slog-searches;
     in property <[TableRow]> slog-rows;
+    in-out property <bool> slog-confirm;
     // channels
     in property <string> channels-source;
     in property <[string]> table-columns;
@@ -306,8 +307,8 @@ export component ChannelsPage inherits Screen {
 
 export component SearchLogPage inherits Screen {
     // the search log: the radio's P25 / DMR search finds read every second (radio_pages.rs slog_*), newest first
-    property <[float]> widths: [0.16, 0.07, 0.12, 0.09, 0.12, 0.12, 0.2, 0.08];
-    property <length> cols-w: self.width - 2 * Theme.pad - 16px - 16px - 8px * 7 - 14px;
+    property <[float]> widths: [0.13, 0.13, 0.06, 0.1, 0.12, 0.1, 0.1, 0.18, 0.08];
+    property <length> cols-w: self.width - 2 * Theme.pad - 16px - 16px - 8px * 8 - 14px;
     heading: Tr.t(Tr.lang, "home_slog");
     Muted { text: Tr.t(Tr.lang, "slog_intro"); }
     HorizontalLayout {
@@ -327,11 +328,23 @@ export component SearchLogPage inherits Screen {
             }
         }
         Button { text: Tr.t(Tr.lang, "b_slog_folder"); horizontal-stretch: 0; clicked => { Radio.slog-folder(); } }
-        Button {
+        if !Radio.slog-confirm : Button {
             text: Tr.t(Tr.lang, "b_slog_clear");
             horizontal-stretch: 0;
-            enabled: !Radio.slog-running && Radio.slog-rows.length > 0;
+            enabled: Radio.slog-rows.length > 0;
+            clicked => { Radio.slog-confirm = true; }
+        }
+        // "Kayıtları temizle" asks once: the table and today's CSV file go
+        if Radio.slog-confirm : Button {
+            text: Tr.t(Tr.lang, "b_slog_clear_yes");
+            kind: "danger";
+            horizontal-stretch: 0;
             clicked => { Radio.slog-clear(); }
+        }
+        if Radio.slog-confirm : Button {
+            text: Tr.t(Tr.lang, "b_cancel_short");
+            horizontal-stretch: 0;
+            clicked => { Radio.slog-confirm = false; }
         }
         Rectangle { horizontal-stretch: 1; }
     }
@@ -347,7 +360,7 @@ export component SearchLogPage inherits Screen {
                 padding-left: 8px;
                 padding-right: 8px;
                 height: 32px;
-                for c[i] in [Tr.t(Tr.lang, "slog_time"), Tr.t(Tr.lang, "slog_mode"), "MHz", "NAC / CC", Tr.t(Tr.lang, "slog_slot"),
+                for c[i] in [Tr.t(Tr.lang, "slog_first"), Tr.t(Tr.lang, "slog_time"), Tr.t(Tr.lang, "slog_mode"), "MHz", "NAC / CC", Tr.t(Tr.lang, "slog_slot"),
                         Tr.t(Tr.lang, "slog_group"), Tr.t(Tr.lang, "slog_source"), Tr.t(Tr.lang, "slog_calls")] : Text {
                     text: c;
                     color: Theme.text-muted;

@@ -48,40 +48,52 @@ fn fields_are_parsed() {
 }
 
 #[test]
-fn only_new_calls_become_rows() {
+fn one_line_per_frequency_code_and_group_with_a_counter() {
     let mut b = SearchLogBook::new();
-    let r = b.add(&poll("p25s.f0=433500000,456,655,1234567,1,30", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,5"), T0);
-    assert_eq!(2, r.len());
-    assert_eq!("P25", r[0].mode);
+    assert!(b.add(&poll("p25s.f0=433500000,456,655,1234567,1,30", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,5"), T0));
+    let g = b.groups();
+    assert_eq!(2, g.len());
+    assert_eq!("DMR", g[0].mode); // heard last comes first
+    assert_eq!((1, 2), (g[1].calls(), g[0].calls()));
     assert_eq!(Some(true), b.p25_on);
     assert_eq!(Some(433512500), b.p25_at_hz);
     let same = poll("p25s.f0=433500000,456,655,1234567,1,31", "dmrs.f0=438612500,1,1,1,1,0,2620,2620123,2,6");
-    assert!(b.add(&same, Stamp(T0.0 + 1)).is_empty());
-    let r = b.add(
-        &poll("p25s.f0=433500000,456,655,7654321,2,0", "dmrs.f0=438612500,1,1,1,1,0,2620,2620999,2,0"),
-        Stamp(T0.0 + 2),
-    );
-    assert_eq!(2, r.len());
-    assert_eq!(4, b.calls().len());
+    assert!(!b.add(&same, Stamp(T0.0 + 1)));
+    // a new call on the same frequency, NAC and group: the same line, counted, the last source kept
+    assert!(b.add(&poll("p25s.f0=433500000,456,655,7654321,2,0", ""), Stamp(T0.0 + 2)));
+    let p = b.groups().into_iter().find(|g| g.mode == "P25").unwrap();
+    assert_eq!((2, 7654321, Stamp(T0.0 - 30), Stamp(T0.0 + 2)), (p.calls(), p.source, p.first, p.last));
+    // another talkgroup on that frequency: its own line
+    assert!(b.add(&poll("p25s.f0=433500000,456,101,1111,3,0", ""), Stamp(T0.0 + 3)));
+    assert_eq!(3, b.groups().len());
     assert_eq!(2, b.frequencies());
-    assert!(b.add(&poll("p25s.f0=433500000,456,655,7654321,1,0", ""), Stamp(T0.0 + 3)).is_empty());
-    assert!(b.add::<String>(&[], Stamp(T0.0 + 4)).is_empty());
+    // the radio lists the frequency twice (the owner's screen: a new line every second before): counted once
+    for i in 0..5 {
+        let twice = ["p25s.f0=433500000,456,101,1111,3,0", "p25s.f1=433500000,456,101,1111,2,4"];
+        assert!(!b.add(&twice, Stamp(T0.0 + 4 + i)));
+    }
+    // the radio restarted (counter back to 1): what was counted stays
+    assert!(b.add(&["p25s.f0=433500000,456,101,2222,1,0"], Stamp(T0.0 + 10)));
+    assert_eq!(4, b.groups().into_iter().find(|g| g.group == 101).unwrap().calls());
+    assert_eq!(2 + 2 + 4, b.total_calls());
+    assert!(!b.add::<String>(&[], Stamp(T0.0 + 11)));
     assert_eq!(None, b.dmr_on);
 }
 
 #[test]
-fn the_days_csv_gets_one_header() {
+fn the_days_csv_is_the_log_itself() {
     let dir = tempfile::tempdir().unwrap();
     let mut b = SearchLogBook::new();
-    let rows = b.add(&poll("p25s.f0=433500000,456,655,1234567,1,0", ""), T0);
-    let path = searchlog::append(dir.path(), &rows, T0).unwrap();
-    searchlog::append(dir.path(), &rows, T0).unwrap();
+    b.add(&poll("p25s.f0=433500000,456,655,1234567,1,0", ""), T0);
+    let path = searchlog::write(dir.path(), &b.groups(), T0).unwrap();
+    b.add(&poll("p25s.f0=433500000,456,655,7654321,2,0", ""), Stamp(T0.0 + 5));
+    assert_eq!(path, searchlog::write(dir.path(), &b.groups(), T0).unwrap());
     let text = std::fs::read_to_string(&path).unwrap();
     let lines: Vec<&str> = text.lines().collect();
     assert_eq!(dir.path().join("search-20261121.csv"), path);
     assert_eq!(CSV_HEADER, lines[0]);
-    assert_eq!(3, lines.len());
-    assert_eq!("2026-11-21 22:00:00,P25,433.5000,$1C8/456,,655,1234567,0,1,", lines[1]);
+    assert_eq!(2, lines.len()); // one line, not one per call
+    assert_eq!("2026-11-21 22:00:00,2026-11-21 22:00:05,P25,433.5000,$1C8/456,,655,7654321,,0,2", lines[1]);
 }
 
 #[test]
@@ -116,7 +128,7 @@ fn all_digital_fields_are_parsed() {
 }
 
 #[test]
-fn all_digital_calls_are_their_own_rows() {
+fn all_digital_finds_join_the_same_lines() {
     let mut b = SearchLogBook::new();
     let first = [
         "p25s.on=0",
@@ -128,23 +140,25 @@ fn all_digital_calls_are_their_own_rows() {
         "alls.f0=433500000,P25,456,0,0,1,0,655,1234567,1,0,",
         "alls.f1=439100000,YSF,0,0,0,0,0,0,0,1,4,TA2DOU",
     ];
-    let r = b.add(&first, T0);
-    assert_eq!(3, r.len());
+    assert!(b.add(&first, T0));
+    let g = b.groups();
+    assert_eq!(2, g.len());
     assert_eq!(Some(true), b.all_on);
     assert_eq!(Some(false), b.p25_on);
     assert_eq!(Some(433512500), b.all_at_hz);
-    assert_eq!("TA2DOU", r.iter().find(|c| c.mode == "YSF").unwrap().caller);
+    assert_eq!(2, g.iter().find(|g| g.mode == "P25").unwrap().calls());
+    assert_eq!("TA2DOU", g.iter().find(|g| g.mode == "YSF").unwrap().caller);
     let same = [
         "alls.f0=433500000,P25,456,0,0,1,0,655,1234567,1,1,",
         "alls.f1=439100000,YSF,0,0,0,0,0,0,0,1,5,TA2DOU",
         "p25s.f0=433500000,456,655,1234567,2,31",
     ];
-    assert!(b.add(&same, Stamp(T0.0 + 1)).is_empty());
-    let r = b.add(&["alls.f0=439100000,YSF,0,0,0,0,0,0,0,1,0,YM2KDZ"], Stamp(T0.0 + 2));
-    assert_eq!(1, r.len());
-    assert_eq!("YM2KDZ", r[0].caller);
+    assert!(!b.add(&same, Stamp(T0.0 + 1)));
+    assert!(b.add(&["alls.f0=439100000,YSF,0,0,0,0,0,0,0,2,0,YM2KDZ"], Stamp(T0.0 + 2)));
+    let y = b.groups().into_iter().find(|g| g.mode == "YSF").unwrap();
+    assert_eq!(("YM2KDZ", 2), (y.caller.as_str(), y.calls()));
     let dir = tempfile::tempdir().unwrap();
-    let path = searchlog::append(dir.path(), &r, T0).unwrap();
+    let path = searchlog::write(dir.path(), &b.groups(), T0).unwrap();
     let text = std::fs::read_to_string(&path).unwrap();
-    assert!(text.lines().nth(1).unwrap().ends_with(",YSF,439.1000,DG0,,0,0,0,1,YM2KDZ"));
+    assert!(text.lines().any(|l| l.ends_with(",YSF,439.1000,DG0,,0,0,YM2KDZ,0,2")));
 }

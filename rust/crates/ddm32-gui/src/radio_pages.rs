@@ -9,7 +9,7 @@ use ddm32_core::radio::codec::Codec;
 use ddm32_core::radio::debug::{health_tool, live_tool, searchlog_tool};
 use ddm32_core::radio::live::{self, HealthSummary, LiveSummary, Verdict};
 use ddm32_core::radio::port::{RadioAccess, RawSerial, SystemClock};
-use ddm32_core::radio::searchlog::{self, SearchCall, SearchLogBook};
+use ddm32_core::radio::searchlog::{self, SearchGroup, SearchLogBook};
 use ddm32_core::radio::tools::ToolContext;
 use ddm32_core::radio::{ToolError, ToolResult};
 use ddm32_core::storage::backups;
@@ -61,8 +61,19 @@ pub fn wire(ui: &AppWindow) {
     });
     let w = ui.as_weak();
     r.on_slog_clear(move || {
-        with(|s| s.slog_book = SearchLogBook::new());
-        show_slog(&w.unwrap(), None);
+        // "Kayıtları temizle" after its confirmation: the table and the day's CSV file are emptied; a running log goes
+        // on from nothing
+        let file = with(|s| {
+            s.slog_book = SearchLogBook::new();
+            s.slog_day = None;
+            s.slog_file.take()
+        });
+        if let Some(f) = file {
+            let _ = std::fs::remove_file(f);
+        }
+        let ui = w.unwrap();
+        ui.global::<Radio>().set_slog_confirm(false);
+        show_slog(&ui, None);
     });
     let w = ui.as_weak();
     r.on_choose_table(move |t| {
@@ -491,11 +502,16 @@ pub fn demo(ui: &AppWindow, lang: &str) {
 
 // ---- search log ---------------------------------------------------------------------------------------------------------
 
-/// A table row (newest first on screen).
-pub fn slog_cells(c: &SearchCall) -> Vec<String> {
-    let t = searchlog::format_time(c.time);
+fn short_time(t: searchlog::Stamp) -> String {
+    let t = searchlog::format_time(t);
+    format!("{}.{} {}", &t[8..10], &t[5..7], &t[11..])
+}
+
+/// A table row: one mode + frequency + code + group, the most recently heard first on screen.
+pub fn slog_cells(c: &SearchGroup) -> Vec<String> {
     vec![
-        format!("{}.{} {}", &t[8..10], &t[5..7], &t[11..]),
+        short_time(c.first),
+        short_time(c.last),
         c.mode.to_string(),
         searchlog::mhz(c.hz),
         c.code.clone(),
@@ -508,7 +524,7 @@ pub fn slog_cells(c: &SearchCall) -> Vec<String> {
         } else {
             format!("{}{}", c.source, if c.encrypted { " (enc)" } else { "" })
         },
-        c.calls.to_string(),
+        c.calls().to_string(),
     ]
 }
 
@@ -525,7 +541,7 @@ pub fn slog_searches(lang: &str, book: &SearchLogBook) -> String {
         one("P25", book.p25_on, book.p25_at_hz),
         one("DMR", book.dmr_on, book.dmr_at_hz),
         one(&i18n::t(lang, "slog_all"), book.all_on, book.all_at_hz),
-        f2("slog_count", &book.calls().len().to_string(), &book.frequencies().to_string())
+        f2("slog_count", &book.total_calls().to_string(), &book.frequencies().to_string())
     )
 }
 
@@ -534,9 +550,8 @@ fn show_slog(ui: &AppWindow, status: Option<String>) {
     let (rows, searches) = with(|s| {
         let rows: Vec<TableRow> = s
             .slog_book
-            .calls()
+            .groups()
             .iter()
-            .rev()
             .map(|c| TableRow {
                 cells: ModelRc::new(VecModel::from(
                     slog_cells(c).into_iter().map(SharedString::from).collect::<Vec<_>>(),
@@ -572,9 +587,13 @@ fn slog_line(ui: &AppWindow, line: String) {
     });
     let Some(poll) = done else { return };
     let now = searchlog::local_stamp();
-    let (fresh, logs) = with(|s| (s.slog_book.add(&poll, now), s.paths.logs()));
-    if !fresh.is_empty() {
-        match searchlog::append(&logs, &fresh, now) {
+    let (changed, logs, lines, day) = with(|s| {
+        let changed = s.slog_book.add(&poll, now);
+        let day = *s.slog_day.get_or_insert(now);
+        (changed, s.paths.logs(), s.slog_book.groups(), day)
+    });
+    if changed {
+        match searchlog::write(&logs, &lines, day) {
             Ok(p) => with(|s| s.slog_file = Some(p)),
             Err(e) => message(ui, &trf("msg_failed", &e.to_string()), "danger"),
         }
