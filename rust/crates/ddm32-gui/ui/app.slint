@@ -471,6 +471,8 @@ component FirstStart inherits VerticalLayout {
 
 export component AppWindow inherits Window {
     title: "DDM32 Plus";
+    // the title bar and taskbar icon (the program's logo, as the setup's shortcuts)
+    icon: @image-url("../../../packaging/art/ddm32plus.png");
     preferred-width: 900px;
     preferred-height: 720px;
     min-width: 640px;

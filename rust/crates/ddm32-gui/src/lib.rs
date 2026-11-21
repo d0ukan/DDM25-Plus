@@ -335,16 +335,25 @@ fn navigate(ui: &AppWindow, page: i32) {
 
 /// The versions the chosen channel offers (Latest: stable only; Beta: stable and beta; Test: all), never legacy.
 pub fn offered(cat: &Catalog, channel: i32) -> Vec<catalog::FirmwareVersion> {
-    cat.firmware
-        .iter()
-        .filter(|f| !f.is_legacy())
-        .filter(|f| match catalog::label_for(f, &cat.firmware) {
-            ReleaseLabel::TestAlpha => channel >= 2,
-            ReleaseLabel::Beta => channel >= 1,
-            _ => true,
-        })
-        .cloned()
-        .collect()
+    let pick = |ch: i32| -> Vec<catalog::FirmwareVersion> {
+        cat.firmware
+            .iter()
+            .filter(|f| !f.is_legacy())
+            .filter(|f| match catalog::label_for(f, &cat.firmware) {
+                ReleaseLabel::TestAlpha => ch >= 2,
+                ReleaseLabel::Beta => ch >= 1,
+                _ => true,
+            })
+            .cloned()
+            .collect()
+    };
+    let list = pick(channel);
+    // No stable release yet (every release is a beta): offer the betas, as the C# program does, instead of an empty
+    // list that reads like a network error. Test / alpha builds still need their own channel.
+    if list.is_empty() && channel < 1 {
+        return pick(1);
+    }
+    list
 }
 
 fn refresh(ui: &AppWindow) {

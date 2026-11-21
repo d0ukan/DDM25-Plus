@@ -46,6 +46,17 @@ fn home_names_the_full_version_and_its_label() {
 }
 
 #[test]
+fn only_betas_published_still_lists_them_on_the_default_channel() {
+    // the owner's first run of 3.0.0-alpha.1: every release a beta, channel "Latest" -> an empty list that read like
+    // a network error
+    let cat = catalog(&[("1.0.0-beta.6", "beta"), ("1.0.0-beta.4", "beta"), ("1.1.0-alpha.1", "beta")]);
+    let names = |ch: i32| offered(&cat, ch).iter().map(|f| f.version().to_string()).collect::<Vec<_>>();
+    assert_eq!(vec!["1.0.0-beta.6", "1.0.0-beta.4"], names(0));
+    assert_eq!(names(1), names(0));
+    assert_eq!(vec!["1.1.0-alpha.1", "1.0.0-beta.6", "1.0.0-beta.4"], names(2));
+}
+
+#[test]
 fn every_list_is_in_the_csharp_order() {
     let cat = catalog(&[
         ("1.0.0", "stable"),

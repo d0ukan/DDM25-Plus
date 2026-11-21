@@ -18,7 +18,7 @@
 ; Uninstall: Settings > Apps (per-user entry, HKCU).
 
 #define AppName "DDM32 Plus"
-#define AppVersion "3.0.0-alpha.1"
+#define AppVersion "3.0.0-alpha.2"
 #define AppNumericVersion "3.0.0.0"
 #define AppExe "DDM32Plus.exe"
 #define AppPublisher "d0ukan · TA2DOU"
@@ -42,7 +42,7 @@ DisableDirPage=auto
 DisableProgramGroupPage=yes
 DefaultGroupName={#AppName}
 UninstallDisplayName={#AppName}
-UninstallDisplayIcon={app}\{#AppExe}
+UninstallDisplayIcon={app}\ddm32plus.ico
 SetupIconFile=..\..\..\win\src\DDM32Plus\Assets\ddm32plus.ico
 OutputDir=..\..\dist
 OutputBaseFilename=DDM32Plus-Setup-{#AppVersion}
@@ -75,10 +75,12 @@ Name: "{app}\backups"; Flags: uninsneveruninstall
 
 [Files]
 Source: "..\..\target\release\ddm32-gui.exe"; DestDir: "{app}"; DestName: "{#AppExe}"; Flags: ignoreversion
+; the shortcuts' and the Apps list's icon (the exe itself carries no icon resource; the window sets its own)
+Source: "..\..\..\win\src\DDM32Plus\Assets\ddm32plus.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\ddm32plus.ico"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\ddm32plus.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
