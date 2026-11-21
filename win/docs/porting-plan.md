@@ -3,7 +3,7 @@
 This page says how each radio tool of the Python program (`pc/radiotools/`) is ported, which guards it must keep, and
 how the C# port is proven equal to the Python tool **before** it is ever pointed at a radio.
 
-## Status (2.0.0-beta.1, 2026-11-21)
+## Status (2.0.0-beta.2, 2026-11-21)
 
 | Tool | C# (`src/DDM32Plus.Core/Radio/`) | Verified against Python |
 |---|---|---|
@@ -14,7 +14,8 @@ how the C# port is proven equal to the Python tool **before** it is ever pointed
 | the guards' frame rules | `ReadOnlyPort`, `InstallPort` | layer 3: 89 frames + 5 step sequences, same verdicts and messages |
 | quick update and install without backup (C# only, owner's decision 2026-11-20) | `FastInstallTool` | the C# FakeRadio (`FakeRadio.cs`), itself checked to draw the Python tools' exact bytes on 11 recorded runs; 17 tests of the new paths and guard rules |
 | data packs (tools/datapack.py; the CPS write of docs/plus.md "User data packs") | `DataPacks/`, `CpsPack.cs` | the builder byte for byte on synthetic inputs (`make_datapack_fixtures.py`, `DataPackTests.cs`); the CPS write on a fake radio as `cps_openfw.c` behaves (`CpsPackTests.cs`); not yet run on the radio |
-| health / live panel (plus_live) | not yet | |
+| plus_txdiag --health, plus_live (the debug link of the pinned `rfoundry_debug.py`, `DebugLinkPort`) | `DebugLink.cs` (`DebugReaders`), `LiveData.cs` | 11 recorded runs over the pinned DebugLink (`make_live_fixtures.py`): same frames, same printed text, same parsed summaries; guard refusals; stop by cancel |
+| the codeplug viewer (pc/ddm32_app/codeplug.py) | `Codeplug/Codeplug.cs` | 5 synthetic images (`make_codeplug_fixtures.py`): every row, zone, contact, list and CSV equal; the NAC in the firmware's decimal-first form |
 
 Layer 2 means: `tests/DDM32Plus.Core.Tests/Fixtures/make_radio_fixtures.py` runs the Python tool against the pinned
 monitor's FakeRadio under a virtual clock and records every port event; the C# tool replays it and must write the same
@@ -25,6 +26,35 @@ equal. The recording is made on Windows (Python's text files have CRLF there).
 The serial port is behind `RadioAccess` (`Ports.cs`). Since 2.0.0-beta.1 (owner's decision 2026-11-21: installs
 are done with this program) the release build has radio access and writes on; `-p:RadioAccess=false` builds a program
 that opens no port. The developer build (`-p:Developer=true`) made the first real backup and two real installs.
+
+## Health, live panel and channels (2.0.0-beta.2; for the Rust port)
+
+What the C# program does, so another port can do the same and be held to the same fixtures:
+
+- **Debug link** (`DebugLink.cs`, from the pinned `tools/rfoundry_debug.py`): frame `A5 5A cmd seq len16 payload
+  crc16` (CRC-16/CCITT-FALSE over cmd..payload, little endian); the answer is `cmd|0x80` with the same seq and the
+  status as its first byte, or `0xFF` (error, status first). Reading: skip to `A5 5A`, drop the SOF on a length over
+  1024 or a bad CRC, skip answers with another seq; 1 s per request, no retry of a busy answer (`busy_wait=0`). Error
+  texts exactly as Python (`no answer to command 0x09 within 1 s on COM9 (firmware without the debug link? another
+  program has the port?)`, `command 0x21: unavailable`).
+- **Health** = `plus_txdiag --health`: views 20, 21, 23 (tasks, crash, reset), each printed as `--- view NAME (N)
+  status 0`, `uptime_ms=U32`, then the view's text (`ascii`, `replace`, right-stripped). An error ends the run.
+- **Live** = `plus_live.run`: crash and reset once, then per poll `=== poll N`, views core (0) and tasks (20), the
+  native status 0x21/0 (38 u32 fields, plus `state_name` / `reason_name`), the scan counters 0x21/12 (13 u32),
+  `=== end N`; a query error is printed (`status -1` for no answer, `error=DebugLinkError: ...`) and the poll goes on;
+  three polls with no answer at all end the run (exit 3). The program's version also ends on the page's stop.
+- **Guard**: a whitelist of (command, one-byte payload) checked on the bytes about to be written; health
+  `{09/14, 09/15, 09/17}`, live adds `{09/00, 21/00, 21/0C}`. Fixed 115200 baud.
+- **Parsers** (`LiveData.cs`): `parse_health`, `health_summary` (tasks sorted by free bytes), the verdict
+  (red / amber at heap_min_free < 1024 or a stack < 200 / green), `parse_blocks`, `live_summary`, the S-meter (S9 =
+  -93 dBm, 6 dB a unit, banker's rounding), MHz with a decimal comma in Turkish, h:mm:ss.
+- **Codeplug** (`Codeplug.cs`): the layout in `pc/ddm32_app/codeplug.py`'s module text; the row texts come from a
+  word table per language (`CodeplugText.Tr` is the Python viewer's Turkish, `.En` new), decoded again on a language
+  change. The only intended difference to Python: `nac_text` is `"{dec} (${hex:03X})"` and Any is `"{Any} 3966
+  ($F7E)"` (the firmware's CONFIG_NAC_DEC). The CSV is `csv.writer` (minimal quoting, `\n`), saved UTF-8 with a BOM.
+- **Fixtures** to reuse as they are: `Fixtures/live-results.json` (frames, answers, printed text, summaries) and
+  `Fixtures/codeplug-results.json.gz` (sparse 16 MiB images: `[address, base64]` runs over 0xFF, and the expected
+  rows and CSV). Make them again with the two scripts when the Python side changes.
 
 ## Rules that do not change
 
@@ -50,8 +80,8 @@ that opens no port. The developer build (`-p:Developer=true`) made the first rea
 3. **install** (`install_plus.py` with `install_firstboot.InstallPort`, `prepare_unit_image.py`): plan, then writes.
 4. **restore** (`install_plus.py --restore`, `install_firstboot.py --restore-stock --use-saved-backup`).
 
-The health and live panels (`plus_live.py`) come after these, with the same transport and their own read-only
-allowlist.
+The health and live panels (`plus_live.py`) came after these (2.0.0-beta.2), with their own transport (the
+firmware's debug link) and their own read-only allowlist.
 
 ## How a port is verified
 

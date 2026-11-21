@@ -1,11 +1,11 @@
 # DDM32 Plus programı: kullanım kılavuzu
 
 Baofeng DM-32UV telsize DDM32 Plus yazılımını kurmak, güncellemek, eski hâline döndürmek ve veri paketlerini yüklemek
-için Windows programı (sürüm 2.0.0-beta.1). Python veya başka bir şey kurmanız gerekmez.
+için Windows programı (sürüm 2.0.0-beta.2). Python veya başka bir şey kurmanız gerekmez.
 
 ## 1. Kurulum
 
-1. GitHub sürüm sayfasından `DDM32Plus-Setup-2.0.0-beta.1.exe` dosyasını indirin.
+1. GitHub sürüm sayfasından `DDM32Plus-Setup-2.0.0-beta.2.exe` dosyasını indirin.
 2. Çalıştırın. Program yalnızca sizin Windows kullanıcınız için kurulur, yönetici izni istemez
    (`%LOCALAPPDATA%\Programs\DDM32 Plus`). Başlat menüsüne ve isterseniz masaüstüne kısayol koyar.
 3. **"Windows bilgisayarınızı korudu" uyarısı (SmartScreen):** program henüz kod imzalı değil. **Ek bilgi**'ye,
@@ -63,11 +63,47 @@ yenisi gerekir. Paketler veri yongasının yalnızca ayrılmış bölgesine (0xE
 İndirdiğiniz listeler ve oluşan paketler programın `paketler` klasöründe durur. Bu veriler sizin kullanımınız
 içindir; başkasına dağıtmayın.
 
-## 6. Programın klasörü
+## 6. Telsizin durumu
+
+**Telsizin durumu** sekmesi önce kabloyu ve CH340 sürücüsünü denetler (port açmaz). Telsiz **açık**, DDM32 Plus
+çalışırken ve kablo takılıyken **Durumu oku**'ya basın: telsizin belleği, görevlerin yığınları, hata (çökme) kaydı ve
+son açılış nedeni okunur. Yeşil ışık "Her şey yolunda", sarı "Dikkat: bellek az", kırmızı "Hata kaydı var" demektir;
+kırmızıda "Ayrıntılar"daki çıktıyı bize gönderin. **her 30 sn oku** kutusu açıkken sayfa kendisi okur. Sayfa ayrıca
+bu programın en yeni doğrulanmış yedeğini ve içindeki yazılımı gösterir (yalnızca dosyadan). Bu sayfa telsize hiçbir
+şey yazmaz; yalnızca okuma komutları gönderilebilir, diğer her komut gönderilmeden reddedilir.
+
+## 7. Canlı panel
+
+**Canlı panel** telsizi birkaç saniyede bir okur: sinyal gücü (S-metre ve son okumaların çizgisi), durum, mod, kanal
+ve bölge, frekans, P25 alıcısı, bellek, son açılış, hata kaydı ve P25 bölge tarama sayaçları. Telsiz açık ve kablo
+takılıyken **Bağlan**'a basın; **Yenileme** ile 1-5 saniye seçilir (önce Durdur). **Durdur** okumayı bitirir ve portu
+kapatır; program kapanırken de durur. Telsiz üç okumada hiç yanıt vermezse panel kendisi durur. Panel yalnızca okur:
+ayar değiştirmez, yayın yapmaz. Panel açıkken başka bir sayfanın telsiz düğmesi beklemede kalır (kablo aynı anda tek
+işe kullanılır).
+
+## 8. Kanallarım
+
+**Kanallarım** telsizin kanallarını yedekten gösterir; telsize bağlanmaz, hiçbir şey yazmaz. En yeni doğrulanmış
+yedek kendiliğinden açılır; **Başka bir yedek aç...** ile başka bir yedek klasörü seçilir.
+
+- **Kanallar** sekmesi: numara, ad, frekans, mod (FM, DMR, P25, NXDN, dPMR, YSF) ve kısa ayar (ton, CC/TS, NAC/TG,
+  RAN ...). P25 NAC telsizdeki gibi önce ondalık yazılır: `659 ($293)`; herhangi NAC `Herhangi 3966 ($F7E)`.
+  **Tüm sütunlar** kaydın bütün alanlarını gösterir. Sütun başlığına tıklayınca sıralanır.
+- **Bölgeler** (en çok 68 bölge, bölge başına 80 kanal), **Kişiler**, **RX grup listeleri** sekmeleri. Bir bölgeye
+  çift tıklayınca Kanallar sekmesi yalnızca o bölgenin kanallarını, bölgedeki sırayla gösterir (ya da **Bölge**
+  listesinden seçin).
+- **Ara:** yazdığınız metni her sütunda arar (ad, frekans, `659` ya da `$293` ...). **Mod** listesi kanalları moda
+  göre süzer.
+- **Gösterileni CSV olarak kaydet...** o sekmede gösterilen satırları bütün sütunlarıyla bir CSV dosyasına yazar
+  (Excel açar).
+
+Kanalları değiştirmek için telsizin kendi menülerini ya da CPS'i kullanın.
+
+## 9. Programın klasörü
 
 | Klasör | Ne var |
 |---|---|
-| `yedekler` | telsizin yedekleri ve kayıtlar: kalibrasyon ve kanallarınız içindedir, **silmeyin, paylaşmayın** |
+| `yedekler` | telsizin yedekleri ve kayıtlar (durum okumaları `health-*.log`): kalibrasyon ve kanallarınız içindedir, **silmeyin, paylaşmayın** |
 | `surumler` | indirilen yazılım sürümleri |
 | `paketler` | veri paketi dosyaları |
 | `guncelleme` | programın kendi güncellemesi |
@@ -75,11 +111,14 @@ içindir; başkasına dağıtmayın.
 Python programının eski yedekleri (`%LOCALAPPDATA%\DDM32Plus`, `DDM25Plus`) bulunur ve gösterilir; taşınmaz,
 silinmez.
 
-## 7. Sorun olursa
+## 10. Sorun olursa
 
 - **Kablo bulunamadı:** kabloyu başka bir USB yuvasına takın, "Telsizin durumu" sayfasındaki yönergeyi izleyin.
 - **"Telsizi şimdi kapatıp açın" çıktı ama bir şey olmadı:** telsizi kapatıp yeniden açın; süre dolarsa adımı
   yeniden başlatın. Bu yalnızca okumadır, telsize bir şey yazılmamıştır.
 - **Yazma yarıda kaldı:** program tekrar denemez. **Geri dön** sekmesinden son yedeğinizi geri yükleyin.
+- **Durum okunamadı / Canlı panel "Bağlantı kesildi":** telsiz açık mı, DDM32 Plus çalışıyor mu, kablo takılı mı?
+  Başka bir sayfada telsiz işlemi sürüyorsa bitmesini bekleyin.
+- **Kanallarım "Yedek bulunamadı":** önce "Telsizi güncelle" sayfasında bir yedek alın ya da bir yedek klasörü seçin.
 - Her işlemin ayrıntılı kaydı sayfanın "Ayrıntılar" bölümünde ve `yedekler` / `paketler` klasöründeki `.log`
   dosyalarındadır.

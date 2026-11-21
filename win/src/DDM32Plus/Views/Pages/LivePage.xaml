@@ -1,28 +1,120 @@
 <UserControl x:Class="DDM32Plus.Views.Pages.LivePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:l="clr-namespace:DDM32Plus.Localization">
-    <!-- live_tab.py: signal, status and the P25 zone scan counters, read only (next stage) -->
+             xmlns:l="clr-namespace:DDM32Plus.Localization"
+             xmlns:p="clr-namespace:DDM32Plus.Views.Pages">
+    <!-- live_tab.py: signal, status and the P25 zone scan counters, read every 1-5 s over the debug link
+         (DebugReaders.Live behind its read-only DebugLinkPort) from "Bağlan" until "Durdur" -->
+    <UserControl.Resources>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,3,10,2" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="Value" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,2" />
+            <Setter Property="FontSize" Value="{StaticResource Size3}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Text" Value="-" />
+        </Style>
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Live}" />
             <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Live_Text}" />
-            <UniformGrid Columns="2" Margin="-4,4">
-                <Button Style="{StaticResource BigButton}" Tag="&#xE768;" Margin="4" Content="{l:Tr Live_Connect}" IsEnabled="False" />
-                <Button Style="{StaticResource BigButton}" Tag="&#xE71A;" Margin="4" Content="{l:Tr Live_Stop}" IsEnabled="False" />
-            </UniformGrid>
-            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Live_NotConnected}" />
-            <UniformGrid Columns="3" Margin="-4,4">
-                <GroupBox Header="{l:Tr Live_Signal}" Margin="4" MinHeight="90" />
-                <GroupBox Header="{l:Tr Live_State}" Margin="4" MinHeight="90" />
-                <GroupBox Header="{l:Tr Live_Scan}" Margin="4" MinHeight="90" />
-            </UniformGrid>
-            <Border Style="{StaticResource NextStage}">
+            <TextBlock x:Name="CableText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
+            <Grid Margin="0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="ConnectButton" Style="{StaticResource BigButton}" Tag="&#xE768;" Margin="0,4,8,4"
+                        Content="{l:Tr Live_Connect}" ToolTip="{l:Tr Live_ConnectTip}" Click="OnConnect" />
+                <TextBlock Grid.Column="1" Text="{l:Tr Live_Interval}" VerticalAlignment="Center" Margin="4,0,6,0" />
+                <ComboBox x:Name="IntervalBox" Grid.Column="2" Width="80" VerticalAlignment="Center" ToolTip="{l:Tr Live_IntervalTip}" />
+                <Button x:Name="StopButton" Grid.Column="3" Style="{StaticResource BigButton}" Tag="&#xE71A;" Margin="8,4,0,4"
+                        Content="{l:Tr Live_Stop}" ToolTip="{l:Tr Live_StopTip}" Click="OnStop" />
+            </Grid>
+            <TextBlock x:Name="StatusText" Style="{StaticResource Plain}" Text="{l:Tr Live_NotConnected}" />
+            <TextBlock x:Name="ErrorText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" FontSize="{StaticResource Size1}" />
+            <Grid Margin="-4,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+                <GroupBox Header="{l:Tr Live_Signal}" Margin="4">
+                    <StackPanel Margin="4">
+                        <Grid Height="34">
+                            <ProgressBar x:Name="RssiBar" Maximum="100" Foreground="#1565c0" />
+                            <TextBlock x:Name="RssiText" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"
+                                       FontSize="{StaticResource Size4}" />
+                        </Grid>
+                        <TextBlock Text="{l:Tr Live_History}" Margin="0,6,0,2" Foreground="{StaticResource Grey}" />
+                        <p:RssiHistory x:Name="History" Height="90" />
+                        <Grid Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource Label}" Text="{l:Tr Live_LState}" />
+                            <TextBlock Style="{StaticResource Label}" Grid.Row="1" Text="{l:Tr Live_LMode}" />
+                            <TextBlock Style="{StaticResource Label}" Grid.Row="2" Text="{l:Tr Live_LChannel}" />
+                            <TextBlock Style="{StaticResource Label}" Grid.Row="3" Text="{l:Tr Live_LFreq}" />
+                            <TextBlock Style="{StaticResource Label}" Grid.Row="4" Text="{l:Tr Live_LNoise}" />
+                            <TextBlock x:Name="VState" Style="{StaticResource Value}" Grid.Column="1" />
+                            <TextBlock x:Name="VMode" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="1" />
+                            <TextBlock x:Name="VChannel" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="2" />
+                            <TextBlock x:Name="VFreq" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="3" />
+                            <TextBlock x:Name="VNoise" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="4" />
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Grid.Column="1" Header="{l:Tr Live_State}" Margin="4">
+                    <Grid Margin="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Style="{StaticResource Label}" Text="{l:Tr Live_LNative}" />
+                        <TextBlock Style="{StaticResource Label}" Grid.Row="1" Text="{l:Tr Live_LSync}" />
+                        <TextBlock Style="{StaticResource Label}" Grid.Row="2" Text="{l:Tr Live_LUptime}" />
+                        <TextBlock Style="{StaticResource Label}" Grid.Row="3" Text="{l:Tr Live_LHeap}" />
+                        <TextBlock Style="{StaticResource Label}" Grid.Row="4" Text="{l:Tr Live_LStack}" />
+                        <TextBlock Style="{StaticResource Label}" Grid.Row="5" Text="{l:Tr Live_LReset}" />
+                        <TextBlock Style="{StaticResource Label}" Grid.Row="6" Text="{l:Tr Live_LCrash}" />
+                        <TextBlock x:Name="VNative" Style="{StaticResource Value}" Grid.Column="1" />
+                        <TextBlock x:Name="VSync" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="1" />
+                        <TextBlock x:Name="VUptime" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="2" />
+                        <TextBlock x:Name="VHeap" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="3" />
+                        <TextBlock x:Name="VStack" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="4" />
+                        <TextBlock x:Name="VReset" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="5" />
+                        <TextBlock x:Name="VCrash" Style="{StaticResource Value}" Grid.Column="1" Grid.Row="6" />
+                    </Grid>
+                </GroupBox>
+            </Grid>
+            <GroupBox Header="{l:Tr Live_Scan}" Margin="0,4">
+                <StackPanel Margin="4">
+                    <UniformGrid x:Name="ScanGrid" Columns="4" />
+                    <TextBlock x:Name="ScanNote" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
+                </StackPanel>
+            </GroupBox>
+            <Border x:Name="AccessNote" Style="{StaticResource NextStage}">
                 <StackPanel>
-                    <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
-                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
+                    <TextBlock x:Name="AccessTitle" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock x:Name="AccessText" Style="{StaticResource Plain}" />
                 </StackPanel>
             </Border>
+            <Expander Header="{l:Tr Common_Details}">
+                <TextBox x:Name="LogText" IsReadOnly="True" FontFamily="Consolas" TextWrapping="NoWrap" Margin="16,4,0,0"
+                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="240" />
+            </Expander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

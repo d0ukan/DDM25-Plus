@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:DDM32Plus.Localization">
-    <!-- health_tab.py: the cable (CH340 driver) check works now; the radio's own health read comes later -->
+    <!-- health_tab.py: the cable (CH340 driver) check, one read of the radio's health per click (the debug link's
+         views tasks, crash, reset; DebugReaders.Health behind its read-only guard), and the newest verified backup -->
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Health}" />
@@ -19,22 +20,87 @@
                 </DockPanel>
             </Border>
             <DockPanel Margin="0,4">
-                <CheckBox DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0" Content="{l:Tr Health_Auto}" IsEnabled="False" />
-                <Button Style="{StaticResource BigButton}" Tag="&#xE946;" Content="{l:Tr Health_Read}"
-                        ToolTip="{l:Tr Health_ReadTip}" IsEnabled="False" />
+                <CheckBox x:Name="AutoBox" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,16,0"
+                          Content="{l:Tr Health_Auto}" ToolTip="{l:Tr Health_AutoTip}" Checked="OnAuto" Unchecked="OnAuto" />
+                <Button x:Name="ReadButton" Style="{StaticResource BigButton}" Tag="&#xE946;" Content="{l:Tr Health_Read}"
+                        ToolTip="{l:Tr Health_ReadTip}" Click="OnRead" />
             </DockPanel>
             <Border Style="{StaticResource Card}">
                 <DockPanel>
-                    <Ellipse DockPanel.Dock="Left" Width="56" Height="56" Fill="#8a8a8a" Margin="0,0,14,0" VerticalAlignment="Top" />
-                    <TextBlock Text="{l:Tr Health_NotRead}" FontSize="{StaticResource Size9}" FontWeight="Bold" VerticalAlignment="Center" />
+                    <Ellipse x:Name="Light" DockPanel.Dock="Left" Width="56" Height="56" Fill="#8a8a8a" Margin="0,0,14,0" VerticalAlignment="Top" />
+                    <StackPanel>
+                        <TextBlock x:Name="VerdictText" Text="{l:Tr Health_NotRead}" FontSize="{StaticResource Size12}" FontWeight="Bold" />
+                        <TextBlock x:Name="SummaryText" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}" />
+                        <TextBlock x:Name="WhenText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
+                    </StackPanel>
                 </DockPanel>
             </Border>
-            <Border Style="{StaticResource NextStage}">
+            <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
-                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
+                    <TextBlock Text="{l:Tr Health_BackupTitle}" FontSize="{StaticResource Size4}" FontWeight="Bold" />
+                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Health_BackupText}" Foreground="{StaticResource Grey}" />
+                    <TextBlock x:Name="BackupText" Style="{StaticResource Plain}" />
+                    <TextBlock x:Name="BackupCount" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
                 </StackPanel>
             </Border>
+            <Border x:Name="AccessNote" Style="{StaticResource NextStage}">
+                <StackPanel>
+                    <TextBlock x:Name="AccessTitle" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock x:Name="AccessText" Style="{StaticResource Plain}" />
+                </StackPanel>
+            </Border>
+            <Expander x:Name="DetailsBox" Header="{l:Tr Common_Details}">
+                <StackPanel Margin="16,4,0,0">
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="{l:Tr Health_LUptime}" Margin="0,2,12,2" />
+                        <TextBlock Grid.Row="1" Text="{l:Tr Health_LHeap}" Margin="0,2,12,2" />
+                        <TextBlock Grid.Row="2" Text="{l:Tr Health_LHeapMin}" Margin="0,2,12,2" />
+                        <TextBlock Grid.Row="3" Text="{l:Tr Health_LMinTask}" Margin="0,2,12,2" />
+                        <TextBlock Grid.Row="4" Text="{l:Tr Health_LCrash}" Margin="0,2,12,2" />
+                        <TextBlock Grid.Row="5" Text="{l:Tr Health_LReset}" Margin="0,2,12,2" />
+                        <TextBlock x:Name="VUptime" Grid.Row="0" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VHeap" Grid.Row="1" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VHeapMin" Grid.Row="2" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VMinTask" Grid.Row="3" Grid.Column="1" Margin="0,2" />
+                        <TextBlock x:Name="VCrash" Grid.Row="4" Grid.Column="1" Margin="0,2" TextWrapping="Wrap" />
+                        <TextBlock x:Name="VReset" Grid.Row="5" Grid.Column="1" Margin="0,2" />
+                    </Grid>
+                    <Grid Margin="0,4,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{l:Tr Health_Task}" FontWeight="Bold" />
+                        <TextBlock Grid.Column="1" Text="{l:Tr Health_Free}" FontWeight="Bold" />
+                    </Grid>
+                    <ItemsControl x:Name="TaskList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Text}" />
+                                    <ProgressBar Grid.Column="2" Height="12" Maximum="{Binding Max}" Value="{Binding Value}" Foreground="{Binding Brush}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBox x:Name="LogText" IsReadOnly="True" FontFamily="Consolas" TextWrapping="NoWrap" Margin="0,8,0,0"
+                             HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="240" />
+                </StackPanel>
+            </Expander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
