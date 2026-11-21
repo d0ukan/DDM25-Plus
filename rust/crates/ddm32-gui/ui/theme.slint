@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// The one place every colour, size and font of the program comes from. Light by default (owner, 2026-11-21);
+// dark when chosen in the settings; switched live. No widget names a colour of its own.
+// Contrast: every text / background pair below meets WCAG AA (4.5:1, large text 3:1); tests/screens.rs checks it.
+
+export global Theme {
+    in-out property <bool> dark: false;
+
+    // surfaces
+    out property <color> window: dark ? #15181d : #f6f7f9;
+    out property <color> surface: dark ? #1f242b : #ffffff;
+    out property <color> surface-alt: dark ? #272d35 : #eef1f5;
+    out property <color> border: dark ? #4a5361 : #c4cad3;
+    // text
+    out property <color> text: dark ? #eef1f5 : #15181d;
+    out property <color> text-muted: dark ? #b4bcc8 : #4b5563;
+    // the main action
+    out property <color> primary: dark ? #4f9cf9 : #1d5fd1;
+    out property <color> primary-hover: dark ? #72b0fb : #174ea9;
+    out property <color> primary-text: dark ? #0b1220 : #ffffff;
+    // secondary buttons
+    out property <color> button: dark ? #2c333d : #e6eaf0;
+    out property <color> button-hover: dark ? #38404c : #d7dde6;
+    out property <color> button-text: dark ? #eef1f5 : #15181d;
+    // disabled
+    out property <color> disabled: dark ? #2a2f37 : #e3e6eb;
+    out property <color> disabled-text: dark ? #a3abb7 : #5f6774;
+    // states
+    out property <color> danger: dark ? #ff7b72 : #b42318;
+    out property <color> danger-bg: dark ? #3d1d1d : #fdecea;
+    out property <color> danger-text: dark ? #ffd2cd : #7a1810;
+    out property <color> warning-bg: dark ? #3a3015 : #fff6db;
+    out property <color> warning-text: dark ? #ffe08a : #6b4e00;
+    out property <color> success-bg: dark ? #17331f : #e7f6ec;
+    out property <color> success-text: dark ? #9be3b0 : #14532d;
+    // the shade behind a dialog
+    out property <color> scrim: dark ? #000000b3 : #00000080;
+    out property <color> focus: dark ? #ffd166 : #b45309;
+
+    // sizes (generous: big readable text, plenty of space)
+    out property <length> font: 17px;
+    out property <length> font-small: 15px;
+    out property <length> font-title: 26px;
+    out property <length> font-big: 22px;
+    out property <length> pad: 20px;
+    out property <length> gap: 14px;
+    out property <length> radius: 10px;
+}

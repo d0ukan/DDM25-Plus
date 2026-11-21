@@ -1,0 +1,21 @@
+[package]
+name = "ddm32-cli"
+description = "DDM32 Plus programmer: command line front end"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "ddm32"
+path = "src/main.rs"
+
+[features]
+default = []
+radio = ["ddm32-core/radio"]
+developer = ["ddm32-core/developer"]
+
+[dependencies]
+ddm32-core = { path = "../ddm32-core" }

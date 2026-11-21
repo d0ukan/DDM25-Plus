@@ -1,0 +1,288 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// The read-only radio pages: health, live view, my channels. Every colour from Theme, every text from Tr.
+import { ListView, ScrollView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr, Label, Muted, Title, Button, Card, Notice, Choice, Progress } from "widgets.slint";
+
+export struct Fact { label: string, value: string }
+export struct TableRow { cells: [string] }
+
+export global Radio {
+    // health
+    in property <string> health-verdict: "grey";   // grey, green, amber, red
+    in property <string> health-text;
+    in property <[Fact]> health-facts;
+    in property <[Fact]> health-tasks;
+    in property <string> health-raw;
+    // live
+    in property <bool> live-running;
+    in property <float> live-signal;               // 0..1
+    in property <string> live-smeter;
+    in property <string> live-dbm;
+    in property <[Fact]> live-facts;
+    in property <string> live-raw;
+    in-out property <int> live-interval: 2;
+    // channels
+    in property <string> channels-source;
+    in property <[string]> table-columns;
+    in property <[TableRow]> table-rows;
+    in property <[float]> table-widths;
+    in property <string> table-count;
+    in-out property <int> table: 0;                // 0 channels, 1 zones, 2 contacts, 3 lists
+    in-out property <string> search;
+    // shared
+    in property <string> message;
+    in property <string> message-kind: "info";
+    in property <bool> busy;
+    in-out property <bool> show-raw;
+
+    callback read-health();
+    callback live-start();
+    callback live-stop();
+    callback choose-table(int);
+    callback search-changed(string);
+    callback export-csv();
+    callback navigate-home();
+}
+
+component Header inherits HorizontalLayout {
+    in property <string> heading;
+    spacing: Theme.gap;
+    Button {
+        text: "← " + Tr.t(Tr.lang, "back_home");
+        enabled: !Radio.busy && !Radio.live-running;
+        horizontal-stretch: 0;
+        min-width: 190px;
+        max-width: 240px;
+        clicked => { Radio.navigate-home(); }
+    }
+    Title { text: root.heading; vertical-alignment: center; horizontal-stretch: 1; }
+}
+
+component FactList inherits VerticalLayout {
+    in property <[Fact]> facts;
+    spacing: 4px;
+    for f in root.facts : HorizontalLayout {
+        spacing: Theme.gap;
+        Text { text: f.label; color: Theme.text-muted; font-size: Theme.font-small; width: 240px; wrap: word-wrap; }
+        Text { text: f.value; color: Theme.text; font-size: Theme.font; wrap: word-wrap; horizontal-stretch: 1; }
+    }
+}
+
+component Raw inherits VerticalLayout {
+    in property <string> text;
+    spacing: 6px;
+    if root.text != "" : Button {
+        text: (Radio.show-raw ? "− " : "+ ") + Tr.t(Tr.lang, "details");
+        clicked => { Radio.show-raw = !Radio.show-raw; }
+    }
+    if Radio.show-raw && root.text != "" : Card {
+        min-height: rt.preferred-height + 24px;
+        rt := Text {
+            x: 12px;
+            width: parent.width - 24px;
+            text: root.text;
+            color: Theme.text-muted;
+            font-size: 13px;
+            font-family: "Consolas";
+            wrap: word-wrap;
+        }
+    }
+}
+
+export component HealthPage inherits VerticalLayout {
+    padding: Theme.pad * 1.5;
+    spacing: Theme.gap;
+    Header { heading: Tr.t(Tr.lang, "home_health"); }
+    Muted { text: Tr.t(Tr.lang, "health_intro"); font-size: Theme.font; }
+    Button {
+        text: Tr.t(Tr.lang, "b_read_health");
+        kind: "primary";
+        big: true;
+        enabled: !Radio.busy;
+        clicked => { Radio.read-health(); }
+    }
+    if Radio.health-verdict != "grey" : Notice {
+        text: Radio.health-text;
+        big: true;
+        kind: Radio.health-verdict == "green" ? "success" : Radio.health-verdict == "amber" ? "warning" : "danger";
+    }
+    if Radio.message != "" : Notice { text: Radio.message; kind: Radio.message-kind; }
+    ScrollView {
+        vertical-stretch: 1;
+        VerticalLayout {
+            alignment: start;
+            spacing: Theme.gap;
+            padding-right: 8px;
+            FactList { facts: Radio.health-facts; }
+            if Radio.health-tasks.length > 0 : Label { text: Tr.t(Tr.lang, "health_tasks"); font-weight: 700; }
+            FactList { facts: Radio.health-tasks; }
+            Raw { text: Radio.health-raw; }
+        }
+    }
+}
+
+export component LivePage inherits VerticalLayout {
+    padding: Theme.pad * 1.5;
+    spacing: Theme.gap;
+    Header { heading: Tr.t(Tr.lang, "home_live"); }
+    Muted { text: Tr.t(Tr.lang, "live_intro"); font-size: Theme.font; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Button {
+            text: Radio.live-running ? Tr.t(Tr.lang, "b_live_stop") : Tr.t(Tr.lang, "b_live_start");
+            kind: Radio.live-running ? "secondary" : "primary";
+            big: true;
+            enabled: !Radio.busy;
+            clicked => {
+                if Radio.live-running {
+                    Radio.live-stop();
+                } else {
+                    Radio.live-start();
+                }
+            }
+        }
+        for s in [1, 2, 5] : Choice {
+            title: s + " " + Tr.t(Tr.lang, "live_seconds");
+            detail: "";
+            selected: Radio.live-interval == s;
+            enabled: !Radio.live-running;
+            horizontal-stretch: 0;
+            min-width: 96px;
+            clicked => { Radio.live-interval = s; }
+        }
+    }
+    Card {
+        vertical-stretch: 0;
+        min-height: sv.preferred-height;
+        sv := VerticalLayout {
+            padding: Theme.pad;
+            spacing: 8px;
+            HorizontalLayout {
+                spacing: Theme.gap;
+                Text {
+                    text: Radio.live-smeter == "" ? "—" : Radio.live-smeter;
+                    color: Theme.text;
+                    font-size: 34px;
+                    font-weight: 700;
+                    width: 150px;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 6px;
+                    Progress { value: Radio.live-signal; }
+                    Muted { text: Radio.live-dbm; }
+                }
+            }
+        }
+    }
+    if Radio.message != "" : Notice { text: Radio.message; kind: Radio.message-kind; }
+    ScrollView {
+        vertical-stretch: 1;
+        VerticalLayout {
+            alignment: start;
+            spacing: Theme.gap;
+            padding-right: 8px;
+            FactList { facts: Radio.live-facts; }
+            Raw { text: Radio.live-raw; }
+        }
+    }
+}
+
+export component ChannelsPage inherits VerticalLayout {
+    // the columns' share of the table's width (fractions from the controller, one per column)
+    property <length> cols-w: self.width - 3 * Theme.pad - 16px - 16px - 8px * 4 - 14px;
+    padding: Theme.pad * 1.5;
+    spacing: Theme.gap;
+    Header { heading: Tr.t(Tr.lang, "home_channels"); }
+    Muted { text: Radio.channels-source; }
+    HorizontalLayout {
+        spacing: 8px;
+        for name[i] in [Tr.t(Tr.lang, "t_channels"), Tr.t(Tr.lang, "t_zones"), Tr.t(Tr.lang, "t_contacts"), Tr.t(Tr.lang, "t_lists")] : Choice {
+            title: name;
+            detail: "";
+            selected: Radio.table == i;
+            clicked => { Radio.choose-table(i); }
+        }
+    }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Rectangle {
+            min-height: 44px;
+            border-radius: Theme.radius;
+            background: Theme.surface;
+            border-width: si.has-focus ? 3px : 1px;
+            border-color: si.has-focus ? Theme.focus : Theme.border;
+            si := TextInput {
+                x: 12px;
+                width: parent.width - 24px;
+                text <=> Radio.search;
+                color: Theme.text;
+                font-size: Theme.font;
+                vertical-alignment: center;
+                selection-background-color: Theme.primary;
+                selection-foreground-color: Theme.primary-text;
+                accessible-role: text-input;
+                accessible-label: Tr.t(Tr.lang, "search");
+                edited => { Radio.search-changed(self.text); }
+            }
+            if Radio.search == "" : Text {
+                x: 12px;
+                text: Tr.t(Tr.lang, "search");
+                color: Theme.text-muted;
+                font-size: Theme.font;
+                vertical-alignment: center;
+            }
+        }
+        Muted { text: Radio.table-count; vertical-alignment: center; horizontal-stretch: 0; font-size: Theme.font; }
+        Button {
+            text: Tr.t(Tr.lang, "b_csv");
+            horizontal-stretch: 0;
+            enabled: Radio.table-rows.length > 0;
+            clicked => { Radio.export-csv(); }
+        }
+    }
+    if Radio.message != "" : Notice { text: Radio.message; kind: Radio.message-kind; }
+    Card {
+        vertical-stretch: 1;
+        VerticalLayout {
+            padding: 8px;
+            HorizontalLayout {
+                spacing: 8px;
+                padding-left: 8px;
+                padding-right: 8px;
+                height: 32px;
+                for c[i] in Radio.table-columns : Text {
+                    text: c;
+                    color: Theme.text-muted;
+                    font-size: Theme.font-small;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                    width: root.cols-w * Radio.table-widths[i];
+                }
+            }
+            Rectangle { height: 1px; background: Theme.border; }
+            if Radio.table-rows.length == 0 : Notice { text: Tr.t(Tr.lang, "channels_none"); }
+            ListView {
+                vertical-stretch: 1;
+                for r[ri] in Radio.table-rows : Rectangle {
+                    height: max(36px, rl.preferred-height + 12px);
+                    background: Math.mod(ri, 2) == 0 ? Theme.surface : Theme.surface-alt;
+                    rl := HorizontalLayout {
+                        spacing: 8px;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        for c[i] in r.cells : Text {
+                            text: c;
+                            color: Theme.text;
+                            font-size: Theme.font-small;
+                            wrap: word-wrap;
+                            vertical-alignment: center;
+                            width: root.cols-w * Radio.table-widths[i];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

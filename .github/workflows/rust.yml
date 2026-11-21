@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# The Rust programmer (rust/): tests, clippy and format on Windows, Linux and macOS, then the release binaries as
+# build artifacts. Runs only on pushes to the rust-app branch (and by hand); no secret is used, nothing is signed or
+# published from here (see rust/docs/plan.md, stage 3).
+name: rust
+
+on:
+  push:
+    branches: [rust-app]
+    paths: ["rust/**", ".github/workflows/rust.yml", "win/tests/DDM32Plus.Core.Tests/Fixtures/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Linux build packages
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libfontconfig-dev
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Clippy (radio feature)
+        run: cargo clippy -p ddm32-core --features radio -- -D warnings
+      - name: Tests (no serial port exists in them)
+        run: cargo test
+      - name: Release binaries (radio access compiled in, as the installed program)
+        run: cargo build --release -p ddm32-cli -p ddm32-gui --features ddm32-cli/radio,ddm32-gui/radio
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ddm32-${{ matrix.os }}
+          path: |
+            rust/target/release/ddm32
+            rust/target/release/ddm32.exe
+            rust/target/release/ddm32-gui
+            rust/target/release/ddm32-gui.exe
+          if-no-files-found: ignore

@@ -620,6 +620,27 @@ __pycache__/
 /win/publish-dev/
 /win/publish-dev-write/
 /win/publish-dev-write-next/
+# DDM32 Plus programmer in Rust (rust/README.md): sources, tests, docs, packaging; never target/ or build output
+!/rust/Cargo.toml
+!/rust/Cargo.lock
+!/rust/rustfmt.toml
+!/rust/README.md
+!/rust/THIRD_PARTY.md
+!/rust/docs/*.md
+!/rust/docs/screenshots/*.png
+!/rust/crates/*/Cargo.toml
+!/rust/crates/*/build.rs
+!/rust/crates/*/src/**/*.rs
+!/rust/crates/*/tests/**/*.rs
+!/rust/crates/*/ui/**/*.slint
+!/rust/crates/*/data/*
+!/rust/packaging/**/*.iss
+!/rust/packaging/**/*.sh
+!/rust/packaging/**/*.py
+!/rust/packaging/**/*.desktop
+!/rust/packaging/**/*.plist
+!/.github/workflows/rust.yml
+/rust/target/
 # status strip signal bars filled only while something is heard (tools/plus_sigbar.py)
 !/tools/plus_sigbar.py
 !/tools/test_sigbar.py
@@ -635,3 +656,5 @@ __pycache__/
 !/tools/plus_polish.py
 !/tools/test_polish.py
 !/docs/kullanim-telsiz.md
+!/rust/crates/*/ui/**/*.png
+/rust/dist/
