@@ -99,10 +99,10 @@
     <value>Refresh</value>
   </data>
   <data name="Common_NextStageTitle" xml:space="preserve">
-    <value>Coming in the next stage</value>
+    <value>Coming in a later version</value>
   </data>
   <data name="Common_NextStage" xml:space="preserve">
-    <value>The part of this page that works with the radio comes in the next stage. Each radio tool is first checked byte for byte against the Python tool on recorded samples. This version never connects to the radio and never opens a serial port.</value>
+    <value>The part of this page that reads the radio comes in a later version; until then this page does not connect to the radio. Each radio tool is first checked byte for byte against the Python tool on recorded samples.</value>
   </data>
   <data name="Lang_Prompt" xml:space="preserve">
     <value>Dil seçin / Choose your language</value>
@@ -912,5 +912,195 @@ There is no backup. If the write stops part way there is no backup to go back to
   </data>
   <data name="Prog_Verify" xml:space="preserve">
     <value>Reading back and verifying: {0}%</value>
+  </data>
+  <data name="Tab_Packs" xml:space="preserve">
+    <value>Data packs</value>
+  </data>
+  <data name="Pack_Text" xml:space="preserve">
+    <value>Data packs are lists the radio keeps on its data chip: the **RadioID pack** (callers' names for DMR IDs) and the **air band pack** (each airfield's frequencies). This page builds them on your PC from files **you download yourself** (radioid.net, your State's AIP pages) and writes one to the radio. Nothing of these lists comes with the program. Optional: the radio works without packs. Needs DDM32 Plus v1.0.0-beta.4 or newer on the radio.</value>
+  </data>
+  <data name="Pack_OnRadio" xml:space="preserve">
+    <value>On the radio</value>
+  </data>
+  <data name="Pack_OnRadioText" xml:space="preserve">
+    <value>The radio must be switched on and running DDM32 Plus, with the cable in; it does not need to be switched off and on. The live read uses the radio's own programming (CPS) protocol and only reads. A verified backup shows what the radio held when it was made (files only).</value>
+  </data>
+  <data name="Pack_Read" xml:space="preserve">
+    <value>Read the radio's packs</value>
+  </data>
+  <data name="Pack_ReadTip" xml:space="preserve">
+    <value>Reads the radio information and both slots of each pack type (read only)</value>
+  </data>
+  <data name="Pack_FromBackup" xml:space="preserve">
+    <value>Show from a backup...</value>
+  </data>
+  <data name="Pack_FromBackupTip" xml:space="preserve">
+    <value>Shows the packs in a verified backup's data chip image (no radio)</value>
+  </data>
+  <data name="Pack_RadioIdTitle" xml:space="preserve">
+    <value>RadioID pack</value>
+  </data>
+  <data name="Pack_RadioIdText" xml:space="preserve">
+    <value>Download RadioID.net's user list (**user.csv**) yourself: open the page in your browser, or let the program download it from radioid.net when you click. Then choose the countries (comma separated, as RadioID.net writes them) and build the pack. The list stays on your PC; the program never passes it on.</value>
+  </data>
+  <data name="Pack_OpenRadioId" xml:space="preserve">
+    <value>Open radioid.net</value>
+  </data>
+  <data name="Pack_OpenRadioIdTip" xml:space="preserve">
+    <value>Opens RadioID.net's database download page in your browser</value>
+  </data>
+  <data name="Pack_Download" xml:space="preserve">
+    <value>Download user.csv</value>
+  </data>
+  <data name="Pack_DownloadTip" xml:space="preserve">
+    <value>Downloads the list from radioid.net into the program's paketler folder</value>
+  </data>
+  <data name="Pack_ChooseCsv" xml:space="preserve">
+    <value>Choose a CSV...</value>
+  </data>
+  <data name="Pack_Countries" xml:space="preserve">
+    <value>Countries:</value>
+  </data>
+  <data name="Pack_CountriesTip" xml:space="preserve">
+    <value>For example: Turkey, Cyprus</value>
+  </data>
+  <data name="Pack_Name" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="Pack_Build" xml:space="preserve">
+    <value>Build the pack</value>
+  </data>
+  <data name="Pack_AirTitle" xml:space="preserve">
+    <value>Air band pack</value>
+  </data>
+  <data name="Pack_AirText" xml:space="preserve">
+    <value>Download the aerodromes' **AD 2** pages (PDF) of your State's AIP yourself; in Turkey the DHMI eAIP. The program reads each page's **AD 2.18** table (ATS communication facilities). An airfield the pack names gets the pack's frequency list on the radio; the others keep the built-in table.</value>
+  </data>
+  <data name="Pack_OpenAip" xml:space="preserve">
+    <value>Open the DHMI AIP page</value>
+  </data>
+  <data name="Pack_OpenAipTip" xml:space="preserve">
+    <value>Opens the AIP page in your browser</value>
+  </data>
+  <data name="Pack_AddPdf" xml:space="preserve">
+    <value>Add AD 2 PDFs...</value>
+  </data>
+  <data name="Pack_Clear" xml:space="preserve">
+    <value>Clear the list</value>
+  </data>
+  <data name="Pack_WriteTitle" xml:space="preserve">
+    <value>Write to the radio</value>
+  </data>
+  <data name="Pack_WriteText" xml:space="preserve">
+    <value>The pack goes into the slot **not in force**: its sectors first, its header last. Until the last sector the radio keeps the pack it has; if anything goes wrong, that pack stays. Only the data pack region of the data chip (0xE70000-0xEFFFFF) is written; the program refuses every other address. The radio stays switched on.</value>
+  </data>
+  <data name="Pack_WriteRadioId" xml:space="preserve">
+    <value>Write the RadioID pack</value>
+  </data>
+  <data name="Pack_WriteAir" xml:space="preserve">
+    <value>Write the air band pack</value>
+  </data>
+  <data name="Pack_LoadDpk" xml:space="preserve">
+    <value>Choose a .dpk file...</value>
+  </data>
+  <data name="Pack_DescRadioId" xml:space="preserve">
+    <value>RadioID pack "{0}", {1}: {2} IDs, {3}</value>
+  </data>
+  <data name="Pack_DescAir" xml:space="preserve">
+    <value>Air band pack "{0}", {1}: {2} airfields, {3}</value>
+  </data>
+  <data name="Pack_NoCsv" xml:space="preserve">
+    <value>No list chosen yet.</value>
+  </data>
+  <data name="Pack_Csv" xml:space="preserve">
+    <value>List: {0} ({1})</value>
+  </data>
+  <data name="Pack_NoPdf" xml:space="preserve">
+    <value>No page added yet.</value>
+  </data>
+  <data name="Pack_AirSource" xml:space="preserve">
+    <value>{0}: {1} frequencies ({2}) {3}</value>
+  </data>
+  <data name="Pack_Skipped" xml:space="preserve">
+    <value>Left out: {0} callsigns that do not fit, {1} bad IDs, {2} repeated IDs</value>
+  </data>
+  <data name="Pack_NothingBuilt" xml:space="preserve">
+    <value>No pack built or chosen yet.</value>
+  </data>
+  <data name="Pack_NotRead" xml:space="preserve">
+    <value>Not read yet.</value>
+  </data>
+  <data name="Pack_TypeRadioId" xml:space="preserve">
+    <value>RadioID</value>
+  </data>
+  <data name="Pack_TypeAir" xml:space="preserve">
+    <value>Air band</value>
+  </data>
+  <data name="Pack_SlotEmpty" xml:space="preserve">
+    <value>{0} slot {1} ({2}): empty</value>
+  </data>
+  <data name="Pack_SlotDamaged" xml:space="preserve">
+    <value>{0} slot {1} ({2}): "{3}" damaged, not used</value>
+  </data>
+  <data name="Pack_SlotInForce" xml:space="preserve">
+    <value>{0} slot {1} ({2}): "{3}", {4}, {5} entries, {6}, sequence {7}: IN FORCE</value>
+  </data>
+  <data name="Pack_SlotOld" xml:space="preserve">
+    <value>{0} slot {1} ({2}): "{3}", {4}, {5} entries, {6}, sequence {7}: older</value>
+  </data>
+  <data name="Pack_RadioInfo" xml:space="preserve">
+    <value>Radio: {0} ({1})</value>
+  </data>
+  <data name="Pack_Plan" xml:space="preserve">
+    <value>Writing slot {0} at {1}: {2} sectors, sequence {3}.</value>
+  </data>
+  <data name="Pack_Reading" xml:space="preserve">
+    <value>Reading the radio...</value>
+  </data>
+  <data name="Pack_ReadDone" xml:space="preserve">
+    <value>Read.</value>
+  </data>
+  <data name="Pack_Failed" xml:space="preserve">
+    <value>Failed: {0}</value>
+  </data>
+  <data name="Pack_NotVerified" xml:space="preserve">
+    <value>not a verified backup</value>
+  </data>
+  <data name="Pack_FromBackupOf" xml:space="preserve">
+    <value>Backup {0}:</value>
+  </data>
+  <data name="Pack_DownloadConfirm" xml:space="preserve">
+    <value>Download RadioID.net's user list now from
+{0}
+
+The file is large (tens of MB). It is for your own use; do not pass it on.</value>
+  </data>
+  <data name="Pack_Downloading" xml:space="preserve">
+    <value>Downloading: {0}</value>
+  </data>
+  <data name="Pack_Confirm" xml:space="preserve">
+    <value>{0}
+
+will be written to the radio on {1}.
+
+Slots {2}: the one not in force; {3} sectors, payload first, the header last. The radio keeps its current pack until the end. Only 0xE70000-0xEFFFFF is written.
+
+The radio must be on and running DDM32 Plus. Write now?</value>
+  </data>
+  <data name="Pack_ConfirmTitle" xml:space="preserve">
+    <value>Write the data pack</value>
+  </data>
+  <data name="Pack_Writing" xml:space="preserve">
+    <value>Writing the pack...</value>
+  </data>
+  <data name="Pack_WriteDone" xml:space="preserve">
+    <value>PASS: the new pack is in force (Settings &gt; About on the radio shows it).</value>
+  </data>
+  <data name="Pack_WriteFailed" xml:space="preserve">
+    <value>The pack was not written: {0}
+The pack the radio had is still in force.</value>
+  </data>
+  <data name="Pack_ScreenLine" xml:space="preserve">
+    <value>Data pack</value>
   </data>
 </root>

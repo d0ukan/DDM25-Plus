@@ -3,7 +3,7 @@
 This page says how each radio tool of the Python program (`pc/radiotools/`) is ported, which guards it must keep, and
 how the C# port is proven equal to the Python tool **before** it is ever pointed at a radio.
 
-## Status (stage 2, 2026-11-20)
+## Status (2.0.0-beta.1, 2026-11-21)
 
 | Tool | C# (`src/DDM32Plus.Core/Radio/`) | Verified against Python |
 |---|---|---|
@@ -13,6 +13,7 @@ how the C# port is proven equal to the Python tool **before** it is ever pointed
 | install_firstboot --restore-stock | `RestoreStockTool` | layer 2: 4 recorded runs |
 | the guards' frame rules | `ReadOnlyPort`, `InstallPort` | layer 3: 89 frames + 5 step sequences, same verdicts and messages |
 | quick update and install without backup (C# only, owner's decision 2026-11-20) | `FastInstallTool` | the C# FakeRadio (`FakeRadio.cs`), itself checked to draw the Python tools' exact bytes on 11 recorded runs; 17 tests of the new paths and guard rules |
+| data packs (tools/datapack.py; the CPS write of docs/plus.md "User data packs") | `DataPacks/`, `CpsPack.cs` | the builder byte for byte on synthetic inputs (`make_datapack_fixtures.py`, `DataPackTests.cs`); the CPS write on a fake radio as `cps_openfw.c` behaves (`CpsPackTests.cs`); not yet run on the radio |
 | health / live panel (plus_live) | not yet | |
 
 Layer 2 means: `tests/DDM32Plus.Core.Tests/Fixtures/make_radio_fixtures.py` runs the Python tool against the pinned
@@ -21,12 +22,9 @@ bytes in the same order, print the same lines, raise the same error and write th
 manifests byte for byte, Windows line endings as Python writes them; only `write_seconds` is left out). 27 runs, all
 equal. The recording is made on Windows (Python's text files have CRLF there).
 
-The serial port is behind `RadioAccess` (`Ports.cs`): off in every build. A developer build with
-`dotnet build -p:RadioAccess=true` compiles the port in for the read-only backup only; the tools that write get their
-port from `RadioAccess.WriteFactory`, off in every build of this stage. Nothing at run time can turn either on. The pages run the tools
-through it, so in the normal build "Yedek al", "Yükle" and "Geri yükle" stop before any port is opened and say so.
-What works without a radio: the CH340 cable/driver check (Windows' device list), choosing a verified backup on disk,
-its detection and the write plan (the tools' own plan, checked equal to `--plan-only`).
+The serial port is behind `RadioAccess` (`Ports.cs`). Since 2.0.0-beta.1 (owner's decision 2026-11-21: installs
+are done with this program) the release build has radio access and writes on; `-p:RadioAccess=false` builds a program
+that opens no port. The developer build (`-p:Developer=true`) made the first real backup and two real installs.
 
 ## Rules that do not change
 
@@ -34,7 +32,8 @@ its detection and the write plan (the tools' own plan, checked equal to `--plan-
   that specific step. An approval never carries over to the next step. The program itself starts a radio step only
   from its own button (one click = one step) and never retries a failed write.
 - Never write program flash below `0xC000` (bootloader) and never write the 16 MiB data chip (calibration, channels,
-  settings). Writes are bounded to the planned application sectors (and the codec slot `0xE8000..0x100000` for a
+  settings) with the flash tools. The one exception is the data pack region 0xE70000-0xEFFFFF (owner, 2026-11-20),
+  written only through the running firmware's CPS protocol behind `CpsPackPort`. Writes are bounded to the planned application sectors (and the codec slot `0xE8000..0x100000` for a
   first install from stock).
 - Before any write: a verified two-pass backup of the radio as it is now, and a plan that lists the changed sectors.
   Before the write the live program flash must equal the backup and every data chip sector CRC must equal the

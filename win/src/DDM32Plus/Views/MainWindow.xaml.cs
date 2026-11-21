@@ -27,7 +27,7 @@ public partial class MainWindow : Window
     {
         this.state = state;
         InitializeComponent();
-        pages = [Home, Update, Versions, Restore, Health, Live, Channels];
+        pages = [Home, Update, Versions, Restore, Packs, Health, Live, Channels];
         foreach (var p in pages)
             p.Init(state, this);
         state.Changed += () => Dispatcher.Invoke(RefreshAll);
@@ -97,6 +97,7 @@ public partial class MainWindow : Window
             "update" => TabUpdate,
             "versions" => TabVersions,
             "restore" => TabRestore,
+            "packs" => TabPacks,
             "health" => TabHealth,
             "live" => TabLive,
             "channels" => TabChannels,
@@ -180,7 +181,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (Update.Busy || Restore.Busy)
+        if (Update.Busy || Restore.Busy || Packs.Busy)
         {
             // closing would end a running tool half way (main_window.busy_text)
             MessageBox.Show(this, Loc.T("Main_BusyClose"), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Warning);

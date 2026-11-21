@@ -4,17 +4,18 @@
 ; Saved as UTF-8 with BOM (LF): Inno Setup reads the Turkish texts correctly only with the BOM.
 ; Build (Inno Setup 6.3 or newer; 7.1 checked, https://jrsoftware.org/isinfo.php), after the publish step in win/README.md:
 ;   "C:\Program Files\Inno Setup 7\ISCC.exe" win\installer\DDM32Plus.iss
-; Output: win\publish\installer\DDM32Plus-Setup.exe
+; Output: win\publish\installer\DDM32Plus-Setup-<version>.exe
 ;
 ; Where things go:
 ;   {app} = %LOCALAPPDATA%\Programs\DDM32 Plus   DDM32Plus.exe (one self-contained file)
 ;   {app}\yedekler                               the radio's backups: made by the program, NEVER removed by the
 ;                                                uninstaller or by a program update; the uninstaller says where it is
 ;   {app}\settings.json, surumler, guncelleme    settings, downloaded versions, update staging: removed on uninstall
+;   {app}\paketler                               data pack work files (the user's downloads, built packs): removed on uninstall
 ; Uninstall: Settings > Apps (per-user entry, HKCU).
 
 #define AppName "DDM32 Plus"
-#define AppVersion "2.0.0-alpha.1"
+#define AppVersion "2.0.0-beta.1"
 #define AppNumericVersion "2.0.0.0"
 #define AppExe "DDM32Plus.exe"
 #define AppPublisher "d0ukan · TA2DOU"
@@ -41,7 +42,7 @@ UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\src\DDM32Plus\Assets\ddm32plus.ico
 OutputDir=..\publish\installer
-OutputBaseFilename=DDM32Plus-Setup
+OutputBaseFilename=DDM32Plus-Setup-{#AppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -85,6 +86,7 @@ Type: files; Name: "{app}\settings.json"
 Type: files; Name: "{app}\settings.tmp"
 Type: filesandordirs; Name: "{app}\surumler"
 Type: filesandordirs; Name: "{app}\guncelleme"
+Type: filesandordirs; Name: "{app}\paketler"
 
 [Code]
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

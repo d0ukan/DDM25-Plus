@@ -3,14 +3,18 @@
 The Python-free Windows programmer for DDM32 Plus, replacing the PyQt5 program in `pc/` step by step. Same pages,
 same wizard (Hazırlık, Yedek, Kontrol, Yükle, Bitti), Turkish and English.
 
-**Stage 3 (this one): the radio tools are ported, radio access is off; quick update and install without backup;
-a developer build for the first real backup.** The backup, install, first install from
-stock and restore tools of `pc/radiotools` are ported to C# with every guard and are held to the Python tools byte for
-byte on 27 recorded runs (see [docs/porting-plan.md](docs/porting-plan.md)). The wizard and the "Geri dön" page run
-them, but the serial port is behind `RadioAccess` and **off in every build**: "Yedek al", "Yükle" and "Geri yükle"
-stop before any port is opened and say so. The first real run comes with the owner's approval, one step at a time.
-Working without a radio: the CH340 cable and driver check (Windows' device list, no port), a verified backup on disk,
-its detection and the write plan, the signed release list, download with hash checks, the program's self-update.
+**Version 2.0.0-beta.1: the programmer for installs (owner's decision 2026-11-21).** It replaces the Python program
+in `pc/` and is published with the firmware from v1.0.0-beta.4: download `DDM32Plus-Setup-2.0.0-beta.1.exe` from the
+release, run it, done (see [Install](#install) and the Turkish user guide [docs/kullanim.md](docs/kullanim.md)).
+
+The backup, install, quick update, install without backup, first install from stock and restore tools of
+`pc/radiotools` are ported to C# with every guard and held to the Python tools byte for byte on 27 recorded runs
+(see [docs/porting-plan.md](docs/porting-plan.md)); the developer build of this program made two real installs on the
+owner's radio and a real backup byte-identical to the Python tool's. **Radio access is on in the release build:** each
+radio step starts only from its own button, after its own confirmation; every guard of the Python tools stays (a
+verified two-pass backup before a write, the plan of changed sectors, only application sectors, boot area, codec
+slot and data chip never written by an install, full readback, no retry of a failed write). New in this version:
+**data packs** (RadioID and air band, built on the user's PC; see [Data packs](#data-packs)).
 
 | Language dialog | Main window (Türkçe) | Main window (English) |
 |---|---|---|
@@ -25,9 +29,28 @@ its detection and the write plan, the signed release list, download with hash ch
 | 5 Bitti / Done | ![](docs/screenshots/wizard-5-done-tr.png) | ![](docs/screenshots/wizard-5-done-en.png) |
 | Geri dön / Go back | ![](docs/screenshots/restore-tr.png) | ![](docs/screenshots/restore-en.png) |
 | Telsizin durumu / Radio health | ![](docs/screenshots/health-tr.png) | ![](docs/screenshots/health-en.png) |
+| Veri paketleri / Data packs | ![](docs/screenshots/datapacks-tr.png) | ![](docs/screenshots/datapacks-en.png) |
 
-More: [Sürümler](docs/screenshots/versions-tr.png), [Versions](docs/screenshots/versions-en.png). The check step in
-the screenshots shows a synthetic backup chosen as "Mevcut yedeği seç..." does.
+More: [Sürümler](docs/screenshots/versions-tr.png), [Versions](docs/screenshots/versions-en.png). The main window,
+steps 1-2 and the data pack page are the release build 2.0.0-beta.1 (no developer note; the data pack page after
+"Paketi oluştur" on a made-up list); steps 3-5, "Geri dön" and health are from 2.0.0-alpha.1 (same pages, then with
+the "radio access is off" note), the check step showing a synthetic backup chosen as "Mevcut yedeği seç..." does.
+
+## Install
+
+1. Download `DDM32Plus-Setup-2.0.0-beta.1.exe` from the GitHub release (the release's signed manifest also lists the
+   program as `DDM32Plus-win-2.0.0-beta.1.zip`, the file the program's own update uses).
+2. Run it. It installs **for your Windows user only**, without an administrator prompt, to
+   `%LOCALAPPDATA%\Programs\DDM32 Plus`, with a Start menu entry and (if ticked) a desktop shortcut. Nothing else
+   is needed: the .NET runtime is inside the program.
+3. **SmartScreen.** The setup and the program are not code-signed yet, so Windows may say "Windows protected your
+   PC" on the first run. Click **More info**, then **Run anyway** (Türkçe: **Ek bilgi**, sonra **Yine de
+   çalıştır**). This goes away once a code-signing certificate is used.
+4. On the first start choose Türkçe or English, read and accept the disclaimer, then use "Telsizi güncelle".
+
+Later versions: the program checks the signed release list on start (switchable in Sürümler) and updates itself
+from the manifest's `app_net` entry, after checking its Ed25519 signature, size and SHA-256. Uninstall in Settings >
+Apps; the backups folder `yedekler` stays.
 
 ## Layout
 
@@ -40,6 +63,8 @@ win/
   src/DDM32Plus.Core/Radio/      the radio tools (ports of pc/radiotools), their guards, the install / restore
                                  flows' rules, the CH340 check; Data/ = the pinned RAM monitor image and the DM32
                                  codec tables (RadioFoundry, MIT, LICENSES/RadioFoundry-MIT.txt)
+  src/DDM32Plus.Core/DataPacks/  the data pack builder (port of tools/datapack.py), the RadioID CSV and AIP readers;
+                                 Radio/CpsPack.cs = the CPS client, its guard and the data pack tool
   src/DDM32Plus/                 the WPF program; Resources/Strings.resx (English) + Strings.tr.resx (Turkish)
   tests/DDM32Plus.Core.Tests/    xUnit; Fixtures/python-results.json = results of the Python code (make_fixtures.py),
                                  Fixtures/radio/ = recorded runs of the Python radio tools (make_radio_fixtures.py)
@@ -96,42 +121,66 @@ order, once; boot area, codec slot and data chip never written (data chip CRCs c
 program read back before the restart; no retry of a failed write. The tool is `FastInstallTool` (`--quick --backup B`
 or `--no-backup`), tested on the C# FakeRadio (`FastInstallTests.cs`).
 
-## Radio access (developer flag)
+## Data packs
 
-`RadioAccess.Enabled` is a compile-time constant, false in every normal build (the release exe and the setup). Only
+Page **"Veri paketleri / Data packs"** (docs/plus.md "User data packs" in the firmware): lists the radio keeps in
+the one data chip region the firmware may write, **0xE70000-0xEFFFFF**, two slots a type (RadioID 2 x 256 KB at
+0xE70000 / 0xEB0000, air band 2 x 16 KB at 0xEF0000 / 0xEF4000). Optional; needs DDM32 Plus v1.0.0-beta.4 or newer.
+
+- **What the radio has:** "Telsizdeki paketleri oku" reads the radio information and both slots of each type over
+  the firmware's own open-firmware CPS protocol (`R` area 9 and area 1 reads inside the region; no new protocol, no
+  write). "Yedekten göster..." reads the same from a verified backup's `q128-pass1.bin` (files only). The radio stays
+  switched on (the CPS talks to the running firmware, not the boot ROM).
+- **RadioID pack:** from RadioID.net's `user.csv` that the **user** downloads: "radioid.net'i aç" opens the download
+  page in the browser, "user.csv'yi indir" downloads `https://radioid.net/static/user.csv` on that click only (HTTPS,
+  radioid.net only). Countries as RadioID.net writes them (default Turkey). The list stays on the user's PC.
+- **Air band pack:** from the aerodromes' AIP **AD 2** PDFs the user downloads (in Turkey the DHMI eAIP); the
+  **AD 2.18** table of each page is read (PDF text with PdfPig). The aerodrome code comes from the file name
+  (`LT_AD_2_LTAC_en.pdf`) or the page.
+- **Write:** one confirmation, then the CPS session (`C` 0, screen text, `C` 6 4; no "save settings"), the pack into
+  the slot **not in force** with the next sequence number, its sectors as journaled sector writes (prepare, data,
+  commit) **payload first, the header's sector last**, every sector read back, then `C` 5 (the radio checks its
+  slots) and a check that the new pack is in force. A failure stops at once (no retry); the pack in force stays.
+- **The guard** (`CpsPackPort`): reads only inside the region (and the radio information); after the plan is set,
+  only the planned sectors, in plan order, each once, with exactly the planned bytes, committed only when whole; no
+  reboot, no settings save, no EEPROM / WAV / `W` / `D` command. Tests: `CpsPackTests.cs` (a fake CPS radio as
+  `cps_openfw.c` behaves, failures, refusals).
+- **Same bytes as `tools/datapack.py`:** the builder (CSV rules, text folding, short names, callsign packing, AD 2.18
+  parser, payloads, headers, slot choice, sequence, CPS order) is held to the Python builder on synthetic inputs
+  (`Fixtures/make_datapack_fixtures.py` -> `datapack-results.json`, `DataPackTests.cs`). Run the script again when
+  `tools/datapack.py`, `iddb.py` or `airfields.py` change. Only this program's builder tag differs
+  (`DDM32Plus-win 1`, datapack.py writes `datapack.py 1`); with the same tag the bytes are equal.
+- Never commit real RadioID or AIP data; the fixtures are made up.
+
+## Radio access and build flags
+
+Three compile-time flags (`Directory.Build.props`); nothing at run time can change them:
+
+| Flag | Release build and setup | What it does |
+|---|---|---|
+| `RadioAccess` | **true** | compiles the serial port in (`RadioAccess.Factory`): the read-only backup, the data pack read |
+| `RadioWrite` | **true** | the tools that write get a port (`RadioAccess.WriteFactory`): install, quick update, install without backup, restore, data pack write. Needs `RadioAccess` |
+| `Developer` | false | the developer-only features: the local release folder ("Yerel sürüm klasörü...", `--release-folder`), the backup folder choice, the title "DEVELOPER BUILD" |
+
+Owner's decision 2026-11-21: installs are done with this program, so the release build reaches the radio.
+`dotnet build -p:RadioAccess=false` gives a program that opens no port at all (its pages say so). The tests run the
+release configuration and also pass with `-p:RadioAccess=false -p:RadioWrite=false`; they never open a real port (a
+tool run without an explicit port factory gets none: `ToolContext.NoPort`).
+
+Every guard stays in either build: `ReadOnlyPort` (backup), `InstallPort` (install, restore), `CpsPackPort` (data
+packs) check every frame before it is sent. Every radio step needs its own click and confirmation; a failed write is
+never repeated.
+
+### A developer build
 
 ```
-dotnet build -p:RadioAccess=true
+dotnet publish src/DDM32Plus/DDM32Plus.csproj -p:PublishProfile=win-x64 -p:Developer=true -p:PublishDir=<new folder>\
 ```
 
-compiles the serial port in, and even then only for the **read-only backup**: the tools that write (install, quick
-update, install without backup, restore) get their port from `RadioAccess.WriteFactory`, which stays off in every build
-of this stage. Never run such a build against the radio without the owner's approval for that specific step
-(AGENTS.md hard safety rules); the tests check that the normal build refuses to open a port.
-
-### The developer build for the first real run
-
-Built (not installed, not part of the setup) with:
-
-```
-dotnet publish src/DDM32Plus/DDM32Plus.csproj -p:PublishProfile=win-x64 -p:RadioAccess=true -p:PublishDir=E:\GIT-REPO\ddm32-net\win\publish-dev\
-```
-
-Result: `win\publish-dev\DDM32Plus.exe`. Its title bar says **"DDM32 Plus 2.0.0-alpha.1 - DEVELOPER BUILD - radio
-access on"** and the pages say that only the backup reaches the radio. Its settings live next to the exe (or in
-`DDM32_DATA`). It opens no port until "Yedek al / Back up" is pressed; it then asks for the folder the backup goes to
-and writes `<folder>\dm32-YYYYMMDD\` and `<folder>\backup-dm32-YYYYMMDD.log`.
-
-The run (only after the owner's approval in chat for this step):
-
-1. Radio off, cable in (COM14). Start `win\publish-dev\DDM32Plus.exe`, accept the disclaimer, Update the radio >
-   Preparation (the cable shows COM14) > Backup > Back up, choose an empty folder outside the repository, for example
-   `E:\DDM32-dev-backups`.
-2. When the yellow "switch the radio off and on now" shows, switch the radio on. Wait for "VERIFIED" (both chips read
-   twice).
-
-The comparison with the Python backup of the same radio (a local compare; the private folder is never copied into
-the repository):
+Title **"DDM32 Plus 2.0.0-beta.1 - DEVELOPER BUILD - radio WRITE on"**; its settings live next to the exe (or in
+`DDM32_DATA`). Publish each variant into its own new folder; never delete inside a publish folder (the developer builds
+keep their settings next to the exe). The first real backup was compared with the Python tool's as follows (a local
+compare; the private folder is never copied into the repository):
 
 ```powershell
 $py = 'E:\GIT-REPO\open25-dm32\backups\dm32-047-plus-20261120-b'
@@ -140,28 +189,7 @@ foreach ($f in 'progmem-pass1.bin','progmem-pass2.bin','q128-pass1.bin','q128-pa
   $same = (Get-FileHash "$py\$f").Hash -eq (Get-FileHash "$cs\$f").Hash
   '{0,-30} {1}' -f $f, $(if ($same) { 'IDENTICAL' } else { 'DIFFERENT' })
 }
-python -c "import json,sys; a,b=(json.load(open(sys.argv[i]+r'\backup-manifest.json')) for i in (1,2)); skip={'started_utc','completed_utc','installed_firmware_user_reported'}; d=[k for k in sorted(set(a)|set(b)) if k not in skip and a.get(k)!=b.get(k)]; print('manifest differs in:', d or 'nothing')" $py $cs
 ```
-
-Expected: all five files IDENTICAL and the manifests equal apart from the time stamps and the free-text firmware note
-(`outgoing_commands` also differs if either run had to ask for a frame again). If the radio's settings changed between
-the two backups (the radio was used), the `q128` images differ legitimately: the program flash images must still be
-identical, and the changed data sectors are listed by comparing the manifests' `sector_sha256` lists:
-
-```powershell
-python -c "import json,sys; c=[json.load(open(sys.argv[i]+r'\backup-manifest.json'))['captures'] for i in (1,2)]; q=[[r for r in x if r['file']=='q128-pass1.bin'][0]['sector_sha256'] for x in c]; print([hex(i*4096) for i,(u,v) in enumerate(zip(*q)) if u!=v])" $py $cs
-```
-
-### The developer build with writing (owner's approval 2026-11-20, for their install)
-
-```
-dotnet publish src/DDM32Plus/DDM32Plus.csproj -p:PublishProfile=win-x64 -p:RadioAccess=true -p:RadioWrite=true -p:PublishDir=E:\GIT-REPO\ddm32-net\win\publish-dev-write\
-```
-
-`win\publish-dev-write\DDM32Plus.exe`, title **"DEVELOPER BUILD - radio WRITE on"**: backup, quick update, install
-without backup, normal install and restore reach the radio, with every guard unchanged. `RadioWrite` alone does
-nothing (it needs `RadioAccess`); neither is ever set for the release exe or the setup. Publish each variant into its
-own new folder; never delete inside a publish folder (the developer builds keep their settings next to the exe).
 
 ### A signed release from a local folder (developer builds)
 
@@ -181,7 +209,7 @@ seç..." takes it) for screenshots and demos; it only navigates and reads files.
 dotnet publish src/DDM32Plus/DDM32Plus.csproj -p:PublishProfile=win-x64
 ```
 
-Output: `win/publish/win-x64/DDM32Plus.exe` (about 60 MB): self-contained (the .NET runtime is inside), single file,
+Output: `win/publish/win-x64/DDM32Plus.exe` (about 61 MB): self-contained (the .NET runtime is inside), single file,
 compressed, x64. It runs on a stock Windows 10 (1809 or newer) or 11 with nothing installed.
 
 ## Setup (Inno Setup)
@@ -193,7 +221,11 @@ Install [Inno Setup](https://jrsoftware.org/isinfo.php) 6.3 or newer (7.1 builds
 ```
 
 (Inno Setup 6: `"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"`, or under `%LOCALAPPDATA%\Programs` for a per-user Inno install). Output:
-`win/publish/installer/DDM32Plus-Setup.exe`.
+`win/publish/installer/DDM32Plus-Setup-<version>.exe`.
+
+The program update zip for the signed manifest (`app_net`): `DDM32Plus-win-<version>.zip` holding only
+`DDM32Plus/DDM32Plus.exe` (the published exe; nothing user-specific), given to
+`pc/release/make_release.py build ... --app-net-zip ZIP --app-net-version <version>`, which checks it again.
 
 The setup installs **per user** to `%LOCALAPPDATA%\Programs\DDM32 Plus` without an administrator prompt, adds a Start
 menu and a desktop shortcut, and appears in Settings > Apps. Uninstalling removes the program, its settings and
@@ -210,6 +242,7 @@ Everything in its own install folder:
 | `yedekler\` | the radio's backups and logs (private: calibration, channels). Updates and uninstall never touch it |
 | `surumler\` | downloaded firmware releases and the verified manifest cache |
 | `guncelleme\` | program update staging, `rollback\` (the previous program files), `failed\` |
+| `paketler\` | data packs: the RadioID list you downloaded (`user.csv`), the packs built (`*.dpk`), the logs of pack reads and writes. Removed on uninstall |
 
 `DDM32_DATA=<folder>` moves all of these elsewhere (tests, screenshots).
 
@@ -249,4 +282,4 @@ the new program; if it does not report back within 90 s, the old files are put b
 
 `DDM32Plus.exe` and the setup are not code-signed yet, so Windows SmartScreen warns on the first run ("Windows
 protected your PC"). Click **More info**, then **Run anyway** (Türkçe: **Ek bilgi**, sonra **Yine de çalıştır**).
-Screenshots of these two clicks will be added here; the warning goes away once a code-signing certificate is used.
+The warning goes away once a code-signing certificate is used.

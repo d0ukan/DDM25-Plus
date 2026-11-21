@@ -56,3 +56,16 @@ data below are used by its own files and generators only, never by `--classic`.
 | RadioID.net user list and repeater list (`user.csv`, `rptrs.json`) | `tools/iddb.py`, `tools/rpt_list.py`; downloads kept in the git-ignored `research-data/` | Data © RadioID.net, credited on the radio ("Repeater data: RadioID.net"); the DMR ID database and the DMR repeaters of Tools > Repeaters. Never committed. |
 | TRAC (Telsiz ve Radyo Amatörleri Cemiyeti) repeater list | `tools/rpt_list.py` (`research-data/repeaters.csv`, the owner's copy of TRAC's published list) | Credited on the radio ("Repeater data: TRAC"); TRAC states no licence: the list is never committed, and an image that carries it is for the owner's radio until TRAC's permission is clear. |
 | CelesTrak amateur satellite elements | `tools/sat_tle.py`, `integration/radiofoundry/sat/tle.txt` | Public orbital element sets (NORAD / CelesTrak), Tools > Satellites. |
+
+## The Windows program (`win/`)
+
+The Windows program (C#, .NET 10, WPF) is GPL-3.0-or-later. Its published single-file `DDM32Plus.exe` carries the
+.NET runtime (MIT, Microsoft) and these NuGet packages:
+
+| Component | Version | Terms and use |
+| --- | --- | --- |
+| System.IO.Ports, System.Management | 10.0.x (Microsoft) | MIT; the serial port and Windows' device list (CH340 cable check). |
+| PdfPig (UglyToad) | 0.1.16 | Apache-2.0 (https://github.com/UglyToad/PdfPig); reads the text of the AIP pages the user chooses for an air band data pack. |
+
+Data packs are built on the user's PC from files the user downloads (RadioID.net's `user.csv`, the State's AIP
+pages); nothing of them is in this repository, a release or the program.

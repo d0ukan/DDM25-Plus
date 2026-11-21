@@ -104,6 +104,15 @@
                 </TabItem.Header>
                 <p:RestorePage x:Name="Restore" />
             </TabItem>
+            <TabItem x:Name="TabPacks">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8F1;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{l:Tr Tab_Packs}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <p:DataPacksPage x:Name="Packs" />
+            </TabItem>
             <TabItem x:Name="TabHealth">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">

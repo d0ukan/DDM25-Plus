@@ -1,0 +1,120 @@
+<UserControl x:Class="DDM32Plus.Views.Pages.DataPacksPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:DDM32Plus.Localization">
+    <!-- Veri paketleri / Data packs (docs/plus.md "User data packs"): what the radio holds, building a RadioID pack and
+         an air band pack from files the user downloaded, writing one to the radio over the CPS protocol -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Packs}" />
+            <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Pack_Text}" />
+            <TextBlock x:Name="CableText" Style="{StaticResource Plain}" />
+
+            <!-- what the radio holds -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Pack_OnRadio}" FontSize="{StaticResource Size4}" FontWeight="Bold" />
+                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Pack_OnRadioText}" />
+                    <WrapPanel Margin="0,4,0,0">
+                        <Button x:Name="ReadButton" Style="{StaticResource IconButton}" Tag="&#xE896;" Margin="0,0,8,4"
+                                Content="{l:Tr Pack_Read}" ToolTip="{l:Tr Pack_ReadTip}" Click="OnRead" />
+                        <Button x:Name="FromBackupButton" Style="{StaticResource IconButton}" Tag="&#xE8B7;" Margin="0,0,8,4"
+                                Content="{l:Tr Pack_FromBackup}" ToolTip="{l:Tr Pack_FromBackupTip}" Click="OnFromBackup" />
+                    </WrapPanel>
+                    <TextBlock x:Name="RadioText" Style="{StaticResource Plain}" />
+                </StackPanel>
+            </Border>
+
+            <!-- RadioID -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Pack_RadioIdTitle}" FontSize="{StaticResource Size4}" FontWeight="Bold" />
+                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Pack_RadioIdText}" />
+                    <WrapPanel Margin="0,4,0,0">
+                        <Button Style="{StaticResource IconButton}" Tag="&#xE774;" Margin="0,0,8,4" Content="{l:Tr Pack_OpenRadioId}"
+                                ToolTip="{l:Tr Pack_OpenRadioIdTip}" Click="OnOpenRadioId" />
+                        <Button x:Name="DownloadButton" Style="{StaticResource IconButton}" Tag="&#xE896;" Margin="0,0,8,4"
+                                Content="{l:Tr Pack_Download}" ToolTip="{l:Tr Pack_DownloadTip}" Click="OnDownload" />
+                        <Button Style="{StaticResource IconButton}" Tag="&#xE8E5;" Margin="0,0,8,4" Content="{l:Tr Pack_ChooseCsv}"
+                                Click="OnChooseCsv" />
+                    </WrapPanel>
+                    <TextBlock x:Name="CsvText" Style="{StaticResource Plain}" />
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{l:Tr Pack_Countries}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBox x:Name="Countries" Grid.Column="1" ToolTip="{l:Tr Pack_CountriesTip}" />
+                        <TextBlock Grid.Column="2" Text="{l:Tr Pack_Name}" VerticalAlignment="Center" Margin="12,0,6,0" />
+                        <TextBox x:Name="RadioIdName" Grid.Column="3" MaxLength="16" />
+                    </Grid>
+                    <Button x:Name="BuildRadioIdButton" Style="{StaticResource IconButton}" Tag="&#xE74E;" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Content="{l:Tr Pack_Build}" Click="OnBuildRadioId" />
+                    <TextBlock x:Name="RadioIdResult" Style="{StaticResource Plain}" />
+                </StackPanel>
+            </Border>
+
+            <!-- air band -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Pack_AirTitle}" FontSize="{StaticResource Size4}" FontWeight="Bold" />
+                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Pack_AirText}" />
+                    <WrapPanel Margin="0,4,0,0">
+                        <Button Style="{StaticResource IconButton}" Tag="&#xE774;" Margin="0,0,8,4" Content="{l:Tr Pack_OpenAip}"
+                                ToolTip="{l:Tr Pack_OpenAipTip}" Click="OnOpenAip" />
+                        <Button Style="{StaticResource IconButton}" Tag="&#xE710;" Margin="0,0,8,4" Content="{l:Tr Pack_AddPdf}"
+                                Click="OnAddPdf" />
+                        <Button Style="{StaticResource IconButton}" Tag="&#xE74D;" Margin="0,0,8,4" Content="{l:Tr Pack_Clear}"
+                                Click="OnClearPdf" />
+                    </WrapPanel>
+                    <TextBlock x:Name="AirList" Style="{StaticResource Plain}" />
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{l:Tr Pack_Name}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBox x:Name="AirName" Grid.Column="1" MaxLength="16" />
+                    </Grid>
+                    <Button x:Name="BuildAirButton" Style="{StaticResource IconButton}" Tag="&#xE74E;" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Content="{l:Tr Pack_Build}" Click="OnBuildAir" />
+                    <TextBlock x:Name="AirResult" Style="{StaticResource Plain}" />
+                </StackPanel>
+            </Border>
+
+            <!-- write -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="{l:Tr Pack_WriteTitle}" FontSize="{StaticResource Size4}" FontWeight="Bold" />
+                    <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr Pack_WriteText}" />
+                    <TextBlock x:Name="ChosenText" Style="{StaticResource Plain}" />
+                    <WrapPanel Margin="0,4,0,0">
+                        <Button x:Name="WriteRadioIdButton" Style="{StaticResource BigButton}" Tag="&#xE898;" Margin="0,0,8,4"
+                                Content="{l:Tr Pack_WriteRadioId}" Click="OnWriteRadioId" />
+                        <Button x:Name="WriteAirButton" Style="{StaticResource BigButton}" Tag="&#xE898;" Margin="0,0,8,4"
+                                Content="{l:Tr Pack_WriteAir}" Click="OnWriteAir" />
+                    </WrapPanel>
+                    <Button x:Name="LoadButton" Content="{l:Tr Pack_LoadDpk}" HorizontalAlignment="Left" Click="OnLoadDpk" />
+                    <ProgressBar x:Name="Progress" Height="14" Maximum="100" Margin="0,6" />
+                    <TextBlock x:Name="Result" Style="{StaticResource Plain}" />
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="AccessNote" Style="{StaticResource NextStage}">
+                <StackPanel>
+                    <TextBlock x:Name="AccessTitle" FontWeight="Bold" FontSize="{StaticResource Size2}" />
+                    <TextBlock x:Name="AccessText" Style="{StaticResource Plain}" />
+                </StackPanel>
+            </Border>
+            <Expander Header="{l:Tr Common_Details}">
+                <TextBox x:Name="LogText" IsReadOnly="True" FontFamily="Consolas" TextWrapping="NoWrap" Margin="16,4,0,0"
+                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="240" />
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -99,10 +99,10 @@
     <value>Yenile</value>
   </data>
   <data name="Common_NextStageTitle" xml:space="preserve">
-    <value>Bir sonraki aşamada</value>
+    <value>Sonraki bir sürümde</value>
   </data>
   <data name="Common_NextStage" xml:space="preserve">
-    <value>Bu sayfanın telsizle çalışan kısmı bir sonraki aşamada gelecek. Her telsiz aracı önce Python aracıyla kayıtlı örnekler üzerinde bayt bayt karşılaştırılarak doğrulanacak. Bu sürüm telsize hiç bağlanmaz ve seri port açmaz.</value>
+    <value>Bu sayfanın telsizi okuyan kısmı sonraki bir sürümde gelecek; o zamana kadar bu sayfa telsize bağlanmaz. Her telsiz aracı önce Python aracıyla kayıtlı örnekler üzerinde bayt bayt karşılaştırılarak doğrulanır.</value>
   </data>
   <data name="Lang_Prompt" xml:space="preserve">
     <value>Dil seçin / Choose your language</value>
@@ -912,5 +912,195 @@ Yedek yok. Yazma yarıda kalırsa geri dönülecek yedek olmaz.
   </data>
   <data name="Prog_Verify" xml:space="preserve">
     <value>Yazılan program okunup doğrulanıyor: %{0}</value>
+  </data>
+  <data name="Tab_Packs" xml:space="preserve">
+    <value>Veri paketleri</value>
+  </data>
+  <data name="Pack_Text" xml:space="preserve">
+    <value>Veri paketleri telsizin veri yongasında tuttuğu listelerdir: **RadioID paketi** (DMR kimliklerinin adları) ve **hava bandı paketi** (meydanların frekansları). Bu sayfa onları **kendi indirdiğiniz** dosyalardan (radioid.net, devletin AIP sayfaları) bilgisayarınızda oluşturur ve birini telsize yazar. Bu listelerin hiçbiri programla gelmez. İsteğe bağlıdır: telsiz paketsiz de çalışır. Telsizde DDM32 Plus v1.0.0-beta.4 veya yenisi gerekir.</value>
+  </data>
+  <data name="Pack_OnRadio" xml:space="preserve">
+    <value>Telsizde olanlar</value>
+  </data>
+  <data name="Pack_OnRadioText" xml:space="preserve">
+    <value>Telsiz açık olmalı, DDM32 Plus çalışmalı ve kablo takılı olmalı; kapatıp açmanız gerekmez. Canlı okuma telsizin kendi programlama (CPS) protokolünü kullanır ve yalnızca okur. Doğrulanmış bir yedek, alındığı andaki durumu gösterir (yalnızca dosyalar).</value>
+  </data>
+  <data name="Pack_Read" xml:space="preserve">
+    <value>Telsizdeki paketleri oku</value>
+  </data>
+  <data name="Pack_ReadTip" xml:space="preserve">
+    <value>Telsiz bilgisini ve her paket türünün iki yuvasını okur (yalnızca okuma)</value>
+  </data>
+  <data name="Pack_FromBackup" xml:space="preserve">
+    <value>Yedekten göster...</value>
+  </data>
+  <data name="Pack_FromBackupTip" xml:space="preserve">
+    <value>Doğrulanmış bir yedeğin veri yongası görüntüsündeki paketleri gösterir (telsiz gerekmez)</value>
+  </data>
+  <data name="Pack_RadioIdTitle" xml:space="preserve">
+    <value>RadioID paketi</value>
+  </data>
+  <data name="Pack_RadioIdText" xml:space="preserve">
+    <value>RadioID.net'in kullanıcı listesini (**user.csv**) kendiniz indirin: sayfayı tarayıcıda açın ya da tıkladığınızda program radioid.net'ten indirsin. Sonra ülkeleri seçin (virgülle, RadioID.net'in yazdığı gibi) ve paketi oluşturun. Liste bilgisayarınızda kalır; program onu kimseye vermez.</value>
+  </data>
+  <data name="Pack_OpenRadioId" xml:space="preserve">
+    <value>radioid.net'i aç</value>
+  </data>
+  <data name="Pack_OpenRadioIdTip" xml:space="preserve">
+    <value>RadioID.net'in veri tabanı indirme sayfasını tarayıcıda açar</value>
+  </data>
+  <data name="Pack_Download" xml:space="preserve">
+    <value>user.csv'yi indir</value>
+  </data>
+  <data name="Pack_DownloadTip" xml:space="preserve">
+    <value>Listeyi radioid.net'ten programın paketler klasörüne indirir</value>
+  </data>
+  <data name="Pack_ChooseCsv" xml:space="preserve">
+    <value>CSV seç...</value>
+  </data>
+  <data name="Pack_Countries" xml:space="preserve">
+    <value>Ülkeler:</value>
+  </data>
+  <data name="Pack_CountriesTip" xml:space="preserve">
+    <value>Örneğin: Turkey, Cyprus</value>
+  </data>
+  <data name="Pack_Name" xml:space="preserve">
+    <value>Ad:</value>
+  </data>
+  <data name="Pack_Build" xml:space="preserve">
+    <value>Paketi oluştur</value>
+  </data>
+  <data name="Pack_AirTitle" xml:space="preserve">
+    <value>Hava bandı paketi</value>
+  </data>
+  <data name="Pack_AirText" xml:space="preserve">
+    <value>Devletinizin AIP'sinden meydanların **AD 2** sayfalarını (PDF) kendiniz indirin; Türkiye'de DHMİ eAIP. Program her sayfanın **AD 2.18** tablosunu (ATS haberleşme kolaylıkları) okur. Paketin adını verdiği meydan telsizde paketin frekans listesini alır; diğerleri yerleşik tabloyla kalır.</value>
+  </data>
+  <data name="Pack_OpenAip" xml:space="preserve">
+    <value>DHMİ AIP sayfasını aç</value>
+  </data>
+  <data name="Pack_OpenAipTip" xml:space="preserve">
+    <value>AIP sayfasını tarayıcıda açar</value>
+  </data>
+  <data name="Pack_AddPdf" xml:space="preserve">
+    <value>AD 2 PDF ekle...</value>
+  </data>
+  <data name="Pack_Clear" xml:space="preserve">
+    <value>Listeyi temizle</value>
+  </data>
+  <data name="Pack_WriteTitle" xml:space="preserve">
+    <value>Telsize yaz</value>
+  </data>
+  <data name="Pack_WriteText" xml:space="preserve">
+    <value>Paket **kullanımda olmayan** yuvaya gider: önce bölümleri, en son başlığı. Son bölüme kadar telsiz elindeki paketi kullanır; bir şey ters giderse o paket kalır. Veri yongasının yalnızca veri paketi bölgesi (0xE70000-0xEFFFFF) yazılır; program başka her adresi reddeder. Telsiz açık kalır.</value>
+  </data>
+  <data name="Pack_WriteRadioId" xml:space="preserve">
+    <value>RadioID paketini yaz</value>
+  </data>
+  <data name="Pack_WriteAir" xml:space="preserve">
+    <value>Hava bandı paketini yaz</value>
+  </data>
+  <data name="Pack_LoadDpk" xml:space="preserve">
+    <value>.dpk dosyası seç...</value>
+  </data>
+  <data name="Pack_DescRadioId" xml:space="preserve">
+    <value>RadioID paketi "{0}", {1}: {2} kimlik, {3}</value>
+  </data>
+  <data name="Pack_DescAir" xml:space="preserve">
+    <value>Hava bandı paketi "{0}", {1}: {2} meydan, {3}</value>
+  </data>
+  <data name="Pack_NoCsv" xml:space="preserve">
+    <value>Henüz liste seçilmedi.</value>
+  </data>
+  <data name="Pack_Csv" xml:space="preserve">
+    <value>Liste: {0} ({1})</value>
+  </data>
+  <data name="Pack_NoPdf" xml:space="preserve">
+    <value>Henüz sayfa eklenmedi.</value>
+  </data>
+  <data name="Pack_AirSource" xml:space="preserve">
+    <value>{0}: {1} frekans ({2}) {3}</value>
+  </data>
+  <data name="Pack_Skipped" xml:space="preserve">
+    <value>Dışarıda kalan: sığmayan {0} çağrı işareti, {1} hatalı kimlik, {2} tekrarlanan kimlik</value>
+  </data>
+  <data name="Pack_NothingBuilt" xml:space="preserve">
+    <value>Henüz oluşturulmuş ya da seçilmiş paket yok.</value>
+  </data>
+  <data name="Pack_NotRead" xml:space="preserve">
+    <value>Henüz okunmadı.</value>
+  </data>
+  <data name="Pack_TypeRadioId" xml:space="preserve">
+    <value>RadioID</value>
+  </data>
+  <data name="Pack_TypeAir" xml:space="preserve">
+    <value>Hava bandı</value>
+  </data>
+  <data name="Pack_SlotEmpty" xml:space="preserve">
+    <value>{0} yuva {1} ({2}): boş</value>
+  </data>
+  <data name="Pack_SlotDamaged" xml:space="preserve">
+    <value>{0} yuva {1} ({2}): "{3}" bozuk, kullanılmıyor</value>
+  </data>
+  <data name="Pack_SlotInForce" xml:space="preserve">
+    <value>{0} yuva {1} ({2}): "{3}", {4}, {5} kayıt, {6}, sıra {7}: KULLANIMDA</value>
+  </data>
+  <data name="Pack_SlotOld" xml:space="preserve">
+    <value>{0} yuva {1} ({2}): "{3}", {4}, {5} kayıt, {6}, sıra {7}: eski</value>
+  </data>
+  <data name="Pack_RadioInfo" xml:space="preserve">
+    <value>Telsiz: {0} ({1})</value>
+  </data>
+  <data name="Pack_Plan" xml:space="preserve">
+    <value>Yuva {0} ({1}) yazılıyor: {2} bölüm, sıra {3}.</value>
+  </data>
+  <data name="Pack_Reading" xml:space="preserve">
+    <value>Telsiz okunuyor...</value>
+  </data>
+  <data name="Pack_ReadDone" xml:space="preserve">
+    <value>Okundu.</value>
+  </data>
+  <data name="Pack_Failed" xml:space="preserve">
+    <value>Olmadı: {0}</value>
+  </data>
+  <data name="Pack_NotVerified" xml:space="preserve">
+    <value>doğrulanmış bir yedek değil</value>
+  </data>
+  <data name="Pack_FromBackupOf" xml:space="preserve">
+    <value>Yedek {0}:</value>
+  </data>
+  <data name="Pack_DownloadConfirm" xml:space="preserve">
+    <value>RadioID.net'in kullanıcı listesi şimdi indirilsin mi?
+{0}
+
+Dosya büyüktür (onlarca MB). Kendi kullanımınız içindir; başkasına vermeyin.</value>
+  </data>
+  <data name="Pack_Downloading" xml:space="preserve">
+    <value>İndiriliyor: {0}</value>
+  </data>
+  <data name="Pack_Confirm" xml:space="preserve">
+    <value>{0}
+
+{1} üzerinden telsize yazılacak.
+
+Yuvalar {2}: kullanımda olmayanı; {3} bölüm, önce yük, en son başlık. Telsiz sona kadar şimdiki paketini kullanır. Yalnızca 0xE70000-0xEFFFFF yazılır.
+
+Telsiz açık olmalı ve DDM32 Plus çalışmalı. Şimdi yazılsın mı?</value>
+  </data>
+  <data name="Pack_ConfirmTitle" xml:space="preserve">
+    <value>Veri paketini yaz</value>
+  </data>
+  <data name="Pack_Writing" xml:space="preserve">
+    <value>Paket yazılıyor...</value>
+  </data>
+  <data name="Pack_WriteDone" xml:space="preserve">
+    <value>TAMAM: yeni paket kullanımda (telsizde Ayarlar &gt; Hakkında gösterir).</value>
+  </data>
+  <data name="Pack_WriteFailed" xml:space="preserve">
+    <value>Paket yazılamadı: {0}
+Telsizdeki önceki paket hâlâ kullanımda.</value>
+  </data>
+  <data name="Pack_ScreenLine" xml:space="preserve">
+    <value>Veri paketi</value>
   </data>
 </root>
