@@ -29,5 +29,7 @@ slint-build = "=1.16.1"
 
 [dev-dependencies]
 hex = "0.4"
+base64 = "0.22"
+flate2 = "1"
 png = "0.18"
 regex = "1"

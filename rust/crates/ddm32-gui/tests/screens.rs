@@ -126,6 +126,9 @@ fn every_screen_in_both_themes() {
         ("packs", 3, 0, 0, ""),
         ("settings", 4, 0, 0, ""),
         ("about", 5, 0, 0, ""),
+        ("health", 7, 0, 0, ""),
+        ("live", 8, 0, 0, ""),
+        ("channels", 9, 0, 0, ""),
     ];
     let dir = shots();
     for lang in ["tr", "en"] {

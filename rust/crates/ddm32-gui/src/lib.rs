@@ -6,6 +6,7 @@
 //! `yedekler` and are found by themselves (ddm32_core::storage::backups); the user never chooses a folder.
 
 pub mod i18n;
+pub mod radio_pages;
 
 slint::include_modules!();
 
@@ -43,21 +44,28 @@ pub struct State {
     pub tracker: ProgressTracker,
     /// A note shown once on Home (the last program update's result).
     pub note: Option<String>,
+    /// My channels: the decoded codeplug of the newest verified backup.
+    pub codeplug: Option<ddm32_core::codeplug::Codeplug>,
+    /// The live view: the stop switch of the running reader and the lines of the poll being read.
+    pub live_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    pub live_once: Vec<String>,
+    pub live_poll: Vec<String>,
+    pub live_in_poll: bool,
 }
 
 thread_local! {
     static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
 }
 
-fn with<R>(f: impl FnOnce(&mut State) -> R) -> R {
+pub(crate) fn with<R>(f: impl FnOnce(&mut State) -> R) -> R {
     STATE.with(|s| f(s.borrow_mut().as_mut().expect("controller set up")))
 }
 
-fn tr(key: &str) -> String {
+pub(crate) fn tr(key: &str) -> String {
     with(|s| i18n::t(&s.lang, key))
 }
 
-fn trf(key: &str, arg: &str) -> String {
+pub(crate) fn trf(key: &str, arg: &str) -> String {
     with(|s| i18n::tf(&s.lang, key, arg))
 }
 
@@ -147,9 +155,15 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
             pack: None,
             tracker: ProgressTracker::new(),
             note: None,
+            codeplug: None,
+            live_cancel: None,
+            live_once: vec![],
+            live_poll: vec![],
+            live_in_poll: false,
         })
     });
     wire(ui);
+    radio_pages::wire(ui);
     refresh(ui);
     if first_start {
         app.set_page(6);
@@ -303,6 +317,9 @@ fn navigate(ui: &AppWindow, page: i32) {
         app.set_backup_choice(0);
         app.set_understood(false);
         set_step(ui, 0);
+    }
+    if page == 9 {
+        radio_pages::load_channels(ui);
     }
     if page == 2 {
         app.set_selected_backup(-1);
@@ -507,7 +524,7 @@ fn set_step(ui: &AppWindow, step: i32) {
     set_message(ui, "", "info");
 }
 
-fn port() -> Option<String> {
+pub(crate) fn port() -> Option<String> {
     cable_ports().into_iter().next()
 }
 
@@ -897,6 +914,7 @@ pub fn demo(ui: &AppWindow) {
     app.set_installed_text(i18n::tf(&lang, "installed", "DDM32 Plus 1.0.0-beta.4 (Beta)").into());
     app.set_app_update_text(i18n::tf(&lang, "pu_available", "3.0.0-beta.1").into());
     app.set_app_update_available(true);
+    radio_pages::demo(ui, &lang);
     app.set_versions(ModelRc::new(VecModel::from(vec![
         VersionRow {
             version: "1.0.0".into(),

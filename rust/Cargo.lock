@@ -1138,7 +1138,9 @@ dependencies = [
 name = "ddm32-gui"
 version = "3.0.0-alpha.1"
 dependencies = [
+ "base64",
  "ddm32-core",
+ "flate2",
  "hex",
  "png 0.18.1",
  "regex",

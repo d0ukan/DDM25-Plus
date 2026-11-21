@@ -4,13 +4,14 @@
 import { ScrollView } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Tr, Label, Muted, Title, Button, Card, Notice, Check, Choice, Progress } from "widgets.slint";
-export { Theme, Tr }
+import { Radio, Fact, TableRow, HealthPage, LivePage, ChannelsPage } from "radio_pages.slint";
+export { Theme, Tr, Radio, Fact, TableRow }
 
 export struct VersionRow { version: string, label: string, notes: string, local: bool }
 export struct BackupRow { name: string, detail: string, origin: string, kind: string }
 
 export global App {
-    // 0 home, 1 update wizard, 2 backups and going back, 3 data packs, 4 settings, 5 about, 6 first start
+    // 0 home, 1 update wizard, 2 backups and going back, 3 data packs, 4 settings, 5 about, 6 first start, 7 health, 8 live, 9 my channels
     in-out property <int> page: 0;
     // the home screen
     in property <string> radio-text;
@@ -131,11 +132,13 @@ component Home inherits VerticalLayout {
         spacing: Theme.gap;
         Button { text: Tr.t(Tr.lang, "home_backups"); clicked => { App.navigate(2); } }
         Button { text: Tr.t(Tr.lang, "home_packs"); clicked => { App.navigate(3); } }
+        Button { text: Tr.t(Tr.lang, "home_channels"); clicked => { App.navigate(9); } }
     }
     HorizontalLayout {
         spacing: Theme.gap;
+        Button { text: Tr.t(Tr.lang, "home_health"); clicked => { App.navigate(7); } }
+        Button { text: Tr.t(Tr.lang, "home_live"); clicked => { App.navigate(8); } }
         Button { text: Tr.t(Tr.lang, "home_settings"); clicked => { App.navigate(4); } }
-        Button { text: Tr.t(Tr.lang, "home_about"); clicked => { App.navigate(5); } }
     }
     Rectangle { vertical-stretch: 1; }
     // calm facts, at the bottom: what the radio runs (by the last backup) and where the backups are
@@ -149,6 +152,14 @@ component Home inherits VerticalLayout {
             HorizontalLayout {
                 spacing: Theme.gap;
                 Muted { text: App.backups-text + "  " + App.backups-folder; vertical-alignment: center; }
+                Button {
+                    text: Tr.t(Tr.lang, "home_about");
+                    horizontal-stretch: 0;
+                    min-width: 110px;
+                    max-height: 40px;
+                    min-height: 36px;
+                    clicked => { App.navigate(5); }
+                }
                 Button {
                     text: Tr.t(Tr.lang, "b_open");
                     horizontal-stretch: 0;
@@ -457,6 +468,9 @@ export component AppWindow inherits Window {
     if App.page == 4 : Settings {}
     if App.page == 5 : About {}
     if App.page == 6 : FirstStart {}
+    if App.page == 7 : HealthPage {}
+    if App.page == 8 : LivePage {}
+    if App.page == 9 : ChannelsPage {}
 
     // the second confirmation of the install without backup
     if App.confirm-open : Rectangle {
