@@ -1,159 +1,58 @@
-# Building Classic
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2026 Open25-DM32 Contributors -->
 
-Use Python 3.10+, a host C/C++ compiler, Git, Make and the C-SKY toolchain.
-Keep active builds on internal storage.
+# Building Classic r14
 
-```sh
-make sources
-make toolchain
-sh tools/bootstrap_newlib.sh
-make radiofoundry
-```
-
-`make radiofoundry` selects Classic: original RadioFoundry UI, FM, DMR and
-saved conventional P25 channels. It enables normal PTT, storage, channel editing
-and CPS. It omits the first-boot restrictions and bench replay controls.
-The embedded full-rate IMBE codec uses fixed-point C and caller-owned storage;
-no Rust toolchain, trunking or newer UI source is needed. Dependencies and codec
-snapshots are pinned in `sources.lock.json` and the build recipe.
-
-For a release candidate, also verify a forced rebuild:
+Use Python 3.11+, Git, GNU Make, a host C compiler and an existing CK803S C-SKY
+toolchain. Preparing sources requires access to the two public Git repositories
+pinned in `sources.lock.json`.
 
 ```sh
-python3 tools/build_radiofoundry.py --classic --stack-check --verify-rebuild
-make test
+$(tools/rfoundry_python.sh) tools/prepare_upstream.py
+$(tools/rfoundry_python.sh) tools/build_release.py --cross /path/to/csky-elf- --stack-check --verify-rebuild
 ```
 
-The builder rejects target compiler warnings, checks the ABI and records source,
-generated-source and output hashes. `make test` covers the standalone CAI
-library with sanitizers, conventional protocol/FEC, codec,
-audio, native modem ownership, the FM/DMR state machine, P25 channel persistence
-and the original UI's P25 editor. Host checks do not establish RF interoperability.
+The prepared source is `build/upstream`. The application, deterministic ZIP,
+build receipt and logs are under `build/upstream/build/classic-test`. The wrapper
+uses the Classic profile from the reconstructed source and pins version,
+`RFOUNDRY_GIT_TIME`, `SOURCE_DATE_EPOCH` and `RELEASE=` independently of local Git
+dates or tags. The recorded epoch is 1795197378. It refuses compiler warnings,
+checks the application size/hash, optionally checks stacks and an identical
+forced rebuild, then checks the ZIP against the reviewed package hash.
 
-The audio FIFO scheduling fix follows RadioFoundry PR #660, including its PCM
-refill on timer 6. Classic's native P25 lease guard uses timer 4, reserved in
-`integration/radiofoundry/native/hrc_native_port.h`; the PA delay uses timer 3.
-Both board preparation and the interrupt port check that same guard reservation.
-Native P25 builds reject APRS because APRS also requires timer 4. The Classic
-preset already disables APRS. The native regression runs the generated PCM
-driver with the real P25 interrupt port to check TX/RX start, lease expiry,
-stop and cleanup without replacing or stopping the other owner's timer.
+The exact release compiler is GCC 14.3.0 with binutils 2.45.1 and newlib
+4.5.0.20241231. The linked archive fingerprints are recorded in
+`sources.lock.json`. The tested newlib used CK803S, little endian, soft float,
+no high registers, `-Os`, nano malloc, small reentrancy and no supplied syscalls.
+Different toolchains or library builds can change the resulting bytes. The
+upstream toolchain bootstrap uses other versions and is not an exact recipe for
+this release. Toolchain executables and libraries are not bundled here.
 
-Phase 1 wire coding and framing use the pinned library in
-`third_party/p25cai`; the existing conventional `p25.h` interface is retained.
-`sources.lock.json` owns the snapshot revision, exact file hashes and the two
-caller-binding copies in `src/p25`. Builds and host tests reject a changed
-snapshot or binding. To refresh, select a reviewed library revision, replace
-the snapshot and both bindings together, update its lock record, and run
-`python3 tools/sources.py verify-vendored` followed by the full tests and
-target checks. Keep library changes with its source owner and refresh these
-copies from that revision. The codec and application policy keep their
-existing interfaces and notices.
+Source preparation checks every overlay hash before copying. Repeating it
+checks the prepared upstream commit, source changes, overlay and FreeRTOS. A
+changed manifest or unexpected source edit causes refusal; preserve that working
+directory and prepare a separate one with `--out` rather than deleting work.
+For an already available source cache, `--upstream-local /path/to/git-source` and
+`--freertos-local /path/to/git-source` fetch the same pinned commits from those
+repositories. They do not change the required identities.
 
-The same snapshot rule applies to `third_party/imbe`: its source owner supplies
-the copied `src/codec/dm32_imbe.h` and `src/runtime/memory.c`. The lock verifies
-all three together. Refresh Classic and Next from the same reviewed library
-revision. A context/layout change requires complete application RAM/stack checks.
-The target memory implementation is compiled with the measured `-O2` per-file
-preset; other application files retain their existing build optimization.
-
-Output is under `build/radiofoundry-p25/build/dm32-p25-classic/`.
-The application has no proprietary AMBE codec. To make the same application-only
-ZIP offered by Flasher v3:
+Run the firmware's host regressions and Classic policy/UI/package checks:
 
 ```sh
-python3 tools/prepare_web_firmware.py \
-  --image build/radiofoundry-p25/build/dm32-p25-classic/rfoundry_dm32.bin \
-  --out artifacts/firmware/Open25-DM32-Classic-0.1.0-rc1-r13-p25-tx-cleanup-application.zip
+make -C build/upstream/tests/host
+$(tools/rfoundry_python.sh) build/upstream/tools/test_classic_bands.py
+$(tools/rfoundry_python.sh) build/upstream/tools/test_classic_product.py
 ```
 
-The packager verifies the application and linker-map hashes against the build
-manifest, checks the reserved codec layout, and writes only `firmware.json` and
-`application.bin`. The manifest records `codecTablesEnd` from the verified
-linker map; older ZIPs without that field retain the old table limit. It refuses
-to replace an existing ZIP. The runtime version is
-`open25-classic-0.1.0-rc1-r13`; `r13` identifies this catalog/package revision.
-Firmware binaries and ZIPs stay in ignored output directories and are never
-committed to GitHub. No build or packaging command opens or installs a radio.
+Use Clang for the Classic sanitizer checks. The complete upstream host suite
+retains its documented optional tool requirements. A separate sanitized host run
+requires a clean host-test output because its binaries do not track sanitizer
+flags; preserve existing test evidence before changing that output. These tests
+use software fixtures and do not qualify RF interoperability or speech quality.
 
-The installer preserves a valid compatible DMR codec in its reserved location.
-For first installation from RadioFoundry-recognized DM32 OEM codecs (.032
-through NRFB .050, including .046 HR and NRF/fanti .049), it
-prepares that radio's own codec in the reserved slot after validating its code
-and tables independently. It preserves the
-bootloader and data chip. Full backup/restore covers both complete chips,
-including the codec area.
-Local `--with-local-stock` unit images contain proprietary material and must stay
-private; they are not inputs to this public packager.
-
-In the channel editor, choose P25 mode and set Talkgroup, RX NAC, TX NAC and
-P25 Radio ID. NAC values have three hexadecimal digits. TX NAC initially shows
-**Same as RX**; confirming it unchanged keeps that inheritance. Typing a number
-creates an explicit TX NAC, even if it equals RX. In the TX editor, Down from
-the first digit selects **Same as RX** again. A numeric override stays fixed
-when RX NAC changes. Up/Down moves between digits and the knob changes a digit.
-
-RX NAC `F7E` accepts any NAC. Inherited TX uses the receive NAC, or `293` when
-RX is wildcard `F7E`; a numeric override remains explicit and fixed. TX NAC
-`000` is valid; explicit TX `F7E`/`F7F` and RX `F7F` are rejected.
-Transmit still requires a nonzero talkgroup and radio ID from 1 to 16777214.
-
-RFKV mode records are the only supported Classic P25 programming format.
-Retired A5/D/E channel records are refused without conversion. If such records
-are present, normal editing uses the existing foreign-codeplug gate and requires
-an explicit **Start new** choice; boot and detection never erase them. The
-matching Classic CPS uses the same canonical format and refuses older firmware.
-
-
-Selected-channel P25 is supported; P25 scanning and VFO are not in this candidate.
-FM/DMR scanning skips P25 entries. Normal radio protections remain active.
-
-Legacy development flags remain available for regression work. `--first-boot`
-blocks ordinary TX/writes; `--tx-bench` additionally requires `--dev-update` and
-uses fixed bench settings. Neither is the Classic release preset, and those
-flags cannot be combined with `--classic`.
-
-## RFKV programming release
-
-Classic r9 and the matching Classic CPS use RadioFoundry's RFKV v1 mode records
-and the existing journaled continuation mechanism. There is no reader, writer
-or automatic conversion for retired Classic A5/D/E P25 programming. Recreate old
-programming in the current CPS or use the radio's explicit Start new workflow.
-The underlying standard FM/DMR base records remain unchanged.
-
-The firmware reports `codeplug=rfkv1` and `codeplug_chain=1`; the editor checks
-both before programming. Update firmware and CPS together. No build, package or
-host-test command flashes or programs a physical radio.
-
-New standard P25 channels select Normal (all groups on the RX NAC) or Selective
-(the saved talkgroup). Explicit TX NAC `000` and fixed TX equal to RX remain
-distinct from inheritance. Conventional unit IDs use the upstream 24-bit range
-through `0xFFFFFE`; the selected codec and voice bitstream are unchanged.
-
-## RX-only defaults in r10
-
-The radio editor and matching Classic CPS default new/copied channels outside
-144–148 and 420–450 MHz to RX-only. A committed edit that changes actual TX to
-an outside frequency restores RX-only, including RX-offset and Talkaround
-changes. Existing RFKV records and imported programming retain their saved
-choices; the encoder and storage format are unchanged.
-
-Disabling RX-only outside those ranges opens the existing confirmation owner.
-Keep RX-only is selected by default; explicit Enable TX changes the draft's
-existing flag and normal Save persists it. No acknowledgement flag or per-PTT
-prompt is added. The independent P25 transmit-frequency restriction and other
-admission checks remain active.
-
-The full UI regression covers new/copy defaults, effective TX edits, confirmation
-accept/cancel, in-band behavior, existing-record preservation and display fit.
-Run the normal full host suite and target stack/ABI/identical-rebuild checks
-above before packaging a release.
-
-## P25 capability advertisement in r11
-
-The shared firmware feature list advertises `P25` only when
-`CONFIG_P25_CHANNELS` is enabled. `make classic-test` compiles the real VERSION
-handler, formatter and feature list for disabled, lab-only and Classic builds.
-It checks the returned capability tokens and RFKV programming markers. The
-matching CPS regression parses the same C handler response and checks the form
-and table mode choices without relying on an existing P25 channel.
+The source overlay is deliberately separate from installation. Loading the
+application alone does not convert r13 programming; use migration-aware Flasher
+v3 for that operation. The application ZIP contains the original license and
+author notices, platform/MBE attribution, compiled font notices, the FreeRTOS
+license and the linked newlib notice. It includes no proprietary codec. Do not
+publish generated codec-bearing images, full-radio backups or recordings.

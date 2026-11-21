@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 The RadioFoundry Authors
+# Copyright (c) 2026 Open25-DM32 Contributors
+# Product identity and installed codec contract; memory bounds belong to the board registry.
+name = "Open25-DM32 Classic"
+maintainer = "Open25-DM32 / KD8ZMM"
+target = "dm32-048"
+format = "open25-dm32-firmware"
+codec_tables_end = 0x18003E38

@@ -1,129 +1,319 @@
 {
-  "schema": 1,
-  "note": "Classic build and regression dependencies only; no stock images, manuals or analysis inputs.",
-  "repositories": [
-    {
-      "path": "research/codec/mbelib",
-      "url": "https://github.com/szechyjs/mbelib.git",
-      "commit": "9a04ed5c78176a9965f3d43f7aa1b1f5330e771f",
-      "git_archive_sha256": "01cf7640c493e18cf2c1550e27ce9e87f1c752b4aa854d07320744d36db566dd"
-    },
-    {
-      "path": "research/protocol/op25",
-      "url": "https://github.com/boatbod/op25.git",
-      "commit": "3f44d43eb449bb4753247ce848bb42a403823dea",
-      "git_archive_sha256": "50e34fb54444aca2667805af77c69fbd422e307dbebeb968323ae9b112e2f51d"
+  "format": "open25-classic-source-overlay",
+  "version": 1,
+  "upstream": {
+    "url": "https://github.com/RadioFoundry/RadioFoundry.git",
+    "commit": "f2e232028838a4f23ee88f7fc89dc376d574562c",
+    "tree": "a3eef9d90a5c0e9a6fa1c5522468dca0a5ed282c"
+  },
+  "freertos": {
+    "url": "https://github.com/FreeRTOS/FreeRTOS-Kernel.git",
+    "commit": "3a22924e0a9ddbbc8b0758881c33b3422a5cc20d",
+    "tree": "c39d1c935bead88a31ea8badf9f33747c82ade26"
+  },
+  "release": {
+    "version": "open25-classic-0.1.0-rc1-r14",
+    "epoch": 1795197378,
+    "board": "dm32",
+    "application_bytes": 351492,
+    "application_sha256": "de5cdfdb768f203f1c7a9cfe2f0dd921550885b9eedcc4138f2e17f75343a907",
+    "package_sha256": "3e2bdce9486beab83ab3d35ccedfb3ca577439143a0584fb6dfe5d923f56c2f6"
+  },
+  "toolchain": {
+    "gcc": "14.3.0",
+    "binutils": "2.45.1",
+    "newlib": "4.5.0.20241231",
+    "linked_archives_sha256": {
+      "libc.a": "b80a52eff5fdf8ebcfada686e0a300b80c3a4175793fe165dc6ef28886005e07",
+      "libm.a": "24fe1ca091715291d7721b6609a4cf8406fa0e29644309723f33d76c6a328c70",
+      "libgcc.a": "229c763244712951e7c49590caafbcdf120d1129384b96bcd8e00399b44be7ea",
+      "libnosys.a": "2c39ca9e77fa209ef44cbbbf7ca0f84bc778ffa7805de70c2c3c324d5db6936c"
     }
-  ],
-  "files": [
-    {
-      "path": "research/toolchain/downloads/binutils-2.45.1.tar.xz",
-      "url": "https://ftp.gnu.org/gnu/binutils/binutils-2.45.1.tar.xz",
-      "bytes": 27962312,
-      "sha256": "5fe101e6fe9d18fdec95962d81ed670fdee5f37e3f48f0bef87bddf862513aa5"
+  },
+  "overlay": {
+    "boards/dm32/board.c": {
+      "sha256": "afbed548391f1728c424ccaf7ae0e59899a32fd1d9025789a44b0a2c8cf45a33",
+      "mode": "100644"
     },
-    {
-      "path": "research/toolchain/downloads/gcc-14.3.0.tar.xz",
-      "url": "https://ftp.gnu.org/gnu/gcc/gcc-14.3.0/gcc-14.3.0.tar.xz",
-      "bytes": 95212220,
-      "sha256": "e0dc77297625631ac8e50fa92fffefe899a4eb702592da5c32ef04e2293aca3a"
+    "boards/dm32/classic.toml": {
+      "sha256": "cd8db8e45345639f7fc73e9520b8fe2c66d347fc655ea9602b7846683094a060",
+      "mode": "100644"
+    },
+    "config/features.mk": {
+      "sha256": "430794ebb907f58e9b6528b567280dd91d56cf36b1f9242e7db3edf5f473157a",
+      "mode": "100644"
+    },
+    "config/variants/classic.mk": {
+      "sha256": "9238c5ca257effe10acd92aaa370d7c35da881fca7c11c8876f8467e380e0f6b",
+      "mode": "100644"
+    },
+    "core/air/air_session.c": {
+      "sha256": "92e04ef26bfa30d2f89f6d4240f0a81178349873494ecf7110dd48ea23bf123c",
+      "mode": "100644"
+    },
+    "core/air/air_session.h": {
+      "sha256": "55bffe40fb01bef46ca9b358082b6e2e55a07bc185fe1117b0166c421ac067b9",
+      "mode": "100644"
+    },
+    "core/codeplug/codeplug.c": {
+      "sha256": "829b2c6ef4c78d0028e59bbd4c667a1247c8224785d04f00c5cde785a5fd5a7e",
+      "mode": "100644"
+    },
+    "core/config.h": {
+      "sha256": "a14f15eee0254b047507be04498b354aabf66068aa9128dc1d7dbfd465148aad",
+      "mode": "100644"
+    },
+    "core/cps/cps_openfw.c": {
+      "sha256": "7a546ecb7290f791a7dec987bdcb4fc31392b7ad81d43450694d6adc3210d5b1",
+      "mode": "100644"
+    },
+    "core/debuglink/debuglink_chipreg.c": {
+      "sha256": "e5ab19e971390359129f00aad8ddf830e7ce683541287ff898765969e6d996cb",
+      "mode": "100644"
+    },
+    "core/debuglink/debuglink_view_p25.c": {
+      "sha256": "faaf37802cfdb67a4a07e6a889910eda2c895ee6c485a9450f7b48c7400249b3",
+      "mode": "100644"
+    },
+    "core/dmr/ambe/ambeVoice.c": {
+      "sha256": "6c0fcd09134434853591812b61425cfad32f4651564b7d667479d90d5cee8e11",
+      "mode": "100644"
+    },
+    "core/hostlink/build_info.h": {
+      "sha256": "8de42a444e41d3da02e0b2bff3b4f55804cfb302456be1d2835b3feac62fa490",
+      "mode": "100644"
+    },
+    "core/hostlink/hostlink.c": {
+      "sha256": "8a71e716d5665cd5a36d640856af27e18245d3d53594a25e802a0e32bae7ad96",
+      "mode": "100644"
+    },
+    "core/mbe/imbe.h": {
+      "sha256": "7ba5514d21c9613a6dec93eca912f3ffe36e9a89da096e5856d98b59d3e0fcf1",
+      "mode": "100644"
+    },
+    "core/mbe/imbe_dec.c": {
+      "sha256": "4ad8946ea1fcf24d31c0a72da667012cb3c6f66ce7aa93325eecc4a6f4469d0a",
+      "mode": "100644"
+    },
+    "core/mbe/imbe_enc.c": {
+      "sha256": "adbcbbc1cc96c6c23a4cd8a2a2e1b3a5b933b03ba6dc80d89062bc9f6700de50",
+      "mode": "100644"
+    },
+    "core/mbe/mbe_est.c": {
+      "sha256": "5e2edd7cc3a74b09c248da6446ccab086674ce90e4509d3d55403e411838ccf9",
+      "mode": "100644"
+    },
+    "core/mbe/mbe_est.h": {
+      "sha256": "3c38087c950597647b8474d4e79d661dfde5d03c9369554077ed3ef0f532c5d2",
+      "mode": "100644"
+    },
+    "core/nxdn/nxdn_call.c": {
+      "sha256": "1160176b9e23573dee3b8a3750aef6affce75aef8d6eac8345f0a51fe7765766",
+      "mode": "100644"
+    },
+    "core/nxdn/nxdn_engine.c": {
+      "sha256": "aa30e23bd0e913ec96f45dfc28f95d2925846e4814aacff6cb9bf58761418aeb",
+      "mode": "100644"
+    },
+    "core/nxdn/nxdn_rx.c": {
+      "sha256": "098eeef3cd285bddca4b1a26889de02ddbf3afd432d4fad4a89b2c77a4789468",
+      "mode": "100644"
+    },
+    "core/p25/p25.h": {
+      "sha256": "946148c7dca584d36e9106500acbf585efb746e5d5d982df7c89fca9a30f3632",
+      "mode": "100644"
+    },
+    "core/p25/p25Voice.c": {
+      "sha256": "4849328ec876bc06cad81c1186b0730eef3a34692b30106cf25be41bd9a2851a",
+      "mode": "100644"
+    },
+    "core/p25/p25Voice.h": {
+      "sha256": "30900f4b8a1196ebf6bda97ffd67a9a1f212d88982fb6cbd1fd95143ba93f5f2",
+      "mode": "100644"
+    },
+    "core/p25/p25_call.c": {
+      "sha256": "497331520fc3115646be73cb98cd9d5dd2289aa5641f3846441e2b8cb2f87b9a",
+      "mode": "100644"
+    },
+    "core/p25/p25_codeplug.c": {
+      "sha256": "38f2e5f303932f0997d14fd5de2d5d18f7bbfae4ebb1f7e03c7e586d25f9917c",
+      "mode": "100644"
+    },
+    "core/p25/p25_engine.c": {
+      "sha256": "d9dc971fc5099a247a2e0c3de239e6dcc7d60171fdc6d8baecaeb3685fc9f6a0",
+      "mode": "100644"
+    },
+    "core/p25/p25_engine.h": {
+      "sha256": "1618349a1d7d08dc458e3689d6379f0157cb116cdee320689963bb76e38f1da5",
+      "mode": "100644"
+    },
+    "core/p25/p25_mic_agc.h": {
+      "sha256": "b2f27d2d0174cd8b5439dc3220ca45e7380eee55d462455cf850704c7d50ef4a",
+      "mode": "100644"
+    },
+    "core/p25/p25_rx.c": {
+      "sha256": "c103bc3ecbf44c6cb1ca36956632a14b648167dec813cb536e84ffc7f135bfcf",
+      "mode": "100644"
+    },
+    "core/p25/p25_unit.c": {
+      "sha256": "756fc5f5f095421fc3d07aa80db28f23daf185e9835bd91e6a1825e151678b0f",
+      "mode": "100644"
+    },
+    "core/radio/beep.c": {
+      "sha256": "189d5b2291a8860b1eed73e59ca6452d8c1f652927a6ecccc05ee7abcab9a05e",
+      "mode": "100644"
+    },
+    "core/radio/beep.h": {
+      "sha256": "dc3dae8b6390619b5311523863bcbdfcde2af20458520b591abf0b6bf089ed2a",
+      "mode": "100644"
+    },
+    "core/radio/p25_tx_policy.h": {
+      "sha256": "9748fbe5aeb5398e8d8c37729d7bf79566175d8143232f80d74d47ca3751189f",
+      "mode": "100644"
+    },
+    "core/radio/radio_p25.c": {
+      "sha256": "0ce7908b32f8bc4f5c727d641601a450dc483b040288f4b789833d1e541448b5",
+      "mode": "100644"
+    },
+    "core/radio/radio_sm.c": {
+      "sha256": "48921c43f865f944ea0fe1922e6d7b4e10436cda4fdbfadf0478d7d468b00c20",
+      "mode": "100644"
+    },
+    "core/settings/settings.h": {
+      "sha256": "12e7ca5754a8557a7da24367aa7b07ee5cb382c0b5aa67ac3215494150d7b818",
+      "mode": "100644"
+    },
+    "core/ui/ui_menus.c": {
+      "sha256": "a82bd041b1f9061e98be59fd14efdf7cae46cafe40c80e1f6ba36a4ad52e4709",
+      "mode": "100644"
+    },
+    "core/ui/ui_screens.c": {
+      "sha256": "13a39762947252bcccb58b67ecf6de7440fd8850f82e8dcb94d6fcfc51aea505",
+      "mode": "100644"
+    },
+    "core/ui/ui_screens.h": {
+      "sha256": "011018c99fed38e956b5693c9918f72e42f3393ead9e2b8a0bbc3f9ea41fa606",
+      "mode": "100644"
+    },
+    "core/ui/ui_svc.h": {
+      "sha256": "295c2a9bbaa2236bdd65101e51ab2ba8322f0620330b692940764b7839481f36",
+      "mode": "100644"
+    },
+    "core/ui/ui_svc_radio.c": {
+      "sha256": "2b9ec3808be45bf1b5ba4985839cf6074ddefa7e2abf71ac649f692823ac467b",
+      "mode": "100644"
+    },
+    "drivers/modem/hrc7000/hrc7000_air.c": {
+      "sha256": "755c6468d330f78b3f4c1135a21e1bef3b4a6c23e2bd9e23bd5dcffc1439a5eb",
+      "mode": "100644"
+    },
+    "drivers/modem/hrc7000/hrc7000_air.h": {
+      "sha256": "51b18b8bb3e5fd87766487eaf53e24876d9cd7ff98223dff48a036084f51879a",
+      "mode": "100644"
+    },
+    "hal/board.h": {
+      "sha256": "fd42f3482ae1122e32c47b0685c147a9dd22fd460451dd591cf7996df47d35b8",
+      "mode": "100644"
+    },
+    "hal/hal_air.h": {
+      "sha256": "234377132f114ff4bb5d40185a6f3fb44203b850bc95f068b732425f214c2bf1",
+      "mode": "100644"
+    },
+    "platform/hrc7000/dmr_glue.c": {
+      "sha256": "613bc2d3be0c650bae844533d8bc88cdcdb5e6e0dd7a1bd914fdcf5a47b10990",
+      "mode": "100644"
+    },
+    "tests/host/Makefile": {
+      "sha256": "acd8fdfee33f875aa0dd6125f5c193e9cb512536e4340d134a368480281e9a32",
+      "mode": "100644"
+    },
+    "tests/host/classicBandsTest.c": {
+      "sha256": "4ff752d5f882a7ed5bb649dbd8ac09d779b143ef46138b520c4e7dc8342433ae",
+      "mode": "100644"
+    },
+    "tests/host/classicChipRegTest.c": {
+      "sha256": "2519f28aa2cc971e692b1e6575758dc85a24ae4296885955acc32889c163bdf2",
+      "mode": "100644"
+    },
+    "tests/host/classicProductUiTest.c": {
+      "sha256": "a1cd15fe5799aba7bba63eeac885a27fa58850c1af70c99c8e9e7f0db04d599e",
+      "mode": "100644"
+    },
+    "tests/host/codeplugFormatTest.c": {
+      "sha256": "7a183c9212055fee566da9d3e7fc1a6424564cfffaf443bf2e97e31253baea82",
+      "mode": "100644"
+    },
+    "tests/host/hrc6000AirTest.c": {
+      "sha256": "86b17b6e91d205250f6c75366a650bfa82bba26832414e66dd762b34a74cc79a",
+      "mode": "100644"
+    },
+    "tests/host/hrc7000AirMmioTest.h": {
+      "sha256": "f6307141169306ef59d9e97d872e1d131ac3cc8743eff73a8b9b929f695f3d6d",
+      "mode": "100644"
+    },
+    "tests/host/hrc7000AirTest.c": {
+      "sha256": "91ee6eb57edaf600cf0f1aa937a9e02568da5aedc5de53428efa111c93ba3dfa",
+      "mode": "100644"
+    },
+    "tests/host/imbeEncTest.c": {
+      "sha256": "50fce5c42791a30aa1c75c6727ec5d968271787add85a118d47c27e7997c865a",
+      "mode": "100644"
+    },
+    "tests/host/mbeTest.c": {
+      "sha256": "b60e5c33075bc051592fb610995ed8a9266bf2b759095ccdfa1aacc4f314bb25",
+      "mode": "100644"
+    },
+    "tests/host/nxdnTest.c": {
+      "sha256": "4df9173f3a6d0f1823612cebeb912f0c9bde345cdfbdd3fab32541c1bca6bcd7",
+      "mode": "100644"
+    },
+    "tests/host/p25EngineTest.c": {
+      "sha256": "1dd461b116a517909705e9055889a12286641a39aa6e3cce2d8bf0765c414186",
+      "mode": "100644"
+    },
+    "tests/host/p25RxRegressionTest.c": {
+      "sha256": "c7034347ad052a9625a88f62052fb24e2984f9f8d8d7acbe66f7698dbcba1796",
+      "mode": "100644"
+    },
+    "tests/host/p25Test.c": {
+      "sha256": "bb3d0d04904571daa11dc27f4839ce8a64497628a23ecdb96a85b22c030303b4",
+      "mode": "100644"
+    },
+    "tests/host/p25TxPolicyTest.c": {
+      "sha256": "fbd1b6d94c9599101ddb2efb39dfcf31e049888322fa3d185a3766f8a37b5bdd",
+      "mode": "100644"
+    },
+    "tests/host/p25VoiceTest.c": {
+      "sha256": "5ef9972b43854d88b5e174a90258a766156df63dc8f0a37e96e12bbecd171481",
+      "mode": "100644"
+    },
+    "tests/host/radioCoreTest.c": {
+      "sha256": "897b556428fc8158ed60a2d1f878fe9a38ea142d8e89974017753c070e7b8612",
+      "mode": "100644"
+    },
+    "tests/host/radioFeaturesTest.c": {
+      "sha256": "5a3ed44e1e376f67f38257652cbdc85b46b197b286b23c83487bf0fcf0ded1c2",
+      "mode": "100644"
+    },
+    "tests/host/rxCoverageMenuTest.c": {
+      "sha256": "3e6bc0c6386b4efeeea8ca8d235f1f70f4d7ee1a7882b318df6db8d36cc784f7",
+      "mode": "100644"
+    },
+    "tests/host/sharedBeepPcmTest.c": {
+      "sha256": "c3ae37eb37280c22057ab54d88800494baf246210a83f3608c32ed6cd861d54f",
+      "mode": "100644"
+    },
+    "tools/build_classic.py": {
+      "sha256": "327051d765b32b477563dc6f7f30f203f7a5ca325792d5ca8d47ee97f2e717cb",
+      "mode": "100755"
+    },
+    "tools/test_classic_bands.py": {
+      "sha256": "73f647d40d6a0aa86fb48a0e795db8564050c2b292bab60c4c4f1233feb4a8bd",
+      "mode": "100644"
+    },
+    "tools/test_classic_product.py": {
+      "sha256": "e6c637630f48f8373155eed896c69e1b54a07a618fe5007200dafe80deea7ebc",
+      "mode": "100644"
     }
-  ],
-  "vendored": [
-    {
-      "name": "p25cai",
-      "path": "third_party/p25cai",
-      "commit": "9f67eee4566c0c58a80f6ab5be872595eff82361",
-      "files": {
-        ".gitignore": "de933c874513f27c7bab6e3911a211997cd2857b203968b0b0ed0d7bfd9b1115",
-        "AGENTS.md": "f16f816dcf464aef774ba107bcacef2c7c10f483948e3467cd480d7daf38d178",
-        "CMakeLists.txt": "8d9036df9d836c190630ff1df9b0666f9a54682d8c56eafe29107081bdf2cef1",
-        "LICENSE": "ea5a582e635b93318adb54e62c7e71165ccf8f3f695811cd51e693c2ec065f34",
-        "README.md": "16f4c8f3ccd69df74faccb89d2dceb5aaf5db35c66c2f0a8ee5cfdeb9ca64660",
-        "SOURCES.md": "c2a7b0f4ab78468c9ca600e2152d4059401ce97ed5e4919b53bfa50051a4ae34",
-        "compat/open25/p25.c": "60eea9f1c99c281617dff185acc054c73b7da3137184efe465ef609f22f31b92",
-        "compat/open25/p25.h": "a42990e8d1dad32eddfd5b97c0d9cac5e8a9cd083a65f974297b25185005fe4c",
-        "include/p25cai.h": "9e42061eab97bf88839646345ccdabebfa0e61724b63d97f9637c67c4ab3a7c1",
-        "src/auth.c": "b9301f4011158e87d425b90e03d95556a84e867bb4a170e4d1c536743d60ed57",
-        "src/blocks.c": "87818bdcec7f156bd27e0b8f4543510dfbc917bb1f930d7f5ab316b868fb1ff9",
-        "src/control.c": "ed65d2fcc95f3c711ada0f1132f795b347960a2436777795ee951ae2d141392f",
-        "src/fec.c": "3d02a6b7ab4d0b534e464e75299a774a53acfb7f805f92c6dfa04e8e43267986",
-        "src/fields.c": "995b046147fbeeb982d88c5e048a7e0dd8bc7242c0f02b18a54ddbd1611440b7",
-        "src/frame.c": "034ded8561a931853c3009986b72450f7f4204a07087d5ed9f9a63d7c0df2711",
-        "src/golay_errors.inc": "581bd4a2bfde6938e9a2894dfdf3041f6ef4cb2455159a5fd80476aea35ee797",
-        "src/internal.h": "6f2690249576d37fcc979ec14f6e50d9ce9d7904d093ccd752675df21fb86dd8",
-        "src/messages.c": "d38ec6c2a56726f023827951c42a4e2acfa6ca8ed962b5cd459003b5fd547fb9",
-        "src/packet.c": "978b3c46f2b9750eaf0d07de8170e35d09eb8ff396cc08d1fd694dd3c297e2b6",
-        "src/trellis.c": "17a387c3d18804a4962436ac9bc8c6dcde64b080573f52d67af496678ce3af99",
-        "src/voice.c": "e8298fb4b806fcb9789f53ef93d00ff13c60f4aaaa274990dec313ee2c636c12",
-        "tests/test_auth.c": "4ed4f311ea0abb7472756bf454e4bf8afa0942a024e0dac8d5f806fdda4841a5",
-        "tests/test_cai.c": "8360b273e89a13634f45e1085564440a00a6db5dc262e74fa847c5cec92ea3c0",
-        "tests/test_control.c": "e5a1366bb59e771d68be5b50dcdb05c8d54cd864ea0714a53bd3f036cc2a00f7",
-        "tests/test_messages.c": "e9be1502e5ccf9f3464c64b7f974daab2425a83c0399edc8afc6408adbbc1490",
-        "tests/test_open25.c": "fefcddb998d082c5251e1bf385f07653ef99613694c883b767e7603d69d9383b",
-        "tests/test_packet.c": "b1fe7fd75471f890bba3548317e3b2b26afdc6f06d05391bb6b3f1c7e312d01b",
-        "tools/generate_golay.py": "2742a89e4f312aa5cbedc1844990738a16c2bc26588667cd4198514ad9a16e4d"
-      },
-      "copies": {
-        "compat/open25/p25.c": "src/p25/p25.c",
-        "compat/open25/p25.h": "src/p25/p25.h"
-      }
-    },
-    {
-      "name": "imbe",
-      "path": "third_party/imbe",
-      "commit": "5391d896329f1b0b6c4bc0677c2a64a159cd0564",
-      "files": {
-        ".gitignore": "1549e4a6cae4902d9a2ce88230f00e28b9440d24bb104e5e2886a3a2f2948230",
-        "AGENTS.md": "3f23fc14f24d88315c1760f31d3a4741eb5398de194d40f1887b186169cf2946",
-        "LICENSE": "1bcac8a206ce555d0c237d8b668b756f19e13b27f95e4a67494f7ff1d424fc43",
-        "README.md": "c7cd329773bef95952e42e7fd2ebf41f9465539854a13e4adad402004031f9ee",
-        "SOURCES.json": "039d16a1d5eadb66919d6578fdb57f8ac75cde6fcea913884d03a0bd7b6bf04c",
-        "build-options.json": "85dbbd04ad64984a7c1232ea7d497752de5877fc559e1c41dc6779fe90597f2b",
-        "compat/open25/dm32_imbe.h": "8ce2d92554705923291d2d24e2aceb9e509e6c9729712496a147e26242103ef5",
-        "quant-provenance.md": "b93901bbd5612d2d909fe4259174a2a115e6db8de28556d6bd3bf22c7c914a10",
-        "runtime/memory.c": "9c835bb9f2072a2acc9876301f739cce0736dd50849b7ca260d54b939923a349",
-        "src/codec.c": "e5e4117cf67cc283dd6aea839fea6e518bf3d0e96396368465e675e6073a594c",
-        "src/decoder.c": "83753cc329fa063d4ae94d4cbb5503144daf7e3c5cbd71c469b0613866530daf",
-        "src/decoder.h": "0dae97c30c49f323a4cf574898104d3b927d14d82b7330b666d9cd033cdcde16",
-        "src/encoder.c": "2029319424a781feec288aff16838f40014b66c19695a8495a0c4fd236cf3f26",
-        "src/encoder.h": "6be5905829984d46c60337b6d0895fb88a9f33c3af3bda818f3fa48bbf36a9d2",
-        "src/fft.c": "6c41e80846fdbff80dee5eb02a2dede8a2f47447dc395911f32826742b1994e6",
-        "src/imbe_model.h": "09e24dfb0430efb333c7a995f35efcad04044b6bd50e0925dca0dbf955f444c0",
-        "src/math.c": "781965ea2fae67689fd39192e6ae1eb956f61fac03e4ca1e215416311e166c47",
-        "src/quant.c": "672e532d73e2d53983410a1cea372c7ddd7de477e573bcad8ffd325bd2fe63ac",
-        "src/quant.h": "1e9783e200aa06a491c7b7edfe34c1424d5381d7380b3eaa326c6eab14895451",
-        "src/quant_tables.inc": "19aad2620f40e5688d62aa449689e39f33398105054e69ad4dfe8209316efb27",
-        "tests/test_codec.c": "6e2e01eeabfe35c6611a7b5da396c29b7f36eb4904820248baffe1c089751266",
-        "tests/test_decoder.c": "2b22a66f7d766cefc1487592b3b60c34752d4ec122e38a572cec84b08d672620",
-        "tests/test_math.c": "1556f2a88f8e4eb70fc04acb56cef2319b8deb44f5040426aeb2c7e4c3368d52",
-        "tests/test_quant.c": "d16e9ea44894ae4963dbfbe2dd63c54315c719614a9cb336b806d2fbcdda4427",
-        "tools/build.py": "278b5acd3513be9c452957497ceb1be8a1ea12b9fc3c02888338e9fc4bcac01d",
-        "tools/generate_header.py": "a41510458b588517b22a74fa4442406cccbe398788e159ea9927d47ef7ccbd38",
-        "tools/test_c.py": "1ee46242b063846463692e032d59b12ac04b91a741cf330b2c81c6a9e64378d3"
-      },
-      "copies": {
-        "compat/open25/dm32_imbe.h": "src/codec/dm32_imbe.h",
-        "runtime/memory.c": "src/runtime/memory.c"
-      }
-    },
-    {
-      "path": "third_party/rf_codeplug",
-      "commit": "9e1f7209cd00c2575f18c72746ed4dbb1f482f67",
-      "note": "Selected upstream MIT components with reviewed continuation/NAC extensions; original hashes in UPSTREAM.json.",
-      "files": {
-        "README.md": "86c9fb0ee945d5d1c7e8de2dfcce0c0e26245c8227d46e9f6d39eebd0b168a4a",
-        "UPSTREAM.json": "03824268a0d872c52d0b7a204b23e97b926534f768aa25442726076aea111d89",
-        "core/codeplug/codeplug_kv.c": "19a32c3efa9b7746753c6e9bd09d0e752a9dbb6595bc97536e17b14722826f45",
-        "core/codeplug/codeplug_kv.h": "b49254ede208885fe6f1d5c4d392b3f673d0509b8f205f889eb7b94adf04a588",
-        "core/codeplug/codeplug_modes.h": "9f662a2642f890c77ba09541885f742d4ac28688db3ae6fd166098fa2206c16b",
-        "core/codeplug/codeplug_records.c": "6b24702227f6733308793496bbd120770a05a18ce9d80e2fe875e7a8053b36a6",
-        "core/codeplug/codeplug_records.h": "dff2088447c646ab3e4bce49ee8253e93cd1c52760273278381ea623116ef1f0",
-        "core/codeplug/codeplug_tag.c": "eb3470f5eda175dd4ce40cc8f8213d34e45eee6ab903d3271d6d920438165220",
-        "core/codeplug/codeplug_tag.h": "edb47dea6f7444ce92d680ee515e72b838853eb9b496ef4efe8e00bd864ed86f",
-        "core/p25/p25_codeplug.c": "fb56cf54368a00b9dade36d7f7ff7f05d045dde78ff79cb9a40c51429a03afed",
-        "core/p25/p25_codeplug.h": "1a2d439208e51aed52674f8cc718c7384821e9d70e723dea24ee7baa56ccc1f3"
-      }
-    }
-  ]
+  }
 }
