@@ -72,6 +72,11 @@ export global App {
     callback set-channel(int);
     callback set-auto-check(bool);
     callback open-backups-folder();
+    // the program's own update
+    in property <string> app-update-text;
+    in property <bool> app-update-available;
+    callback app-check();
+    callback app-update();
 }
 
 component Page inherits VerticalLayout {
@@ -351,6 +356,27 @@ component Packs inherits Page {
     Rectangle {}
 }
 
+// the program's own update (through the signed manifest)
+component ProgramUpdate inherits Card {
+    min-height: pu.preferred-height;
+    vertical-stretch: 0;
+    pu := VerticalLayout {
+        padding: Theme.pad;
+        spacing: 10px;
+        Label { text: Tr.t(Tr.lang, "pu_title"); font-weight: 700; }
+        Label { text: App.app-update-text; }
+        HorizontalLayout {
+            spacing: Theme.gap;
+            Button { text: Tr.t(Tr.lang, "pu_check"); enabled: !App.busy; clicked => { App.app-check(); } }
+            Button {
+                text: Tr.t(Tr.lang, "pu_install"); kind: "primary";
+                enabled: App.app-update-available && !App.busy;
+                clicked => { App.app-update(); }
+            }
+        }
+    }
+}
+
 component Settings inherits Page {
     heading: Tr.t(Tr.lang, "home_settings");
     Label { text: Tr.t(Tr.lang, "set_lang"); font-weight: 700; }
@@ -377,6 +403,7 @@ component Settings inherits Page {
         checked <=> App.auto-check;
         toggled => { App.set-auto-check(App.auto-check); }
     }
+    ProgramUpdate {}
     Rectangle {}
 }
 
@@ -395,6 +422,7 @@ component About inherits Page {
             Muted { text: "Made with Slint (slint.dev)"; }
         }
     }
+    ProgramUpdate {}
     Rectangle {}
 }
 

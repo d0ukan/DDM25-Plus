@@ -152,7 +152,7 @@ export component Choice {
     in property <bool> danger: false;
     in property <bool> enabled: true;
     callback clicked;
-    min-height: 72px;
+    min-height: root.detail == "" ? 52px : 72px;
     vertical-stretch: 0;
     accessible-role: button;
     accessible-label: root.title;
@@ -175,7 +175,7 @@ export component Choice {
                 color: !root.enabled ? Theme.disabled-text : root.danger ? Theme.danger : Theme.text;
                 font-size: Theme.font; font-weight: 700; wrap: word-wrap;
             }
-            Text { text: root.detail; color: !root.enabled ? Theme.disabled-text : Theme.text-muted; font-size: Theme.font-small; wrap: word-wrap; }
+            if root.detail != "" : Text { text: root.detail; color: !root.enabled ? Theme.disabled-text : Theme.text-muted; font-size: Theme.font-small; wrap: word-wrap; }
         }
     }
     TouchArea { enabled: root.enabled; clicked => { fs.focus(); root.clicked(); } }

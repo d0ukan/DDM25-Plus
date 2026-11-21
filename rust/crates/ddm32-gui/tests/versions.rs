@@ -80,3 +80,25 @@ fn home_names_what_the_radio_runs_by_its_backup() {
         ddm32_gui::installed_line(&vec![0xFFu8; 0x100000], &cat.firmware, "tr")
     );
 }
+
+#[test]
+fn the_program_update_follows_the_channel() {
+    let secret: Vec<u8> = (0..32u8).collect();
+    let key = hex::encode(ddm32_core::crypto::ed25519::secret_to_public(&secret));
+    let platform = ddm32_core::releases::platform_key();
+    let mut cat = Catalog::default();
+    for (tag, v) in [("v1.0.0", "3.0.0"), ("v1.1.0", "3.1.0-beta.1")] {
+        let name = format!("DDM32Plus-{v}.zip");
+        let m = json!({"format": CURRENT.format, "repo": CURRENT.repo, "release": tag, "created_utc": "2026-11-21T00:00:00Z",
+            "firmware": [], "app_rs": {platform.clone(): {"version": v, "file": name,
+            "url": format!("{}{tag}/{name}", CURRENT.url_prefix()), "sha256": sm::sha256_hex(b"z"), "size": 1}}});
+        let data = serde_json::to_vec_pretty(&m).unwrap();
+        let sig = sm::sign_bytes(&data, &secret);
+        cat.add(tag, &sm::verify_bytes(&data, sig.as_bytes(), Some(&key), None).unwrap(), None);
+    }
+    cat.sort();
+    assert_eq!("3.0.0", ddm32_gui::newer_program(&cat, "3.0.0-alpha.1", 0).unwrap().entry.version);
+    assert_eq!("3.1.0-beta.1", ddm32_gui::newer_program(&cat, "3.0.0-alpha.1", 1).unwrap().entry.version);
+    assert!(ddm32_gui::newer_program(&cat, "3.0.0", 0).is_none());
+    assert!(ddm32_gui::newer_program(&cat, "3.1.0", 2).is_none());
+}

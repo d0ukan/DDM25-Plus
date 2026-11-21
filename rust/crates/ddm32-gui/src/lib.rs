@@ -41,6 +41,8 @@ pub struct State {
     pub quick: Option<PathBuf>,
     pub pack: Option<PathBuf>,
     pub tracker: ProgressTracker,
+    /// A note shown once on Home (the last program update's result).
+    pub note: Option<String>,
 }
 
 thread_local! {
@@ -144,6 +146,7 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
             quick: None,
             pack: None,
             tracker: ProgressTracker::new(),
+            note: None,
         })
     });
     wire(ui);
@@ -151,6 +154,19 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
     if first_start {
         app.set_page(6);
     }
+    // the last program update's result, once; old staging folders and zips go
+    let updates = with(|s| s.paths.updates());
+    if let Some(r) = ddm32_core::update::self_update::read_result(&updates) {
+        let key = match r.as_str() {
+            "ok" => "pu_result_ok",
+            "rolled_back" => "pu_result_rolled_back",
+            _ => "pu_result_aborted",
+        };
+        let note = trf(key, ddm32_core::app_info::VERSION);
+        with(|s| s.note = Some(note));
+        refresh(ui);
+    }
+    ddm32_core::update::self_update::cleanup(&updates, None);
     if fetch && auto {
         load_catalog(ui.as_weak());
     }
@@ -238,6 +254,14 @@ fn wire(ui: &AppWindow) {
     app.on_pack_air(move || pack_air(&w.unwrap()));
     let w = ui.as_weak();
     app.on_pack_write(move || pack_write(&w.unwrap()));
+    let w = ui.as_weak();
+    app.on_app_check(move || {
+        let ui = w.unwrap();
+        ui.global::<App>().set_app_update_text(tr("pu_checking").into());
+        load_catalog(ui.as_weak());
+    });
+    let w = ui.as_weak();
+    app.on_app_update(move || app_update(&w.unwrap()));
     app.on_open_backups_folder(move || {
         let dir = with(|s| s.paths.backups());
         open_folder(&dir);
@@ -362,6 +386,22 @@ fn refresh(ui: &AppWindow) {
         .map(|imgs| installed_line(&imgs["progmem-pass1.bin"], &all, &lang))
         .unwrap_or_else(|| tr("installed_none"));
     app.set_installed_text(installed.into());
+    // the program's own update
+    let channel = app.get_channel();
+    let (text, available) = with(|s| match &s.catalog {
+        Some(cat) if cat.source != "cache" || !cat.apps.is_empty() => {
+            match newer_program(cat, ddm32_core::app_info::VERSION, channel) {
+                Some(a) => (i18n::tf(&s.lang, "pu_available", &a.entry.version), true),
+                None => (i18n::tf(&s.lang, "pu_current", ddm32_core::app_info::VERSION), false),
+            }
+        }
+        _ => (i18n::t(&s.lang, "pu_unknown"), false),
+    });
+    app.set_app_update_text(text.into());
+    app.set_app_update_available(available);
+    if let Some(note) = with(|s| s.note.clone()) {
+        app.set_update_text(format!("{note}\n{}", app.get_update_text()).into());
+    }
     app.set_quick_available(quick.is_some());
     app.set_quick_backup(
         quick.map(|q| q.file_name().unwrap_or_default().to_string_lossy().into_owned()).unwrap_or_default().into(),
@@ -376,6 +416,65 @@ fn refresh(ui: &AppWindow) {
         })
         .collect();
     app.set_backups(ModelRc::new(VecModel::from(brows)));
+}
+
+/// The newer build of this program for this platform that the channel offers (prereleases from Beta on).
+pub fn newer_program(cat: &Catalog, current: &str, channel: i32) -> Option<catalog::AppRelease> {
+    cat.newer_app(current, channel >= 1).cloned()
+}
+
+/// Downloads the new program (size and SHA-256 from the signed manifest), stages it, starts the staged program as
+/// the helper that swaps the files after this program has closed, and closes. Windows only: on Linux and macOS the
+/// package (AppImage, .app) is replaced from the download page.
+fn app_update(ui: &AppWindow) {
+    let app = ui.global::<App>();
+    let Some(rel) =
+        with(|s| s.catalog.as_ref().and_then(|c| newer_program(c, ddm32_core::app_info::VERSION, app.get_channel())))
+    else {
+        return;
+    };
+    if !cfg!(windows) {
+        let url = format!("{}/releases/tag/{}", ddm32_core::app_info::REPO_URL, rel.release);
+        app.set_app_update_text(trf("pu_other_os", &url).into());
+        let opener = if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+        let _ = std::process::Command::new(opener).arg(&url).spawn();
+        return;
+    }
+    app.set_busy(true);
+    app.set_app_update_text(tr("pu_downloading").into());
+    let updates = with(|s| s.paths.updates());
+    let w = ui.as_weak();
+    std::thread::spawn(move || {
+        use ddm32_core::update::self_update as su;
+        let r = (|| -> Result<(PathBuf, Vec<String>), String> {
+            let zip =
+                client::download_app(&rel.entry, &updates, &HttpReleaseNet::real(), None).map_err(|e| e.to_string())?;
+            let staged = su::stage(&zip, &updates, &rel.entry.version).map_err(|e| e.0)?;
+            let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+            let app_dir = exe.parent().ok_or("no program folder")?.to_path_buf();
+            Ok(su::helper_command(
+                &staged,
+                std::process::id(),
+                &app_dir,
+                &updates.join("started.json"),
+                &updates.join(su::RESULT_FILE),
+            ))
+        })();
+        let _ = slint::invoke_from_event_loop(move || {
+            let Some(ui) = w.upgrade() else { return };
+            let app = ui.global::<App>();
+            app.set_busy(false);
+            match r.and_then(|(helper, args)| {
+                std::process::Command::new(&helper).args(&args).spawn().map_err(|e| e.to_string()).map(|_| ())
+            }) {
+                Ok(()) => {
+                    app.set_app_update_text(tr("pu_restarting").into());
+                    let _ = slint::quit_event_loop();
+                }
+                Err(e) => app.set_app_update_text(trf("pu_failed", &e).into()),
+            }
+        });
+    });
 }
 
 fn load_catalog(w: Weak<AppWindow>) {
@@ -796,6 +895,8 @@ pub fn demo(ui: &AppWindow) {
     app.set_update_text(i18n::tf(&lang, "update_available", "1.0.0-beta.5 (Beta)").into());
     app.set_backups_text(i18n::tf(&lang, "backups_found", "3").into());
     app.set_installed_text(i18n::tf(&lang, "installed", "DDM32 Plus 1.0.0-beta.4 (Beta)").into());
+    app.set_app_update_text(i18n::tf(&lang, "pu_available", "3.0.0-beta.1").into());
+    app.set_app_update_available(true);
     app.set_versions(ModelRc::new(VecModel::from(vec![
         VersionRow {
             version: "1.0.0".into(),
