@@ -38,7 +38,7 @@ by **d0ukan · TA2DOU**
 ## Status
 
 DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.6](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6)** (2026-11-21), with the Windows
-programmer 2.0.0-beta.3 and the first build of the new cross-platform programmer 3.0.0-alpha.1 (Windows setup; Linux
+programmer 2.0.0-beta.3 and the first build of the new cross-platform programmer 3.0.0-alpha.2 (Windows setup; Linux
 and macOS packages to follow). The release candidate's new features and the DMR audio settings were checked on the
 author's radio.
 Every feature below is built and covered by host tests (a simulator of the radio's screens, radio core and
@@ -150,7 +150,7 @@ The older Python programmer (`DDM32Plus-1.0.0-beta.2.zip`, [`pc/`](pc/)) still w
 ## In development
 
 - Two-radio tests of DOTA Transfer (channels and data packs) and of the DMR cross-band store-and-forward.
-- The cross-platform programmer 3.0.0-alpha.1: Linux (AppImage, .deb) and macOS packages.
+- The cross-platform programmer 3.0.0-alpha.2: Linux (AppImage, .deb) and macOS packages.
 
 ## Building
 

@@ -40,7 +40,7 @@
 ## Durum
 
 DDM32 Plus **beta** aşamasındadır. En son ön sürüm **[v1.0.0-beta.6](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6)** (2026-11-21); Windows programı
-2.0.0-beta.3 ve yeni çok platformlu programın ilk sürümü 3.0.0-alpha.1 (Windows kurulumu; Linux ve macOS paketleri
+2.0.0-beta.3 ve yeni çok platformlu programın ilk sürümü 3.0.0-alpha.2 (Windows kurulumu; Linux ve macOS paketleri
 sonra) ile birlikte. Yeni özellikler ve DMR ses ayarları yazarın telsizinde denendi.
 Aşağıdaki her özellik yazıldı ve bilgisayarda testlerden geçti (telsizin ekran, radyo çekirdeği ve modemlerinin
 simülatörü), ama **birçok özellik henüz havada denenmedi**. Telsiz test notları:
@@ -152,7 +152,7 @@ Eski Python programı (`DDM32Plus-1.0.0-beta.2.zip`, [`pc/`](pc/)) çalışmaya 
 ## Geliştirilmekte olanlar
 
 - DOTA Transfer'in (kanallar ve veri paketleri) ve DMR çapraz bant kaydet-ilet'in iki telsizle denenmesi.
-- Çok platformlu program 3.0.0-alpha.1: Linux (AppImage, .deb) ve macOS paketleri.
+- Çok platformlu program 3.0.0-alpha.2: Linux (AppImage, .deb) ve macOS paketleri.
 
 ## Derleme
 
