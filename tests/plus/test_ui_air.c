@@ -214,6 +214,9 @@ static void aw_four(void)
 		check(air_sim.hz[k] == ltac_hz[k] && air_sim_vfo_hz(k) == ltac_hz[k], "each letter's VFO on its frequency");
 	check(air_sim.atis == 1u << 3, "D (the ATIS) marked, A..C not");
 	expect("shows=121.90 shows=118.10 shows=119.10 shows=123.60");
+	/* Owner's beta.7 report: every letter in AM, and Home says so: the rows and the status bar's mode word (it read
+	 * "FM DUAL"), no "FM" anywhere */
+	expect("shows=AM_121.900 shows=AM_123.600 hides=FM");
 	run("shot:home-air-four");
 	layout();
 	run("back back wait:300");
@@ -262,6 +265,8 @@ static void aw_pair(void)
 	airfields();
 	run("ok ctx");
 	expect("screen=home dual=1 mwn=0 mwradion=2 vfo=1 freq=120200000");
+	/* Both panes and the status bar in AM (they read "VFO FM" and "FM DUAL") */
+	expect("shows=VFO_AM hides=FM");
 	check(air_sim.vfo_calls == 2 && air_sim.hz[1] == 132000000, "two VFOs");
 	run("back back wait:300");
 	expect("dual=0");

@@ -8,7 +8,8 @@ change only through the hunks below.
   AIR_WATCH  (item 44b) Tools > Airfields, # on an airfield's page: up to 6 of its frequencies on the multi-watch ring,
              A..F each its own VFO (AM: the air band), hopping as multi-watch does; its ATIS last, holding the ring 5 s
              at most and then passed over 60 s; stopping it brings the user's watch back as it was. Needs MULTI_WATCH,
-             VFO_MODES and AIRFIELDS.
+             VFO_MODES and AIRFIELDS. Home's status bar and dual watch's VFO pane say AM for the air band (they said
+             FM), and the priority channel is never a stop of its ring (radio_scanprio.inc).
   SPECTRUM_WF3D (item 45) Tools > Spectrum's third view: the waterfall's rows as a ridge plot in perspective (* cycles
              waterfall, 3D, bars alone); the waterfall's own heap rows, no new RAM. Needs SPECTRUM_WF.
 """
@@ -163,4 +164,34 @@ def prepare_air(transform, install):
         ('#if CONFIG_MULTI_WATCH\n#include "ui_mwatch.inc"\t// DM32 Plus\n#endif\n',
          '#if CONFIG_MULTI_WATCH\n#include "ui_mwatch.inc"\t// DM32 Plus\n#endif\n'
          '#if CONFIG_AIR_WATCH\n#include "ui_airwatch.inc"\t// DDM32 Plus air watch (item 44b)\n#endif\n'),
+    ])
+
+    # Dual watch / the air watch on Home: a pane's FM channel or VFO in the air band is received in AM (radio_am.h).
+    # Upstream's status bar word said "FM" (or DMR) for the selected pane and a VFO pane read "VFO FM": the air watch's
+    # letters showed FM while the radio received them in AM (owner's beta.7 report)
+    transform('core/ui/ui_screens.c', [
+        ('static bool strip_fits(const font_t *f, int lx, int rx, const char *word)\n',
+         '#if CONFIG_DUAL_WATCH && CONFIG_AM_RX\n'
+         '#include "radio/radio_am.h"\n'
+         '// DDM32 Plus: a pane received in AM, as the radio core decides (radio_am_channel: an FM channel or VFO in the air\n'
+         '// band on a radio that receives AM; the air watch\'s letters)\n'
+         'static bool dual_pane_am(const ui_dual_pane_t *p)\n'
+         '{\n'
+         '\treturn p->mode == RADIO_MODE_FM && radio_am_band(p->rx_hz) && radio_am_capable();\n'
+         '}\n'
+         '#endif\n\n'
+         'static bool strip_fits(const font_t *f, int lx, int rx, const char *word)\n'),
+        ('\t\tmw = s->dual.pane[s->dual.sel].mode == RADIO_MODE_DMR ? "DMR" : "FM";\n',
+         '#if CONFIG_AM_RX\n'
+         '\t\tmw = s->dual.pane[s->dual.sel].mode == RADIO_MODE_DMR ? "DMR" :\n'
+         '\t\t     dual_pane_am(&s->dual.pane[s->dual.sel]) ? "AM" : "FM";\t// DDM32 Plus: the air band in AM\n'
+         '#else\n'
+         '\t\tmw = s->dual.pane[s->dual.sel].mode == RADIO_MODE_DMR ? "DMR" : "FM";\n'
+         '#endif\n'),
+        ('\t\tsb_str(&b, "VFO FM");\n',
+         '#if CONFIG_AM_RX\n'
+         '\t\tsb_str(&b, dual_pane_am(p) ? "VFO AM" : "VFO FM");\t// DDM32 Plus: the air band in AM\n'
+         '#else\n'
+         '\t\tsb_str(&b, "VFO FM");\n'
+         '#endif\n'),
     ])

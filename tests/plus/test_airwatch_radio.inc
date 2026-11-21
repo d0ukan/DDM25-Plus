@@ -7,7 +7,13 @@
  * tuned in AM, its own frequency, TX refused), the AM squelch per letter (a signal holds the ring on its letter, the
  * ring goes on after it), nothing noted while it runs, the end (VFOs A / B and the position back from the settings,
  * C..F's VFOs empty), a power off during it (back as before it), the user's own ring kept on its selected channel,
- * an ATIS letter (held 5 s at most, then passed over 60 s) and the refusals. */
+ * an ATIS letter (held 5 s at most, then passed over 60 s) and the refusals. Owner's beta.7 report (the letters heard
+ * in FM): the fake board's demodulator is checked on every stop (AM there, FM back after the end), around a refused
+ * PTT, and a priority channel (CONFIG_SCAN_PRIO) is never a stop of the air watch's ring. */
+
+#if CONFIG_SCAN_PRIO
+#include "radio/scanprio.h"
+#endif
 
 static void air_req(uint8_t type, int32_t arg, uint32_t arg2)
 {
@@ -23,13 +29,38 @@ static void air_req(uint8_t type, int32_t arg, uint32_t arg2)
 void radio_req_air_vfo(uint8_t idx, uint32_t hz) { air_req(RREQ_AIR_VFO, idx, hz); }
 void radio_req_air_end(void) { air_req(RREQ_AIR_END, 0, 0); }
 
+/* The fake board's demodulator as the DM-32's (radio_dm32.c rx_tune): rx() plays FM, rx_am() AM, and AM is refused
+ * unless the chip is in FM mode. air_board_am: what the last tune left playing (owner's beta.7 report: the air watch's
+ * letters heard in FM) */
+static bool air_board_am;
+static bool air_r_rx(uint32_t hz, radio_bw_t bw, const subtone_t *t)
+{
+    air_board_am = false;
+    return r_rx(hz, bw, t);
+}
+static bool air_rx_am(uint32_t hz, radio_bw_t bw)
+{
+    if (hw_mode != RADIO_MODE_FM)
+        return false;
+    air_board_am = true;
+    return vx_rx_am(hz, bw);
+}
+
+/* The receiver on air frequency hz: the view in AM there (an FM VFO in the air band) and the board's AM demodulator
+ * playing that frequency */
+static bool air_am_on(uint32_t hz)
+{
+    return sm.view.vfo && sm.view.am && sm.view.ch.mode == RADIO_MODE_FM && sm.view.ch.rx_hz == hz && air_board_am &&
+           vx_am_hz == hz;
+}
+
 /* mw_poll for AM letters: a signal on air_busy_hz while the board's AM receiver is tuned there (the fake board's AM
  * receiver leaves hw.rx_hz alone), at -60 dBm: the AM squelch reads the strength, not the noise */
 static uint32_t air_busy_hz;
 static void air_poll(void)
 {
     now += RADIO_POLL_MS;
-    bool on = air_busy_hz != 0 && sm.view.am && vx_am_hz == air_busy_hz;
+    bool on = air_busy_hz != 0 && sm.view.am && air_board_am && vx_am_hz == air_busy_hz;
     signal(on ? 0 : 120, true);
     hw.st.rssi_dbm = on ? -60 : -125;	/* the default AM squelch (level 5) opens above -70 dBm */
     if (native_lab_owns())
@@ -46,7 +77,8 @@ static void air_user(void)
 {
     mw_codeplug(RADIO_MODE_FM, -1);
     mw_start_radio();
-    fake_radio.rx_am = vx_rx_am;
+    fake_radio.rx = air_r_rx;
+    fake_radio.rx_am = air_rx_am;
     vx_request(RREQ_VFO, 1);
     vx_request(RREQ_VFO_SET, 145500000);
     vx_request(RREQ_VFO, 0);
@@ -80,39 +112,61 @@ static bool air_noted_as_before(void)
 static void test_air_ring(void)
 {
     air_user();
+#if CONFIG_SCAN_PRIO
+    /* A priority channel set by the user (the zone's third channel, number 4): never a stop of the air watch's ring
+     * (owner's beta.7 report: the letters heard in FM) */
+    radio_scan_prio_set(scanprio_pack(4, 0));
+#endif
     air_start(4);
     CHECK(sm.air && sm.scan.kind == SCAN_DUAL && sm.dual_n == 4 && sm.dual_sel == 0);
-    /* The ring visits each letter on its own frequency, in AM, and none transmits */
-    unsigned seen = 0, am = 0;
-    for (int i = 0; i < 400 && seen != 0xFu; i++) {
+    /* The ring visits each letter on its own frequency, the board's AM demodulator playing it (every stop, not just
+     * once), and none transmits; 10 s of it, so a priority stop would have come (every 2 s) */
+    unsigned seen = 0, stops = 0;
+    for (int i = 0; i < 400; i++) {
         mw_poll();
-        if (sm.scan.kind == SCAN_DUAL && sm.view.vfo && sm.dual_at < 4) {
-            uint8_t k = sm.dual_at;
-            CHECK(sm.view.ch.rx_hz == air_hz[k] && sm.view.ch.mode == RADIO_MODE_FM && sm.view.am);
-            CHECK(radio_sm_tx_check(&sm) == TXDENY_AM);
-            am += vx_am_hz == air_hz[k];
-            seen |= 1u << k;
-        }
+        CHECK(sm.scan.kind == SCAN_DUAL && sm.view.vfo && sm.dual_at < 4);
+        uint8_t k = sm.dual_at;
+        CHECK(air_am_on(air_hz[k]));
+        CHECK(radio_sm_tx_check(&sm) == TXDENY_AM);
+        stops += !((seen >> k) & 1u) || i % 7 == 0;
+        seen |= 1u << k;
     }
-    CHECK(seen == 0xFu && am > 0);
-    /* A signal on C (123.600): the AM squelch opens on its strength and holds the ring there */
+    CHECK(seen == 0xFu && stops > 4);
+    /* PTT on the air watch: refused (TX denied AM), nothing keyed; the ring goes on in AM after it */
+    unsigned tx0 = (unsigned)hw.tx_calls;
+    air_req(RREQ_PTT, 1, 0);
+    for (int i = 0; i < 8; i++)
+        mw_poll();
+    CHECK(sm.view.state != RS_TX && (unsigned)hw.tx_calls == tx0 && radio_sm_tx_check(&sm) == TXDENY_AM);
+    CHECK(sm.view.state != RS_TX_DENIED || sm.view.tx_deny == TXDENY_AM);
+    CHECK(air_am_on(air_hz[sm.dual_at]));
+    air_req(RREQ_PTT, 0, 0);
+    seen = 0;
+    for (int i = 0; i < 200 && seen != 0xFu; i++) {
+        mw_poll();
+        CHECK(sm.scan.kind == SCAN_DUAL && air_am_on(air_hz[sm.dual_at]));
+        seen |= 1u << sm.dual_at;
+    }
+    CHECK(seen == 0xFu && (unsigned)hw.tx_calls == tx0);
+    /* A signal on C (123.600): the AM squelch opens on its strength and holds the ring there, in AM */
     air_busy_hz = air_hz[2];
     bool held = false;
     for (int i = 0; i < 400 && !held; i++) {
         air_poll();
         held = sm.dual_at == 2 && sm.view.state == RS_RX;
     }
-    CHECK(held);
+    CHECK(held && air_am_on(air_hz[2]));
     unsigned stayed = 0;
-    for (int i = 0; i < 80; i++) {	/* 2 s: it stays, receiving */
+    for (int i = 0; i < 80; i++) {	/* 2 s: it stays, receiving in AM */
         air_poll();
-        stayed += sm.dual_at == 2 && sm.view.state == RS_RX;
+        stayed += sm.dual_at == 2 && sm.view.state == RS_RX && air_am_on(air_hz[2]);
     }
     CHECK(stayed == 80);
     air_busy_hz = 0;
     bool moved = false;
     for (int i = 0; i < 800 && !moved; i++) {
         air_poll();
+        CHECK(air_am_on(air_hz[sm.dual_at]));
         moved = sm.dual_at != 2 && sm.scan.kind == SCAN_DUAL;
     }
     CHECK(moved);
@@ -122,7 +176,10 @@ static void test_air_ring(void)
     /* The end: the ring stops, the radio back on the third channel, VFO A as it was, C..F's VFOs empty */
     radio_req_air_end();
     CHECK(!sm.air && sm.scan.kind == SCAN_OFF && !sm.view.vfo && sm.view.zone_pos == 2 && !sm.view.am);
-    CHECK(sm.view.ch.rx_hz == mw_hz[2] && hw.rx_hz == mw_hz[2]);
+    CHECK(sm.view.ch.rx_hz == mw_hz[2] && hw.rx_hz == mw_hz[2] && !air_board_am);	/* the user's channel, FM again */
+#if CONFIG_SCAN_PRIO
+    radio_scan_prio_set(0);
+#endif
     CHECK(sm.vfo_idx == 0 && sm.vfox_at == 0 && sm.vfo_ch.rx_hz == 145500000 && sm.vfo_ch.mode == RADIO_MODE_FM);
     static const vfox_slot_t empty;
     for (int k = 0; k < 4; k++)

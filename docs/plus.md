@@ -2422,6 +2422,18 @@ After the rebase onto 42a0ff4: public 84,484 B flash and **1,760 B RAM free**; o
 - **Bug fixed after beta.6** (owner: Esenboğa shows four frequencies, # watched only three, A..C): no ring limit, the
   ATIS left out on purpose (a documented deviation from "all", made before the 5 s limit existed). Fixed as above: Esenboğa's four on
   A..D (GND, TWR, APP, the ATIS on D). Cost: FLASH +440 B (841,104), RAM +16 B (209,584 of 211,456: 1,872 free).
+- **Bug fixed after the beta.7 candidate** (owner: Esenboğa's four on A..D, but "received in FM, not AM"). The radio
+  core was already right: every letter is tuned through `tune()`, which puts an FM VFO in the air band on the board's
+  AM demodulator (`rx_am`) with the AM squelch; the host test now models the DM-32's demodulator (rx() plays FM,
+  rx_am() AM, refused outside FM mode) and checks it on **every** stop, while a letter holds a call, around a refused
+  PTT and back in FM after the end. What said FM: (1) **Home's status bar** in any dual watch / ring read the selected
+  pane's mode as `DMR ? "DMR" : "FM"` (upstream `ui_screens.c`), so the air watch showed "FM DUAL" over its AM rows;
+  (2) a **VFO pane** of dual watch's pair read "VFO FM" (an airfield with two frequencies). Both now follow the radio
+  core's rule (`dual_pane_am`: an FM pane in the air band on a radio that receives AM says AM; `tools/plus_air.py`).
+  (3) A real FM stop: with a **priority channel** set (Settings, CONFIG_SCAN_PRIO) the ring added a stop on it every
+  2 s and held it on a signal, so the user's FM channel was heard in the middle of the air watch. The air watch's ring
+  never takes priority stops or looks now (`scx_kind_ok` while `sm.air`, `radio_scanprio.inc`); the user's watch and
+  scans keep them. Cost: FLASH +116 B (844,892), RAM +0 B (209,608 of 211,456: 1,848 free).
 - Tests: `tests/plus/test_airwatch_radio.inc` (run by `tools/test_air.py` after upstream's radio suite, the Classic /
   Plus P25 suites, the multi-watch ring and every mode in the VFO again with it built in): four air frequencies on the
   letters' VFOs and the ring over them, each tuned on its own frequency in AM through the board's AM receiver, TX
