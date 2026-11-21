@@ -53,6 +53,43 @@ def prepare_p25_txnac(transform, install):
          '\t\t\t\t\tsb_chr(&b, "0123456789ABCDEF"[(c->p25_nac >> (4 * (2 - d))) & 15u]);\n#endif\n'),
     ])
 
+    # ---- Home's VFO row: every NAC in both forms, "NAC $293/659>$659/1625" (owner 2026-11-21: hex with "$" and the
+    # decimal wherever a NAC is shown). Forms: "VFO P25 NAC $293/659 TG 99" | "P25 NAC ..." | "NAC$293/659 TG99";
+    # Any: "NAC Any $F7E/3966" in the wide forms, "NACAny" in the tight one. A TX NAC of its own that does not fit even
+    # so gets a fourth, last-resort form with the decimals alone ("NAC659>1625 TG99", round 15's)
+    transform('core/ui/ui_screens.c', [
+        ('\tstatic char buf[96];\t// three forms, the TX NAC in each\n',
+         '#if CONFIG_NAC_DEC\n\tstatic char buf[144];\t// four forms, both NAC forms and the TX NAC in each\n#else\n'
+         '\tstatic char buf[96];\t// three forms, the TX NAC in each\n#endif\n'),
+        ('#else\n\tstatic char buf[72];\n#endif\n\tuint8_t m = vfox_mode_of(&v->ch);\n',
+         '#elif CONFIG_NAC_DEC\n\tstatic char buf[112];\t// three forms, both NAC forms in each\n'
+         '#else\n\tstatic char buf[72];\n#endif\n\tuint8_t m = vfox_mode_of(&v->ch);\n'),
+        ('\tfor (int form = 0; form < 3; form++) {\n',
+         '#if CONFIG_NAC_DEC\n'
+         '\tint forms = m == RADIO_MODE_P25 && c->p25_tx_nac_override && codeplug_p25_tx_nac(c) != c->p25_nac ? 4 : 3;\n'
+         '\tfor (int form = 0; form < forms; form++) {\n'
+         '#else\n'
+         '\tfor (int form = 0; form < 3; form++) {\n'
+         '#endif\n'),
+        ('\t\t\t\tsb_str(&b, TR("Any"));\n\t\t\t} else {\n#if CONFIG_NAC_DEC\n\t\t\t\tsb_u32(&b, c->p25_nac, 1);\n#else\n',
+         '\t\t\t\tsb_str(&b, TR("Any"));\n'
+         '#if CONFIG_NAC_DEC\n\t\t\t\tif (form < 2)\n\t\t\t\t\tsb_str(&b, " $F7E/3966");\n#endif\n'
+         '\t\t\t} else {\n#if CONFIG_NAC_DEC\n'
+         '\t\t\t\tif (form < 3)\n\t\t\t\t\tsb_nac_both(&b, c->p25_nac);\n\t\t\t\telse\n'
+         '\t\t\t\t\tsb_u32(&b, c->p25_nac, 1);\n#else\n'),
+        ('\t\t\t\tsb_chr(&b, \'>\');\n\t\t\t\tsb_u32(&b, tx, 1);\t// decimal (CONFIG_NAC_DEC, which P25_TXNAC needs)\n',
+         '\t\t\t\tsb_chr(&b, \'>\');\n'
+         '\t\t\t\tif (form < 3)\n\t\t\t\t\tsb_nac_both(&b, tx);\t// CONFIG_NAC_DEC, which P25_TXNAC needs\n'
+         '\t\t\t\telse\n\t\t\t\t\tsb_u32(&b, tx, 1);\n'),
+        ('static const char *__attribute__((noinline)) vfox_home(const radio_view_t *v)\n',
+         '#if CONFIG_NAC_DEC\n'
+         '// DM32 Plus: a NAC in both forms, "$293/659"\n'
+         'static void sb_nac_both(sbuf_t *b, unsigned nac)\n{\n\tsb_chr(b, \'$\');\n'
+         '\tfor (unsigned d = 0; d < 3; d++)\n\t\tsb_chr(b, "0123456789ABCDEF"[(nac >> (4 * (2 - d))) & 15u]);\n'
+         '\tsb_chr(b, \'/\');\n\tsb_u32(b, nac, 1);\n}\n#endif\n'
+         'static const char *__attribute__((noinline)) vfox_home(const radio_view_t *v)\n'),
+    ])
+
     # ---- The simulator (host UI tests): the "txnac" key (the TX NAC itself; 0 = Same as RX) ----
     transform('tests/host/sim/ui_sim.c', [
         ('\telse if (strcmp(key, "nac") == 0) snprintf(got, sizeof got, "%X", view.ch.p25_nac);\n',

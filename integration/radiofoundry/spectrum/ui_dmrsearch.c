@@ -149,7 +149,7 @@ static void sb_hex3(sbuf_t *b, uint16_t v)
 		sb_chr(b, "0123456789ABCDEF"[(v >> (4 * d)) & 15u]);
 }
 
-/* The all digital search's first line after the frequency: "P25 NAC 1C8", "YSF DG 0", "NXDN RAN 1" (DMR: as the DMR
+/* The all digital search's first line after the frequency: "P25 NAC $1C8/456", "YSF DG 0", "NXDN RAN 1" (DMR: as the DMR
  * search's) */
 static bool all_line(sbuf_t *b, const dmrs_found_t *f)
 {
@@ -162,16 +162,23 @@ static bool all_line(sbuf_t *b, const dmrs_found_t *f)
 	sb_str(b, dmrs_mode_name(f->mode));
 	if (f->cc != DMRS_CC_NONE) {
 		sb_str(b, f->mode == DMRS_MODE_P25 ? " NAC " : f->mode == DMRS_MODE_YSF ? " DG " : " RAN ");
-		if (f->mode == DMRS_MODE_P25)
+		if (f->mode == DMRS_MODE_P25) {
+#if CONFIG_NAC_DEC
+			sb_chr(b, '$');	// DM32 Plus: both forms, "$1C8/456"
+#endif
 			sb_hex3(b, f->cc);
-		else
+#if CONFIG_NAC_DEC
+			sb_chr(b, '/');
+			sb_u32(b, f->cc, 1);
+#endif
+		} else
 			sb_u32(b, f->cc, 1);
 	}
 	return true;
 }
 #endif
 
-/* "433.5000 CC1 TS1+2 RPT 3m" (the all digital search: "433.5000 P25 NAC 1C8 3m", "438.7125 DMR CC1 TS2 RPT 3m") */
+/* "433.5000 CC1 TS1+2 RPT 3m" (the all digital search: "433.5000 P25 NAC $1C8/456 3m", "438.7125 DMR CC1 TS2 RPT 3m") */
 static void found_line(sbuf_t *b, const dmrs_found_t *f)
 {
 	sb_mhz4(b, f->hz);

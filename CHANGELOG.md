@@ -13,6 +13,9 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 - Air watch in AM: Home's top bar said "FM DUAL" (and a two-frequency airfield's panes "VFO FM") although every air
   letter is received in AM; it now says "AM DUAL" / "VFO AM". A priority channel set in Settings is no longer a stop
   of the air watch's ring (it put the user's FM channel in the middle of it); your own scans and watches keep it.
+- P25 NAC in both forms everywhere: hex marked with "$" and the decimal, e.g. "NAC $659/1625", on Home's caller line
+  (the tight form too), dual / multi-watch panes, Home's VFO row (with the TX NAC), Recent, Heard list, All digital
+  search and P25 trunk (the "$" was missing there); P25 search and the NAC editor rows already showed both.
 - Search log on the PC: the Windows programmer 2.0.0-beta.4 and the programmer 3.0.0-alpha.3 have a Search log page.
   With P25 search, DMR search or All digital search running on the radio and the cable in, it reads the search's
   finds every second (read only: two / three debug link views, not counted as a look, so the search still stops once

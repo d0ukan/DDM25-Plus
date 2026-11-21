@@ -194,7 +194,7 @@ int main(void)
     CHECK(played_frames==36u && muted_frames==0);
     CHECK(p25_lab_p25_kind(&target)==P25_LAB_EMERGENCY && target==0);
     lines();
-    CHECK(same(home,"\x1d" "EMERGENCY TG 101 ID 77285 NAC $293/659" "\x1f" "EMERGENCY TG101 ID77285 NAC$293"
+    CHECK(same(home,"\x1d" "EMERGENCY TG 101 ID 77285 NAC $293/659" "\x1f" "EMERGENCY TG101 ID77285 NAC$293/659"
                     "\x1f" "EMERGENCY TG101 ID77285" "\x1e"));
     /* both pane forms would take 64 of the pane's 48 bytes: the short one alone */
     CHECK(same(pane,"\x1d" "EMERGENCY TG101 ID77285" "\x1e"));
@@ -209,7 +209,7 @@ int main(void)
     execute(0x293,101,1234);
     CHECK(played_frames==36u && muted_frames==0 && p25_lab_p25_kind(NULL)==0);
     lines();
-    CHECK(same(home,"\x1d" "P25 TG 101 ID 77285 NAC $293/659" "\x1f" "TG101 ID77285 NAC$293" "\x1f" "TG101 ID77285" "\x1e"));
+    CHECK(same(home,"\x1d" "P25 TG 101 ID 77285 NAC $293/659" "\x1f" "TG101 ID77285 NAC$293/659" "\x1f" "TG101 ID77285" "\x1e"));
     CHECK(p25_lab_call(&c)==n0+1u && !c.emergency && !c.priv && c.tg==101);
     report("group call after it: played, caller line as before the extras",before);
 
@@ -221,7 +221,7 @@ int main(void)
     CHECK(played_frames==36u && muted_frames==0);
     CHECK(p25_lab_p25_kind(&target)==P25_LAB_PRIVATE && target==1234);
     lines();
-    CHECK(same(home,"\x1d" "P25 Private 77285 > 1234 NAC $293/659" "\x1f" "Private 77285>1234 NAC$293"
+    CHECK(same(home,"\x1d" "P25 Private 77285 > 1234 NAC $293/659" "\x1f" "Private 77285>1234 NAC$293/659"
                     "\x1f" "Private 77285>1234" "\x1e"));
     CHECK(same(pane,"\x1d" "Private 77285>1234" "\x1e"));	/* 54 bytes with the wide form: the short one */
     char small[40];	/* the length returned is the text's */
@@ -264,8 +264,9 @@ int main(void)
     execute(0x293,101,1234);
     CHECK(played_frames==36u && p25_lab_p25_kind(&target)==(P25_LAB_EMERGENCY|P25_LAB_PRIVATE) && target==1234);
     lines();
-    CHECK(same(home,"\x1d" "EMERGENCY Private 77285 > 1234 NAC $293/659" "\x1f" "EMERGENCY Private 77285>1234 NAC$293"
-                    "\x1f" "EMERGENCY Private 77285>1234" "\x1e"));
+    /* both NAC forms in each (DM32 Plus): Home's 112 bytes leave out the widest form (43 characters, wider than the
+     * screen in every font anyway) */
+    CHECK(same(home,"\x1d" "EMERGENCY Private 77285>1234 NAC$293/659" "\x1f" "EMERGENCY Private 77285>1234" "\x1e"));
     CHECK(same(pane,"\x1d" "EMERGENCY Private 77285>1234" "\x1e"));
     CHECK(p25_lab_call(&c)==n0+6u && c.priv && c.emergency && c.target==1234);	/* each receive above: one call */
     report("emergency unit-to-unit call: both marks; the pane keeps the form that fits",before);
@@ -287,7 +288,7 @@ int main(void)
     execute(0x293,101,1234);
     CHECK(played_frames==0 && muted_frames==36u && p25_lab_p25_kind(NULL)==0);
     lines();
-    CHECK(same(home,"\x1d" "P25 TG 202 ID 77285 NAC $293/659" "\x1f" "TG202 ID77285 NAC$293" "\x1f" "TG202 ID77285" "\x1e"));
+    CHECK(same(home,"\x1d" "P25 TG 202 ID 77285 NAC $293/659" "\x1f" "TG202 ID77285 NAC$293/659" "\x1f" "TG202 ID77285" "\x1e"));
     report("group call on another talkgroup: shown, muted (as before)",before);
 
     /* A Motorola-style talker alias LC (LCF 0x15, MFID 0x90) in the second LDU1: that superframe is no longer muted;
@@ -299,7 +300,7 @@ int main(void)
     execute(0x293,101,1234);
     CHECK(played_frames==36u && muted_frames==0 && p25_lab_p25_kind(NULL)==0);
     lines();
-    CHECK(same(home,"\x1d" "P25 TG 101 ID 77285 NAC $293/659" "\x1f" "TG101 ID77285 NAC$293" "\x1f" "TG101 ID77285" "\x1e"));
+    CHECK(same(home,"\x1d" "P25 TG 101 ID 77285 NAC $293/659" "\x1f" "TG101 ID77285 NAC$293/659" "\x1f" "TG101 ID77285" "\x1e"));
     report("vendor LC (talker alias header) in an LDU1: not muted, the caller kept",before);
 
     /* ... but a protected LC (P bit) is still treated as before: that superframe muted */

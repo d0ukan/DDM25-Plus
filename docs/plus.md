@@ -395,7 +395,7 @@ Found list: 8 entries, newest first, with the mode as a field:
 
 | Mode | First line | Second line |
 |---|---|---|
-| P25 | `433.5000 P25 NAC 1C8 3m` | `TG 655 from 1234567` |
+| P25 | `433.5000 P25 NAC $1C8/456 3m` | `TG 655 from 1234567` |
 | DMR | `438.7125 DMR CC1 TS2 RPT 3m` | `TG 2620 from 2620123` / Encrypted |
 | YSF | `439.1000 YSF DG 0 3m` | `from TA2DOU` (the header's source callsign, packed base 40 into the entry's two numbers: no extra RAM) |
 | NXDN | `438.8000 NXDN RAN 5 3m` | `TG 101 from 1234` / Encrypted |
@@ -1202,6 +1202,34 @@ Third round (owner, 2026-11-17): 1 DMR scanner, 2 DMR any CC/TG/TS, 3 call histo
   back to hex digits. P25 search ("$125/293"), P25 trunk and Home's P25 caller line ("NAC $125/293", the tight form
   "$125") mark hex with "$" and add the decimal. No RAM; +~0.5 KB flash. UI flows in tests/plus/test_ui_any.c.
   Radio row NC1.
+- [built] NAC in both forms everywhere (`CONFIG_NAC_DEC`; owner 2026-11-21): wherever the radio shows a P25 NAC it
+  shows hex marked with "$" and the decimal, `$659/1625`, in the tight forms too (no screen shows one form alone any
+  more, except the last-resort row below):
+  - Home's P25 caller line: `P25 TG 101 ID 77285 NAC $293/659` | `TG101 ID77285 NAC$293/659` | `TG101 ID77285`
+    (the tight form had the hex alone); dual watch and multi-watch panes: `TG 101 ID 77285 NAC $293/659` |
+    `TG101 ID77285` (`integration/radiofoundry/p25_lab.c`).
+  - Home's VFO row (`tools/plus_p25nac.py`): `VFO P25 NAC $456/1110 TG 99` | `P25 NAC ...` | `NAC$456/1110 TG99`,
+    with a TX NAC of its own `NAC$293/659>$659/1625 TG99`; Any reads `NAC Any $F7E/3966` in the wide forms and
+    `NACAny` in the tight one. Only when a TX NAC of its own does not fit even so (Large text) a fourth form keeps
+    round 15's decimals, `NAC659>1625 TG99`. Its buffer 96 -> 144 B (+48 B static RAM; static RAM 209,656 B, 1,800 B free).
+  - Recent (the call history), a P25 row: `TG 202 $293/659 1s` (the "$" marks the NAC; the word "NAC" gave its four
+    bytes to the decimal so the row's 44-byte value still offers the NAC at both of its first levels; the room is
+    counted from the age as written, not its longest).
+  - Tools > Heard list: the row `TG101 $659/1625 x12 3m`, where that does not fit (the DM-32's rows) `TG101 x12 3m`
+    as before (the alternates now wrap only the talkgroup and NAC, so the value's 44 bytes hold them; the third,
+    `x12 3m` alone, is gone: an empty last alternate would leave the whole value out), the station's page `$659/1625  433.500000`, the VFO tune toast
+    `VFO 433.500000 $659/1625 TG 101`.
+  - Tools > All digital search, a P25 find: `433.5000 P25 NAC $1C8/456 3m`.
+  - Tools > P25 trunk, the system line: `WACN BEE00 SYS 1C8 NAC $1C8/456` (the "$" was missing); where that is too
+    wide the space after NAC goes first, then the WACN: `SYS 1C8 NAC$1C8/456` (the DM-32's width; before, the line
+    ran off the screen there).
+  - Unchanged, already both: P25 search's found list (`433.5000 $125/293 TG101 3m`), the channel editor's and VFO
+    settings' RX / TX NAC rows (`659 ($293)`, typed `[293] ($125)`, hex digits `$2[9]3 (659)`, Any
+    `Any 3966 ($F7E)`; the entry stays decimal first, # # hex), the toasts naming 3966 / 3967 ($F7E / $F7F).
+  No screen besides these shows a NAC (Last calls, scan, multi-watch rows and diagnostics have none). +376 B flash,
+  +48 B static RAM. Host tests: `tests/plus/test_p25x_worker.c` (the caller line's forms), `test_ui_p25x.c` (Recent),
+  `test_ui_p25nac.c`, `test_ui_vfox.c` (Home's VFO row), `test_ui_toolbox.c` (Heard list, P25 trunk), with the
+  layout checks in English and Turkish. Radio row NC2.
 - [built] RAM for the hotspot (`prepare_audio_mux`, `PLUS_AUDIO_MUX_NO_HOST`; Plus only, 2026-11-19): upstream's
   hotspot as Classic measured it (+11.2 KB) overflowed the Plus image by 7,120 B. Two exact cuts, no sharing:
   1. The split duplex extension off (`CONFIG_HOTSPOT_SPLIT=n` in the Plus preset; its default follows HOTSPOT): the
@@ -2136,7 +2164,7 @@ plus-radio-test.md):
   209,168 B (-1,520: the six copies' 1,292 B -> the union's 280 and its owner byte, about -1,010; the ring -512), **2,288 B free**; FLASH
   +168 B; every task's deepest stack path unchanged.
 - [built] Heard list (`CONFIG_HEARD`, item 24; needs CALL_LOG). Tools > **Heard list** ("Duyulanlar"): every station
-  heard on P25, DMR, YSF, NXDN and dPMR, one row each, newest first: "P25 77285" and "TG101 $659 x12 3m" (the
+  heard on P25, DMR, YSF, NXDN and dPMR, one row each, newest first: "P25 77285" and "TG101 $659/1625 x12 3m" (the
   talkgroup or the unit called, the NAC / colour code / RAN, the calls, how long ago; the NAC, then the talkgroup
   left out where the row is too narrow). Entries merge by (mode, source, destination); a private call and another
   mode are other entries. Fed where Recent is fed (ui_app.c `recent_add`: every new call; while a DMR or P25 call goes
@@ -2963,7 +2991,8 @@ values: **RX Any** is `#` as before and reads `Any 3966 ($F7E)`; **TX Same as RX
 decimal). OK refuses an RX NAC 3967 ($F7F: "3967 ($F7F) is not a NAC: # is Any") and a TX NAC 3966 / 3967 ($F7E /
 $F7F: "TX NAC can't be 3966 or 3967") and keeps the row open; before, those reached the save and got the general
 "Check P25 NAC, talkgroup and ID". Home's VFO row (`tools/plus_p25nac.py`) shows the NACs in decimal too:
-`P25 NAC 1110 TG 99`, `NAC 659>1625` with a TX NAC of its own. P25 search and P25 trunk keep listing both ways.
+`P25 NAC 1110 TG 99`, `NAC 659>1625` with a TX NAC of its own (since 2026-11-21 both forms there too:
+`NAC $456/1110`, see "NAC in both forms everywhere"). P25 search and P25 trunk keep listing both ways.
 Upstream's own builds (no `NAC_DEC`) are unchanged. Updated with it: `tests/plus/test_ui_any.c`, `test_ui_vfox.c`,
 `test_ui_p25nac.c` (their typed NACs and expected rows now decimal), and `integration/radiofoundry/vfox/ui_vfox.inc`
 (the flag is `ced_nac_hex` now). New flows in `tests/plus/test_ui_chux.c` (English and Turkish).

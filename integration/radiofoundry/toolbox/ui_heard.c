@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* DDM32 Plus Tools > Heard list (heard.h, docs/plus.md "Heard list"): every station heard, newest first, one row each:
- * "P25 77285" and "TG101 $659 x12 3m" (the talkgroup, NAC, calls, how long ago; the NAC, then the talkgroup left out
+ * "P25 77285" and "TG101 $659/1625 x12 3m" (the talkgroup, NAC, calls, how long ago; the NAC, then the talkgroup left out
  * where they do not fit on the row). OK on a
  * row opens it: the mode, destination, source, NAC / colour code and slot / RAN, the frequency, the calls and when;
  * on a P25 or DMR station OK there tunes the VFO to it (CONFIG_VFO_MODES: the VFO settings' own path,
@@ -125,6 +125,10 @@ static void code(sbuf_t *b, const heard_t *e)
 	case RADIO_MODE_P25:
 		sb_chr(b, '$');
 		hex3(b, e->nac);
+#if CONFIG_NAC_DEC
+		sb_chr(b, '/');		// both forms: "$659/1625"
+		sb_u32(b, e->nac, 1);
+#endif
 		break;
 	case RADIO_MODE_DMR:
 		sb_str(b, "CC");
@@ -196,7 +200,8 @@ static void heard_item(uint16_t i, ui_item_t *it)
 		sb_chr(&b, ' ');
 		sb_u32(&b, e->id, 1);
 	}
-	/* "TG101 $659 x12 3m", where that does not fit "TG101 x12 3m", then "x12 3m" */
+	/* "TG101 $659/1625 x12 3m", where that does not fit "TG101 x12 3m" (the alternates around the talkgroup and NAC
+	 * only: the value's 44 bytes hold them so; an empty last alternate would leave the whole value out) */
 	sb_init(&b, it->value, sizeof it->value);
 	sb_str(&b, TEXT_ALT_OPEN);
 	dest(&b, e);
@@ -204,13 +209,10 @@ static void heard_item(uint16_t i, ui_item_t *it)
 		code(&b, e);
 		sb_chr(&b, ' ');
 	}
-	count_age(&b, e);
 	sb_str(&b, TEXT_ALT_NEXT);
 	dest(&b, e);
-	count_age(&b, e);
-	sb_str(&b, TEXT_ALT_NEXT);
-	count_age(&b, e);
 	sb_str(&b, TEXT_ALT_CLOSE);
+	count_age(&b, e);
 }
 
 static void heard_select(uint16_t i, bool hold)
@@ -320,6 +322,10 @@ static void __attribute__((noinline)) tune(const heard_t *e)
 	if (m == RADIO_MODE_P25) {
 		sb_str(&b, " $");
 		hex3(&b, e->nac);
+#if CONFIG_NAC_DEC
+		sb_chr(&b, '/');
+		sb_u32(&b, e->nac, 1);
+#endif
 		if (ch.p25_tg != 0) {
 			sb_str(&b, " TG ");
 			sb_u32(&b, ch.p25_tg, 1);

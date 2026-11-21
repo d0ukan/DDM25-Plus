@@ -224,7 +224,7 @@ def p25_extras_tests(flags, worker_flags, codec):
     argv[argv.index('uiFlowTest.c')]=str(ROOT/'tests/plus/test_ui_p25x.c')
     argv[argv.index('-o')+1]=str(OUT/'test_ui_p25x')
     run([*argv,'-I'+str(host),'-DCONFIG_P25_CHANNELS=1','-DCONFIG_DEV_TX=1','-DCONFIG_CALL_LOG=1','-DCONFIG_P25_CALLER=1',
-         '-DCONFIG_P25_EXTRAS=1'],cwd=host)
+         '-DCONFIG_P25_EXTRAS=1','-DCONFIG_NAC_DEC=1'],cwd=host)	# NAC_DEC as Plus: the NAC's two forms, " $293/659"
     run([OUT/'test_ui_p25x'],cwd=host)
     # CH_MODE 2 records (the owner's channels 18-21): with the switch and without; every record that is not mode 2
     # must decode the same in both builds
