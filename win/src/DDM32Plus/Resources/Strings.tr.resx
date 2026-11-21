@@ -1442,4 +1442,67 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
   <data name="Demo_Note" xml:space="preserve">
     <value>Örnek veri: telsize bağlanılmadı</value>
   </data>
+  <data name="Tab_SearchLog" xml:space="preserve">
+    <value>Arama kaydı</value>
+  </data>
+  <data name="SLog_Text" xml:space="preserve">
+    <value>Telsizde **P25 arama** ya da **DMR arama**yı başlatın (Araçlar), kabloyu takıp **Kaydı başlat**a basın. Program her saniye aramanın bulduklarını okur (yalnızca okur; telsize hiçbir şey göndermez) ve her konuşmayı burada ve günlük bir CSV dosyasında tutar; açık bırakırsanız bütün gece. Ses kaydedilmez.</value>
+  </data>
+  <data name="SLog_Start" xml:space="preserve">
+    <value>Kaydı başlat</value>
+  </data>
+  <data name="SLog_StartTip" xml:space="preserve">
+    <value>Kabloyu açar ve Durdur'a kadar her saniye telsizin arama sonuçlarını okur</value>
+  </data>
+  <data name="SLog_Folder" xml:space="preserve">
+    <value>Kayıt klasörünü aç</value>
+  </data>
+  <data name="SLog_Clear" xml:space="preserve">
+    <value>Tabloyu temizle</value>
+  </data>
+  <data name="SLog_NotRunning" xml:space="preserve">
+    <value>Kayıt yapılmıyor.</value>
+  </data>
+  <data name="SLog_Running" xml:space="preserve">
+    <value>Kaydediliyor (son okuma {0}).</value>
+  </data>
+  <data name="SLog_File" xml:space="preserve">
+    <value>Dosya: {0}</value>
+  </data>
+  <data name="SLog_SearchOn" xml:space="preserve">
+    <value>{0} arama: çalışıyor ({1} MHz)</value>
+  </data>
+  <data name="SLog_SearchOff" xml:space="preserve">
+    <value>{0} arama: kapalı</value>
+  </data>
+  <data name="SLog_SearchNone" xml:space="preserve">
+    <value>{0} arama: yanıt yok</value>
+  </data>
+  <data name="SLog_Count" xml:space="preserve">
+    <value>{1} frekansta {0} konuşma</value>
+  </data>
+  <data name="SLog_Time" xml:space="preserve">
+    <value>Zaman</value>
+  </data>
+  <data name="SLog_Mode" xml:space="preserve">
+    <value>Mod</value>
+  </data>
+  <data name="SLog_Mhz" xml:space="preserve">
+    <value>MHz</value>
+  </data>
+  <data name="SLog_Code" xml:space="preserve">
+    <value>NAC / CC</value>
+  </data>
+  <data name="SLog_Slot" xml:space="preserve">
+    <value>Slot</value>
+  </data>
+  <data name="SLog_Group" xml:space="preserve">
+    <value>Grup</value>
+  </data>
+  <data name="SLog_Source" xml:space="preserve">
+    <value>Kaynak</value>
+  </data>
+  <data name="SLog_Calls" xml:space="preserve">
+    <value>Çağrı</value>
+  </data>
 </root>

@@ -27,7 +27,7 @@ public partial class MainWindow : Window
     {
         this.state = state;
         InitializeComponent();
-        pages = [Home, Update, Versions, Restore, Packs, Health, Live, Channels];
+        pages = [Home, Update, Versions, Restore, Packs, Health, Live, SearchLog, Channels];
         foreach (var p in pages)
             p.Init(state, this);
         state.Changed += () => Dispatcher.Invoke(RefreshAll);
@@ -41,7 +41,7 @@ public partial class MainWindow : Window
 
     private void RefreshAll()
     {
-        Title = $"{AppInfo.Name} {AppState.ProgramVersion}" + (!Core.Radio.BuildFlags.IsDeveloper ? "" :
+        Title = $"{AppInfo.Name} {AppState.ProgramVersion} - TA2DOU" + (!Core.Radio.BuildFlags.IsDeveloper ? "" :
             Core.Radio.RadioAccess.WritesOn ? Loc.T("Dev_TitleWrite") : Core.Radio.RadioAccess.IsOn ? Loc.T("Dev_Title") : "");
         LocalButton.Visibility = Core.Radio.BuildFlags.IsDeveloper ? Visibility.Visible : Visibility.Collapsed;
         MenuTr.IsChecked = Loc.Instance.Language == "tr";
@@ -114,6 +114,7 @@ public partial class MainWindow : Window
             "packs" => TabPacks,
             "health" => TabHealth,
             "live" => TabLive,
+            "searchlog" => TabSearchLog,
             "channels" => TabChannels,
             _ => null,
         };
@@ -203,6 +204,7 @@ public partial class MainWindow : Window
             return;
         }
         Live.Stop();                                    // the live reader ends at its next step and closes the port
+        SearchLog.Stop();                               // the search log too
         var r = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
         state.Settings.Save("window", new System.Text.Json.Nodes.JsonObject
         {

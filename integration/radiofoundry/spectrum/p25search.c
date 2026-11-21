@@ -316,6 +316,31 @@ uint32_t p25s_at_hz(void)
 	return s.at_hz;
 }
 
+/* The PC's search log (debug link section, tools/plus_searchlog.py): the state and found entry i, read like the
+ * snapshot but not counted as a look, so the search still stops once its screen was left. Small on the caller's stack
+ * (the host link task): one entry at a time. False when i is past the list or the copy kept changing */
+bool p25s_peek(unsigned i, p25s_peek_t *out)
+{
+	for (unsigned tries = 0; tries < 8u; tries++) {
+		uint32_t a = seq;
+		__asm__ volatile("" ::: "memory");
+		if (a & 1u)
+			continue;
+		out->phase = s.phase;
+		out->at_hz = s.at_hz;
+		out->lo_hz = s.lo_hz;
+		out->hi_hz = s.hi_hz;
+		out->found_n = s.found_n;
+		bool have = i < s.found_n && i < P25S_FOUND_MAX;
+		if (have)
+			memcpy(&out->f, &s.found[i], sizeof out->f);
+		__asm__ volatile("" ::: "memory");
+		if (seq == a)
+			return have;
+	}
+	return false;
+}
+
 bool p25s_snapshot(p25s_view_t *out)
 {
 	reads++;

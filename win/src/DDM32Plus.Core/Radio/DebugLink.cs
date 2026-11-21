@@ -255,6 +255,63 @@ public static class DebugReaders
 
     public const int MaxSilentPolls = 3;
 
+    /// <summary>The search log (firmware tools/plus_searchlog.py) sends only these: GET_VIEW p25s (28) and dmrs (29).</summary>
+    public static readonly IReadOnlySet<(byte, byte)> SearchLogAllowed = new HashSet<(byte, byte)>
+    {
+        (0x09, SearchLogBook.SectionP25), (0x09, SearchLogBook.SectionDmr),
+    };
+
+    /// <summary>The search log runs all night: a radio busy for a while (a menu, a restart) is waited for this many
+    /// polls (about a minute at one a second) before the run ends.</summary>
+    public const int SearchLogSilentPolls = 60;
+
+    /// <summary>search log: --port P [--count N]. Every second the p25s and dmrs sections, printed as the live reader
+    /// prints a poll ("=== poll N" ... "=== end N"), until <see cref="ToolContext.Cancel"/> or N polls.</summary>
+    public static void SearchLog(IReadOnlyList<string> argv, ToolContext ctx)
+    {
+        var a = new Args(argv, ["--port", "--count"], [], ["--port"]);
+        var portName = a.Get("--port")!;
+        if (!int.TryParse(a.Get("--count") ?? "0", NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) || count < 0)
+            throw new ToolExit("2");
+        var raw = Open(ctx, portName);
+        int code;
+        try
+        {
+            ctx.Print($"SEARCHLOG: {portName} open, read only, every 1 s");
+            var link = new DebugLinkClient(new DebugLinkPort(raw, SearchLogAllowed, "searchlog"), ctx.Clock, portName);
+            code = PollSearch(link, count, ctx);
+        }
+        finally
+        {
+            raw.Close();
+        }
+        if (code != 0)
+            throw new ToolExit(code.ToString(CultureInfo.InvariantCulture));
+    }
+
+    public static int PollSearch(DebugLinkClient link, int count, ToolContext ctx)
+    {
+        int n = 0, silent = 0;
+        while ((count == 0 || n < count) && !ctx.Cancel.IsCancellationRequested)
+        {
+            n++;
+            var started = ctx.Clock.Monotonic();
+            ctx.Print($"=== poll {n}");
+            int[] codes = [PrintView(link, "view p25s", SearchLogBook.SectionP25, ctx),
+                PrintView(link, "view dmrs", SearchLogBook.SectionDmr, ctx)];
+            ctx.Print($"=== end {n}");
+            silent = codes.All(c => c == -1) ? silent + 1 : 0;
+            if (silent >= SearchLogSilentPolls)
+            {
+                ctx.Print($"No answer from the radio for {silent} polls; stopping.");
+                return 3;
+            }
+            if (count == 0 || n < count)
+                Wait(ctx, Math.Max(0.0, 1.0 - (ctx.Clock.Monotonic() - started)));
+        }
+        return 0;
+    }
+
     private static (string Name, byte Section)[] HealthViews => [("tasks", 0x14), ("crash", 0x15), ("reset", 0x17)];
 
     private static IRawSerial Open(ToolContext ctx, string portName)

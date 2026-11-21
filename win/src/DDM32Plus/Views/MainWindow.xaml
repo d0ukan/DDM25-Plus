@@ -131,6 +131,15 @@
                 </TabItem.Header>
                 <p:LivePage x:Name="Live" />
             </TabItem>
+            <TabItem x:Name="TabSearchLog">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE721;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{l:Tr Tab_SearchLog}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <p:SearchLogPage x:Name="SearchLog" />
+            </TabItem>
             <TabItem x:Name="TabChannels">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">

@@ -37,6 +37,7 @@ public sealed class AppPaths
     }
 
     public string Packs => Path.Combine(Root, AppInfo.PacksFolder);
+    public string Logs => Path.Combine(Root, AppInfo.LogsFolder);
 
     /// <summary>The old backups folder (yedekler) when it is still there: a move that could not be done, or both
     /// names present. Its backups are still offered (quick update, restore, channels).</summary>

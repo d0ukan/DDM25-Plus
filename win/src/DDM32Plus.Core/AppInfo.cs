@@ -23,6 +23,8 @@ public static class AppInfo
     public const string ReleasesFolder = "releases";
     public const string UpdatesFolder = "updates";
     public const string PacksFolder = "packs";
+    /// <summary>The search log's CSV files (one a day; kept on uninstall).</summary>
+    public const string LogsFolder = "logs";
     public const string SettingsFile = "settings.json";
 
     /// <summary>The Turkish folder names up to 2.0.0-beta.2, moved to the English ones at start-up
@@ -42,6 +44,6 @@ public static class AppInfo
 
     /// <summary>Names an update must never replace: the user's data in the install folder (old names too).</summary>
     public static readonly IReadOnlyList<string> ReservedNames =
-        [BackupsFolder, ReleasesFolder, UpdatesFolder, PacksFolder, SettingsFile, "unins000.exe", "unins000.dat",
+        [BackupsFolder, ReleasesFolder, UpdatesFolder, PacksFolder, LogsFolder, SettingsFile, "unins000.exe", "unins000.dat",
          LegacyBackupsFolder, LegacyReleasesFolder, LegacyUpdatesFolder, LegacyPacksFolder];
 }

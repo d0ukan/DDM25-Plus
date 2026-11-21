@@ -1442,4 +1442,67 @@ The pack the radio had is still in force.</value>
   <data name="Demo_Note" xml:space="preserve">
     <value>Example data: no radio was contacted</value>
   </data>
+  <data name="Tab_SearchLog" xml:space="preserve">
+    <value>Search log</value>
+  </data>
+  <data name="SLog_Text" xml:space="preserve">
+    <value>Start **P25 search** or **DMR search** on the radio (Tools), connect the cable and press **Start log**. Every second the program reads what the search found (read only; nothing is sent to the radio) and keeps every call here and in a CSV file per day, all night if you leave it on. No audio is recorded.</value>
+  </data>
+  <data name="SLog_Start" xml:space="preserve">
+    <value>Start log</value>
+  </data>
+  <data name="SLog_StartTip" xml:space="preserve">
+    <value>Opens the cable and reads the radio's search finds every second until Stop</value>
+  </data>
+  <data name="SLog_Folder" xml:space="preserve">
+    <value>Open log folder</value>
+  </data>
+  <data name="SLog_Clear" xml:space="preserve">
+    <value>Clear table</value>
+  </data>
+  <data name="SLog_NotRunning" xml:space="preserve">
+    <value>Not running.</value>
+  </data>
+  <data name="SLog_Running" xml:space="preserve">
+    <value>Logging (last read {0}).</value>
+  </data>
+  <data name="SLog_File" xml:space="preserve">
+    <value>File: {0}</value>
+  </data>
+  <data name="SLog_SearchOn" xml:space="preserve">
+    <value>{0} search: running ({1} MHz)</value>
+  </data>
+  <data name="SLog_SearchOff" xml:space="preserve">
+    <value>{0} search: off</value>
+  </data>
+  <data name="SLog_SearchNone" xml:space="preserve">
+    <value>{0} search: no answer</value>
+  </data>
+  <data name="SLog_Count" xml:space="preserve">
+    <value>{0} calls on {1} frequencies</value>
+  </data>
+  <data name="SLog_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="SLog_Mode" xml:space="preserve">
+    <value>Mode</value>
+  </data>
+  <data name="SLog_Mhz" xml:space="preserve">
+    <value>MHz</value>
+  </data>
+  <data name="SLog_Code" xml:space="preserve">
+    <value>NAC / CC</value>
+  </data>
+  <data name="SLog_Slot" xml:space="preserve">
+    <value>Slot</value>
+  </data>
+  <data name="SLog_Group" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="SLog_Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="SLog_Calls" xml:space="preserve">
+    <value>Calls</value>
+  </data>
 </root>

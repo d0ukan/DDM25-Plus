@@ -141,11 +141,22 @@ int main(void)
 	CHECK(hit && p25s_at_hz() == 433500000u && waited <= P25S_REVISIT_STEPS + 2u);
 	uint32_t back = p25s_probe_done(true, now);
 	CHECK(back != 0 && back != 433500000u && p25s_phase() == P25S_SWEEP);	/* the sweep resumes where it was */
-	/* Nobody looks (the screen was left): the search stops by itself */
+	/* The PC's search log (p25s_peek): the frequency just found, one entry at a time */
+	{
+		p25s_peek_t pk;
+		bool seen = false;
+		for (unsigned i = 0; p25s_peek(i, &pk); i++)
+			seen |= pk.f.hz == 433500000u;
+		CHECK(seen && pk.found_n > 0 && !p25s_peek(P25S_FOUND_MAX, &pk));
+	}
+	/* Nobody looks (the screen was left): the search stops by itself, also while the PC reads it */
 	p25s_start(433000000u, 434000000u, 12500u, now);
 	uint32_t t0 = now, e0 = p25s_epoch();
-	while (p25s_on() && now - t0 < 20000u)
+	p25s_peek_t pk;
+	while (p25s_on() && now - t0 < 20000u) {
+		(void)p25s_peek(0u, &pk);	/* the PC's search log reads it: not a look */
 		p25s_sweep(-124, now += 10, &hit);
+	}
 	CHECK(!p25s_on() && now - t0 >= P25S_IDLE_MS && now - t0 < P25S_IDLE_MS + 50u && p25s_epoch() == e0);
 	/* reversed range, stop */
 	CHECK(p25s_start(434000000u, 433000000u, 0, now) == 433000000u);

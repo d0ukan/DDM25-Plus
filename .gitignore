@@ -659,3 +659,9 @@ __pycache__/
 !/docs/kullanim-telsiz.md
 !/rust/crates/*/ui/**/*.png
 /rust/dist/
+# search log on the PC: the P25 / DMR searches found lists over the debug link (tools/plus_searchlog.py)
+!/tools/plus_searchlog.py
+!/tools/test_searchlog.py
+!/tests/plus/test_searchlog.c
+!/integration/radiofoundry/spectrum/searchlog_view.c
+!/integration/radiofoundry/spectrum/searchlog_view.h

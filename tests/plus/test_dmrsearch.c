@@ -243,11 +243,21 @@ int main(void)
 	uint32_t back = hold(&h, 5000u);
 	CHECK(back != 0 && back != 433500000u && dmrs_phase() == DMRS_SWEEP);	/* the sweep resumes where it was */
 
-	/* Nobody looks (the screen was left): the search stops by itself */
+	/* The PC's search log (dmrs_peek): the state and one entry at a time, the call just played among them */
+	dmrs_peek_t pk;
+	bool seen = false;
+	for (unsigned i = 0; dmrs_peek(i, &pk); i++)
+		seen |= pk.f.hz == 433500000u && pk.f.dst == 101u && pk.f.src == 77285u && pk.f.calls > 0;
+	CHECK(seen && pk.found_n > 0 && pk.phase == DMRS_SWEEP && pk.lo_hz == 433000000u);
+	CHECK(!dmrs_peek(DMRS_FOUND_MAX, &pk));
+
+	/* Nobody looks (the screen was left): the search stops by itself, also while the PC reads it all the time */
 	dmrs_start(433000000u, 434000000u, 12500u, now);
 	t0 = now;
-	while (dmrs_on() && now - t0 < 20000u)
+	while (dmrs_on() && now - t0 < 20000u) {
+		(void)dmrs_peek(0u, &pk);
 		dmrs_sweep(-124, now += POLL_MS, &hit);
+	}
 	CHECK(!dmrs_on() && now - t0 >= DMRS_IDLE_MS && now - t0 < DMRS_IDLE_MS + 50u);
 	/* reversed range, stop: probe and sweep do nothing when off */
 	CHECK(dmrs_start(434000000u, 433000000u, 0, now) == 433000000u);

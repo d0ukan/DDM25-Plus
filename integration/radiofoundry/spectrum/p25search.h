@@ -73,6 +73,13 @@ void p25s_probe_found(uint16_t nac, uint16_t tg, uint32_t src, uint32_t now_ms);
 uint32_t p25s_probe_done(bool was_p25, uint32_t now_ms);
 /* A consistent copy for the UI */
 bool p25s_snapshot(p25s_view_t *out);
+/* The PC's search log: the state and found entry i, not counted as a look (p25search.c) */
+typedef struct {
+	uint8_t phase, found_n;
+	uint32_t at_hz, lo_hz, hi_hz;
+	p25s_found_t f;
+} p25s_peek_t;
+bool p25s_peek(unsigned i, p25s_peek_t *out);
 
 void radio_req_p25_search(uint32_t lo_hz, uint32_t hi_hz);	/* lo 0 = stop */
 

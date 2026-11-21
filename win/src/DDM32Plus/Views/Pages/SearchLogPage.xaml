@@ -1,0 +1,28 @@
+<UserControl x:Class="DDM32Plus.Views.Pages.SearchLogPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:DDM32Plus.Localization">
+    <!-- The search log: the radio's P25 / DMR search finds read every second over the debug link (DebugReaders.SearchLog
+         behind its read-only DebugLinkPort) from "Kaydı başlat" until "Durdur"; every call a row and a line in the day's CSV -->
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_SearchLog}" />
+            <TextBlock Style="{StaticResource Plain}" l:Rich.Text="{l:Tr SLog_Text}" />
+            <TextBlock x:Name="CableText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
+            <StackPanel Orientation="Horizontal" Margin="0,4">
+                <Button x:Name="StartButton" Style="{StaticResource BigButton}" Tag="&#xE768;" Margin="0,4,8,4"
+                        Content="{l:Tr SLog_Start}" ToolTip="{l:Tr SLog_StartTip}" Click="OnStart" />
+                <Button x:Name="StopButton" Style="{StaticResource BigButton}" Tag="&#xE71A;" Margin="0,4,8,4"
+                        Content="{l:Tr Live_Stop}" Click="OnStop" />
+                <Button x:Name="FolderButton" Margin="0,4,8,4" Padding="10,4" Content="{l:Tr SLog_Folder}" Click="OnFolder" />
+                <Button x:Name="ClearButton" Margin="0,4,0,4" Padding="10,4" Content="{l:Tr SLog_Clear}" Click="OnClear" />
+            </StackPanel>
+            <TextBlock x:Name="StatusText" Style="{StaticResource Plain}" />
+            <TextBlock x:Name="SearchText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
+            <TextBlock x:Name="ErrorText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" FontSize="{StaticResource Size1}" />
+        </StackPanel>
+        <DataGrid x:Name="Grid" Margin="0,6,0,0" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal" CanUserAddRows="False" SelectionMode="Extended" />
+        <!-- the columns are made in code with the page's language (SearchLogPage.Columns) -->
+    </DockPanel>
+</UserControl>

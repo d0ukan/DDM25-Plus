@@ -196,6 +196,7 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_sigbar", fromlist=["x"]).prepare_sigbar(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_airprov", fromlist=["x"]).prepare_airprov(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_polish", fromlist=["x"]).prepare_polish(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_searchlog", fromlist=["x"]).prepare_searchlog(transform, install)
 
 
 def prepare_large_scale(transform):

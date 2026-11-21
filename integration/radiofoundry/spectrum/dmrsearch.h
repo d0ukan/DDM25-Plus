@@ -100,6 +100,13 @@ uint8_t dmrs_phase(void);
 uint32_t dmrs_at_hz(void);
 /* A consistent copy for the UI (and a sign that the screen still looks) */
 bool dmrs_snapshot(dmrs_view_t *out);
+/* The PC's search log: the state and found entry i, not counted as a look (dmrsearch.c) */
+typedef struct {
+	uint8_t phase, found_n;
+	uint32_t at_hz, lo_hz, hi_hz;
+	dmrs_found_t f;
+} dmrs_peek_t;
+bool dmrs_peek(unsigned i, dmrs_peek_t *out);
 
 void radio_req_dmr_search(uint32_t lo_hz, uint32_t hi_hz);	/* lo 0 = stop */
 
