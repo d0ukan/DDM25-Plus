@@ -9,7 +9,11 @@
  * Order: by the squared equirectangular distance from here (integer, 1e-5 degree, the longitude scaled by the cosine
  * of the pair's middle latitude in Q15, from a 5 degree table), then by the table index (the code): a total order, so
  * walking it forward and back visits every airfield once. No float. Without a position of our own the order is the
- * table's (by code). */
+ * table's (by code).
+ *
+ * Provinces (CONFIG_AIR_PROV, DDM32 Plus round 16: Tools > Airfields opens on "All" and the provinces that have
+ * airfields): each airfield carries its province's plate, decided by tools/airfields.py from its position with the
+ * repeater list's lookup (the map's outlines); the _in walks keep to one province. */
 #ifndef PLUS_AIRFIELD_H
 #define PLUS_AIRFIELD_H
 
@@ -35,7 +39,13 @@ typedef struct {
 	uint8_t kind;			/* air_kind_t */
 	char code[AIR_CODE_MAX + 1];	/* ICAO code, else OurAirports' ident */
 	char name[AIR_NAME_MAX + 1];	/* short name, ISO-8859-9 */
+	uint8_t prov;			/* the province's plate 1..81, AIR_PROV_UNKNOWN (tools/airfields.py; was padding) */
 } air_field_t;
+_Static_assert(sizeof(air_field_t) == 44u, "tools/airfields.py FIELD_BYTES");
+
+#define AIR_PROVS	81u	/* plates 1..81 */
+#define AIR_PROV_UNKNOWN 0u	/* air_field_t.prov: not placed in a province */
+#define AIR_PROV_ALL	0xFFu	/* the filter of air_next_in / air_rank_in / air_count_in: every airfield */
 
 typedef struct {
 	uint16_t ch;			/* (channel name kHz - AIR_CH_BASE_KHZ) / 5: 121.580 -> 2716 */
@@ -54,11 +64,19 @@ typedef struct {
 } air_here_t;
 
 void air_here_set(air_here_t *h, bool ok, int32_t lat_e7, int32_t lon_e7);
-/* The airfield after (dir > 0) or before (dir < 0) cur in the order; cur AIR_NONE: the first (last). AIR_NONE past
- * the end. One pass over the table */
-uint16_t air_next(const air_here_t *h, uint16_t cur, int dir);
-/* How many airfields come before i in the order (0: the nearest) */
-uint16_t air_rank(const air_here_t *h, uint16_t i);
+/* The airfield after (dir > 0) or before (dir < 0) cur in the order, among the airfields of province prov (a plate,
+ * AIR_PROV_UNKNOWN, or AIR_PROV_ALL: all); cur AIR_NONE: the first (last). AIR_NONE past the end. One pass over the
+ * table */
+uint16_t air_next_in(const air_here_t *h, uint16_t cur, int dir, uint8_t prov);
+/* How many airfields of prov come before i in the order (0: the nearest) */
+uint16_t air_rank_in(const air_here_t *h, uint16_t i, uint8_t prov);
+/* How many airfields prov has; one pass (AIR_PROV_ALL: the count) */
+uint16_t air_count_in(uint8_t prov);
+static inline uint16_t air_next(const air_here_t *h, uint16_t cur, int dir)
+{
+	return air_next_in(h, cur, dir, AIR_PROV_ALL);
+}
+static inline uint16_t air_rank(const air_here_t *h, uint16_t i) { return air_rank_in(h, i, AIR_PROV_ALL); }
 static inline uint16_t air_nearest(const air_here_t *h) { return air_next(h, AIR_NONE, 1); }
 
 /* Metres and the true bearing (0..359) from (lat_e7, lon_e7) to airfield i */

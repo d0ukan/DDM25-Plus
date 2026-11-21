@@ -6260,3 +6260,8 @@ msgstr "OK uygula  Geri iptal"
 #: core/ui/ui_p25search.c core/ui/ui_dmrsearch.c
 msgid "{OK start  <> range  * edit|OK start  * range}"
 msgstr "{OK başlat  <> aralık  * düzenle|OK başlat  * aralık}"
+
+# --- branch r16-airprov: airfields by province, spectrum in colour (tools/plus_airprov.py) ---
+#: core/ui/ui_airfield.c
+msgid "All airfields"
+msgstr "Hepsi"

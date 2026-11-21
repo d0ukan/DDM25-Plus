@@ -26,9 +26,18 @@ removed: nothing is added, changed or reclassified from that publication (it is 
 pinned data (an exclusion that matches nothing fails the run, so a refresh reviews it). A small airfield left without a
 frequency is not listed, as the selection says.
 
+Province (CONFIG_AIR_PROV, DDM32 Plus round 16: Tools > Airfields groups by it): the plate 1..81 (0 not known) of
+each airfield from its position, by the same lookup the repeater list uses (tools/rpt_list.py Provinces: the map's own
+province outlines, then a district centre within 10 km, the municipality naming a province, a district centre within
+30 km). Checked against the data's own region (iso_region "TR-34": ISO 3166-2:TR, whose numbers are the plates):
+where the two differ and a district centre of the region's province is within REGION_KM, the airfield is at a border
+the simplified outlines do not follow there and the region wins (Sabiha Gokcen in Pendik is inside the Kocaeli
+outline, Cukurova near Tarsus inside Adana's); farther, the position stays and the run reports it. One byte in what
+was air_field_t's tail padding.
+
 Reproducible: both inputs are pinned by SHA-256 (research-data/ourairports/, git-ignored; --unpinned for test
-fixtures only); the output depends only on them. Hard cap: MAX_BYTES of table. Untrusted input: read as data only;
-run with python -I.
+fixtures only); the output depends only on them and on the map's committed province tables. Hard cap: MAX_BYTES of
+table. Untrusted input: read as data only; run with python -I.
 
   python3 -I tools/airfields.py                 # writes integration/radiofoundry/air/airfield_data.{c,h}
   python3 -I tools/airfields.py --check         # fails if the committed files differ
@@ -38,6 +47,7 @@ import argparse
 import csv
 import hashlib
 import io
+import math
 import re
 import sys
 from decimal import Decimal, InvalidOperation
@@ -46,6 +56,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 import turkey_map  # noqa: E402  (encode_name, c_string, ascii_fold)
+sys.path.insert(0, str(ROOT))
+from tools.rpt_list import Provinces  # noqa: E402  (the repeater list's province lookup: the map's outlines)
 
 SOURCE_URL = 'https://davidmegginson.github.io/ourairports-data/'
 SOURCE_DATE = '2026-11-19'
@@ -61,6 +73,7 @@ NAME_MAX = 22           # airfield.h AIR_NAME_MAX
 FREQ_MAX = 64           # frequencies kept for one airfield (air_field_t.count is a uint8_t)
 FIELD_BYTES = 44        # sizeof(air_field_t)
 FREQ_BYTES = 4          # sizeof(air_freq_t)
+REGION_KM = 30          # the data's region wins over the outline within this of a district centre of its province
 MAX_BYTES = 12 * 1024   # a hard cap on the table (docs/plus.md: the job's flash budget)
 LO_KHZ, HI_KHZ = 118000, 137000     # the VHF aeronautical mobile band (hi exclusive)
 CH_BASE_KHZ = 108000    # air_freq_t.ch = (name - CH_BASE_KHZ) / 5
@@ -232,11 +245,40 @@ def exclusions(exclude):
     return out
 
 
-def build(airports_text, freqs_text, exclude=EXCLUDE):
-    """-> (fields, stats); fields sorted by code: dict(code, name, lat, lon, kind, freqs=[(type, khz)]).
-    stats['unused_exclusions']: the exclusions that matched nothing (main() refuses them for the pinned data)"""
+def region_plate(text):
+    """OurAirports' iso_region "TR-06" -> 6 (ISO 3166-2:TR numbers the provinces by plate), else 0"""
+    m = re.match(r'^TR-(\d\d)$', (text or '').strip())
+    return int(m.group(1)) if m and 1 <= int(m.group(1)) <= 81 else 0
+
+
+def near_province(prov_of, lat_e5, lon_e5, plate, max_km):
+    """A district centre of province plate within max_km (rpt_list.Provinces.district's distance)"""
+    x, y = (lon_e5 - 2500000) / 100, (lat_e5 - 3550000) / 100
+    c = math.cos(math.radians(lat_e5 / 1e5))
+    lim = max_km / 0.11132     # 0.001 degree of latitude is 111.32 m
+    return any(p == plate and math.hypot((dx - x) * c, dy - y) < lim for dx, dy, p in prov_of.districts)
+
+
+def province(prov_of, lat_e5, lon_e5, r, code, stats):
+    """(plate, how) of an airport row: the repeater list's lookup, the data's region at a border (module doc)"""
+    plate, how = prov_of.of(lat_e5, lon_e5, r.get('municipality') or '')
+    region = region_plate(r.get('iso_region'))
+    if region and region != plate:
+        if near_province(prov_of, lat_e5, lon_e5, region, REGION_KM):
+            return region, 'region'
+        stats['differ'].append((code, plate, region))
+    return plate, how
+
+
+def build(airports_text, freqs_text, exclude=EXCLUDE, provinces=None):
+    """-> (fields, stats); fields sorted by code: dict(code, name, lat, lon, kind, prov, freqs=[(type, khz)]).
+    stats['unused_exclusions']: the exclusions that matched nothing (main() refuses them for the pinned data);
+    stats['provinces'] {plate: airfields} (0: not known), stats['how'] {how it was placed: airfields},
+    stats['differ'] [(code, position's plate, region's plate)] far from the region's province (the position kept).
+    provinces: a tools/rpt_list.py Provinces (None: the map's)"""
     stats = {'airfields': 0, 'frequencies': 0, 'refused': {}, 'dropped_over_max': 0, 'without_frequency': 0,
-             'excluded': 0}
+             'excluded': 0, 'provinces': {}, 'how': {}, 'differ': []}
+    prov_of = provinces or Provinces()
     ex = exclusions(exclude)
     used = set()
     aps = {}
@@ -283,7 +325,11 @@ def build(airports_text, freqs_text, exclude=EXCLUDE):
             fr = fr[:FREQ_MAX]
         if not fr:
             stats['without_frequency'] += 1
-        fields.append(dict(code=code, name=short_name(r['name']), lat=lat, lon=lon, kind=KINDS[r['type']], freqs=fr))
+        plate, how = province(prov_of, round(lat * 1e5), round(lon * 1e5), r, code, stats)
+        stats['provinces'][plate] = stats['provinces'].get(plate, 0) + 1
+        stats['how'][how] = stats['how'].get(how, 0) + 1
+        fields.append(dict(code=code, name=short_name(r['name']), lat=lat, lon=lon, kind=KINDS[r['type']], prov=plate,
+                           freqs=fr))
     fields.sort(key=lambda f: f['code'])
     codes = [f['code'] for f in fields]
     if len(set(codes)) != len(codes):
@@ -315,17 +361,17 @@ def generate(fields, stats, source):
          'extern const air_field_t air_fields[AIR_FIELDS];\n',
          'extern const air_freq_t air_freqs[AIR_FREQS];\n\n#endif\n']
     c = [head, '#include "config.h"\n#if CONFIG_AIRFIELDS\n#include "ui/airfield_data.h"\n\n',
-         '/* { lat_e5, lon_e5, first, count, kind, code, name } */\n',
+         '/* { lat_e5, lon_e5, first, count, kind, code, name, province } */\n',
          'const air_field_t air_fields[AIR_FIELDS] = {\n']
     first = 0
     for f in fields:
         name = turkey_map.c_string(turkey_map.encode_name(f['name'], 'iso-8859-9'))
-        c.append('\t{ %d, %d, %u, %u, %u, "%s", %s },\t/* %s */\n'
+        c.append('\t{ %d, %d, %u, %u, %u, "%s", %s, %u },\t/* %s */\n'
                  % (round(f['lat'] * 1e5), round(f['lon'] * 1e5), first, len(f['freqs']), f['kind'], f['code'], name,
-                    turkey_map.ascii_fold(f['name'])))
+                    f['prov'], turkey_map.ascii_fold(f['name'])))
         first += len(f['freqs'])
-    c.append('};\n\nconst uint16_t air_field_count = AIR_FIELDS;\n\n'
-             'const air_freq_t air_freqs[AIR_FREQS] = {\n')
+    c.append('};\n/* %s */\n\nconst uint16_t air_field_count = AIR_FIELDS;\n\n'
+             'const air_freq_t air_freqs[AIR_FREQS] = {\n' % prov_line(stats))
     for f in fields:
         if not f['freqs']:
             continue
@@ -333,6 +379,14 @@ def generate(fields, stats, source):
         c.append('\t%s,\t/* %s */\n' % (', '.join(items), f['code']))
     c.append('};\n#endif\n')
     return ''.join(h), ''.join(c)
+
+
+def prov_line(stats):
+    """The table's comment line: '35 provinces (01 2, 06 4, ...), unknown 0; by district 4, outline 70'"""
+    dist = stats['provinces']
+    return '%d provinces (%s), unknown %d; by %s' % (
+        sum(1 for p in dist if p), ', '.join('%02d %d' % kv for kv in sorted(dist.items()) if kv[0]), dist.get(0, 0),
+        ', '.join('%s %d' % kv for kv in sorted(stats['how'].items())))
 
 
 def load(path, sha, unpinned):
@@ -346,8 +400,11 @@ def load(path, sha, unpinned):
 def describe(stats):
     ref = ', '.join('%s %d' % kv for kv in sorted(stats['refused'].items())) or 'none'
     return ('Airfields: %d (%d without a frequency), %d frequencies, %d bytes; refused: %s; excluded: %d; over %d an '
-            'airfield: %d' % (stats['airfields'], stats['without_frequency'], stats['frequencies'], stats['bytes'], ref,
-                              stats['excluded'], FREQ_MAX, stats['dropped_over_max']))
+            'airfield: %d; %d provinces, unknown %d, by region %d; position and region far apart: %s' % (
+                stats['airfields'], stats['without_frequency'], stats['frequencies'], stats['bytes'], ref,
+                stats['excluded'], FREQ_MAX, stats['dropped_over_max'], sum(1 for p in stats['provinces'] if p),
+                stats['provinces'].get(0, 0), stats['how'].get('region', 0),
+                ', '.join('%s %02d not %02d' % d for d in stats['differ']) or 'none'))
 
 
 def main():
@@ -370,7 +427,7 @@ def main():
               % (SOURCE_DATE, SOURCE_URL, AIRPORTS_SHA256, FREQS_SHA256)) if not args.unpinned else 'test fixture'
     if args.list:
         for f in fields:
-            print('%-7s %-22s %8.4f %8.4f %d  %s' % (f['code'], f['name'], f['lat'], f['lon'], f['kind'],
+            print('%-7s %-22s %8.4f %8.4f %d %02d  %s' % (f['code'], f['name'], f['lat'], f['lon'], f['kind'], f['prov'],
                   ' '.join('%s %d.%03d' % (t, k // 1000, k % 1000) for t, k in f['freqs'])))
     h, c = generate(fields, stats, source)
     files = {args.out_dir / 'airfield_data.h': h, args.out_dir / 'airfield_data.c': c}

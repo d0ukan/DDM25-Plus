@@ -623,3 +623,10 @@ __pycache__/
 !/tools/plus_sigbar.py
 !/tools/test_sigbar.py
 !/tests/plus/test_sigbar.c
+# branch r16-airprov: airfields by province, spectrum in colour (tools/plus_airprov.py)
+!/tools/plus_airprov.py
+!/tools/test_airprov.py
+!/tests/plus/test_airprov.c
+!/tests/plus/test_ui_airprov.c
+!/tests/plus/test_wfcolor.c
+!/tests/plus/test_ui_wfcolor.c

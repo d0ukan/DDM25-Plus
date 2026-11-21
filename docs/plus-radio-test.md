@@ -631,3 +631,28 @@ owner's channel and licence).
 | MR-6 | The other radio sends P25 on C with the right NAC and talkgroup (TG 101, NAC 659) | held, the native receiver plays it, given back 1.5 s after the last voice, the ring goes on after the wait |
 | MR-7 | Watch channels 2 (dual watch) | as before: 150 ms a stop, no "Ring" line |
 | MR-8 | A weak FM signal near the squelch on one letter | it opens there as before (a single reading at 50 ms decides a quiet stop, as the squelch itself does); note if it is missed more than with the build before |
+
+## Round 16 airprov (branch `r16-airprov`)
+
+Airfields by province (Tools > Airfields, docs/plus.md "Airfields by province"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| AP-1 | Tools > Airfields | the first level: "All airfields (74)" (Turkish "Hepsi (74)"), "01 Adana (2)", "02 Adıyaman (1)", ... in plate order, only provinces with airfields, the last "76 Iğdır (1)"; Up from All goes round to it |
+| AP-2 | Down to "06 Ankara (5)", OK | the title "Airfields Ankara", Güvercinlik, Etimesgut, ... only Ankara's five, nearest first with distance and direction; Up / Down go round within the five |
+| AP-3 | In Ankara's list, # | the nearest Ankara airfield's details; Back: Ankara's list; Back: the first level with Ankara still picked; Back: Tools |
+| AP-4 | "34 İstanbul (5)" | Atatürk, Hezarfen, Samandıra, Sabiha Gökçen and İstanbul; "41 Kocaeli (1)" holds Cengiz Topel only; "33 Mersin (1)" Çukurova |
+| AP-5 | "07 Antalya (2)", OK on Antalya, Down to a frequency, OK | the list line "TWR 125.000 +1"; the details list all seven; OK tunes the VFO in AM (receive only) |
+| AP-6 | In Antalya's details, # | air watch on its six frequencies as before (Home's ring A..F); Back Back stops it |
+| AP-7 | "All airfields", OK | the whole list nearest first as before; # on the first level opens the nearest airfield's details |
+| AP-8 | With an air band pack installed (Settings > About shows it) | a province's list shows the pack's frequencies for the airfields it names, as "All" does |
+
+Spectrum in colour (Tools > Spectrum, docs/plus.md "The spectrum in colour"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SC-1 | Tools > Spectrum on a busy band (or the other radio sending FM nearby), waterfall view | quiet points dark blue, weak ones blue / cyan, stronger green, yellow, orange, the strongest red; the bars and texts as before |
+| SC-2 | * (3D waterfall) | the ridges in the same colours by height: the strongest peaks red |
+| SC-3 | Settings > Display > Theme: Light, back to Tools > Spectrum | a pale blue for the weakest, darker blue, teal, green, dark yellow, orange, red on white; every colour distinct |
+| SC-4 | Look closely at the texts on the spectrum screen (title, frequency, Hit / Floor, the key hint) in both themes | readable; their edges may look a little harder than on other screens (the palette's entries go to the colours first) |
+| SC-5 | * again (bars alone), then *: waterfall | bars alone without colours; the waterfall back in colour |
