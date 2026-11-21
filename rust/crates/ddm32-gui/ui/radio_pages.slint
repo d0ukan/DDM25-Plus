@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The read-only radio pages: health, live view, my channels. Every colour from Theme, every text from Tr.
+// The read-only radio pages: health, live view, my channels, the search log. Every colour from Theme, every text from Tr.
 import { ListView, ScrollView } from "std-widgets.slint";
 import { Theme } from "theme.slint";
-import { Tr, Label, Muted, Title, Button, Card, Notice, Choice, Progress } from "widgets.slint";
+import { Tr, Label, Muted, Title, Heading, Button, Card, Notice, Choice, Progress, PageHeader } from "widgets.slint";
 
 export struct Fact { label: string, value: string }
 export struct TableRow { cells: [string] }
@@ -54,18 +54,23 @@ export global Radio {
     callback navigate-home();
 }
 
-component Header inherits HorizontalLayout {
+// a radio page: the header row across the window (home stays closed while the live reader runs), then the content
+component Screen inherits VerticalLayout {
     in property <string> heading;
-    spacing: Theme.gap;
-    Button {
-        text: "← " + Tr.t(Tr.lang, "back_home");
-        enabled: !Radio.busy && !Radio.live-running;
-        horizontal-stretch: 0;
-        min-width: 190px;
-        max-width: 240px;
-        clicked => { Radio.navigate-home(); }
+    padding: 0;
+    spacing: 0;
+    PageHeader {
+        heading: root.heading;
+        back-text: Tr.t(Tr.lang, "back_home");
+        back-enabled: !Radio.busy && !Radio.live-running;
+        back-clicked => { Radio.navigate-home(); }
     }
-    Title { text: root.heading; vertical-alignment: center; horizontal-stretch: 1; }
+    VerticalLayout {
+        padding: Theme.pad;
+        spacing: Theme.gap;
+        vertical-stretch: 1;
+        @children
+    }
 }
 
 component FactList inherits VerticalLayout {
@@ -81,9 +86,12 @@ component FactList inherits VerticalLayout {
 component Raw inherits VerticalLayout {
     in property <string> text;
     spacing: 6px;
-    if root.text != "" : Button {
-        text: (Radio.show-raw ? "− " : "+ ") + Tr.t(Tr.lang, "details");
-        clicked => { Radio.show-raw = !Radio.show-raw; }
+    if root.text != "" : HorizontalLayout {
+        alignment: start;
+        Button {
+            text: (Radio.show-raw ? "− " : "+ ") + Tr.t(Tr.lang, "details");
+            clicked => { Radio.show-raw = !Radio.show-raw; }
+        }
     }
     if Radio.show-raw && root.text != "" : Card {
         min-height: rt.preferred-height + 24px;
@@ -92,25 +100,26 @@ component Raw inherits VerticalLayout {
             width: parent.width - 24px;
             text: root.text;
             color: Theme.text-muted;
-            font-size: 13px;
+            font-size: Theme.font-small;
             font-family: "Consolas";
             wrap: word-wrap;
         }
     }
 }
 
-export component HealthPage inherits VerticalLayout {
-    padding: Theme.pad * 1.5;
-    spacing: Theme.gap;
-    Header { heading: Tr.t(Tr.lang, "home_health"); }
-    Muted { text: Tr.t(Tr.lang, "health_intro"); font-size: Theme.font; }
-    Button {
-        text: Tr.t(Tr.lang, "b_read_health");
-        kind: "primary";
-        big: true;
-        default-focus: true;
-        enabled: !Radio.busy;
-        clicked => { Radio.read-health(); }
+export component HealthPage inherits Screen {
+    heading: Tr.t(Tr.lang, "home_health");
+    Muted { text: Tr.t(Tr.lang, "health_intro"); }
+    HorizontalLayout {
+        alignment: start;
+        Button {
+            text: Tr.t(Tr.lang, "b_read_health");
+            kind: "primary";
+            big: true;
+            default-focus: true;
+            enabled: !Radio.busy;
+            clicked => { Radio.read-health(); }
+        }
     }
     if Radio.health-verdict != "grey" : Notice {
         text: Radio.health-text;
@@ -125,24 +134,24 @@ export component HealthPage inherits VerticalLayout {
             spacing: Theme.gap;
             padding-right: 8px;
             FactList { facts: Radio.health-facts; }
-            if Radio.health-tasks.length > 0 : Label { text: Tr.t(Tr.lang, "health_tasks"); font-weight: 700; }
+            if Radio.health-tasks.length > 0 : Heading { text: Tr.t(Tr.lang, "health_tasks"); }
             FactList { facts: Radio.health-tasks; }
             Raw { text: Radio.health-raw; }
         }
     }
 }
 
-export component LivePage inherits VerticalLayout {
-    padding: Theme.pad * 1.5;
-    spacing: Theme.gap;
-    Header { heading: Tr.t(Tr.lang, "home_live"); }
-    Muted { text: Tr.t(Tr.lang, "live_intro"); font-size: Theme.font; }
+export component LivePage inherits Screen {
+    heading: Tr.t(Tr.lang, "home_live");
+    Muted { text: Tr.t(Tr.lang, "live_intro"); }
     HorizontalLayout {
         spacing: Theme.gap;
+        alignment: start;
         Button {
             text: Radio.live-running ? Tr.t(Tr.lang, "b_live_stop") : Tr.t(Tr.lang, "b_live_start");
             kind: Radio.live-running ? "secondary" : "primary";
             big: true;
+            horizontal-stretch: 0;
             enabled: !Radio.busy;
             clicked => {
                 if Radio.live-running {
@@ -173,7 +182,7 @@ export component LivePage inherits VerticalLayout {
                 Text {
                     text: Radio.live-smeter == "" ? "—" : Radio.live-smeter;
                     color: Theme.text;
-                    font-size: 34px;
+                    font-size: 28px;
                     font-weight: 700;
                     width: 150px;
                 }
@@ -199,12 +208,10 @@ export component LivePage inherits VerticalLayout {
     }
 }
 
-export component ChannelsPage inherits VerticalLayout {
+export component ChannelsPage inherits Screen {
     // the columns' share of the table's width (fractions from the controller, one per column)
-    property <length> cols-w: self.width - 3 * Theme.pad - 16px - 16px - 8px * 4 - 14px;
-    padding: Theme.pad * 1.5;
-    spacing: Theme.gap;
-    Header { heading: Tr.t(Tr.lang, "home_channels"); }
+    property <length> cols-w: self.width - 2 * Theme.pad - 16px - 16px - 8px * 4 - 14px;
+    heading: Tr.t(Tr.lang, "home_channels");
     Muted { text: Radio.channels-source; }
     HorizontalLayout {
         spacing: 8px;
@@ -218,10 +225,10 @@ export component ChannelsPage inherits VerticalLayout {
     HorizontalLayout {
         spacing: Theme.gap;
         Rectangle {
-            min-height: 44px;
+            min-height: Theme.control-height;
             border-radius: Theme.radius;
             background: Theme.surface;
-            border-width: si.has-focus ? 3px : 1px;
+            border-width: si.has-focus ? 2px : 1px;
             border-color: si.has-focus ? Theme.focus : Theme.border;
             si := TextInput {
                 x: 12px;
@@ -276,7 +283,7 @@ export component ChannelsPage inherits VerticalLayout {
             ListView {
                 vertical-stretch: 1;
                 for r[ri] in Radio.table-rows : Rectangle {
-                    height: max(36px, rl.preferred-height + 12px);
+                    height: max(30px, rl.preferred-height + 10px);
                     background: Math.mod(ri, 2) == 0 ? Theme.surface : Theme.surface-alt;
                     rl := HorizontalLayout {
                         spacing: 8px;
@@ -297,14 +304,12 @@ export component ChannelsPage inherits VerticalLayout {
     }
 }
 
-export component SearchLogPage inherits VerticalLayout {
+export component SearchLogPage inherits Screen {
     // the search log: the radio's P25 / DMR search finds read every second (radio_pages.rs slog_*), newest first
     property <[float]> widths: [0.16, 0.07, 0.12, 0.09, 0.12, 0.12, 0.2, 0.08];
-    property <length> cols-w: self.width - 3 * Theme.pad - 16px - 16px - 8px * 7 - 14px;
-    padding: Theme.pad * 1.5;
-    spacing: Theme.gap;
-    Header { heading: Tr.t(Tr.lang, "home_slog"); }
-    Muted { text: Tr.t(Tr.lang, "slog_intro"); font-size: Theme.font; }
+    property <length> cols-w: self.width - 2 * Theme.pad - 16px - 16px - 8px * 7 - 14px;
+    heading: Tr.t(Tr.lang, "home_slog");
+    Muted { text: Tr.t(Tr.lang, "slog_intro"); }
     HorizontalLayout {
         spacing: Theme.gap;
         Button {
@@ -357,7 +362,7 @@ export component SearchLogPage inherits VerticalLayout {
             ListView {
                 vertical-stretch: 1;
                 for r[ri] in Radio.slog-rows : Rectangle {
-                    height: 30px;
+                    height: 28px;
                     background: Math.mod(ri, 2) == 0 ? Theme.surface : Theme.surface-alt;
                     HorizontalLayout {
                         spacing: 8px;

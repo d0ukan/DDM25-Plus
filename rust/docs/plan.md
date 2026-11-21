@@ -32,13 +32,19 @@ Ported module by module from `win/src/DDM32Plus.Core`, with the C# tests' fixtur
 - A home screen with **one big primary action** ("Telsizi güncelle / Update the radio") and a few clear secondary
   ones. A wizard that asks **one thing per screen** in plain Turkish / English; the next step is always obvious.
 - No jargon on the main path: sector counts, hashes, plans are under **"Ayrıntılar / Details"**.
-- Big readable text (17 px body, 22 px for prompts), generous spacing.
+- ~~Big readable text (17 px body, 22 px for prompts), generous spacing.~~ Revised by the owner (2026-11-21, later):
+  a calm, plain desktop tool, not a "designed" one. Normal text (15 px body, 13 px small, 19 px page titles), normal
+  controls (34 px high, 3 px corners), a header row across every page, dense aligned rows; colour only for the one
+  accent (blue: main action, selection) and for states (green ok, amber warning, red error, as the bar of a notice).
+  Controls stay at least 32 px (WCAG 2.2 asks 24 px); the 150 % / 200 % layout test still checks that nothing overlaps
+  or leaves the window.
 - **Light and dark themes; light is the default at the first start**; a switch in Settings, remembered in
   `settings.json`, switched live without a restart. Every colour comes from one palette (`ui/theme.slint`); no other
   file names a colour (a test checks it). Every text / background pair of both palettes meets WCAG AA (4.5:1 for text,
   3:1 for focus rings and large accents), including disabled, focus, hover, warning and danger states (a test checks
   it).
-- The radio power-cycle prompts are large and unmistakable (a big yellow box: "1. Telsizi KAPATIN …").
+- The radio power-cycle prompts are unmistakable (bold steps in a notice with the amber warning bar: "1. Telsizi
+  KAPATIN …").
 - Errors say what to do ("… Kabloyu kontrol edip yeniden deneyin. Telsize bir şey yazılmadı.").
 - Backups always go to the program's own `backups` and are found by themselves; the user never chooses a folder.
 - Pages: Update radio, Backups / going back, Data packs, Settings (language, theme, release channel Latest / Beta /

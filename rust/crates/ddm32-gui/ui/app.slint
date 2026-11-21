@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// DDM32 Plus: one window. A home screen with one big action, a wizard that asks one thing per screen, and four plain
+// DDM32 Plus: one window. A home screen with one main action, a wizard that asks one thing per screen, and four plain
 // pages (backups, data packs, settings, about). Every colour from Theme, every text from Tr (tr / en).
 import { ScrollView } from "std-widgets.slint";
 import { Theme } from "theme.slint";
-import { Tr, Label, Muted, Title, Button, Card, Notice, Check, Choice, Progress } from "widgets.slint";
+import { Tr, Label, Muted, Title, Heading, Button, Card, Notice, Check, Choice, Progress, PageHeader } from "widgets.slint";
 import { Radio, Fact, TableRow, HealthPage, LivePage, ChannelsPage, SearchLogPage } from "radio_pages.slint";
 export { Theme, Tr, Radio, Fact, TableRow }
 
@@ -81,114 +81,128 @@ export global App {
     callback app-update();
 }
 
+// a page: the header row across the window, then the page's own content
 component Page inherits VerticalLayout {
     in property <string> heading;
     in property <bool> back: true;
-    padding: Theme.pad * 1.5;
-    spacing: Theme.gap;
-    HorizontalLayout {
-        spacing: Theme.gap;
-        if root.back : Button {
-            text: "← " + Tr.t(Tr.lang, "back_home");
-            enabled: !App.busy;
-            clicked => { App.navigate(0); }
-            horizontal-stretch: 0;
-            min-width: 190px;
-            max-width: 240px;
-        }
-        Title { text: root.heading; vertical-alignment: center; horizontal-stretch: 1; }
+    padding: 0;
+    spacing: 0;
+    PageHeader {
+        heading: root.heading;
+        back: root.back;
+        back-text: Tr.t(Tr.lang, "back_home");
+        back-enabled: !App.busy;
+        back-clicked => { App.navigate(0); }
     }
-    @children
+    VerticalLayout {
+        padding: Theme.pad;
+        spacing: Theme.gap;
+        @children
+    }
 }
 
 component Home inherits VerticalLayout {
-    padding: Theme.pad * 1.5;
-    spacing: Theme.gap;
-    // the owner's mark, in the theme's own variant
-    HorizontalLayout {
-        spacing: Theme.gap * 1.5;
-        Image {
-            source: Theme.dark ? @image-url("logo-dark.png") : @image-url("logo-light.png");
-            height: 104px;
-            width: 102px;
-            image-fit: contain;
-            accessible-role: image;
-            accessible-label: "DDM32+";
-        }
-        VerticalLayout {
-            alignment: center;
-            spacing: 8px;
-            Notice { text: App.radio-text; kind: App.radio-kind; }
-            if App.update-text != "" : Muted { text: App.update-text; font-size: Theme.font; }
-        }
+    padding: 0;
+    spacing: 0;
+    // the header row: the program's name, its version and the owner's mark (in the theme's own variant)
+    PageHeader {
+        heading: "DDM32 Plus";
+        back: false;
+        logo: Theme.dark ? @image-url("logo-dark.png") : @image-url("logo-light.png");
+        Muted { text: App.version; vertical-alignment: center; horizontal-stretch: 0; }
     }
-    Button {
-        text: Tr.t(Tr.lang, "home_update");
-        kind: "primary";
-        big: true;
-        default-focus: true;
-        min-height: 92px;
-        clicked => { App.navigate(1); }
-    }
-    HorizontalLayout {
+    VerticalLayout {
+        padding: Theme.pad;
         spacing: Theme.gap;
-        Button { text: Tr.t(Tr.lang, "home_backups"); clicked => { App.navigate(2); } }
-        Button { text: Tr.t(Tr.lang, "home_packs"); clicked => { App.navigate(3); } }
-        Button { text: Tr.t(Tr.lang, "home_channels"); clicked => { App.navigate(9); } }
+        vertical-stretch: 1;
+        // the cable and the version on offer
+        Notice { text: App.radio-text; kind: App.radio-kind; }
+        if App.update-text != "" : Muted { text: App.update-text; font-size: Theme.font; }
+        // the main action
+        HorizontalLayout {
+            padding-top: 6px;
+            padding-bottom: 6px;
+            alignment: start;
+            Button {
+                text: Tr.t(Tr.lang, "home_update");
+                kind: "primary";
+                big: true;
+                default-focus: true;
+                min-width: 240px;
+                clicked => { App.navigate(1); }
+            }
+        }
+        HorizontalLayout {
+            spacing: Theme.gap;
+            Button { even: true; text: Tr.t(Tr.lang, "home_backups"); clicked => { App.navigate(2); } }
+            Button { even: true; text: Tr.t(Tr.lang, "home_packs"); clicked => { App.navigate(3); } }
+            Button { even: true; text: Tr.t(Tr.lang, "home_channels"); clicked => { App.navigate(9); } }
+        }
+        HorizontalLayout {
+            spacing: Theme.gap;
+            Button { even: true; text: Tr.t(Tr.lang, "home_health"); clicked => { App.navigate(7); } }
+            Button { even: true; text: Tr.t(Tr.lang, "home_live"); clicked => { App.navigate(8); } }
+            Button { even: true; text: Tr.t(Tr.lang, "home_slog"); clicked => { App.navigate(10); } }
+            Button { even: true; text: Tr.t(Tr.lang, "home_settings"); clicked => { App.navigate(4); } }
+        }
+        Rectangle { vertical-stretch: 1; }
     }
-    HorizontalLayout {
-        spacing: Theme.gap;
-        Button { text: Tr.t(Tr.lang, "home_health"); clicked => { App.navigate(7); } }
-        Button { text: Tr.t(Tr.lang, "home_live"); clicked => { App.navigate(8); } }
-        Button { text: Tr.t(Tr.lang, "home_slog"); clicked => { App.navigate(10); } }
-        Button { text: Tr.t(Tr.lang, "home_settings"); clicked => { App.navigate(4); } }
-    }
-    Rectangle { vertical-stretch: 1; }
-    // calm facts, at the bottom: what the radio runs (by the last backup) and where the backups are
-    Card {
+    // calm facts, in a bar at the bottom: what the radio runs (by the last backup) and where the backups are
+    Rectangle {
+        background: Theme.surface;
         vertical-stretch: 0;
         min-height: facts.preferred-height;
-        facts := VerticalLayout {
-            padding: Theme.pad;
-            spacing: 6px;
-            Muted { text: App.installed-text; font-size: Theme.font; color: Theme.text; }
-            HorizontalLayout {
-                spacing: Theme.gap;
-                Muted { text: App.backups-text + "  " + App.backups-folder; vertical-alignment: center; }
-                Button {
-                    text: Tr.t(Tr.lang, "home_about");
-                    horizontal-stretch: 0;
-                    min-width: 110px;
-                    max-height: 40px;
-                    min-height: 44px;
-                    clicked => { App.navigate(5); }
-                }
-                Button {
-                    text: Tr.t(Tr.lang, "b_open");
-                    horizontal-stretch: 0;
-                    min-width: 90px;
-                    max-height: 40px;
-                    min-height: 44px;
-                    clicked => { App.open-backups-folder(); }
-                }
+        Rectangle { y: 0; height: 1px; background: Theme.border; }
+        facts := HorizontalLayout {
+            padding-left: Theme.pad;
+            padding-right: Theme.pad;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            spacing: Theme.gap;
+            VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+                Label { text: App.installed-text; font-size: Theme.font-small; }
+                Muted { text: App.backups-text + "  " + App.backups-folder; }
+            }
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 0;
+                Button { text: Tr.t(Tr.lang, "b_open"); clicked => { App.open-backups-folder(); } }
+            }
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 0;
+                Button { text: Tr.t(Tr.lang, "home_about"); clicked => { App.navigate(5); } }
             }
         }
     }
 }
 
+// the wizard's steps in one row: done in green, the current one in the accent with a line under it, the rest muted
 component StepBar inherits HorizontalLayout {
-    spacing: 8px;
+    spacing: 4px;
     for name[i] in [Tr.t(Tr.lang, "s_version"), Tr.t(Tr.lang, "s_backup"), Tr.t(Tr.lang, "s_check"), Tr.t(Tr.lang, "s_install"), Tr.t(Tr.lang, "s_done")] : Rectangle {
         property <int> n: i == 0 ? 0 : i == 1 ? 1 : i == 2 ? 3 : i == 3 ? 4 : 5;
         property <bool> active: App.step == n || (i == 1 && App.step == 2);
-        height: 40px;
-        border-radius: Theme.radius;
-        background: active ? Theme.primary : App.step > n ? Theme.success-bg : Theme.surface-alt;
-        Text {
-            text: name;
-            color: active ? Theme.primary-text : App.step > n ? Theme.success-text : Theme.text-muted;
+        property <bool> done: App.step > n && !active;
+        // five equal parts, whatever the words
+        preferred-width: 100px;
+        horizontal-stretch: 1;
+        min-height: st.preferred-height + 12px;
+        st := Text {
+            text: (i + 1) + ". " + name;
+            color: active ? Theme.accent-text : done ? Theme.success : Theme.text-muted;
             font-size: Theme.font-small;
-            font-weight: active ? 700 : 400;
+            font-weight: active ? 600 : 400;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+            width: parent.width - 8px;
+        }
+        Rectangle {
+            y: parent.height - 2px;
+            height: 2px;
+            background: active ? Theme.primary : done ? Theme.success : Theme.border;
         }
     }
 }
@@ -206,7 +220,7 @@ component Wizard inherits Page {
             if App.step == 0 : VerticalLayout {
                 spacing: Theme.gap;
                 alignment: start;
-                Label { text: Tr.t(Tr.lang, "q_version"); font-size: Theme.font-big; }
+                Heading { text: Tr.t(Tr.lang, "q_version"); font-size: Theme.font-big; }
                 for v[i] in App.versions : Choice {
                     title: v.version + "   " + v.label;
                     detail: v.notes;
@@ -219,7 +233,7 @@ component Wizard inherits Page {
             if App.step == 1 : VerticalLayout {
                 spacing: Theme.gap;
                 alignment: start;
-                Label { text: Tr.t(Tr.lang, "q_backup"); font-size: Theme.font-big; }
+                Heading { text: Tr.t(Tr.lang, "q_backup"); font-size: Theme.font-big; }
                 Choice {
                     title: Tr.t(Tr.lang, "c_new"); detail: Tr.t(Tr.lang, "c_new_d");
                     selected: App.backup-choice == 0;
@@ -249,27 +263,33 @@ component Wizard inherits Page {
                 spacing: Theme.gap;
                 alignment: start;
                 Notice { text: App.power-prompt; kind: "warning"; big: true; }
-                Button {
-                    text: Tr.t(Tr.lang, "b_start_backup"); kind: "primary"; big: true;
-                    enabled: !App.busy && !App.step-done && App.radio-access;
-                    clicked => { App.start-backup(); }
+                HorizontalLayout {
+                    alignment: start;
+                    Button {
+                        text: Tr.t(Tr.lang, "b_start_backup"); kind: "primary"; big: true;
+                        enabled: !App.busy && !App.step-done && App.radio-access;
+                        clicked => { App.start-backup(); }
+                    }
                 }
             }
             // 3: the check, in plain words; the numbers under Details
             if App.step == 3 : VerticalLayout {
                 spacing: Theme.gap;
                 alignment: start;
-                Label { text: App.summary; font-size: Theme.font-big; }
+                Label { text: App.summary; }
             }
             // 4: the install (a radio step)
             if App.step == 4 : VerticalLayout {
                 spacing: Theme.gap;
                 alignment: start;
                 Notice { text: App.power-prompt; kind: "warning"; big: true; }
-                Button {
-                    text: Tr.t(Tr.lang, "b_start_install"); kind: App.backup-choice == 2 ? "danger" : "primary"; big: true;
-                    enabled: !App.busy && !App.step-done && App.radio-access;
-                    clicked => { App.start-install(); }
+                HorizontalLayout {
+                    alignment: start;
+                    Button {
+                        text: Tr.t(Tr.lang, "b_start_install"); kind: App.backup-choice == 2 ? "danger" : "primary"; big: true;
+                        enabled: !App.busy && !App.step-done && App.radio-access;
+                        clicked => { App.start-install(); }
+                    }
                 }
             }
             // 5: done
@@ -288,15 +308,18 @@ component Wizard inherits Page {
             if !App.radio-access && (App.step == 2 || App.step == 4) : Notice { text: Tr.t(Tr.lang, "no_radio_access"); kind: "warning"; }
             if App.details != "" : VerticalLayout {
                 spacing: 6px;
-                Button {
-                    text: (App.show-details ? "− " : "+ ") + Tr.t(Tr.lang, "details");
-                    clicked => { App.show-details = !App.show-details; }
+                HorizontalLayout {
+                    alignment: start;
+                    Button {
+                        text: (App.show-details ? "− " : "+ ") + Tr.t(Tr.lang, "details");
+                        clicked => { App.show-details = !App.show-details; }
+                    }
                 }
                 if App.show-details : Card {
                     min-height: dt.preferred-height + 24px;
                     dt := Text {
                         x: 12px; width: parent.width - 24px;
-                        text: App.details; color: Theme.text-muted; font-size: 13px; font-family: "Consolas";
+                        text: App.details; color: Theme.text-muted; font-size: Theme.font-small; font-family: "Consolas";
                         wrap: word-wrap;
                     }
                 }
@@ -348,6 +371,7 @@ component Backups inherits Page {
     }
     HorizontalLayout {
         spacing: Theme.gap;
+        alignment: end;
         Button { text: Tr.t(Tr.lang, "b_open_folder"); clicked => { App.open-backups-folder(); } }
         Button {
             text: Tr.t(Tr.lang, "b_restore"); kind: "primary";
@@ -362,15 +386,19 @@ component Packs inherits Page {
     Label { text: Tr.t(Tr.lang, "packs_intro"); }
     HorizontalLayout {
         spacing: Theme.gap;
+        alignment: start;
         Button { text: Tr.t(Tr.lang, "b_pack_radioid"); enabled: !App.busy; clicked => { App.pack-radioid(); } }
         Button { text: Tr.t(Tr.lang, "b_pack_air"); enabled: !App.busy; clicked => { App.pack-air(); } }
     }
     if App.pack-text != "" : Notice { text: App.pack-text; kind: App.pack-ready ? "success" : "info"; }
     if App.message != "" : Notice { text: App.message; kind: App.message-kind; }
-    Button {
-        text: Tr.t(Tr.lang, "b_pack_write"); kind: "primary";
-        enabled: App.pack-ready && !App.busy && App.radio-access;
-        clicked => { App.pack-write(); }
+    HorizontalLayout {
+        alignment: start;
+        Button {
+            text: Tr.t(Tr.lang, "b_pack_write"); kind: "primary";
+            enabled: App.pack-ready && !App.busy && App.radio-access;
+            clicked => { App.pack-write(); }
+        }
     }
     Muted { text: Tr.t(Tr.lang, "packs_note"); }
     Rectangle {}
@@ -383,10 +411,11 @@ component ProgramUpdate inherits Card {
     pu := VerticalLayout {
         padding: Theme.pad;
         spacing: 10px;
-        Label { text: Tr.t(Tr.lang, "pu_title"); font-weight: 700; }
+        Heading { text: Tr.t(Tr.lang, "pu_title"); }
         Label { text: App.app-update-text; }
         HorizontalLayout {
             spacing: Theme.gap;
+            alignment: start;
             Button { text: Tr.t(Tr.lang, "pu_check"); enabled: !App.busy; clicked => { App.app-check(); } }
             Button {
                 text: Tr.t(Tr.lang, "pu_install"); kind: "primary";
@@ -406,19 +435,19 @@ component Settings inherits Page {
             spacing: Theme.gap;
             padding-right: 8px;
             alignment: start;
-            Label { text: Tr.t(Tr.lang, "set_lang"); font-weight: 700; }
+            Heading { text: Tr.t(Tr.lang, "set_lang"); }
             HorizontalLayout {
                 spacing: Theme.gap;
                 Choice { title: "Türkçe"; detail: ""; selected: Tr.lang == "tr"; clicked => { App.set-lang("tr"); } }
                 Choice { title: "English"; detail: ""; selected: Tr.lang == "en"; clicked => { App.set-lang("en"); } }
             }
-            Label { text: Tr.t(Tr.lang, "set_theme"); font-weight: 700; }
+            Heading { text: Tr.t(Tr.lang, "set_theme"); }
             HorizontalLayout {
                 spacing: Theme.gap;
                 Choice { title: Tr.t(Tr.lang, "theme_light"); detail: ""; selected: !Theme.dark; clicked => { App.set-theme(false); } }
                 Choice { title: Tr.t(Tr.lang, "theme_dark"); detail: ""; selected: Theme.dark; clicked => { App.set-theme(true); } }
             }
-            Label { text: Tr.t(Tr.lang, "set_channel"); font-weight: 700; }
+            Heading { text: Tr.t(Tr.lang, "set_channel"); }
             HorizontalLayout {
                 spacing: Theme.gap;
                 Choice { title: Tr.t(Tr.lang, "ch_latest"); detail: Tr.t(Tr.lang, "ch_latest_d"); selected: App.channel == 0; clicked => { App.set-channel(0); } }
@@ -448,7 +477,7 @@ component About inherits Page {
                 min-height: av.preferred-height;
                 av := VerticalLayout {
                     padding: Theme.pad; spacing: 8px;
-                    Label { text: "DDM32 Plus " + App.version; font-weight: 700; font-size: Theme.font-big; }
+                    Heading { text: "DDM32 Plus " + App.version; font-size: Theme.font-big; }
                     Label { text: Tr.t(Tr.lang, "about_text"); }
                     Muted { text: Tr.t(Tr.lang, "about_data") + " " + App.data-folder; }
                     Muted { text: Tr.t(Tr.lang, "about_key") + " " + App.key-id; }
@@ -468,12 +497,12 @@ component FirstStart inherits VerticalLayout {
     spacing: Theme.gap * 1.5;
     alignment: center;
     Title { text: "DDM32 Plus"; horizontal-alignment: center; }
-    Label { text: "Dil seçin / Choose a language"; horizontal-alignment: center; font-size: Theme.font-big; }
+    Label { text: "Dil seçin / Choose a language"; horizontal-alignment: center; }
     HorizontalLayout {
         spacing: Theme.gap;
         alignment: center;
-        Button { text: "Türkçe"; kind: "primary"; big: true; default-focus: true; min-width: 220px; clicked => { App.set-lang("tr"); App.navigate(0); } }
-        Button { text: "English"; kind: "primary"; big: true; min-width: 220px; clicked => { App.set-lang("en"); App.navigate(0); } }
+        Button { text: "Türkçe"; kind: "primary"; big: true; default-focus: true; min-width: 160px; clicked => { App.set-lang("tr"); App.navigate(0); } }
+        Button { text: "English"; kind: "primary"; big: true; min-width: 160px; clicked => { App.set-lang("en"); App.navigate(0); } }
     }
 }
 
@@ -508,13 +537,13 @@ export component AppWindow inherits Window {
             width: min(parent.width - 80px, 560px);
             height: cv.preferred-height;
             cv := VerticalLayout {
-                padding: Theme.pad * 1.5; spacing: Theme.gap;
+                padding: Theme.pad * 1.25; spacing: Theme.gap * 1.5;
                 Title { text: Tr.t(Tr.lang, "confirm_title"); color: Theme.danger; }
                 Label { text: Tr.t(Tr.lang, "confirm_text"); }
                 HorizontalLayout {
                     spacing: Theme.gap; alignment: end;
                     Button { text: Tr.t(Tr.lang, "b_cancel"); default-focus: true; clicked => { App.confirm-open = false; } }
-                    Button { text: Tr.t(Tr.lang, "b_confirm_none"); kind: "danger"; min-width: 260px; clicked => { App.confirm-no-backup(); } }
+                    Button { text: Tr.t(Tr.lang, "b_confirm_none"); kind: "danger"; clicked => { App.confirm-no-backup(); } }
                 }
             }
         }

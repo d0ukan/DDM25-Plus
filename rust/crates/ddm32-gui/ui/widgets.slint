@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The few widgets the program is made of, all coloured by Theme only.
+// The few widgets the program is made of, all coloured by Theme only. Plain desktop controls: small corners, normal
+// heights, a 2 px focus ring; colour only for the accent (main action, selection) and for states.
 import { Theme } from "theme.slint";
 
 export global Tr {
@@ -24,7 +25,15 @@ export component Muted inherits Text {
 export component Title inherits Text {
     color: Theme.text;
     font-size: Theme.font-title;
-    font-weight: 700;
+    font-weight: 600;
+    wrap: word-wrap;
+}
+
+// A section's name above its controls
+export component Heading inherits Text {
+    color: Theme.text;
+    font-size: Theme.font;
+    font-weight: 600;
     wrap: word-wrap;
 }
 
@@ -33,16 +42,20 @@ export component Button {
     in property <string> text;
     in property <string> kind: "secondary";
     in property <bool> enabled: true;
+    // a little taller for a page's main action; same font
     in property <bool> big: false;
+    // in a row of equal buttons (Home's tools): every one the same width, whatever its label
+    in property <bool> even: false;
     // takes the keyboard focus when the page opens, so Enter runs it
     in property <bool> default-focus: false;
     callback clicked;
     init => { if root.default-focus && root.enabled { fs.focus(); } }
     // grows with a label that wraps (large scaling, narrow window), so no line is ever cut
-    min-height: max(root.big ? 64px : 46px, lbl.preferred-height + 16px);
-    max-height: max(root.big ? 120px : 56px, lbl.preferred-height + 16px);
+    min-height: max(root.big ? 40px : Theme.control-height, lbl.preferred-height + 10px);
+    max-height: max(root.big ? 40px : Theme.control-height, lbl.preferred-height + 10px);
+    preferred-width: root.even ? 100px : max(96px, lbl.preferred-width + 32px);
     vertical-stretch: 0;
-    min-width: 120px;
+    min-width: 88px;
     accessible-role: button;
     accessible-label: root.text;
     accessible-action-default => { if root.enabled { root.clicked(); } }
@@ -60,7 +73,7 @@ export component Button {
             : root.kind == "primary" ? (ta.has-hover ? Theme.primary-hover : Theme.primary)
             : root.kind == "danger" ? Theme.danger
             : (ta.has-hover ? Theme.button-hover : Theme.button);
-        border-width: fs.has-focus ? 3px : (root.kind == "secondary" ? 1px : 0px);
+        border-width: fs.has-focus ? 2px : (root.kind == "secondary" || !root.enabled ? 1px : 0px);
         border-color: fs.has-focus ? Theme.focus : Theme.border;
         lbl := Text {
             text: root.text;
@@ -68,13 +81,13 @@ export component Button {
                 : root.kind == "primary" ? Theme.primary-text
                 : root.kind == "danger" ? Theme.window
                 : Theme.button-text;
-            font-size: root.big ? Theme.font-big : Theme.font;
-            font-weight: root.kind == "secondary" ? 400 : 700;
+            font-size: Theme.font;
+            font-weight: root.kind == "secondary" ? 400 : 600;
             horizontal-alignment: center;
             vertical-alignment: center;
             wrap: word-wrap;
-            x: 16px;
-            width: parent.width - 32px;
+            x: 12px;
+            width: parent.width - 24px;
         }
     }
     ta := TouchArea {
@@ -91,31 +104,76 @@ export component Card inherits Rectangle {
     border-color: Theme.border;
 }
 
-// A notice: kind "info", "warning", "danger", "success"
+// The header row of every page: the way back home (when there is one) and the page's name, on a bar across the
+// window with a line under it.
+export component PageHeader inherits Rectangle {
+    in property <string> heading;
+    in property <bool> back: true;
+    in property <bool> back-enabled: true;
+    in property <string> back-text;
+    // the owner's mark before the name (Home)
+    in property <image> logo;
+    callback back-clicked;
+    background: Theme.surface;
+    min-height: hl.preferred-height;
+    vertical-stretch: 0;
+    hl := HorizontalLayout {
+        padding-left: Theme.pad;
+        padding-right: Theme.pad;
+        padding-top: 8px;
+        padding-bottom: 9px;
+        spacing: Theme.gap * 1.5;
+        if root.back : Button {
+            text: "← " + root.back-text;
+            enabled: root.back-enabled;
+            horizontal-stretch: 0;
+            clicked => { root.back-clicked(); }
+        }
+        if root.logo.width > 0 : Image {
+            source: root.logo;
+            width: 34px;
+            height: 34px;
+            image-fit: contain;
+            accessible-role: image;
+            accessible-label: "DDM32+";
+        }
+        Title { text: root.heading; vertical-alignment: center; horizontal-stretch: 1; }
+        @children
+    }
+    Rectangle { y: parent.height - 1px; height: 1px; background: Theme.border; }
+}
+
+// A notice: kind "info", "warning", "danger", "success". A plain box with a bar on the left in the state's colour.
 export component Notice inherits Rectangle {
     in property <string> text;
     in property <string> kind: "info";
+    // a step the user must follow now (the power prompts, the result): its text in bold
     in property <bool> big: false;
-    background: kind == "danger" ? Theme.danger-bg : kind == "warning" ? Theme.warning-bg
-        : kind == "success" ? Theme.success-bg : Theme.surface-alt;
+    background: Theme.surface;
     border-radius: Theme.radius;
-    border-width: kind == "danger" ? 2px : 0px;
-    border-color: Theme.danger;
+    border-width: 1px;
+    border-color: Theme.border;
     accessible-role: AccessibleRole.text;
     accessible-label: root.text;
-    min-height: t.preferred-height + 2 * Theme.pad;
+    min-height: t.preferred-height + 20px;
     preferred-height: self.min-height;
     vertical-stretch: 0;
+    Rectangle {
+        x: 0; y: 0; width: 4px; height: parent.height;
+        border-top-left-radius: Theme.radius;
+        border-bottom-left-radius: Theme.radius;
+        background: kind == "danger" ? Theme.danger : kind == "warning" ? Theme.warning
+            : kind == "success" ? Theme.success : Theme.border;
+    }
     t := Text {
-        x: Theme.pad;
-        width: parent.width - 2 * Theme.pad;
+        x: 16px;
+        width: parent.width - 28px;
         text: root.text;
         wrap: word-wrap;
         vertical-alignment: center;
-        font-size: root.big ? Theme.font-big : Theme.font;
-        font-weight: root.big ? 700 : 400;
-        color: kind == "danger" ? Theme.danger-text : kind == "warning" ? Theme.warning-text
-            : kind == "success" ? Theme.success-text : Theme.text;
+        font-size: Theme.font;
+        font-weight: root.big ? 600 : 400;
+        color: Theme.text;
     }
 }
 
@@ -123,7 +181,7 @@ export component Check {
     in property <string> text;
     in-out property <bool> checked;
     callback toggled;
-    min-height: 44px;
+    min-height: max(Theme.control-height, ct.preferred-height + 8px);
     accessible-role: checkbox;
     accessible-checked: root.checked;
     accessible-label: root.text;
@@ -134,22 +192,29 @@ export component Check {
         }
     }
     HorizontalLayout {
-        spacing: 12px;
+        spacing: 10px;
         Rectangle {
-            width: 28px; height: 28px; y: (parent.height - 28px) / 2;
-            border-radius: 6px;
-            border-width: fs.has-focus ? 3px : 2px;
-            border-color: fs.has-focus ? Theme.focus : Theme.border;
+            width: 18px; height: 18px; y: (parent.height - 18px) / 2;
+            border-radius: Theme.radius;
+            border-width: fs.has-focus ? 2px : 1px;
+            border-color: fs.has-focus ? Theme.focus : root.checked ? Theme.primary : Theme.border;
             background: root.checked ? Theme.primary : Theme.surface;
             // the tick, drawn (no font glyph needed)
-            if root.checked : Rectangle { width: 12px; height: 12px; border-radius: 3px; background: Theme.primary-text; }
+            if root.checked : Path {
+                width: 12px; height: 12px;
+                viewbox-width: 12; viewbox-height: 12;
+                commands: "M 1.5 6.5 L 4.5 9.5 L 10.5 2.5";
+                stroke: Theme.primary-text;
+                stroke-width: 2px;
+                fill: transparent;
+            }
         }
-        Text { text: root.text; color: Theme.text; font-size: Theme.font; wrap: word-wrap; vertical-alignment: center; }
+        ct := Text { text: root.text; color: Theme.text; font-size: Theme.font; wrap: word-wrap; vertical-alignment: center; }
     }
     TouchArea { clicked => { fs.focus(); root.checked = !root.checked; root.toggled(); } }
 }
 
-// One choice of a list: a big row with a title and a line under it
+// One choice of a list: a row with a round mark, a title and a line under it
 export component Choice {
     in property <string> title;
     in property <string> detail;
@@ -157,7 +222,7 @@ export component Choice {
     in property <bool> danger: false;
     in property <bool> enabled: true;
     callback clicked;
-    min-height: max(root.detail == "" ? 52px : 72px, cl.preferred-height);
+    min-height: max(Theme.control-height + 4px, cl.preferred-height);
     vertical-stretch: 0;
     accessible-role: button;
     accessible-label: root.title;
@@ -169,18 +234,38 @@ export component Choice {
         }
     }
     Rectangle {
-        background: !root.enabled ? Theme.disabled : root.selected ? Theme.surface-alt : Theme.surface;
+        background: !root.enabled ? Theme.disabled : Theme.surface;
         border-radius: Theme.radius;
-        border-width: fs.has-focus ? 3px : (root.selected ? 3px : 1px);
+        border-width: fs.has-focus || root.selected ? 2px : 1px;
         border-color: fs.has-focus ? Theme.focus : root.selected ? (root.danger ? Theme.danger : Theme.primary) : Theme.border;
-        cl := VerticalLayout {
-            padding: 14px; spacing: 4px;
-            Text {
-                text: (root.selected ? "● " : "○ ") + root.title;
-                color: !root.enabled ? Theme.disabled-text : root.danger ? Theme.danger : Theme.text;
-                font-size: Theme.font; font-weight: 700; wrap: word-wrap;
+        cl := HorizontalLayout {
+            padding-left: 12px; padding-right: 12px; padding-top: 8px; padding-bottom: 8px;
+            spacing: 10px;
+            // the round mark: a ring, filled in the middle when chosen
+            VerticalLayout {
+                alignment: start;
+                padding-top: 2px;
+                Rectangle {
+                    width: 16px; height: 16px; border-radius: 8px;
+                    border-width: 1px;
+                    border-color: root.selected ? (root.danger ? Theme.danger : Theme.primary) : Theme.text-muted;
+                    background: Theme.surface;
+                    if root.selected : Rectangle {
+                        width: 8px; height: 8px; border-radius: 4px;
+                        background: root.danger ? Theme.danger : Theme.primary;
+                    }
+                }
             }
-            if root.detail != "" : Text { text: root.detail; color: !root.enabled ? Theme.disabled-text : Theme.text-muted; font-size: Theme.font-small; wrap: word-wrap; }
+            VerticalLayout {
+                spacing: 2px;
+                alignment: center;
+                Text {
+                    text: root.title;
+                    color: !root.enabled ? Theme.disabled-text : root.danger ? Theme.danger : Theme.text;
+                    font-size: Theme.font; font-weight: 600; wrap: word-wrap;
+                }
+                if root.detail != "" : Text { text: root.detail; color: !root.enabled ? Theme.disabled-text : Theme.text-muted; font-size: Theme.font-small; wrap: word-wrap; }
+            }
         }
     }
     TouchArea { enabled: root.enabled; clicked => { fs.focus(); root.clicked(); } }
@@ -188,18 +273,18 @@ export component Choice {
 
 export component Progress inherits Rectangle {
     in property <float> value; // 0..1
-    height: 14px;
+    height: 8px;
     accessible-role: progress-indicator;
     accessible-value-minimum: 0;
     accessible-value-maximum: 100;
     accessible-value: round(clamp(root.value, 0, 1) * 100);
     vertical-stretch: 0;
-    border-radius: 7px;
+    border-radius: 2px;
     background: Theme.surface-alt;
     border-width: 1px;
     border-color: Theme.border;
     Rectangle {
-        x: 0; y: 0; height: parent.height; border-radius: 7px;
+        x: 0; y: 0; height: parent.height; border-radius: 2px;
         width: parent.width * clamp(root.value, 0, 1);
         background: Theme.primary;
     }

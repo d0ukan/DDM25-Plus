@@ -88,7 +88,15 @@ fn check_palette(t: &Theme, which: &str) {
         ("warning-text on warning-bg", t.get_warning_text(), t.get_warning_bg(), 4.5),
         ("success-text on success-bg", t.get_success_text(), t.get_success_bg(), 4.5),
         ("text on success-bg", t.get_text(), t.get_success_bg(), 4.5),
+        ("accent-text on window", t.get_accent_text(), t.get_window(), 4.5),
+        ("accent-text on surface", t.get_accent_text(), t.get_surface(), 4.5),
+        ("success on window (a step done)", t.get_success(), t.get_window(), 4.5),
+        ("success on surface", t.get_success(), t.get_surface(), 4.5),
+        ("success bar on surface", t.get_success(), t.get_surface(), 3.0),
+        ("warning bar on surface", t.get_warning(), t.get_surface(), 3.0),
+        ("danger bar on surface", t.get_danger(), t.get_surface(), 3.0),
         ("primary on surface (selected border)", t.get_primary(), t.get_surface(), 3.0),
+        ("focus ring on primary (a focused main button)", t.get_focus(), t.get_primary(), 1.5),
         ("focus ring on surface", t.get_focus(), t.get_surface(), 3.0),
         ("focus ring on window", t.get_focus(), t.get_window(), 3.0),
         ("border on surface", t.get_border(), t.get_surface(), 1.4),
@@ -176,8 +184,8 @@ fn every_screen_in_both_themes() {
                 // switch the theme live on this very page
                 theme.set_dark(dark);
                 let buf = render(&window);
-                // the window background follows the theme at once
-                let bg = theme.get_window();
+                // the window background follows the theme at once (Home's bottom corner is its facts bar, a surface)
+                let bg = if *page == 0 { theme.get_surface() } else { theme.get_window() };
                 let corner = buf[(H as usize - 2) * W as usize + 2];
                 if *extra != "confirm" {
                     assert_eq!(
@@ -185,6 +193,12 @@ fn every_screen_in_both_themes() {
                         (corner.r, corner.g, corner.b),
                         "{name} {dark}: the theme did not switch"
                     );
+                }
+                // the header row is a surface bar across the top on every page
+                if !matches!(*name, "first-start") && *extra != "confirm" {
+                    let s = theme.get_surface();
+                    let top = buf[2 * W as usize + W as usize / 2];
+                    assert_eq!((s.red(), s.green(), s.blue()), (top.r, top.g, top.b), "{name} {dark}: no header row");
                 }
                 if lang == "tr" || matches!(*name, "home" | "update-2-backup-choice" | "update-3-backup-power") {
                     let file = format!("{name}-{}-{lang}.png", if dark { "dark" } else { "light" });

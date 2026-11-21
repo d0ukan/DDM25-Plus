@@ -131,7 +131,8 @@ fn scaled_150_and_200_percent() {
                                 && ra.x + ra.w <= lw as f32 + 0.5
                                 && ra.y + ra.h <= lh as f32 + 0.5;
                             assert!(inside, "{lang} {tag}% {lw}x{lh} {name}: '{a}' leaves the window: {ra:?}");
-                            assert!(ra.w >= 44.0 && ra.h >= 44.0, "{name}: '{a}' is smaller than a finger: {ra:?}");
+                            // a desktop tool's normal control: well above WCAG 2.2's 24 px target minimum
+                            assert!(ra.w >= 32.0 && ra.h >= 32.0, "{name}: '{a}' is smaller than a target: {ra:?}");
                         }
                         if lang == "tr" && lw == 900 {
                             let file = format!("{name}-{}-{lang}-{tag}.png", if dark { "dark" } else { "light" });
