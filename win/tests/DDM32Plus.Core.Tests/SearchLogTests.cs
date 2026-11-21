@@ -25,7 +25,7 @@ public sealed class SearchLogTests : IDisposable
     public void FieldsAreParsed()
     {
         var p = SearchLogBook.ParseP25("433500000,456,655,1234567,3,10", T0)!.Value.Call;
-        Assert.Equal(("P25", 433500000L, "$1C8", 655L, 1234567L, 3), (p.Mode, p.Hz, p.Code, p.Group, p.Source, p.Calls));
+        Assert.Equal(("P25", 433500000L, "$1C8/456", 655L, 1234567L, 3), (p.Mode, p.Hz, p.Code, p.Group, p.Source, p.Calls));
         Assert.Equal(T0.AddSeconds(-10), p.Time);
         var d = SearchLogBook.ParseDmr("438612500,1,2,1,1,0,2620,2620123,4,0", T0)!.Value.Call;
         Assert.Equal(("DMR", "CC1", "TS2 RPT", 2620L, 2620123L, false), (d.Mode, d.Code, d.Slot, d.Group, d.Source, d.Encrypted));
@@ -69,7 +69,7 @@ public sealed class SearchLogTests : IDisposable
         Assert.Equal(Path.Combine(dir, "search-20261121.csv"), path);
         Assert.Equal(SearchLogBook.CsvHeader, lines[0]);
         Assert.Equal(3, lines.Length);
-        Assert.Equal("2026-11-21 22:00:00,P25,433.5000,$1C8,,655,1234567,0,1,", lines[1]);
+        Assert.Equal("2026-11-21 22:00:00,P25,433.5000,$1C8/456,,655,1234567,0,1,", lines[1]);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class SearchLogTests : IDisposable
     public void AllDigitalFieldsAreParsed()
     {
         var p = SearchLogBook.ParseAll("433500000,P25,456,0,0,1,0,655,1234567,3,10,", T0)!.Value.Call;
-        Assert.Equal(("P25", 433500000L, "$1C8", "", 655L, 1234567L, 3, ""), (p.Mode, p.Hz, p.Code, p.Slot, p.Group, p.Source, p.Calls, p.Caller));
+        Assert.Equal(("P25", 433500000L, "$1C8/456", "", 655L, 1234567L, 3, ""), (p.Mode, p.Hz, p.Code, p.Slot, p.Group, p.Source, p.Calls, p.Caller));
         Assert.Equal(T0.AddSeconds(-10), p.Time);
         var d = SearchLogBook.ParseAll("438612500,DMR,1,2,1,1,0,2620,2620123,4,0,", T0)!.Value.Call;
         Assert.Equal(("DMR", "CC1", "TS2 RPT", 2620L, 2620123L), (d.Mode, d.Code, d.Slot, d.Group, d.Source));

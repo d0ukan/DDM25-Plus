@@ -33,7 +33,7 @@ fn fields_are_parsed() {
     assert_eq!("2026-11-21 22:00:00", searchlog::format_time(T0));
     let p = parse_p25("433500000,456,655,1234567,3,10", T0).unwrap();
     assert_eq!(
-        ("P25", 433500000, "$1C8", 655, 1234567, 3),
+        ("P25", 433500000, "$1C8/456", 655, 1234567, 3),
         (p.mode, p.hz, p.code.as_str(), p.group, p.source, p.calls)
     );
     assert_eq!(Stamp(T0.0 - 10), p.time);
@@ -81,7 +81,7 @@ fn the_days_csv_gets_one_header() {
     assert_eq!(dir.path().join("search-20261121.csv"), path);
     assert_eq!(CSV_HEADER, lines[0]);
     assert_eq!(3, lines.len());
-    assert_eq!("2026-11-21 22:00:00,P25,433.5000,$1C8,,655,1234567,0,1,", lines[1]);
+    assert_eq!("2026-11-21 22:00:00,P25,433.5000,$1C8/456,,655,1234567,0,1,", lines[1]);
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn the_reader_sends_only_its_three_views() {
 fn all_digital_fields_are_parsed() {
     let p = parse_all("433500000,P25,456,0,0,1,0,655,1234567,3,10,", T0).unwrap();
     assert_eq!(
-        ("P25", 433500000, "$1C8", "", 655, 1234567, 3, ""),
+        ("P25", 433500000, "$1C8/456", "", 655, 1234567, 3, ""),
         (p.mode, p.hz, p.code.as_str(), p.slot.as_str(), p.group, p.source, p.calls, p.caller.as_str())
     );
     assert_eq!(Stamp(T0.0 - 10), p.time);

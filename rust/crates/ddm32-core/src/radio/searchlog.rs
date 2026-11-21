@@ -19,7 +19,7 @@ pub const CSV_HEADER: &str = "time,mode,mhz,code,slot,group,source,encrypted,cal
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Stamp(pub i64);
 
-/// One call a search found (no audio). mode: "P25", "DMR", "YSF" or "NXDN"; code: P25 NAC ("$1C8"), DMR colour code
+/// One call a search found (no audio). mode: "P25", "DMR", "YSF" or "NXDN"; code: P25 NAC ("$1C8/456"), DMR colour code
 /// ("CC1"), YSF DG-ID ("DG0") or NXDN RAN ("RAN1"); slot: DMR slots seen and RPT / DIR; group: P25 / NXDN talkgroup or
 /// DMR talkgroup / called ID; caller: the YSF source callsign (empty otherwise).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -72,7 +72,7 @@ pub fn parse_p25(text: &str, now: Stamp) -> Option<SearchCall> {
         time: Stamp(now.0 - age),
         mode: "P25",
         hz: v[0],
-        code: format!("${:03X}", v[1]),
+        code: nac(v[1]),
         slot: String::new(),
         group: v[2],
         source: v[3],
@@ -144,7 +144,7 @@ pub fn parse_all(text: &str, now: Stamp) -> Option<SearchCall> {
     let age = v[9].clamp(0, 86400);
     let known = (0..65535).contains(&v[1]);
     let code = match mode {
-        "P25" if known => format!("${:03X}", v[1]),
+        "P25" if known => nac(v[1]),
         "P25" => "$?".to_string(),
         "DMR" if (0..=15).contains(&v[1]) => format!("CC{}", v[1]),
         "DMR" => "CC?".to_string(),
@@ -244,6 +244,11 @@ impl SearchLogBook {
 /// The local clock as a Stamp (seconds of local time since 1970-01-01 00:00 local).
 pub fn local_stamp() -> Stamp {
     Stamp(chrono::Local::now().naive_local().and_utc().timestamp())
+}
+
+/// A P25 NAC in both forms the radio shows: "$659/1625" (hex, decimal; owner 2026-11-21).
+pub fn nac(v: i64) -> String {
+    format!("${v:03X}/{v}")
 }
 
 pub fn mhz(hz: i64) -> String {

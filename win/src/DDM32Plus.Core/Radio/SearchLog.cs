@@ -120,7 +120,7 @@ public sealed class SearchLogBook
         if (Fields(text, 6) is not { } v || v[0] <= 0)
             return null;
         var age = (int)Math.Clamp(v[5], 0, 86400);
-        return (new SearchCall(now.AddSeconds(-age), "P25", v[0], "$" + v[1].ToString("X3", CultureInfo.InvariantCulture), "",
+        return (new SearchCall(now.AddSeconds(-age), "P25", v[0], Nac(v[1]), "",
             v[2], v[3], false, (int)v[4]), age);
     }
 
@@ -162,7 +162,7 @@ public sealed class SearchLogBook
         var known = v[1] is >= 0 and < 65535;
         var code = mode switch
         {
-            "P25" => known ? "$" + v[1].ToString("X3", CultureInfo.InvariantCulture) : "$?",
+            "P25" => known ? Nac(v[1]) : "$?",
             "DMR" => v[1] is >= 0 and <= 15 ? $"CC{v[1]}" : "CC?",
             "YSF" => known ? $"DG{v[1]}" : "DG?",
             _ => known ? $"RAN{v[1]}" : "RAN?",
@@ -171,6 +171,10 @@ public sealed class SearchLogBook
         var caller = parts.Length > 11 ? parts[11].Trim() : "";
         return (new SearchCall(now.AddSeconds(-age), mode, v[0], code, slot, v[6], v[7], v[5] != 0, (int)v[8], caller), age);
     }
+
+    /// <summary>A P25 NAC in both forms the radio shows: "$659/1625" (hex, decimal; owner 2026-11-21).</summary>
+    public static string Nac(long nac) =>
+        "$" + nac.ToString("X3", CultureInfo.InvariantCulture) + "/" + nac.ToString(CultureInfo.InvariantCulture);
 
     public static string Mhz(long hz) => (hz / 1e6).ToString("0.0000", CultureInfo.InvariantCulture);
 
