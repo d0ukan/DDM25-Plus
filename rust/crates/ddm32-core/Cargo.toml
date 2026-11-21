@@ -1,0 +1,40 @@
+[package]
+name = "ddm32-core"
+description = "DDM32 Plus programmer core: signed releases, radio tools and guards, data packs (no GUI)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+# Compiles a real serial port in. OFF by default: without it no code path can open a port.
+radio = ["dep:serialport"]
+# Developer-only features (local release folder, choosing a backup folder). Never in a release build.
+developer = []
+
+[dependencies]
+num-bigint = "0.4"
+num-traits = "0.2"
+num-integer = "0.1"
+sha2 = "0.10"
+crc32fast = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision", "unbounded_depth"] }
+ureq = { version = "2", default-features = false, features = ["tls"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+fancy-regex = "0.14"
+regex = "1"
+unicode-normalization = "0.1"
+pdf-extract = "0.7"
+lopdf = "0.34"
+flate2 = "1"
+hex = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+base64 = "0.22"
+serialport = { version = "4", default-features = false, optional = true }
+
+[dev-dependencies]
+tempfile = "3"
