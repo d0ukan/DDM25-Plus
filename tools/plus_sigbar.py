@@ -6,7 +6,8 @@ Upstream draws the bars from the receiver's raw level at every poll. With nothin
 wanders between about -118 and -98 dBm, so the bars climbed and fell between one and three on any channel and in any
 mode, as if a call or data were coming in. Now the bars are filled only while something is heard:
 
-  - FM / AM / P25: the squelch is open (RS_RX: carrier and tone; P25 holds RS_RX while a call is heard);
+  - FM / AM / P25: the squelch is open (RS_RX: carrier and tone; P25 holds RS_RX while a call is heard), or the
+    monitor holds the receiver open;
   - DMR: a call is heard on our slot (RDMR_RX, RDMR_RX_OTHER), at the call's own level when the modem gives one.
 
 Otherwise the bars are drawn empty. Home's dBm meter and the Tools screens still show the raw level (a meter's job).
@@ -29,7 +30,7 @@ static uint8_t strip_bars(const radio_view_t *v)
 	if (v->dmr.state == RDMR_RX || v->dmr.state == RDMR_RX_OTHER)
 		return rssi_bars(v->dmr.rssi_dbm != 0 ? v->dmr.rssi_dbm : v->rssi_dbm);
 #endif
-	return v->state == RS_RX ? rssi_bars(v->rssi_dbm) : 0;
+	return v->state == RS_RX || v->monitor ? rssi_bars(v->rssi_dbm) : 0;
 }
 '''
 
