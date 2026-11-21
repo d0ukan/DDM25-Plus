@@ -604,6 +604,7 @@ __pycache__/
 !/win/tests/**/*.cs
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/*.py
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/*.json
+!/win/tests/DDM32Plus.Core.Tests/Fixtures/*.json.gz
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/legacy/*
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/radio/*.json
 !/win/tests/DDM32Plus.Core.Tests/Fixtures/radio/*.json.gz
