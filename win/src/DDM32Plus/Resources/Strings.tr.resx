@@ -98,12 +98,6 @@
   <data name="Common_Refresh" xml:space="preserve">
     <value>Yenile</value>
   </data>
-  <data name="Common_NextStageTitle" xml:space="preserve">
-    <value>Sonraki bir sürümde</value>
-  </data>
-  <data name="Common_NextStage" xml:space="preserve">
-    <value>Bu sayfanın telsizi okuyan kısmı sonraki bir sürümde gelecek; o zamana kadar bu sayfa telsize bağlanmaz. Her telsiz aracı önce Python aracıyla kayıtlı örnekler üzerinde bayt bayt karşılaştırılarak doğrulanır.</value>
-  </data>
   <data name="Lang_Prompt" xml:space="preserve">
     <value>Dil seçin / Choose your language</value>
   </data>
@@ -479,7 +473,7 @@ Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz.</value>
     <value>Bu programın yedekleri: {0} ({1} doğrulanmış)</value>
   </data>
   <data name="Health_Text" xml:space="preserve">
-    <value>Telsiz açık ve kablo takılıyken okuyun. Sadece okur, telsize bir şey yazmaz.</value>
+    <value>Telsiz açık ve kablo takılıyken okuyun: telsizin belleği, hata kaydı ve son açılışı okunur. Sadece okur, telsize bir şey yazmaz.</value>
   </data>
   <data name="Health_Read" xml:space="preserve">
     <value>Durumu oku</value>
@@ -493,11 +487,8 @@ Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz.</value>
   <data name="Health_NotRead" xml:space="preserve">
     <value>Henüz okunmadı</value>
   </data>
-  <data name="Health_Driver" xml:space="preserve">
-    <value>Kablo sürücüsü: Windows CH340 kablosunu sürücüsü olmadan tanımaz. Durum sayfası bunu bir sonraki aşamada kendisi bulup ne yapılacağını anlatacak.</value>
-  </data>
   <data name="Live_Text" xml:space="preserve">
-    <value>Telsiz açık ve kablo takılıyken **Bağlan**'a basın: port açılır ve telsiz yalnızca okunur.</value>
+    <value>Telsiz açık ve kablo takılıyken **Bağlan**'a basın: port açılır ve telsiz birkaç saniyede bir okunur. Sadece okur; ayar değiştirmez, yayın yapmaz.</value>
   </data>
   <data name="Live_Connect" xml:space="preserve">
     <value>Bağlan</value>
@@ -518,7 +509,7 @@ Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz.</value>
     <value>P25 bölge tarama sayaçları</value>
   </data>
   <data name="Ch_Warn" xml:space="preserve">
-    <value>Sadece görüntüleme: telsize yazmaz. Kanalları değiştirmek için upstream CPS kullanın.</value>
+    <value>Sadece görüntüleme: telsize yazmaz. Kanalları değiştirmek için telsizin kendi menüsünü ya da CPS'i kullanın.</value>
   </data>
   <data name="Ch_NoBackup" xml:space="preserve">
     <value>Yedek bulunamadı. Önce "Telsizi güncelle" sayfasından bir yedek alın.</value>
@@ -527,7 +518,7 @@ Bootloader ve veri çipi (kalibrasyon, kanallar, ayarlar) yazılmaz.</value>
     <value>Ara:</value>
   </data>
   <data name="Ch_SearchHint" xml:space="preserve">
-    <value>ad, frekans, mod, NAC, TG ...</value>
+    <value>ad, frekans, mod, NAC (659 ya da $293), TG ...</value>
   </data>
   <data name="Ch_Channels" xml:space="preserve">
     <value>Kanallar</value>
@@ -1102,5 +1093,353 @@ Telsizdeki önceki paket hâlâ kullanımda.</value>
   </data>
   <data name="Pack_ScreenLine" xml:space="preserve">
     <value>Veri paketi</value>
+  </data>
+  <data name="Health_Reading" xml:space="preserve">
+    <value>Okunuyor...</value>
+  </data>
+  <data name="Health_AutoTip" xml:space="preserve">
+    <value>Açıkken her 30 saniyede bir okur. Varsayılan: kapalı.</value>
+  </data>
+  <data name="Health_Green" xml:space="preserve">
+    <value>Her şey yolunda</value>
+  </data>
+  <data name="Health_Amber" xml:space="preserve">
+    <value>Dikkat: bellek az</value>
+  </data>
+  <data name="Health_Red" xml:space="preserve">
+    <value>Hata kaydı var</value>
+  </data>
+  <data name="Health_Failed" xml:space="preserve">
+    <value>Okunamadı</value>
+  </data>
+  <data name="Health_FailedText" xml:space="preserve">
+    <value>Telsiz açık mı, kablo takılı mı? DDM32 Plus çalışırken tekrar deneyin.</value>
+  </data>
+  <data name="Health_LastRead" xml:space="preserve">
+    <value>Son okuma: {0}</value>
+  </data>
+  <data name="Health_Up" xml:space="preserve">
+    <value>Telsiz {0} dk'dır açık.</value>
+  </data>
+  <data name="Health_UpHours" xml:space="preserve">
+    <value>Telsiz {0} sa {1} dk'dır açık.</value>
+  </data>
+  <data name="Health_Heap" xml:space="preserve">
+    <value>Boş bellek (en düşük): {0} KB - {1}</value>
+  </data>
+  <data name="Health_Low" xml:space="preserve">
+    <value>az</value>
+  </data>
+  <data name="Health_Enough" xml:space="preserve">
+    <value>yeterli</value>
+  </data>
+  <data name="Health_Crash" xml:space="preserve">
+    <value>Hata kaydı var: görev {0}. Bize "Ayrıntılar"daki çıktıyı gönderin.</value>
+  </data>
+  <data name="Health_NoCrash" xml:space="preserve">
+    <value>Hata kaydı yok.</value>
+  </data>
+  <data name="Health_LastBoot" xml:space="preserve">
+    <value>Son açılış: {0}.</value>
+  </data>
+  <data name="Reset_power" xml:space="preserve">
+    <value>normal açılış (güç)</value>
+  </data>
+  <data name="Reset_pin" xml:space="preserve">
+    <value>reset tuşu / kablo</value>
+  </data>
+  <data name="Reset_watchdog" xml:space="preserve">
+    <value>watchdog (takılma)</value>
+  </data>
+  <data name="Reset_software" xml:space="preserve">
+    <value>yazılım yeniden başlatması</value>
+  </data>
+  <data name="Reset_brownout" xml:space="preserve">
+    <value>düşük pil / voltaj</value>
+  </data>
+  <data name="Health_LUptime" xml:space="preserve">
+    <value>Çalışma süresi:</value>
+  </data>
+  <data name="Health_LHeap" xml:space="preserve">
+    <value>Heap boş:</value>
+  </data>
+  <data name="Health_LHeapMin" xml:space="preserve">
+    <value>Heap en az boş:</value>
+  </data>
+  <data name="Health_LMinTask" xml:space="preserve">
+    <value>En az boş yığın:</value>
+  </data>
+  <data name="Health_LCrash" xml:space="preserve">
+    <value>Çökme kaydı:</value>
+  </data>
+  <data name="Health_LReset" xml:space="preserve">
+    <value>Reset nedeni:</value>
+  </data>
+  <data name="Health_CrashYes" xml:space="preserve">
+    <value>VAR - görev {0}, pc {1}, çalışma {2}</value>
+  </data>
+  <data name="Health_CrashNotBuilt" xml:space="preserve">
+    <value>Bu build kaydetmiyor</value>
+  </data>
+  <data name="Health_CrashNone" xml:space="preserve">
+    <value>Kayıt yok</value>
+  </data>
+  <data name="Health_Task" xml:space="preserve">
+    <value>Görev</value>
+  </data>
+  <data name="Health_Free" xml:space="preserve">
+    <value>Boş yığın</value>
+  </data>
+  <data name="Health_NoPort" xml:space="preserve">
+    <value>Önce kabloyu takın (yukarıdaki kablo denetimi).</value>
+  </data>
+  <data name="Health_BackupTitle" xml:space="preserve">
+    <value>Son yedek</value>
+  </data>
+  <data name="Health_BackupText" xml:space="preserve">
+    <value>Bu programın en yeni doğrulanmış yedeği (yalnızca dosyadan okunur; telsize bağlanmaz).</value>
+  </data>
+  <data name="Health_BackupNone" xml:space="preserve">
+    <value>Henüz doğrulanmış yedek yok. "Telsizi güncelle" sayfasında "Yedek al" ile alınır.</value>
+  </data>
+  <data name="Health_Backup" xml:space="preserve">
+    <value>{0}, {1}: {2}</value>
+  </data>
+  <data name="Health_FwDdm32" xml:space="preserve">
+    <value>DDM32 Plus kurulu</value>
+  </data>
+  <data name="Health_FwClassic" xml:space="preserve">
+    <value>Open25-DM32 Classic kurulu</value>
+  </data>
+  <data name="Health_FwStock" xml:space="preserve">
+    <value>stok yazılım {0}</value>
+  </data>
+  <data name="Health_FwUnknown" xml:space="preserve">
+    <value>yazılım tanınmadı</value>
+  </data>
+  <data name="Health_Count" xml:space="preserve">
+    <value>Bu programın yedekleri: {0} ({1} doğrulanmış)</value>
+  </data>
+  <data name="Live_ConnectTip" xml:space="preserve">
+    <value>Portu açar ve telsizi okumaya başlar (sadece okuma).</value>
+  </data>
+  <data name="Live_StopTip" xml:space="preserve">
+    <value>Okumayı bitirir ve portu kapatır.</value>
+  </data>
+  <data name="Live_Interval" xml:space="preserve">
+    <value>Yenileme:</value>
+  </data>
+  <data name="Live_Seconds" xml:space="preserve">
+    <value>{0} sn</value>
+  </data>
+  <data name="Live_IntervalTip" xml:space="preserve">
+    <value>Kaç saniyede bir okunacağı. Değiştirmek için önce Durdur.</value>
+  </data>
+  <data name="Live_Connecting" xml:space="preserve">
+    <value>Bağlanılıyor ({0})...</value>
+  </data>
+  <data name="Live_Connected" xml:space="preserve">
+    <value>Bağlı ({0}), her {1} sn. Son okuma: {2}</value>
+  </data>
+  <data name="Live_Stopped" xml:space="preserve">
+    <value>Durduruldu ({0}). Port kapalı.</value>
+  </data>
+  <data name="Live_Lost" xml:space="preserve">
+    <value>Bağlantı kesildi. Telsiz açık mı, kablo takılı mı, DDM32 Plus çalışıyor mu?</value>
+  </data>
+  <data name="Live_NoSignal" xml:space="preserve">
+    <value>Sinyal yok</value>
+  </data>
+  <data name="Live_LState" xml:space="preserve">
+    <value>Durum:</value>
+  </data>
+  <data name="Live_LMode" xml:space="preserve">
+    <value>Mod:</value>
+  </data>
+  <data name="Live_LChannel" xml:space="preserve">
+    <value>Kanal:</value>
+  </data>
+  <data name="Live_LFreq" xml:space="preserve">
+    <value>Frekans:</value>
+  </data>
+  <data name="Live_LNoise" xml:space="preserve">
+    <value>Gürültü:</value>
+  </data>
+  <data name="Live_LNative" xml:space="preserve">
+    <value>P25 alıcısı:</value>
+  </data>
+  <data name="Live_LSync" xml:space="preserve">
+    <value>P25 senkron:</value>
+  </data>
+  <data name="Live_LUptime" xml:space="preserve">
+    <value>Açık kalma:</value>
+  </data>
+  <data name="Live_LHeap" xml:space="preserve">
+    <value>Boş bellek (en düşük):</value>
+  </data>
+  <data name="Live_LStack" xml:space="preserve">
+    <value>En az boş yığın:</value>
+  </data>
+  <data name="Live_LReset" xml:space="preserve">
+    <value>Son açılış:</value>
+  </data>
+  <data name="Live_LCrash" xml:space="preserve">
+    <value>Hata kaydı:</value>
+  </data>
+  <data name="LiveState_idle" xml:space="preserve">
+    <value>Boşta</value>
+  </data>
+  <data name="LiveState_rx" xml:space="preserve">
+    <value>Alıyor</value>
+  </data>
+  <data name="LiveState_tx" xml:space="preserve">
+    <value>Gönderiyor</value>
+  </data>
+  <data name="LiveState_tx_denied" xml:space="preserve">
+    <value>Gönderme engellendi</value>
+  </data>
+  <data name="Live_Monitor" xml:space="preserve">
+    <value> (monitör açık)</value>
+  </data>
+  <data name="Native_idle" xml:space="preserve">
+    <value>boşta</value>
+  </data>
+  <data name="Native_armed" xml:space="preserve">
+    <value>hazır</value>
+  </data>
+  <data name="Native_receive" xml:space="preserve">
+    <value>alıyor</value>
+  </data>
+  <data name="Native_transmit" xml:space="preserve">
+    <value>gönderiyor</value>
+  </data>
+  <data name="Native_draining" xml:space="preserve">
+    <value>bitiriyor</value>
+  </data>
+  <data name="Native_stopped" xml:space="preserve">
+    <value>durdu</value>
+  </data>
+  <data name="Native_fault" xml:space="preserve">
+    <value>hata</value>
+  </data>
+  <data name="Live_LastReason" xml:space="preserve">
+    <value> (son neden: {0})</value>
+  </data>
+  <data name="Live_Unreadable" xml:space="preserve">
+    <value>okunamadı</value>
+  </data>
+  <data name="Live_Zone" xml:space="preserve">
+    <value>  (bölge: {0})</value>
+  </data>
+  <data name="Live_CrashYes" xml:space="preserve">
+    <value>VAR (görev {0})</value>
+  </data>
+  <data name="Live_CrashNo" xml:space="preserve">
+    <value>yok</value>
+  </data>
+  <data name="Scan_stops" xml:space="preserve">
+    <value>Duraklama</value>
+  </data>
+  <data name="Scan_carriers" xml:space="preserve">
+    <value>Taşıyıcı vardı</value>
+  </data>
+  <data name="Scan_cooled" xml:space="preserve">
+    <value>Beklemede atlandı</value>
+  </data>
+  <data name="Scan_takes" xml:space="preserve">
+    <value>P25 alıcısı aldı</value>
+  </data>
+  <data name="Scan_synced" xml:space="preserve">
+    <value>Çerçeve duyuldu</value>
+  </data>
+  <data name="Scan_voiced" xml:space="preserve">
+    <value>Ses duyuldu</value>
+  </data>
+  <data name="Scan_ended" xml:space="preserve">
+    <value>Çağrı bitti</value>
+  </data>
+  <data name="Scan_tails" xml:space="preserve">
+    <value>Kuyruk</value>
+  </data>
+  <data name="Scan_quiet" xml:space="preserve">
+    <value>Çerçeve yok</value>
+  </data>
+  <data name="Scan_foreign" xml:space="preserve">
+    <value>Bize ait değil</value>
+  </data>
+  <data name="Scan_sync_ms" xml:space="preserve">
+    <value>İlk çerçeve (ms)</value>
+  </data>
+  <data name="Scan_voice_ms" xml:space="preserve">
+    <value>İlk ses (ms)</value>
+  </data>
+  <data name="Live_ScanNone" xml:space="preserve">
+    <value>Bu sürüm tarama sayaçlarını vermiyor.</value>
+  </data>
+  <data name="Live_History" xml:space="preserve">
+    <value>Son okumalar (dBm; -93 dBm = S9)</value>
+  </data>
+  <data name="Ch_Info" xml:space="preserve">
+    <value>{0} kanal, {1}, {2} kişi, {3} RX grup listesi. Kaynak: yedek {4}{5}.</value>
+  </data>
+  <data name="Ch_ZoneCount" xml:space="preserve">
+    <value>{0} bölge (bölge başına en çok {1} kanal)</value>
+  </data>
+  <data name="Ch_NoZones" xml:space="preserve">
+    <value>bölge yok (telsiz "All channels" gösterir)</value>
+  </data>
+  <data name="Ch_Unverified" xml:space="preserve">
+    <value> (doğrulanmamış yedek)</value>
+  </data>
+  <data name="Ch_Radio" xml:space="preserve">
+    <value>Telsiz adı: {0} · DMR ID: {1}</value>
+  </data>
+  <data name="Ch_Modes" xml:space="preserve">
+    <value>Modlar: {0}</value>
+  </data>
+  <data name="Ch_BadRecords" xml:space="preserve">
+    <value>Okunamayan kanal kaydı: {0}</value>
+  </data>
+  <data name="Ch_Failed" xml:space="preserve">
+    <value>Okunamadı: {0}</value>
+  </data>
+  <data name="Ch_Open" xml:space="preserve">
+    <value>Başka bir yedek aç...</value>
+  </data>
+  <data name="Ch_OpenTip" xml:space="preserve">
+    <value>Bir yedek klasörü seçin (içinde q128-pass1.bin olan). Yalnızca dosya okunur.</value>
+  </data>
+  <data name="Ch_Export" xml:space="preserve">
+    <value>Gösterileni CSV olarak kaydet...</value>
+  </data>
+  <data name="Ch_ExportTip" xml:space="preserve">
+    <value>Bu sekmede şu an gösterilen satırları, tüm sütunlarıyla bir CSV dosyasına yazar (Excel açar).</value>
+  </data>
+  <data name="Ch_AllColumns" xml:space="preserve">
+    <value>Tüm sütunlar</value>
+  </data>
+  <data name="Ch_AllColumnsTip" xml:space="preserve">
+    <value>Kapalı: sadece No, Ad, Frekans, Mod, Ayar. Açık: kaydın bütün alanları.</value>
+  </data>
+  <data name="Ch_Zone" xml:space="preserve">
+    <value>Bölge:</value>
+  </data>
+  <data name="Ch_AllZones" xml:space="preserve">
+    <value>Tüm kanallar</value>
+  </data>
+  <data name="Ch_Mode" xml:space="preserve">
+    <value>Mod:</value>
+  </data>
+  <data name="Ch_AllModes" xml:space="preserve">
+    <value>Tüm modlar</value>
+  </data>
+  <data name="Ch_Shown" xml:space="preserve">
+    <value>{0} / {1} satır gösteriliyor</value>
+  </data>
+  <data name="Ch_Saved" xml:space="preserve">
+    <value>Kaydedildi: {0}</value>
+  </data>
+  <data name="Demo_Note" xml:space="preserve">
+    <value>Örnek veri: telsize bağlanılmadı</value>
   </data>
 </root>

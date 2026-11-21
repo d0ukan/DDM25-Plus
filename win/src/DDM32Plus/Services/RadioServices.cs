@@ -73,32 +73,58 @@ public sealed record RunEnd(ToolError? Error, bool AccessOff);
 /// </summary>
 public sealed class ToolRunner(Dispatcher dispatcher)
 {
+    private static int active;
+
     public bool Busy { get; private set; }
+
+    /// <summary>A radio step of any page is running: one at a time, so two pages never share the cable.</summary>
+    public static bool AnyBusy => Volatile.Read(ref active) != 0;
+
+    /// <summary>A run started or ended (raised on the window's thread).</summary>
+    public static event Action? BusyChanged;
 
     /// <param name="writes">The tool writes to the radio (install, restore): its port comes from
     /// RadioAccess.WriteFactory, off even in the developer build.</param>
-    public async Task<RunEnd> RunAsync(Action<IReadOnlyList<string>, ToolContext> tool, List<string> argv, string logPath,
-        Action<string> line, bool writes)
+    /// <param name="logPath">The log file (appended), or null for none (the live panel, which reads every few seconds).</param>
+    /// <param name="cancel">Ends a reader that runs until stopped (the live panel).</param>
+    public async Task<RunEnd> RunAsync(Action<IReadOnlyList<string>, ToolContext> tool, List<string> argv, string? logPath,
+        Action<string> line, bool writes, CancellationToken cancel = default)
     {
+        if (Interlocked.CompareExchange(ref active, 1, 0) != 0)
+        {
+            var busy = new ToolError("PortBusy", "another radio step is running; wait for it to end");
+            line(busy.Record);
+            return new RunEnd(busy, false);
+        }
         Busy = true;
+        BusyChanged?.Invoke();
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
-            await using var log = new StreamWriter(logPath, append: true, new UTF8Encoding(false));
-            await log.WriteLineAsync($"# {DateTime.Now:yyyy-MM-dd HH:mm:ss} {string.Join(' ', argv)}");
+            StreamWriter? log = null;
+            if (logPath is not null)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+                log = new StreamWriter(logPath, append: true, new UTF8Encoding(false));
+            }
+            await using var logOwner = log;
+            if (log is not null)
+                await log.WriteLineAsync($"# {DateTime.Now:yyyy-MM-dd HH:mm:ss} {string.Join(' ', argv)}");
             void Print(string s)
             {
                 foreach (var l in s.Split('\n'))
                 {
-                    lock (log)
+                    if (log is not null)
                     {
-                        log.WriteLine(l);
-                        log.Flush();
+                        lock (log)
+                        {
+                            log.WriteLine(l);
+                            log.Flush();
+                        }
                     }
                     dispatcher.BeginInvoke(() => line(l));
                 }
             }
-            var ctx = new ToolContext { Print = Print, Serial = writes ? RadioAccess.WriteFactory : RadioAccess.Factory, Codec = Codec.Dm32 };
+            var ctx = new ToolContext { Print = Print, Serial = writes ? RadioAccess.WriteFactory : RadioAccess.Factory, Codec = Codec.Dm32, Cancel = cancel };
             return await Task.Run(() =>
             {
                 try
@@ -127,6 +153,8 @@ public sealed class ToolRunner(Dispatcher dispatcher)
         finally
         {
             Busy = false;
+            Volatile.Write(ref active, 0);
+            BusyChanged?.Invoke();
         }
     }
 

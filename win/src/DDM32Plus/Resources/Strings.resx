@@ -98,12 +98,6 @@
   <data name="Common_Refresh" xml:space="preserve">
     <value>Refresh</value>
   </data>
-  <data name="Common_NextStageTitle" xml:space="preserve">
-    <value>Coming in a later version</value>
-  </data>
-  <data name="Common_NextStage" xml:space="preserve">
-    <value>The part of this page that reads the radio comes in a later version; until then this page does not connect to the radio. Each radio tool is first checked byte for byte against the Python tool on recorded samples.</value>
-  </data>
   <data name="Lang_Prompt" xml:space="preserve">
     <value>Dil seçin / Choose your language</value>
   </data>
@@ -479,7 +473,7 @@ The bootloader and the data chip (calibration, channels, settings) are never wri
     <value>This program's backups: {0} ({1} verified)</value>
   </data>
   <data name="Health_Text" xml:space="preserve">
-    <value>Read it while the radio is on and the cable is connected. It only reads; nothing is written to the radio.</value>
+    <value>Read with the radio switched on and the cable in: the radio's memory, crash record and last start are read. It only reads; nothing is written to the radio.</value>
   </data>
   <data name="Health_Read" xml:space="preserve">
     <value>Read the status</value>
@@ -493,11 +487,8 @@ The bootloader and the data chip (calibration, channels, settings) are never wri
   <data name="Health_NotRead" xml:space="preserve">
     <value>Not read yet</value>
   </data>
-  <data name="Health_Driver" xml:space="preserve">
-    <value>Cable driver: Windows does not know the CH340 cable without its driver. In the next stage this page finds that by itself and explains what to do.</value>
-  </data>
   <data name="Live_Text" xml:space="preserve">
-    <value>With the radio on and the cable connected press **Connect**: the port is opened and the radio is only read.</value>
+    <value>With the radio switched on and the cable in, press **Connect**: the port is opened and the radio is read every few seconds. It only reads; it changes no setting and never transmits.</value>
   </data>
   <data name="Live_Connect" xml:space="preserve">
     <value>Connect</value>
@@ -518,7 +509,7 @@ The bootloader and the data chip (calibration, channels, settings) are never wri
     <value>P25 zone scan counters</value>
   </data>
   <data name="Ch_Warn" xml:space="preserve">
-    <value>View only: nothing is written to the radio. Use the upstream CPS to change channels.</value>
+    <value>View only: nothing is written to the radio. To change channels use the radio's own menus or the CPS.</value>
   </data>
   <data name="Ch_NoBackup" xml:space="preserve">
     <value>No backup found. Make a backup on the "Update the radio" page first.</value>
@@ -527,7 +518,7 @@ The bootloader and the data chip (calibration, channels, settings) are never wri
     <value>Search:</value>
   </data>
   <data name="Ch_SearchHint" xml:space="preserve">
-    <value>name, frequency, mode, NAC, TG ...</value>
+    <value>name, frequency, mode, NAC (659 or $293), TG ...</value>
   </data>
   <data name="Ch_Channels" xml:space="preserve">
     <value>Channels</value>
@@ -1102,5 +1093,353 @@ The pack the radio had is still in force.</value>
   </data>
   <data name="Pack_ScreenLine" xml:space="preserve">
     <value>Data pack</value>
+  </data>
+  <data name="Health_Reading" xml:space="preserve">
+    <value>Reading...</value>
+  </data>
+  <data name="Health_AutoTip" xml:space="preserve">
+    <value>When ticked, reads every 30 seconds. Default: off.</value>
+  </data>
+  <data name="Health_Green" xml:space="preserve">
+    <value>All is well</value>
+  </data>
+  <data name="Health_Amber" xml:space="preserve">
+    <value>Attention: memory is low</value>
+  </data>
+  <data name="Health_Red" xml:space="preserve">
+    <value>There is a crash record</value>
+  </data>
+  <data name="Health_Failed" xml:space="preserve">
+    <value>Could not read</value>
+  </data>
+  <data name="Health_FailedText" xml:space="preserve">
+    <value>Is the radio on and the cable in? Try again while DDM32 Plus is running.</value>
+  </data>
+  <data name="Health_LastRead" xml:space="preserve">
+    <value>Last read: {0}</value>
+  </data>
+  <data name="Health_Up" xml:space="preserve">
+    <value>The radio has been on for {0} min.</value>
+  </data>
+  <data name="Health_UpHours" xml:space="preserve">
+    <value>The radio has been on for {0} h {1} min.</value>
+  </data>
+  <data name="Health_Heap" xml:space="preserve">
+    <value>Free memory (lowest): {0} KB - {1}</value>
+  </data>
+  <data name="Health_Low" xml:space="preserve">
+    <value>low</value>
+  </data>
+  <data name="Health_Enough" xml:space="preserve">
+    <value>enough</value>
+  </data>
+  <data name="Health_Crash" xml:space="preserve">
+    <value>There is a crash record: task {0}. Please send us the output under "Details".</value>
+  </data>
+  <data name="Health_NoCrash" xml:space="preserve">
+    <value>No crash record.</value>
+  </data>
+  <data name="Health_LastBoot" xml:space="preserve">
+    <value>Last start: {0}.</value>
+  </data>
+  <data name="Reset_power" xml:space="preserve">
+    <value>normal start (power)</value>
+  </data>
+  <data name="Reset_pin" xml:space="preserve">
+    <value>reset key / cable</value>
+  </data>
+  <data name="Reset_watchdog" xml:space="preserve">
+    <value>watchdog (a hang)</value>
+  </data>
+  <data name="Reset_software" xml:space="preserve">
+    <value>software restart</value>
+  </data>
+  <data name="Reset_brownout" xml:space="preserve">
+    <value>low battery / voltage</value>
+  </data>
+  <data name="Health_LUptime" xml:space="preserve">
+    <value>Running for:</value>
+  </data>
+  <data name="Health_LHeap" xml:space="preserve">
+    <value>Heap free:</value>
+  </data>
+  <data name="Health_LHeapMin" xml:space="preserve">
+    <value>Heap lowest free:</value>
+  </data>
+  <data name="Health_LMinTask" xml:space="preserve">
+    <value>Least free stack:</value>
+  </data>
+  <data name="Health_LCrash" xml:space="preserve">
+    <value>Crash record:</value>
+  </data>
+  <data name="Health_LReset" xml:space="preserve">
+    <value>Reset cause:</value>
+  </data>
+  <data name="Health_CrashYes" xml:space="preserve">
+    <value>YES - task {0}, pc {1}, after {2}</value>
+  </data>
+  <data name="Health_CrashNotBuilt" xml:space="preserve">
+    <value>This build does not record it</value>
+  </data>
+  <data name="Health_CrashNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Health_Task" xml:space="preserve">
+    <value>Task</value>
+  </data>
+  <data name="Health_Free" xml:space="preserve">
+    <value>Free stack</value>
+  </data>
+  <data name="Health_NoPort" xml:space="preserve">
+    <value>Plug the cable in first (the cable check above).</value>
+  </data>
+  <data name="Health_BackupTitle" xml:space="preserve">
+    <value>Last backup</value>
+  </data>
+  <data name="Health_BackupText" xml:space="preserve">
+    <value>This program's newest verified backup (read from the file only; the radio is not contacted).</value>
+  </data>
+  <data name="Health_BackupNone" xml:space="preserve">
+    <value>No verified backup yet. "Update the radio" makes one with "Make a backup".</value>
+  </data>
+  <data name="Health_Backup" xml:space="preserve">
+    <value>{0}, {1}: {2}</value>
+  </data>
+  <data name="Health_FwDdm32" xml:space="preserve">
+    <value>DDM32 Plus installed</value>
+  </data>
+  <data name="Health_FwClassic" xml:space="preserve">
+    <value>Open25-DM32 Classic installed</value>
+  </data>
+  <data name="Health_FwStock" xml:space="preserve">
+    <value>stock firmware {0}</value>
+  </data>
+  <data name="Health_FwUnknown" xml:space="preserve">
+    <value>firmware not recognised</value>
+  </data>
+  <data name="Health_Count" xml:space="preserve">
+    <value>This program's backups: {0} ({1} verified)</value>
+  </data>
+  <data name="Live_ConnectTip" xml:space="preserve">
+    <value>Opens the port and starts reading the radio (read only).</value>
+  </data>
+  <data name="Live_StopTip" xml:space="preserve">
+    <value>Ends the reading and closes the port.</value>
+  </data>
+  <data name="Live_Interval" xml:space="preserve">
+    <value>Refresh:</value>
+  </data>
+  <data name="Live_Seconds" xml:space="preserve">
+    <value>{0} s</value>
+  </data>
+  <data name="Live_IntervalTip" xml:space="preserve">
+    <value>How often to read. Stop first to change it.</value>
+  </data>
+  <data name="Live_Connecting" xml:space="preserve">
+    <value>Connecting ({0})...</value>
+  </data>
+  <data name="Live_Connected" xml:space="preserve">
+    <value>Connected ({0}), every {1} s. Last read: {2}</value>
+  </data>
+  <data name="Live_Stopped" xml:space="preserve">
+    <value>Stopped ({0}). The port is closed.</value>
+  </data>
+  <data name="Live_Lost" xml:space="preserve">
+    <value>The connection ended. Is the radio on, the cable in, and DDM32 Plus running?</value>
+  </data>
+  <data name="Live_NoSignal" xml:space="preserve">
+    <value>No signal</value>
+  </data>
+  <data name="Live_LState" xml:space="preserve">
+    <value>State:</value>
+  </data>
+  <data name="Live_LMode" xml:space="preserve">
+    <value>Mode:</value>
+  </data>
+  <data name="Live_LChannel" xml:space="preserve">
+    <value>Channel:</value>
+  </data>
+  <data name="Live_LFreq" xml:space="preserve">
+    <value>Frequency:</value>
+  </data>
+  <data name="Live_LNoise" xml:space="preserve">
+    <value>Noise:</value>
+  </data>
+  <data name="Live_LNative" xml:space="preserve">
+    <value>P25 receiver:</value>
+  </data>
+  <data name="Live_LSync" xml:space="preserve">
+    <value>P25 sync:</value>
+  </data>
+  <data name="Live_LUptime" xml:space="preserve">
+    <value>On for:</value>
+  </data>
+  <data name="Live_LHeap" xml:space="preserve">
+    <value>Free memory (lowest):</value>
+  </data>
+  <data name="Live_LStack" xml:space="preserve">
+    <value>Least free stack:</value>
+  </data>
+  <data name="Live_LReset" xml:space="preserve">
+    <value>Last start:</value>
+  </data>
+  <data name="Live_LCrash" xml:space="preserve">
+    <value>Crash record:</value>
+  </data>
+  <data name="LiveState_idle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
+  <data name="LiveState_rx" xml:space="preserve">
+    <value>Receiving</value>
+  </data>
+  <data name="LiveState_tx" xml:space="preserve">
+    <value>Transmitting</value>
+  </data>
+  <data name="LiveState_tx_denied" xml:space="preserve">
+    <value>Transmit refused</value>
+  </data>
+  <data name="Live_Monitor" xml:space="preserve">
+    <value> (monitor on)</value>
+  </data>
+  <data name="Native_idle" xml:space="preserve">
+    <value>idle</value>
+  </data>
+  <data name="Native_armed" xml:space="preserve">
+    <value>armed</value>
+  </data>
+  <data name="Native_receive" xml:space="preserve">
+    <value>receiving</value>
+  </data>
+  <data name="Native_transmit" xml:space="preserve">
+    <value>transmitting</value>
+  </data>
+  <data name="Native_draining" xml:space="preserve">
+    <value>finishing</value>
+  </data>
+  <data name="Native_stopped" xml:space="preserve">
+    <value>stopped</value>
+  </data>
+  <data name="Native_fault" xml:space="preserve">
+    <value>fault</value>
+  </data>
+  <data name="Live_LastReason" xml:space="preserve">
+    <value> (last reason: {0})</value>
+  </data>
+  <data name="Live_Unreadable" xml:space="preserve">
+    <value>could not read</value>
+  </data>
+  <data name="Live_Zone" xml:space="preserve">
+    <value>  (zone: {0})</value>
+  </data>
+  <data name="Live_CrashYes" xml:space="preserve">
+    <value>YES (task {0})</value>
+  </data>
+  <data name="Live_CrashNo" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="Scan_stops" xml:space="preserve">
+    <value>Stops</value>
+  </data>
+  <data name="Scan_carriers" xml:space="preserve">
+    <value>Carrier seen</value>
+  </data>
+  <data name="Scan_cooled" xml:space="preserve">
+    <value>Skipped (cooling)</value>
+  </data>
+  <data name="Scan_takes" xml:space="preserve">
+    <value>P25 receiver took</value>
+  </data>
+  <data name="Scan_synced" xml:space="preserve">
+    <value>Frame heard</value>
+  </data>
+  <data name="Scan_voiced" xml:space="preserve">
+    <value>Voice heard</value>
+  </data>
+  <data name="Scan_ended" xml:space="preserve">
+    <value>Call ended</value>
+  </data>
+  <data name="Scan_tails" xml:space="preserve">
+    <value>Tail</value>
+  </data>
+  <data name="Scan_quiet" xml:space="preserve">
+    <value>No frame</value>
+  </data>
+  <data name="Scan_foreign" xml:space="preserve">
+    <value>Not ours</value>
+  </data>
+  <data name="Scan_sync_ms" xml:space="preserve">
+    <value>First frame (ms)</value>
+  </data>
+  <data name="Scan_voice_ms" xml:space="preserve">
+    <value>First voice (ms)</value>
+  </data>
+  <data name="Live_ScanNone" xml:space="preserve">
+    <value>This version does not give the scan counters.</value>
+  </data>
+  <data name="Live_History" xml:space="preserve">
+    <value>Last readings (dBm; -93 dBm = S9)</value>
+  </data>
+  <data name="Ch_Info" xml:space="preserve">
+    <value>{0} channels, {1}, {2} contacts, {3} RX group lists. Source: backup {4}{5}.</value>
+  </data>
+  <data name="Ch_ZoneCount" xml:space="preserve">
+    <value>{0} zones (at most {1} channels a zone)</value>
+  </data>
+  <data name="Ch_NoZones" xml:space="preserve">
+    <value>no zones (the radio shows "All channels")</value>
+  </data>
+  <data name="Ch_Unverified" xml:space="preserve">
+    <value> (unverified backup)</value>
+  </data>
+  <data name="Ch_Radio" xml:space="preserve">
+    <value>Radio name: {0} · DMR ID: {1}</value>
+  </data>
+  <data name="Ch_Modes" xml:space="preserve">
+    <value>Modes: {0}</value>
+  </data>
+  <data name="Ch_BadRecords" xml:space="preserve">
+    <value>Unreadable channel records: {0}</value>
+  </data>
+  <data name="Ch_Failed" xml:space="preserve">
+    <value>Could not read: {0}</value>
+  </data>
+  <data name="Ch_Open" xml:space="preserve">
+    <value>Open another backup...</value>
+  </data>
+  <data name="Ch_OpenTip" xml:space="preserve">
+    <value>Choose a backup folder (one holding q128-pass1.bin). Only the file is read.</value>
+  </data>
+  <data name="Ch_Export" xml:space="preserve">
+    <value>Save what is shown as CSV...</value>
+  </data>
+  <data name="Ch_ExportTip" xml:space="preserve">
+    <value>Writes the rows this tab shows now, with all their columns, to a CSV file (Excel opens it).</value>
+  </data>
+  <data name="Ch_AllColumns" xml:space="preserve">
+    <value>All columns</value>
+  </data>
+  <data name="Ch_AllColumnsTip" xml:space="preserve">
+    <value>Off: only No, Name, Frequency, Mode, Settings. On: every field of the record.</value>
+  </data>
+  <data name="Ch_Zone" xml:space="preserve">
+    <value>Zone:</value>
+  </data>
+  <data name="Ch_AllZones" xml:space="preserve">
+    <value>All channels</value>
+  </data>
+  <data name="Ch_Mode" xml:space="preserve">
+    <value>Mode:</value>
+  </data>
+  <data name="Ch_AllModes" xml:space="preserve">
+    <value>All modes</value>
+  </data>
+  <data name="Ch_Shown" xml:space="preserve">
+    <value>Showing {0} of {1} rows</value>
+  </data>
+  <data name="Ch_Saved" xml:space="preserve">
+    <value>Saved: {0}</value>
+  </data>
+  <data name="Demo_Note" xml:space="preserve">
+    <value>Example data: no radio was contacted</value>
   </data>
 </root>
