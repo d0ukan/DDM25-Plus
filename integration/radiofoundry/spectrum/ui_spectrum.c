@@ -10,7 +10,10 @@
  * (tried again on the next entry or *).
  * CONFIG_SPECTRUM_WF3D (DDM32 Plus, item 45, ui/wf3d.h): a third view, the same rows as a ridge plot in perspective;
  * * cycles waterfall > 3D > bars alone > waterfall (RAM only, the waterfall at power on); the 3D view keeps the
- * waterfall's buffer and rows (no new RAM). */
+ * waterfall's buffer and rows (no new RAM).
+ * CONFIG_SPECTRUM_COLOR (DDM32 Plus round 16, wf_ramp): on a colour panel both views draw each level in a signal
+ * strength ramp (dark blue, blue, cyan, green, yellow, orange, red; on the light theme a pale blue first) instead of the
+ * theme's few colours; a mono panel draws as before. */
 #include "config.h"
 #if CONFIG_SPECTRUM
 #include <string.h>
@@ -142,12 +145,47 @@ static int level_y(int16_t dbm, int top, int base)
 }
 
 #if CONFIG_SPECTRUM_WF
-/* The rows from top down, newest first: each point's level as one of the screen's colours, runs of one colour drawn
- * as one box */
+/* The colour of each level's slot: the ramp on a colour panel (CONFIG_SPECTRUM_COLOR), else the screen's colours */
+static void wf_colors(color_t slot[WF_SLOTS])
+{
+#if CONFIG_SPECTRUM_COLOR
+	if (gfx_bpp() != 1) {
+		wf_ramp(slot, ui_col.bg, ui_col.rx, ui_col.tx);
+		return;
+	}
+#endif
+	const color_t theme[WF_SLOTS] = { ui_col.bg, ui_col.line, ui_col.idle, ui_col.dim, ui_col.rx, ui_col.warn,
+					  ui_col.warn, ui_col.tx };
+	memcpy(slot, theme, sizeof theme);
+}
+
+#if CONFIG_SPECTRUM_COLOR
+/* A bpp 4 panel's 16 entry palette fills in drawing order, and anti-aliased text edges take entries while more than
+ * four are free (gfx.c): drawn last, the ramp's colours found it full and fell to the nearest (host test). So each
+ * frame first draws the ramp and the screen's own colours on one pixel (the background again over it): they keep their
+ * entries and their exact colours, and the text edges take the nearest of them */
+static void wf_reserve(void)
+{
+	color_t c[WF_SLOTS + 5];
+	if (gfx_bpp() != 4)
+		return;
+	wf_colors(c);
+	c[WF_SLOTS] = ui_col.fg;
+	c[WF_SLOTS + 1] = ui_col.dim;
+	c[WF_SLOTS + 2] = ui_col.line;
+	c[WF_SLOTS + 3] = ui_col.idle;
+	c[WF_SLOTS + 4] = ui_col.warn;
+	for (uint8_t k = 0; k < WF_SLOTS + 5u; k++)
+		gfx_pixel(0, 0, c[k]);
+	gfx_pixel(0, 0, ui_col.bg);
+}
+#endif
+
+/* The rows from top down, newest first: each point's level as its slot's colour, runs of one colour drawn as one box */
 static void __attribute__((noinline)) wf_draw(int x0, int bw, int top, int h)
 {
-	const color_t slot[WF_SLOTS] = { ui_col.bg, ui_col.line, ui_col.idle, ui_col.dim, ui_col.rx, ui_col.warn,
-					 ui_col.warn, ui_col.tx };
+	color_t slot[WF_SLOTS];
+	wf_colors(slot);
 	int rh = h / (int)WF_ROWS;
 	if (rh < 1)
 		rh = 1;
@@ -168,8 +206,8 @@ static void __attribute__((noinline)) wf_draw(int x0, int bw, int top, int h)
 /* The 3D view: the rows as wf3d draws them, in the waterfall's colours */
 static void __attribute__((noinline)) wf3d_view(int x0, int bw, int top, int h)
 {
-	const color_t slot[WF_SLOTS] = { ui_col.bg, ui_col.line, ui_col.idle, ui_col.dim, ui_col.rx, ui_col.warn,
-					 ui_col.warn, ui_col.tx };
+	color_t slot[WF_SLOTS];
+	wf_colors(slot);
 	wf3d_draw(&wf, x0, bw, top, h, slot, ui_col.bg);
 }
 #endif
@@ -180,6 +218,10 @@ static void spectrum_draw(void)
 	char buf[32];
 	sbuf_t b;
 	gfx_clear(ui_col.bg);
+#if CONFIG_SPECTRUM_COLOR
+	if (wf_on)
+		wf_reserve();	/* before anything else takes the palette's entries */
+#endif
 	int y = ui_draw_top(ui_view(), &ui_st, TR("Spectrum"), "") + 2;
 	const font_t *f = ui_layout.small;
 	bool have = snap();

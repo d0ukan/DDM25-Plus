@@ -569,6 +569,7 @@ __pycache__/
 !/integration/radiofoundry/dmraudio/pcm_diag.inc
 !/tests/plus/test_dmraudio_pcm.c
 !/tests/plus/test_ui_dmraudio.c
+!/tests/plus/test_dmraudio_gain.c
 # DDM32 Plus r15 channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/plus_chux.py)
 !/tools/plus_chux.py
 !/tools/test_chux.py
@@ -618,6 +619,17 @@ __pycache__/
 /win/publish-dev/
 /win/publish-dev-write/
 /win/publish-dev-write-next/
+# status strip signal bars filled only while something is heard (tools/plus_sigbar.py)
+!/tools/plus_sigbar.py
+!/tools/test_sigbar.py
+!/tests/plus/test_sigbar.c
+# branch r16-airprov: airfields by province, spectrum in colour (tools/plus_airprov.py)
+!/tools/plus_airprov.py
+!/tools/test_airprov.py
+!/tests/plus/test_airprov.c
+!/tests/plus/test_ui_airprov.c
+!/tests/plus/test_wfcolor.c
+!/tests/plus/test_ui_wfcolor.c
 # branch r16-polish: the Turkish catalogue complete, text size, user guide (tools/plus_polish.py)
 !/tools/plus_polish.py
 !/tools/test_polish.py

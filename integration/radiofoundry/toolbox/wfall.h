@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "ui/gfx.h"
 
 #define WF_POINTS	64u			/* SPECTRUM_POINTS_MAX */
 #define WF_ROWS		40u
@@ -28,6 +29,14 @@ typedef struct {
 
 /* No rows (the buffer stays) */
 void wf_reset(wf_t *w);
+#if CONFIG_SPECTRUM_COLOR
+/* DDM32 Plus round 16 (CONFIG_SPECTRUM_COLOR): the slots' colours on a colour panel, a signal strength ramp: slot 0
+ * the background, then dark blue, blue, cyan, green, yellow, orange, red. On a light background (the light theme) the
+ * weakest is a pale blue and the others are darker shades that read on white. Green and red are the theme's RX and TX
+ * colours (palette entries the screen has anyway), so the ramp adds five entries to the 16 colour palette of a bpp 4
+ * panel. The waterfall and the 3D view draw with it; a mono panel keeps the theme's slots (ui_spectrum.c) */
+void wf_ramp(color_t slot[WF_SLOTS], color_t bg, color_t rx, color_t tx);
+#endif
 /* A reading's level 0..15: 0 not read or within WF_DB_LEVEL of the floor, then a level every WF_DB_LEVEL dB */
 uint8_t wf_level(int16_t dbm, int16_t floor_dbm);
 /* A level's colour slot 0..WF_SLOTS - 1 (the screen's colours: background, line, idle, dim, RX, warning, TX) */

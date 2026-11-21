@@ -180,7 +180,7 @@ int main(void)
 	CHECK(d.lat_min_us >= 2000u && d.lat_min_us < 3000u && d.lat_max_us >= 7000u && d.lat_max_us < 9000u);
 	CHECK(d.slow == 0 && d.prefills == 0 && d.mode == 0 && d.loud_blocks == 49);
 	CHECK(order_errors == 0 && d.full > 0);
-	CHECK(d.dropped == 1);	/* the first block: stale once the route turned on (spk_drop), as before */
+	CHECK(d.dropped == 0 && play_diag[9] == 1);	/* the first block, stale once the route turned on: not a loss */
 	CHECK(!pd_wait);
 
 	/* Mode 1, the prefill: one block of margin before the FIFO starts; the same call plays without a gap */
@@ -190,7 +190,7 @@ int main(void)
 	printf("mode 1: model gaps %u, driver gaps %u, prefills %u\n", (unsigned)model_gaps, (unsigned)d.gaps,
 	       (unsigned)d.prefills);
 	CHECK(model_gaps == 0 && d.gaps == 0 && d.prefills == 1 && d.mode == HRC_PCM_PREFILL);
-	CHECK(order_errors == 0 && d.dropped == 1);
+	CHECK(order_errors == 0 && d.dropped == 0);
 	/* even a decode that takes 15 ms (the margin is a block): no gap, one slow block counted each time */
 	fresh(HRC_PCM_PREFILL);
 	call(30, 2000u, 15500u);
@@ -229,6 +229,28 @@ int main(void)
 	CHECK(!play_paced && hrc_audio_pcm_mode() == 0);
 	hrc_audio_pcm_set_mode(0xFF);
 	CHECK(hrc_audio_pcm_mode() == (HRC_PCM_PREFILL | HRC_PCM_PACED));
+
+	/* The idle stream (a DMR channel between calls: blocks every 20 ms, the speaker route off) fills the queue and
+	 * drops a block every 20 ms after that: not a loss. The same while the speaker plays and the FIFO takes nothing
+	 * (held) is one */
+	fresh(0);
+	cb_count = 1;	/* no route change in the callback: the route stays off */
+	for (unsigned k = 0; k < 10; k++) {
+		cb_us = 1000u;
+		one_block();
+		advance(19000u);
+	}
+	hrc_audio_pcm_diag(&d);
+	CHECK(play_diag[8] == 10u - (SPK_BLOCKS - 1u) && d.dropped == 0);
+	speaker_pcm(true);
+	fifo_held = true;
+	for (unsigned k = 0; k < 6; k++) {
+		one_block();
+		advance(19000u);
+	}
+	fifo_held = false;
+	hrc_audio_pcm_diag(&d);
+	CHECK(d.dropped == 6u - (SPK_BLOCKS - 1u));
 
 	/* Mode 0 never holds the FIFO back, after any drop; the reset zeroes every counter */
 	fresh(0);

@@ -5,6 +5,12 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- The status strip's signal bars light only while something is heard (squelch open, or a DMR call at its own level).
+  Before, they followed the receiver's noise floor and climbed and fell on any channel as if a call or data came in.
+- DMR receive audio diagnostics, round 2: on Tools > Diagnostics key 8 steps a digital gain on the decoded voice
+  (x1, x2, x4, x8, saturating; beeps keep their level) and a sixth line shows the samples it clipped and the peak after
+  it; the dropped-blocks counter counts only blocks lost while the speaker plays (the idle stream between calls filled
+  it before). Power-on is x1: nothing changes until the owner presses 8. For the radio rows DA-7..DA-11.
 - Turkish: the texts the catalogue missed are translated: the multi-watch ring line ("Döngü 0.6 s"), its # menu
   ("Konuş: B", "Değiş: C", "Durdur, kal: B") and toasts, the cross-band form's Slot row, the caller line before the
   first P25 / YSF / NXDN link control, the battery's time left ("4 sa 20 dk"), upstream's zone toasts and "In Zones"
@@ -92,6 +98,12 @@ Installed and checked on the author's radio with the new Windows programmer, pub
   signal that isn't ours (FM on its frequency, another NAC) no longer freezes the ring: it is given back after 1.2 s
   and passed over while the signal lasts. Dual watch (2 channels) is unchanged. **Not tried on the radio yet** (rows
   MR-*).
+- Airfields by province: Tools > Airfields opens on "All airfields" and the provinces that have airfields, in plate
+  order with their counts ("06 Ankara (5)"), as Tools > Repeaters does; OK lists that province's airfields nearest
+  first, with the details, listening and air watch as before. Each airfield's province comes from its position (the
+  map's provinces; at a border OurAirports' own province decides: Sabiha Gökçen is in İstanbul, Çukurova in Mersin).
+- Spectrum in colour: the waterfall and the 3D waterfall draw signal strength as a colour ramp (dark blue, blue,
+  cyan, green, yellow, orange, red; the light theme its own shades) instead of a few grey and theme colours.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

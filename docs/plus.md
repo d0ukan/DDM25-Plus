@@ -2646,6 +2646,61 @@ dry after a fast first block, m1 and m3 do not, the counters match the model, a 
 mode applied while running, the reset), `tests/plus/test_ui_dmraudio.c` (the real formatter and digit handler cut out
 of the generated `diag_dm32.c`; 4 flows, English and Turkish, layout). Radio rows: `docs/plus-radio-test.md` "DMR
 receive audio", DA-*. Next: the default becomes the mode the rows show clean (one line), or the counters point at 3-5.
+**Round 2 (branch `fix-dmr-audio-2`, after DA-1..3 on v1.0.0-beta.4).** The owner's counters, each a ~30 s run after
+9 (`in` 177-219 frames: about 4 s of voice actually received):
+
+| Mode | rx | in / pl | cc / un | bd / ls / be | pk | sp gp | fu | dr | au bl / sl / ov |
+|---|---|---|---|---|---|---|---|---|---|
+| m0 | -103 dBm | 219 / 215 | 19 / 3 | 4 / 15 / 490 | 1118 | 0 | 1676 | 999 | 0.2-4.6 / 0 / 0 |
+| m1 | -99 | 177 / 177 | 3 / 3 | 0 / 3 / 331 | 1014 | 0 | 1808 | 905 | same |
+| m2 | -100 | 177 / 177 | 3 / 3 | 0 / 3 / 306 | 1064 | 2 / 2.0 ms | 0 | 577 | same |
+| m3 | -98 | 177 / 177 | 3 / 3 | 0 / 3 / 313 | 836 | 2 / 2.1 ms | 0 | 440 | same |
+
+Heard: m0 and m3 cleaner than m1 and m2, none clean. What this says:
+
+- **Candidate 1 (the FIFO running dry) is not supported**: `gp0` in m0 and m1; the block latency (0.2-4.6 ms) is well
+  inside its 20 ms; no microphone block lost. The FIFO is deeper than the model's two chunks, or the first block is not
+  the fastest; either way it does not run dry on this radio.
+- **`dr` was not a loss**: on a DMR channel the PCM stream keeps running between calls with the speaker route off; the
+  FIFO feed returns at once, the 4-slot queue fills, and every later block (50 a second) went to `play_diag[8]`
+  ("queue full"). `dr` now counts only blocks lost to a full queue while the speaker plays (`spk_routed`). **`fu`** is
+  normal for the b31 feed: each 2 ms tick pushes until the FIFO refuses once, so a refusal per tick while voice is
+  queued; the paced modes never fill it (`fu0`).
+- **The signal**: about 2 bit errors fixed per frame (`be` 306-490 over 177-219 frames) at -98..-103 dBm. The FEC fixes
+  errors only in the protected parts (C0 Golay 24,12 and C1 Golay 23,12: 47 of the 72 channel bits); 2.3 corrected
+  errors in 47 bits is a raw bit error rate near 5 %, so the 25 unprotected bits (C2, C3) carry about one error a frame
+  that nothing fixes: that alone sounds warbly / robotic on AMBE+2. A DMR receiver is usually near 5 % BER only around
+  -115..-120 dBm, so at -100 dBm either the signal is weaker than the reading says or the receiver is off frequency /
+  distorted. **This is now the first candidate.** `cc19` / `ls15` in the weakest run (m0, -103 dBm) fit it.
+- **The level**: `pk` 836-1118 of 32,767 on speech, about -30 dBFS. Nothing in our path scales the decoded samples:
+  `vocoder.c` `decode_run` copies the codec's output (flags 0, `r3 = D[0x1166]`, the stock wrapper's values,
+  `codec-dm32.md` "Calling convention"); the decoder is set up with `D[0x116A] = 128`, `D[0x116C] = -20` exactly as the
+  stock init routine does (`codec-dm32.md` C, steps 1 and 4: their meaning is not documented; the encoder gets the same
+  pair); `ambeVoice.c` and `audio_pcm.c` move the samples unchanged; the codec DAC is at 0 dB (`GCR_DACL` 0x80,
+  `hrc7000_power_on_init`; the DM-32 never changes it, its volume knob is analog after the amplifier). FM never passes
+  the DAC (the FD6818's audio goes straight to the amplifier, `hardware-dm32.md` 9), so there is no digital FM level to
+  compare. Beeps go the same digital way at `level x 160` (`beep.c`, default level 50: 8,000 peak, about -12 dBFS),
+  so decoded speech sits about 18 dB under the beeps. Whether stock plays it louder (a gain after its decoder, or other
+  `dec_set` values later) cannot be seen without reading stock code (clean room). How loud the far end's speech is also
+  matters: a quiet transmitter decodes quietly.
+
+**Added in round 2:**
+
+- Key **8** on the page: a digital gain on the decoded voice, x1 -> x2 -> x4 -> x8 -> x1, saturating at the 16-bit limits
+  (`ambeVoice.c` `rx_gain`, in the audio callback after `rx_block`, before the beeps are mixed in: the beeps keep their
+  level; it also applies to NXDN / dPMR / YSF voice on the same sink). RAM only, x1 at power-on; 9 keeps it. x1 leaves
+  every sample as it was.
+- A sixth line `dv cl<clipped> po<peak out>`: samples the gain saturated (until 9) and the latest call's peak after the
+  gain. The first line shows the gain: `dv m0 x1 in.. pl..`.
+- `dr` counts only real losses (above).
+
+Costs (public build on bb6f554, the owner profile the same): FLASH 837,952 -> 838,352 B (+400), static RAM 209,544 ->
+209,560 B (+16; 1,896 B free). Tests: `tests/plus/test_dmraudio_gain.c` (the generated `ambeVoice.c` with the
+real FEC: x1 unchanged, x2 / x4 exact, x8 saturating with every clipped sample counted, the call's peak after the gain,
+the beeps mixed after it, the reset keeping the gain); `test_dmraudio_pcm.c` gains the idle-stream case (drops not
+counted) and the held-FIFO case (counted); `test_ui_dmraudio.c` 5 flows (key 8 added), English and Turkish. Radio rows
+DA-7..DA-11.
+
 ## Round 15: channels, zones and DMR rows (branch `r15-channels`, `CONFIG_CHAN_EXTRAS`)
 
 The owner's reports after v1.0.0-beta.3 (`tools/plus_chux.py`, tests `tools/test_chux.py`). One switch for the job; it
@@ -2935,6 +2990,89 @@ Turkish, the layout). The test fixture's frame time is now cleared between the m
 Cost (public build): FLASH 823,184 -> 823,428 B (+244), static RAM unchanged (209,424 B, free 2,032 B). In the same
 commit: the search range editor lets PTT, the monitor and the emergency key through (item 1's editor had taken every
 key while open).
+
+## Round 16: airfields by province, spectrum in colour (branch `r16-airprov`)
+
+The owner's requests after using v1.0.0-beta.4 on the radio. Code: `tools/plus_airprov.py` (the switches),
+`integration/radiofoundry/air/` (the airfield table, its walks and screen), `tools/airfields.py` (the province of each
+airfield). Host tests: `tools/test_airprov.py` (run by `tools/test_classic.py`). Radio rows: `docs/plus-radio-test.md`
+"Round 16 airprov".
+
+### 1. Airfields by province (`CONFIG_AIR_PROV`; needs AIRFIELDS and MAP)
+
+Tools > Airfields now opens as Tools > Repeaters does (item 37): a first level "All airfields (74)", then the provinces
+that have airfields in plate order with their counts ("01 Adana (2)", "06 Ankara (5)", ... "76 Iğdır (1)": the map's
+names, only provinces with airfields, "Unknown" last if an airfield had no province). OK opens that province's list:
+the same rows (distance and direction, the tower or first frequency, "+N"), nearest first from the position APRS uses
+(by code without one), Up / Down round within the province, # its nearest; OK on an airfield its details, listening
+and air watch (#) as before. "All" is the whole list as before. Back: details -> the province's list -> the first
+level (its focus kept) -> out. # on the first level: the nearest airfield's details in "All". The air band data pack
+(`air_count` / `air_freq`) still answers every airfield's frequencies (the province only filters the walk).
+
+- **Province of each airfield, at build time** (`tools/airfields.py`): the repeater list's own lookup
+  (`tools/rpt_list.py` `Provinces`: the map's province outlines, then a district centre within 10 km, the
+  municipality naming a province, a district centre within 30 km). One byte in what was `air_field_t`'s tail padding
+  (44 B a row as before, `_Static_assert`), so the table costs no flash. **Deviation**: on the pinned data the
+  outlines alone put two airports in the neighbouring province: Sabiha Gökçen (Pendik, İstanbul) inside the
+  simplified Kocaeli outline and Çukurova (near Tarsus, Mersin) inside Adana's. OurAirports' own `iso_region` (ISO
+  3166-2:TR, whose numbers are the plates) is now checked: where it differs and a district centre of that province is
+  within 30 km (`REGION_KM`: a border the simplified outlines do not follow), the region wins; farther, the position
+  stays and the build line reports it (none on the pinned data). Result: 74 airfields in 54 provinces, unknown 0 (71
+  by outline, 1 by a district centre: Ordu-Giresun off the simplified coast, 2 by region). The generated table's
+  comment line gives the distribution; `--list` prints each airfield's plate.
+- **Walks**: `air_next_in` / `air_rank_in` / `air_count_in` keep to one province (`AIR_PROV_ALL`: all; `air_next` /
+  `air_rank` are the All wrappers), one pass over the table a step as before: no RAM for the order.
+- RAM: the first level's state (which groups have airfields: 11 B, the filter, the picked and top rows), as Tools >
+  Repeaters keeps its own.
+
+Host tests: synthetic OurAirports rows (inside an outline, off the coast, at both borders where the region wins, a
+region far from the position kept and reported, no region), the generated rows and comment line, the committed table
+(every airfield in a province, 14 known places); `tests/plus/test_airprov.c` (every province's walk from Kızılay and
+Antalya and without a position: only its airfields, each once, nearest first, rank = place, backward the reverse; All
+as before); `tests/plus/test_ui_airprov.c` in upstream's simulator with the data chip, English and Turkish, the layout
+check on every page: the first level (counts, plate order, no empty province, round), every province label fitting a
+row, Ankara's list (only its five, round, # its nearest), Antalya ("+1", every frequency, OK listens), air watch from a
+province, an air band pack's frequencies in a province's list, no position (by code), All, Back and #. The screens'
+older flows (`test_ui_misc`, `test_ui_air`, `test_ui_datapack`) are built without the switch and pass unchanged.
+
+Cost (public build on bb6f554): FLASH 837,952 -> 838,908 B (+956), static RAM 209,544 -> 209,560 B (+16), free
+1,896 B. The `--plus` build: the same figures.
+
+### 2. The spectrum in colour (`CONFIG_SPECTRUM_COLOR`; needs SPECTRUM_WF)
+
+Tools > Spectrum's waterfall and 3D view (item 45) drew each level in one of the theme's few colours (background,
+line, idle, dim, RX, warning twice, TX: mostly greys). On a colour panel both views now draw the waterfall's 8 slots
+(`wf_slot`: levels 1..15 above the floor, 3 dB each) in a signal strength ramp (`wfall.c` `wf_ramp`):
+
+| Slot (levels) | 1 (1-3) | 2 (4-5) | 3 (6-7) | 4 (8-9) | 5 (10-12) | 6 (13-14) | 7 (15) |
+|---|---|---|---|---|---|---|---|
+| Dark and high contrast themes | dark blue (16,40,168) | blue (16,120,255) | cyan (0,216,232) | the theme's RX green | yellow (248,232,0) | orange (255,128,0) | the theme's TX red |
+| Light theme (a light background) | pale blue (168,204,255) | blue (32,104,232) | teal (0,160,192) | the theme's RX green | dark yellow (200,168,0) | orange (232,104,0) | the theme's TX red |
+
+The flat waterfall uses the same ramp (it was not coloured before either). A mono panel keeps the old slots (any
+non-zero colour is ink there, so its picture is the same either way). The light ramp is chosen by the background's
+brightness, so an accent or the high contrast theme needs nothing more.
+
+- **The 16 colour palette** (the DM-32's bpp 4 panel, `gfx.c`): the screen's own solid colours are 8 (background,
+  text, dim, line, idle, RX, warning, the status strip's grey), and anti-aliased text edges take entries while more
+  than four are free. The ramp adds 5 colours of its own (green and red are the theme's RX and TX) plus TX red, which
+  the screen does not otherwise draw. Counted in the simulator with the ramp drawn where the waterfall is (last): all
+  16 entries taken (8 solids, 4 text edges, 4 ramp colours), orange and red fell to the nearest entry. Now each frame with the waterfall on first draws the
+  ramp and the screen's own colours on one pixel (then the background over it, `wf_reserve`), so they hold their
+  entries: 15 of 16 in use (dark and light themes, flat and 3D view), every level in its exact colour; the text edges
+  take the nearest existing grey (the upstream rule once the palette is short; the dark theme's greys suit it).
+- Host tests: `tests/plus/test_wfcolor.c` (each theme's ramp: background, RX and TX reused, the eight distinct, at most
+  five added, the hues running blue > cyan > green > yellow > orange > red, the weakest dark on black and light on
+  white; the 3D view drawn into a test frame buffer with every level's ridge in its slot's colour);
+  `tests/plus/test_ui_wfcolor.c` (Tools > Spectrum in the simulator's 16 colour frame buffer, dark and light,
+  English and Turkish: the newest waterfall row has every point in its level's exact ramp colour, the 3D view draws
+  every slot, the colours on the screen counted, bars alone draw none of the ramp, the layout check). The existing
+  3D view flows (`test_ui_wf3d`, built without the switch) pass unchanged.
+
+Cost (public build): FLASH 838,908 -> 839,056 B (+148), static RAM 209,560 -> 209,560 B (+0), free 1,896 B.
+The `--plus` build: the same figures. **Both items** (public build on bb6f554): FLASH 837,952 -> 839,056 B
+(+1,104), static RAM 209,544 -> 209,560 B (+16), **1,896 B free**. Zero warnings, forced rebuilds identical,
+every task's stack fits.
 
 ## Round 16 polish (branch `r16-polish`)
 

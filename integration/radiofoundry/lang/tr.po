@@ -6261,6 +6261,11 @@ msgstr "OK uygula  Geri iptal"
 msgid "{OK start  <> range  * edit|OK start  * range}"
 msgstr "{OK başlat  <> aralık  * düzenle|OK başlat  * aralık}"
 
+# --- branch r16-airprov: airfields by province, spectrum in colour (tools/plus_airprov.py) ---
+#: core/ui/ui_airfield.c
+msgid "All airfields"
+msgstr "Hepsi"
+
 # --- branch r16-polish: texts the catalogue missed (.inc files, texts without TR; tools/plus_polish.py) ---
 #: core/ui/ui_mwatch.inc
 msgid "Talking on "
