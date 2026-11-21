@@ -34,7 +34,8 @@ export global App {
     in property <string> message-kind: "info";
     in property <string> power-prompt;
     in property <float> progress;
-    in property <string> progress-text;
+    in property <string> progress-text;      // the percent line (phase and percent); never a raw tool line
+    in property <string> progress-info;      // the last other tool line (JEDEC ID, boot ROM answered, ...)
     in property <string> summary;
     in property <string> details;
     in-out property <bool> show-details;
@@ -281,6 +282,7 @@ component Wizard inherits Page {
                 spacing: 6px;
                 Progress { value: App.progress; }
                 Muted { text: App.progress-text; }
+                if App.progress-info != "" : Muted { text: App.progress-info; font-size: Theme.font-small; }
             }
             if App.message != "" : Notice { text: App.message; kind: App.message-kind; }
             if !App.radio-access && (App.step == 2 || App.step == 4) : Notice { text: Tr.t(Tr.lang, "no_radio_access"); kind: "warning"; }
@@ -338,7 +340,12 @@ component Backups inherits Page {
         }
     }
     if App.message != "" : Notice { text: App.message; kind: App.message-kind; }
-    if App.busy || App.progress > 0 : Progress { value: App.progress; }
+    if App.busy || App.progress > 0 : VerticalLayout {
+        spacing: 6px;
+        Progress { value: App.progress; }
+        if App.progress-text != "" : Muted { text: App.progress-text; }
+        if App.progress-info != "" : Muted { text: App.progress-info; font-size: Theme.font-small; }
+    }
     HorizontalLayout {
         spacing: Theme.gap;
         Button { text: Tr.t(Tr.lang, "b_open_folder"); clicked => { App.open-backups-folder(); } }

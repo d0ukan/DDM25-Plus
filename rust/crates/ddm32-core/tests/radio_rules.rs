@@ -14,7 +14,7 @@ use ddm32_core::radio::guards::{Authorization, InstallPort, ReadOnlyPort};
 use ddm32_core::radio::monitor::{be32, be32_bytes, le32_bytes, ram_monitor as rm, sha};
 use ddm32_core::radio::plan::crc_list;
 use ddm32_core::radio::port::{no_port, RadioAccess, RawSerial, VirtualClock};
-use ddm32_core::radio::progress::ProgressTracker;
+use ddm32_core::radio::progress::{backup_progress, ProgressEvent, ProgressTracker, ProgressView, BACKUP_KEY};
 use ddm32_core::radio::tools::{backup_tool, install_tool, restore_stock_tool, ToolContext};
 use ddm32_core::radio::{ToolError, ToolResult};
 use std::cell::RefCell;
@@ -1226,4 +1226,87 @@ fn progress_restore_phases() {
     }
     assert_eq!(vec!["Prog_Write", "Prog_Verify"], keys);
     assert!(track(&scenario_lines("restore_ok")).iter().any(|x| x.0 == "Prog_Verify"));
+}
+
+// --- one bar over a whole run (ProgressView) ---
+
+fn view_run(lines: &[String]) -> (Vec<ProgressEvent>, ProgressView) {
+    let mut v = ProgressView::new();
+    let ev = lines.iter().map(|l| v.feed(l)).collect();
+    (ev, v)
+}
+
+fn overalls(ev: &[ProgressEvent]) -> Vec<i64> {
+    ev.iter()
+        .filter_map(|e| match e {
+            ProgressEvent::Percent { overall, .. } => Some(*overall),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn backup_progress_spans_both_passes_of_both_chips() {
+    assert_eq!(Some(0), backup_progress("progmem pass 1: 0% (0/1048576)"));
+    // the 1 MiB program chip is 1/17 of a pass, a pass is half of the backup
+    assert_eq!(Some(2), backup_progress("progmem pass 1: 100% (1048576/1048576)"));
+    assert_eq!(Some(26), backup_progress("q128 pass 1: 50% (8388608/16777216)"));
+    assert_eq!(Some(50), backup_progress("q128 pass 1: 100% (16777216/16777216)"));
+    // the owner's line: pass 2 of the program chip at 25 %
+    assert_eq!(Some(50), backup_progress("progmem pass 2: 25% (262144/1048576)"));
+    assert_eq!(Some(100), backup_progress("q128 pass 2: 100% (16777216/16777216)"));
+    assert_eq!(None, backup_progress("data flash JEDEC ID ef4018"));
+    assert_eq!(None, backup_progress("Read current firmware: 40%"));
+    assert_eq!(None, backup_progress("q128 pass 1: 0% (0/0)"));
+}
+
+#[test]
+fn progress_view_backup_run_fills_the_bar_and_keeps_the_percent() {
+    let lines = scenario_lines("backup_ok");
+    let (ev, v) = view_run(&lines);
+    let o = overalls(&ev);
+    assert!(o.len() > 20, "the recorded backup has its percent lines");
+    assert!(o.windows(2).all(|w| w[0] <= w[1]), "the bar never goes back: {o:?}");
+    assert_eq!(100, *o.last().unwrap());
+    assert_eq!(100, v.overall());
+    assert_eq!(Some(("Prog_Backup", 100)), v.last());
+    assert!(ev.iter().all(|e| !matches!(e, ProgressEvent::Percent { key, .. } if *key != BACKUP_KEY)));
+    // JEDEC and other tool lines are information beside the percent, never a percent and never dropped silently
+    assert!(ev.contains(&ProgressEvent::Ready));
+    assert!(ev.iter().any(|e| matches!(e, ProgressEvent::Info(s) if s.contains("JEDEC"))));
+}
+
+#[test]
+fn progress_view_jedec_line_after_a_percent_keeps_the_percent() {
+    let mut v = ProgressView::new();
+    assert_eq!(ProgressEvent::Ready, v.feed("READY: COM14 open; switch radio OFF then ON normally. Waiting 600s."));
+    assert!(matches!(v.feed("progmem pass 1: 100% (1048576/1048576)"), ProgressEvent::Percent { overall: 2, .. }));
+    assert!(matches!(v.feed("progmem pass 2: 25% (262144/1048576)"), ProgressEvent::Percent { overall: 50, .. }));
+    assert_eq!(ProgressEvent::Info("data flash JEDEC ID ef4018".into()), v.feed("data flash JEDEC ID ef4018"));
+    assert_eq!(50, v.overall());
+    assert_eq!(Some((BACKUP_KEY, 50)), v.last());
+    assert_eq!(ProgressEvent::Ignore, v.feed("{\"x\": 1}"));
+    assert_eq!(ProgressEvent::Ignore, v.feed("  \"nested\": true"));
+    assert_eq!(ProgressEvent::Ignore, v.feed(""));
+}
+
+#[test]
+fn progress_view_install_and_restore_runs_fill_one_bar() {
+    for name in ["install_ok", "restore_ok", "restore_stock_ok", "from_stock_ok"] {
+        let (ev, v) = view_run(&scenario_lines(name));
+        let o = overalls(&ev);
+        assert!(!o.is_empty(), "{name}: percent lines");
+        assert!(o.windows(2).all(|w| w[0] <= w[1]), "{name}: the bar never goes back: {o:?}");
+        // restore_ok's readback prints its last percent below 100; the page fills the bar when the tool passes
+        assert!(v.overall() >= 90, "{name}: the bar ends (nearly) full: {}", v.overall());
+        assert_eq!("Prog_Verify", v.last().unwrap().0, "{name}");
+    }
+    // the phases share one bar: checks 0-30, writes 30-70, readback 70-100
+    let mut v = ProgressView::new();
+    assert!(matches!(v.feed("Read current firmware: 100%"), ProgressEvent::Percent { phase: 50, overall: 15, .. }));
+    assert!(matches!(
+        v.feed("Written and sector-readback checked: 50% (2/4)"),
+        ProgressEvent::Percent { key: "Prog_Write", phase: 50, overall: 50 }
+    ));
+    assert!(matches!(v.feed("Verify newly installed application: 100%"), ProgressEvent::Percent { overall: 100, .. }));
 }

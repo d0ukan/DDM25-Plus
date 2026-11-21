@@ -15,7 +15,7 @@ use ddm32_core::pyjson::{self, Py};
 use ddm32_core::radio::codec::Codec;
 use ddm32_core::radio::flow::{FileSteps, Installable, RestoreFlow, StepResult, Wizard};
 use ddm32_core::radio::port::{cable_ports, RadioAccess, RawSerial, SystemClock};
-use ddm32_core::radio::progress::ProgressTracker;
+use ddm32_core::radio::progress::{ProgressEvent, ProgressView};
 use ddm32_core::radio::tools::ToolContext;
 use ddm32_core::radio::{cps, fast_install, tools, ToolError, ToolResult};
 use ddm32_core::releases::catalog::{self, Catalog, ReleaseLabel};
@@ -41,7 +41,7 @@ pub struct State {
     pub found: Vec<FoundBackup>,
     pub quick: Option<PathBuf>,
     pub pack: Option<PathBuf>,
-    pub tracker: ProgressTracker,
+    pub progress: ProgressView,
     /// A note shown once on Home (the last program update's result).
     pub note: Option<String>,
     /// My channels: the decoded codeplug of the newest verified backup.
@@ -158,7 +158,7 @@ pub fn setup(ui: &AppWindow, paths: AppPaths, fetch: bool) {
             found: vec![],
             quick: None,
             pack: None,
-            tracker: ProgressTracker::new(),
+            progress: ProgressView::new(),
             note: None,
             codeplug: None,
             live_cancel: None,
@@ -319,8 +319,7 @@ fn navigate(ui: &AppWindow, page: i32) {
         return;
     }
     set_message(ui, "", "info");
-    app.set_progress(0.0);
-    app.set_progress_text("".into());
+    clear_progress(&app);
     app.set_details("".into());
     app.set_show_details(false);
     if page == 1 {
@@ -527,8 +526,7 @@ fn set_step(ui: &AppWindow, step: i32) {
     let app = ui.global::<App>();
     app.set_step(step);
     app.set_step_done(false);
-    app.set_progress(0.0);
-    app.set_progress_text("".into());
+    clear_progress(&app);
     match step {
         2 => app.set_power_prompt(tr("power_backup").into()),
         4 => app.set_power_prompt(tr("power_install").into()),
@@ -674,6 +672,49 @@ fn check(ui: &AppWindow) {
     }
 }
 
+fn clear_progress(app: &App<'_>) {
+    app.set_progress(0.0);
+    app.set_progress_text("".into());
+    app.set_progress_info("".into());
+}
+
+/// What one tool line changes in the progress area: the bar (0..1), the percent line, the information line.
+/// `None` leaves that part as it is, so a JEDEC or "boot ROM answered" line never replaces the percent.
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct ProgressShow {
+    pub value: Option<f32>,
+    pub text: Option<String>,
+    pub info: Option<String>,
+}
+
+impl ProgressShow {
+    pub fn apply(&self, app: &App<'_>) {
+        if let Some(v) = self.value {
+            app.set_progress(v);
+        }
+        if let Some(t) = &self.text {
+            app.set_progress_text(t.into());
+        }
+        if let Some(i) = &self.info {
+            app.set_progress_info(i.into());
+        }
+    }
+}
+
+/// A tool line turned into what the progress area shows, in a language (the bar is the run's overall percent).
+pub fn progress_show(view: &mut ProgressView, lang: &str, line: &str) -> ProgressShow {
+    match view.feed(line) {
+        ProgressEvent::Percent { key, phase, overall } => ProgressShow {
+            value: Some(overall as f32 / 100.0),
+            text: Some(i18n::tf(lang, key, &phase.to_string())),
+            info: None,
+        },
+        ProgressEvent::Ready => ProgressShow { text: Some(i18n::t(lang, "power_now")), ..Default::default() },
+        ProgressEvent::Info(s) => ProgressShow { info: Some(s), ..Default::default() },
+        ProgressEvent::Ignore => ProgressShow::default(),
+    }
+}
+
 /// Runs one radio tool in a worker thread; its lines feed the progress bar; `done` gets the result in the UI thread.
 fn run_tool(
     ui: &AppWindow,
@@ -684,8 +725,8 @@ fn run_tool(
 ) {
     let app = ui.global::<App>();
     app.set_busy(true);
-    app.set_progress(0.0);
-    with(|s| s.tracker = ProgressTracker::new());
+    clear_progress(&app);
+    with(|s| s.progress = ProgressView::new());
     let w = ui.as_weak();
     std::thread::spawn(move || {
         let clock = SystemClock::default();
@@ -695,15 +736,8 @@ fn run_tool(
             let w3 = w2.clone();
             let _ = slint::invoke_from_event_loop(move || {
                 let Some(ui) = w3.upgrade() else { return };
-                let app = ui.global::<App>();
-                if let Some((_, p)) = with(|s| s.tracker.feed(&line)) {
-                    app.set_progress(p as f32 / 100.0);
-                }
-                if line.starts_with("READY") {
-                    app.set_progress_text(tr("power_now").into());
-                } else if !line.starts_with('{') && !line.starts_with(' ') && !line.starts_with('}') {
-                    app.set_progress_text(line.into());
-                }
+                let show = with(|s| progress_show(&mut s.progress, &s.lang, &line));
+                show.apply(&ui.global::<App>());
             });
         };
         let serial = move |p: &str| -> ToolResult<Box<dyn RawSerial>> {
@@ -725,7 +759,12 @@ fn run_tool(
         };
         let _ = slint::invoke_from_event_loop(move || {
             let Some(ui) = w.upgrade() else { return };
-            ui.global::<App>().set_busy(false);
+            let app = ui.global::<App>();
+            app.set_busy(false);
+            if r.is_ok() && app.get_progress() > 0.0 {
+                // a tool's last percent line may stop short of 100 (the readback prints every 25 %)
+                app.set_progress(1.0);
+            }
             done(&ui, r.err());
         });
     });

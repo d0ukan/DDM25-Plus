@@ -120,6 +120,7 @@ fn every_screen_in_both_themes() {
         ("update-2-no-backup-warning", 1, 1, 2, "understood"),
         ("update-2-no-backup-confirm", 1, 1, 2, "confirm"),
         ("update-3-backup-power", 1, 2, 0, ""),
+        ("update-3-backup-progress", 1, 2, 0, "backup-progress"),
         ("update-4-check", 1, 3, 0, "details"),
         ("update-5-install-power", 1, 4, 0, "progress"),
         ("update-6-done", 1, 5, 0, ""),
@@ -147,13 +148,17 @@ fn every_screen_in_both_themes() {
                     app.set_details("".into());
                 }
                 app.set_step_done(*step == 3);
-                app.set_progress(if *extra == "progress" { 0.42 } else { 0.0 });
+                // the progress area as the tool lines leave it (ProgressView): the run's bar, the phase's percent
+                // line and the last other tool line
+                let (bar, text, info) = match *extra {
+                    "progress" => (0.46, i18n::tf(lang, "Prog_Write", "40"), "INSTALLING: 23 application sectors"),
+                    "backup-progress" => (0.5, i18n::tf(lang, "Prog_Backup", "50"), "data flash JEDEC ID ef4018"),
+                    _ => (0.0, String::new(), ""),
+                };
+                app.set_progress(bar);
                 app.set_busy(false);
-                app.set_progress_text(if *extra == "progress" {
-                    "Written and sector-readback checked: 40% (9/23)".into()
-                } else {
-                    "".into()
-                });
+                app.set_progress_text(text.into());
+                app.set_progress_info(info.into());
                 app.set_power_prompt(i18n::t(lang, if *step == 2 { "power_backup" } else { "power_install" }).into());
                 app.set_message(if *page == 2 { i18n::t(lang, "msg_restore_plan").into() } else { "".into() });
                 app.set_selected_backup(if *page == 2 { 0 } else { -1 });
