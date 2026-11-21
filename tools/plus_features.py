@@ -4090,10 +4090,15 @@ def prepare_repeaters(transform, install):
 
 
 def prepare_nac_decimal(transform):
-    """NAC in decimal too (CONFIG_NAC_DEC, docs/plus.md): the NAC is a 12-bit value that this firmware shows and takes
-    in hex ($293), while some factory radios and their CPS show and take it in decimal (659 = $293; a factory "293" is
-    $125). The channel editor's NAC row adds the decimal value ("$293 = 659"); while the NAC is edited, # once is
-    Any (F7E) as before, # again switches to decimal entry (0-4095), # there goes back to hex digits. P25 search and P25 trunk list the NAC both ways."""
+    """NAC in decimal first (CONFIG_NAC_DEC, docs/plus.md; owner 2026-11-21, round 15 item 5): the NAC is a 12-bit value
+    that factory radios and their CPS show and take in decimal (659 = $293; a factory "293" is $125). The channel
+    editor's and VFO settings' NAC rows show "659 ($293)" and take the decimal value: digits build it (0-4095, a digit
+    that would go past 4095 is refused with a toast), Up / Down and the knob step it by one, Back takes the last digit
+    back; while it is edited "[659] ($293)". # once is Any (RX NAC, "Any 3966 ($F7E)") / Same as RX (TX NAC) as
+    before; # again switches to the hex digits ("$2[9]3 (659)", the cursor and the knob as before), # there back to
+    decimal. OK refuses an RX NAC of 3967 ($F7F, not a NAC: # is Any) and a TX NAC of 3966 / 3967 ($F7E / $F7F),
+    keeping the editor open. P25 search and P25 trunk list the NAC both ways. Until 2026-11-21 the rows were hex first
+    ("$293 = 659") with the decimal entry behind # #."""
     transform('config/features.mk', [
         ('CONFIG_ID_DB ?= n\n',
          'CONFIG_NAC_DEC ?= n\nFEATURES += NAC_DEC\n'
@@ -4106,61 +4111,88 @@ def prepare_nac_decimal(transform):
     transform('core/ui/ui_menus.c', [
         ('static void chinfo_item(uint16_t i, ui_item_t *it)\n',
          '#if CONFIG_NAC_DEC\n'
-         'static bool ced_nac_dec;\t// DM32 Plus: the NAC is being typed in decimal (# twice)\n'
+         'static bool ced_nac_hex;\t// DM32 Plus: the NAC is being typed in hex digits (# twice); else in decimal\n'
+         '\n// "$293", three hex digits\n'
+         'static void sb_nac_hex(sbuf_t *b, unsigned v)\n{\n\tsb_chr(b, \'$\');\n'
+         '\tfor (unsigned d = 0; d < 3; d++)\n\t\tsb_chr(b, "0123456789ABCDEF"[(v >> (4 * (2 - d))) & 15u]);\n}\n'
          '#endif\n\n'
          'static void chinfo_item(uint16_t i, ui_item_t *it)\n'),
-        # The row: "$293 = 659"; typing in decimal: "[659] = $293"
+        # RX Any: "Any 3966 ($F7E)"
+        ('\t\tif (r == CE_P25_NAC && value == 0xF7Eu && cursor == 3) { sb_str(&b, TR("Any (F7E)")); break; }\n',
+         '#if CONFIG_NAC_DEC\n'
+         '\t\tif (r == CE_P25_NAC && value == 0xF7Eu && cursor == 3) { sb_str(&b, TR("Any")); sb_str(&b, " 3966 ($F7E)"); break; }\n'
+         '#else\n'
+         '\t\tif (r == CE_P25_NAC && value == 0xF7Eu && cursor == 3) { sb_str(&b, TR("Any (F7E)")); break; }\n'
+         '#endif\n'),
+        # The row: "659 ($293)"; typing in decimal: "[659] ($293)"; in hex digits: "$2[9]3 (659)"
         ('\t\tsb_chr(&b, \'$\');\n\t\tfor (unsigned digit = 0; digit < 3; digit++) {\n',
          '#if CONFIG_NAC_DEC\n'
-         '\t\tif (editing && ced_nac_dec) {\n'
-         '\t\t\tsb_chr(&b, \'[\');\n\t\t\tsb_u32(&b, value, 1);\n\t\t\tsb_str(&b, "] = $");\n'
-         '\t\t\tfor (unsigned digit = 0; digit < 3; digit++)\n'
-         '\t\t\t\tsb_chr(&b, "0123456789ABCDEF"[(value >> (4 * (2 - digit))) & 15u]);\n'
+         '\t\tif (!editing || !ced_nac_hex) {\n'
+         '\t\t\tif (editing)\n\t\t\t\tsb_chr(&b, \'[\');\n\t\t\tsb_u32(&b, value, 1);\n'
+         '\t\t\tif (editing)\n\t\t\t\tsb_chr(&b, \']\');\n'
+         '\t\t\tsb_str(&b, " (");\n\t\t\tsb_nac_hex(&b, value);\n\t\t\tsb_chr(&b, \')\');\n'
          '\t\t\tbreak;\n\t\t}\n'
          '#endif\n'
          '\t\tsb_chr(&b, \'$\');\n\t\tfor (unsigned digit = 0; digit < 3; digit++) {\n'),
         ('\t\t\tif (digit == cursor) sb_chr(&b, \']\');\n\t\t}\n\t\tbreak;\n\t}\n#endif\n\tcase CE_NUMBER:',
          '\t\t\tif (digit == cursor) sb_chr(&b, \']\');\n\t\t}\n'
-         '#if CONFIG_NAC_DEC\n\t\tsb_str(&b, " = ");\n\t\tsb_u32(&b, value, 1);\n#endif\n'
+         '#if CONFIG_NAC_DEC\n\t\tsb_str(&b, " (");\n\t\tsb_u32(&b, value, 1);\n\t\tsb_chr(&b, \')\');\n#endif\n'
          '\t\tbreak;\n\t}\n#endif\n\tcase CE_NUMBER:'),
-        # A digit in decimal mode builds the value (the first digit starts over; past 4095 starts over too)
+        # A digit in decimal builds the value (the first one starts over, Same as RX included); past 4095: refused
         ('\tcase CE_P25_TX_NAC: {\n        if (ced_len==3) ced_len=0;\n\t\tunsigned shift = 4u * (2u - ced_len);\n'
          '\t\tced_val = (ced_val & ~(15u << shift)) | ((unsigned)(d - \'0\') << shift);\n',
          '\tcase CE_P25_TX_NAC: {\n'
          '#if CONFIG_NAC_DEC\n'
-         '\t\tif (ced_nac_dec) {\n'
-         '\t\t\tint32_t n = ced_len ? ced_val * 10 + (d - \'0\') : (d - \'0\');\n'
-         '\t\t\tced_val = n > 4095 ? (d - \'0\') : n;\n'
-         '\t\t\tced_len = 1;\n\t\t\tbreak;\n\t\t}\n'
+         '\t\tif (!ced_nac_hex) {\n'
+         '\t\t\tint32_t n = ced_typed && ced_len != 3 ? ced_val * 10 + (d - \'0\') : (d - \'0\');\n'
+         '\t\t\tif (n > 4095) {\n\t\t\t\tui_toast(TR("NAC goes 0 to 4095"));\n\t\t\t\tbreak;\n\t\t\t}\n'
+         '\t\t\tced_val = n;\n\t\t\tced_len = 0;\n\t\t\tced_typed = true;\n\t\t\tbreak;\n\t\t}\n'
          '#endif\n'
          '        if (ced_len==3) ced_len=0;\n\t\tunsigned shift = 4u * (2u - ced_len);\n'
          '\t\tced_val = (ced_val & ~(15u << shift)) | ((unsigned)(d - \'0\') << shift);\n'),
-        # # once: Any (RX NAC F7E) / Same as RX (TX NAC); # again: decimal entry; # in decimal entry: back to hex
-        # digits (* opens the Quick menu on every screen, so it is not used). The arrows and the knob do nothing in
-        # decimal entry
+        # # once: Any (RX NAC F7E) / Same as RX (TX NAC); # again: the hex digits; # in hex: decimal again (* opens the
+        # Quick menu on every screen, so it is not used). In decimal the arrows and the knob step the value, Back takes
+        # the last digit back
         ('#if CONFIG_P25_ANY\n    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC || ced_edit == CE_P25_TG) &&\n',
          '#if CONFIG_NAC_DEC\n'
          '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && ev->action == ACT_CONTEXT &&\n'
-         '        ev->gesture == GESTURE_PRESS && (ced_nac_dec || (ced_edit == CE_P25_NAC ? ced_val == 0xF7E && ced_len == 0 :\n'
+         '        ev->gesture == GESTURE_PRESS && (ced_nac_hex || (ced_edit == CE_P25_NAC ? ced_val == 0xF7E && ced_len == 0 :\n'
          '                                                     ced_len == 3))) {\n'
-         '        ced_nac_dec = !ced_nac_dec;\n'
-         '        if (ced_nac_dec)\n            ced_val = 0;\n'
-         '        ced_len = 0;\n'
-         '        ui_toast(ced_nac_dec ? TR("NAC: type it in decimal") : TR("NAC: type it in hex"));\n'
+         '        ced_nac_hex = !ced_nac_hex;\n'
+         '        if (ced_nac_hex && ced_edit == CE_P25_TX_NAC)\n            ced_val = codeplug_p25_tx_nac(&ced_ch);\n'
+         '        ced_len = 0;\n        ced_typed = false;\n'
+         '        ui_toast(ced_nac_hex ? TR("NAC: type it in hex") : TR("NAC: type it in decimal"));\n'
          '        ui_dirty();\n        return true;\n    }\n'
-         '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && ced_nac_dec &&\n'
-         '        (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {\n'
-         '        return true;\n    }\n'
+         '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && !ced_nac_hex && dir != 0 && ev->gesture != GESTURE_UP) {\n'
+         '        if (ced_len == 3)\n            ced_len = 0;\t// off Same as RX: the NAC it sends\n'
+         '        else\n            ced_val = (ced_val + dir + 4096) % 4096;\n'
+         '        ced_typed = false;\n        ui_dirty();\n        return true;\n    }\n'
+         '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && !ced_nac_hex && ced_typed &&\n'
+         '        ev->action == ACT_BACK && ev->gesture == GESTURE_PRESS) {\n'
+         '        ced_val /= 10;\n        ced_typed = ced_val != 0;\n        ui_dirty();\n        return true;\n    }\n'
          '#endif\n'
          '#if CONFIG_P25_ANY\n    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC || ced_edit == CE_P25_TG) &&\n'),
         ('\tcase CE_P25_NAC: ced_edit = r; ced_val = c->p25_nac; ced_len = 0; break;\n'
          '    case CE_P25_TX_NAC: ced_edit=r; ced_val=codeplug_p25_tx_nac(c); ced_len=c->p25_tx_nac_override ? 0 : 3; break;',
          '\tcase CE_P25_NAC: ced_edit = r; ced_val = c->p25_nac; ced_len = 0;\n'
-         '#if CONFIG_NAC_DEC\n\t\tced_nac_dec = false;\n#endif\n\t\tbreak;\n'
+         '#if CONFIG_NAC_DEC\n\t\tced_nac_hex = false;\n\t\tced_typed = false;\n#endif\n\t\tbreak;\n'
          '    case CE_P25_TX_NAC: ced_edit=r; ced_val=codeplug_p25_tx_nac(c); ced_len=c->p25_tx_nac_override ? 0 : 3;\n'
-         '#if CONFIG_NAC_DEC\n\t\tced_nac_dec = false;\n#endif\n\t\tbreak;'),
+         '#if CONFIG_NAC_DEC\n\t\tced_nac_hex = false;\n\t\tced_typed = false;\n#endif\n\t\tbreak;'),
+        # OK: an RX NAC $F7F (3967) or a TX NAC $F7E / $F7F (3966, 3967) is refused, the editor stays open
+        ('\tcase CE_P25_NAC: c->p25_nac = (uint16_t)ced_val; break;\n',
+         '\tcase CE_P25_NAC:\n'
+         '#if CONFIG_NAC_DEC\n'
+         '\t\tif (ced_val == 0xF7F) {\n\t\t\tui_toast(TR("3967 ($F7F) is not a NAC: # is Any"));\n\t\t\treturn;\n\t\t}\n'
+         '#endif\n'
+         '\t\tc->p25_nac = (uint16_t)ced_val;\n\t\tbreak;\n'),
+        ('    case CE_P25_TX_NAC: c->p25_tx_nac_override=ced_len==3 ? 0 : (uint16_t)(ced_val+1); break;\n',
+         '    case CE_P25_TX_NAC:\n'
+         '#if CONFIG_NAC_DEC\n'
+         '\t\tif (ced_len != 3 && (ced_val == 0xF7E || ced_val == 0xF7F)) {\n'
+         '\t\t\tui_toast(TR("TX NAC can\'t be 3966 or 3967"));\n\t\t\treturn;\n\t\t}\n'
+         '#endif\n'
+         '\t\tc->p25_tx_nac_override=ced_len==3 ? 0 : (uint16_t)(ced_val+1);\n\t\tbreak;\n'),
     ])
-
 
 def mw_if(old, new, count=1):
     """(old, new under CONFIG_MULTI_WATCH, else old): a multi-watch change that leaves the line as it was without it"""

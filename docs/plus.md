@@ -2756,3 +2756,19 @@ flows. Tests: `tests/plus/test_zone_cap.c` (the real codeplug: out of two zones 
 the free slot reused in no zone, an empty zone kept, unknown numbers refused, after a power cycle),
 `tests/plus/test_ui_chux.c` (No keeps it, Yes from the zone menu and from the editor, the channel in use refused, no
 row on a new channel; English and Turkish, the layout).
+
+### 5. P25 NAC in decimal (owner: "I want to type the decimal value")
+
+`CONFIG_NAC_DEC` (`plus_features.prepare_nac_decimal`) now puts decimal first. The channel editor's and VFO settings'
+RX NAC / TX NAC rows read **`659 ($293)`**; OK opens the entry in decimal: digits build the value (`[293] ($125)` while
+typed; a digit that would pass 4095 is refused, "NAC goes 0 to 4095", the value kept), Up / Down and the knob step it by
+one (wrapping 0-4095), Back takes the last digit back (an untouched value: Back leaves the row as before). The special
+values: **RX Any** is `#` as before and reads `Any 3966 ($F7E)`; **TX Same as RX** is `#` on the TX NAC as before;
+`#` again on either switches to the hex digits (`$2[9]3 (659)`, the cursor and the knob as before; `#` there back to
+decimal). OK refuses an RX NAC 3967 ($F7F: "3967 ($F7F) is not a NAC: # is Any") and a TX NAC 3966 / 3967 ($F7E /
+$F7F: "TX NAC can't be 3966 or 3967") and keeps the row open; before, those reached the save and got the general
+"Check P25 NAC, talkgroup and ID". Home's VFO row (`tools/plus_p25nac.py`) shows the NACs in decimal too:
+`P25 NAC 1110 TG 99`, `NAC 659>1625` with a TX NAC of its own. P25 search and P25 trunk keep listing both ways.
+Upstream's own builds (no `NAC_DEC`) are unchanged. Updated with it: `tests/plus/test_ui_any.c`, `test_ui_vfox.c`,
+`test_ui_p25nac.c` (their typed NACs and expected rows now decimal), and `integration/radiofoundry/vfox/ui_vfox.inc`
+(the flag is `ced_nac_hex` now). New flows in `tests/plus/test_ui_chux.c` (English and Turkish).

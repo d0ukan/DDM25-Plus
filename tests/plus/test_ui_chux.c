@@ -274,6 +274,52 @@ static void case_delete(void)
 	expect("screen=channel hides=Delete_channel writes=0");
 }
 
+/* ---------------- 5. P25 NAC in decimal ---------------- */
+
+/* COUNTY DMR made P25 (NAC $293), on its RX NAC row */
+static void p25_nac_row(void)
+{
+	run("ok 5 ok");
+	row(T("Mode", "Mod"), "up");
+	run("ok");
+	row("RX NAC", "down");
+}
+
+static void case_nac(void)
+{
+	start("NAC: decimal first, typed in decimal, hex in brackets");
+	p25_nac_row();
+	expect("shows=659_($293)");
+	layout();
+	run("ok 2 9 3");
+	expect("shows=[293]_($125)");
+	run("ok");
+	expect("shows=293_($125)");
+	layout();
+	start("NAC: past 4095 refused, Any, hex digits");
+	p25_nac_row();
+	run("ok 4 0 9 6");
+	expect(T("toast=NAC_goes_0_to_4095 shows=[409]_($199)", "toast=NAC_0_ile_4095 shows=[409]_($199)"));
+	run("ok wait:3000");
+	expect("shows=409_($199)");
+	run("ok ctx ok wait:3000");
+	expect("shows=3966_($F7E)");
+	run("ok ctx 1 2 5 ok wait:3000");
+	expect("shows=293_($125)");
+	layout();
+	start("TX NAC: 3966 refused, a value typed");
+	p25_nac_row();
+	run("down");
+	expect(T("focus=TX_NAC shows=Same_as_RX", "focus=TX_NAC"));
+	run("ok 3 9 6 6 ok");
+	expect(T("toast=TX_NAC_can't_be_3966", "toast=TX_NAC_3966"));
+	run("wait:3000");
+	expect("shows=[3966]_($F7E)");
+	run("back back back back 1 6 2 5 ok");
+	expect("shows=1625_($659)");
+	layout();
+}
+
 typedef void (*case_fn)(void);
 
 static int run_case(case_fn fn)
@@ -293,7 +339,7 @@ static int run_case(case_fn fn)
 
 int main(void)
 {
-	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows, case_dmon, case_delete };
+	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows, case_dmon, case_delete, case_nac };
 	int bad = 0, n = 0;
 	for (int lang = 0; lang < 2; lang++) {
 		turkish = lang == 1;

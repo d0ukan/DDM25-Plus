@@ -571,3 +571,8 @@ unless a row says it transmits.
 | X-2 | The same, Yes | "Deleted <name>"; the channel is gone from every zone that held it and from Channels; Channels > New from current takes its number next |
 | X-3 | Delete the channel in use (zone menu or Channels > OK > Delete channel) | "In use: switch to another channel first", nothing deleted |
 | X-4 | Channels > OK on another channel > the last row Delete channel > Yes | the editor closes, "Deleted <name>"; after a power cycle it is still gone; a P25 channel deleted this way and its number reused for an FM channel: the new one is FM (no P25 left over) |
+| N-1 | A P25 channel (NAC $293), Edit > RX NAC | the row reads "659 ($293)"; OK, 2 9 3, OK: "293 ($125)"; hold OK saves; the channel then hears the other radio programmed with NAC 293 in its factory CPS (decimal) |
+| N-2 | RX NAC: OK, 4 0 9 6 | "NAC goes 0 to 4095" at the 6, the row keeps "[409] ($199)"; Back twice: "[4] ($004)" |
+| N-3 | RX NAC: OK, #, OK; TX NAC: OK, 3 9 6 6, OK | RX reads "Any 3966 ($F7E)"; TX: "TX NAC can't be 3966 or 3967", the row stays open; Back x4, 1 6 2 5, OK: "1625 ($659)" |
+| N-4 | RX NAC: OK, # #, then the knob / digits | "NAC: type it in hex", the hex digits with the cursor ("$2[9]3 (659)") as before; # again: decimal |
+| N-5 | VFO in P25 (Quick > Mode), VFO settings: RX NAC 1110, TX NAC 1625, back to Home | Home's VFO row "P25 NAC 1110>1625 TG .." (or the shorter forms) |

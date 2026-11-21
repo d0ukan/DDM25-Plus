@@ -91,7 +91,7 @@ static void vfoset_enter(void)
 	ced_edit = CE_NONE;
 	ced_new = false;
 #if CONFIG_NAC_DEC
-	ced_nac_dec = false;
+	ced_nac_hex = false;
 #endif
 	ced_num = v->vfo ? CED_VFO_NUM : 0;	// only in the VFO (else: nothing to show)
 	ced_ch = v->ch;

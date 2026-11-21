@@ -6194,3 +6194,15 @@ msgstr "Geri alınamaz."
 #: core/ui/ui_menus.c
 msgid "1-8 pick  Back"
 msgstr "1-8 seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "NAC goes 0 to 4095"
+msgstr "NAC 0 ile 4095 arası"
+
+#: core/ui/ui_menus.c
+msgid "3967 ($F7F) is not a NAC: # is Any"
+msgstr "3967 ($F7F) NAC değil: # Tümü"
+
+#: core/ui/ui_menus.c
+msgid "TX NAC can't be 3966 or 3967"
+msgstr "TX NAC 3966 ya da 3967 olamaz"

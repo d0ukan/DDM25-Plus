@@ -65,6 +65,9 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   toggle says what it does ("Digital monitor on: every call", "Monitor off: channel hears all TGs").
 - Delete channel: the channel editor's last row and the zone channel menu's last entry; asks first (No focused), takes
   the channel out of every zone and frees its number; refused for the channel in use and while cross-band runs.
+- P25 NAC in decimal first: the editor and VFO settings show "659 ($293)" and take the decimal value (0-4095, the
+  knob steps by one); # is Any / Same as RX as before, # # the hex digits; 3967 on RX and 3966 / 3967 on TX are refused
+  with a reason; Home's VFO row shows the NACs in decimal.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

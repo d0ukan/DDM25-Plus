@@ -7,6 +7,7 @@ the shared prepare list gains one line. Upstream files change only through the h
   2. DMR rows: RX list Any is every talkgroup on the slot (not digital monitor), clearer rows and defaults.
   3. Digital monitor: DMon follows the toggle; a channel's Any shows AllTG.
   4. Delete channel: out of every zone, its slot freed (zone_edit_drop_channel, one zone_op_t kind).
+  5. NAC in decimal: not here; it changes CONFIG_NAC_DEC itself (plus_features.prepare_nac_decimal, plus_p25nac.py).
 """
 
 ON = '#if CONFIG_CHAN_EXTRAS\n'
