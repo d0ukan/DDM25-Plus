@@ -4,6 +4,10 @@ tools/test_classic.py after its own (the build tree prepared, ASan / UBSan flags
 
 - item 1, the search range editor through upstream's UI simulator, English and Turkish (tests/plus/test_ui_scan.c,
   tests/plus/ui_sim_scan.c): presets, typing, steps, moving, refusals, the request's step, the range kept;
+- item 2, the faster searches: the P25 and DMR search engines in a receiver model (tests/plus/test_search_model.c),
+  built as they were (CONFIG_SEARCH_FAST=0) and faster (=1): a pass's time, hits on the signal's own frequency and
+  elsewhere for readings up to 15 ms slow, the probes of a busy channel that isn't P25 / DMR; the table printed for
+  docs/plus.md and the figures checked;
 - the radio core with the switches on: upstream's radio suite and the Classic / Plus P25 suites (the P25 search's
   state machine among them), then the DMR search's, built with this job's switches (tests/classic/test_radio.inc;
   OUT/classic_dispatch.inc as tools/test_classic.py wrote it)."""
@@ -32,7 +36,47 @@ def ui_tests(ROOT, APP, OUT, host):
     run([OUT / 'test_ui_scan'], cwd=host)
 
 
-SCAN_SWITCHES = ['-DCONFIG_SEARCH_RANGE=1']
+def search_model(ROOT, APP, OUT, flags):
+    res = {}
+    for fast in (0, 1):
+        exe = OUT / f'test_search_model_{fast}'
+        run(['clang', *flags, '-DCONFIG_P25_SEARCH=1', '-DCONFIG_DMR_SEARCH=1', f'-DCONFIG_SEARCH_FAST={fast}',
+             ROOT / 'tests/plus/test_search_model.c', APP / 'core/radio/p25search.c', APP / 'core/radio/dmrsearch.c',
+             '-lm', '-o', exe], cwd=ROOT)
+        out = run([exe], cwd=ROOT, capture_output=True, text=True).stdout
+        for line in out.splitlines():
+            w = line.split()
+            if w[:1] == ['MODEL']:
+                res[(w[1], w[2], w[3] if 'detect' in w[2] else '')] = [float(x) for x in w[3:]]
+            elif line.startswith('FAIL'):
+                raise SystemExit(line)
+    b, f = 'before', 'fast'
+    print('Search model (25 ms polls +-1 ms, a reading lag tau; before -> after):')
+    for eng in ('p25', 'dmr'):
+        pb, pf = res[(b, eng + '-pass', '')], res[(f, eng + '-pass', '')]
+        print(f'  {eng.upper()} pass +-1 MHz {pb[0] / 1000:.1f} -> {pf[0] / 1000:.1f} s, 430-440 MHz {pb[1] / 1000:.1f} -> '
+              f'{pf[1] / 1000:.1f} s, {pb[2]:.1f} -> {pf[2]:.1f} ms a step')
+        bb, bf = res[(b, eng + '-busy', '')][0], res[(f, eng + '-busy', '')][0]
+        print(f'  {eng.upper()} a busy non-{eng.upper()} carrier: {bb:.0f} -> {bf:.0f} probes in 3 minutes')
+        # The figures: a quiet step one poll (P25) / three polls (DMR), the busy carrier probed less
+        assert pf[2] <= 26.0 and pb[2] >= 49.0 if eng == 'p25' else pf[2] <= 76.0 and pb[2] >= 99.0, (eng, pb, pf)
+        assert bf < bb, (eng, bb, bf)
+    kinds = [('p25', 'p25-detect'), ('dmr repeater', 'dmr-detect-repeater'), ('dmr direct', 'dmr-detect-direct')]
+    for label, key in kinds:
+        for tau in ('0', '5', '10', '15'):
+            db, df = res[(b, key, tau)], res[(f, key, tau)]
+            print(f'  {label:12s} tau {tau:>2s} ms: found {db[1]:.0f} -> {df[1]:.0f} of 200, hits elsewhere '
+                  f'{db[2]:.0f} -> {df[2]:.0f}')
+            # Every signal found up to 10 ms of lag (as before or better); beyond it, the weakest direct mode signals are
+            # at the noise's mercy in both (a case either way); never a hit on another frequency
+            if float(tau) <= 10:
+                assert df[1] == 200 and df[1] >= db[1], (key, tau, db, df)
+            else:
+                assert df[1] >= db[1] - 2, (key, tau, db, df)
+            assert df[2] == 0, (key, tau, df)
+
+
+SCAN_SWITCHES = ['-DCONFIG_SEARCH_RANGE=1', '-DCONFIG_SEARCH_FAST=1']
 
 
 def radio_tests(ROOT, APP, OUT, host):
@@ -65,6 +109,8 @@ def radio_tests(ROOT, APP, OUT, host):
 
 
 def main(ROOT, APP, OUT, flags, host, only=None):
+    if not only or 'model' in only:
+        search_model(ROOT, APP, OUT, flags)
     if not only or 'radio' in only:
         radio_tests(ROOT, APP, OUT, host)
     if not only or 'ui' in only:

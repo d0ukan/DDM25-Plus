@@ -72,6 +72,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   and Upper typed or moved by a step (held Left / Right: 1 MHz), a step of 2.5, 5, 6.25, 10, 12.5, 20, 25, 50,
   100 kHz or 1 MHz, and Move to slide the whole range; OK applies it. Each search remembers its range and step while
   the radio is on; Left / Right still pick the presets.
+- Faster P25 and DMR searches: a quiet step takes one radio poll (25 ms) instead of two in P25 search (430-440 MHz:
+  about 20 s a pass instead of 40) and three instead of four in DMR search (60 s instead of 80); a strong reading is
+  checked again before the frequency is probed, and a busy FM channel in the range is probed less often (30 s apart
+  once it has been checked twice). **Not tried on the radio yet** (rows SF-*).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

@@ -2828,3 +2828,61 @@ by 25 kHz, 1 MHz (round to the start), 6.25 kHz, and by 12.5 kHz untagged.
 Cost (public build): FLASH 819,832 -> 822,584 B (+2,752), static RAM 209,368 -> 209,408 B (+40: the two ranges
 2 x 12 B, the editor 16 B), free 2,048 B. The ID database build (`--plus`) is the same size (the database is a data
 pack since round 14).
+
+### 2. Faster searches (`CONFIG_SEARCH_FAST`; needs P25_SEARCH or DMR_SEARCH)
+
+**What a step cost, and what bounds it** (read from the code, measured in the host model below; nothing measured on
+the radio yet). The radio task polls every 25 ms (`RADIO_POLL_MS`); a sweep step retunes the FD6818 at one poll and
+reads its strength (register 0x67, one SPI read: no time worth counting) at a later one:
+
+| | Before | Bound by |
+|---|---|---|
+| P25 search, a quiet step | 50 ms (2 polls): the reading must be `P25S_SETTLE_MS` = 30 ms after the retune, and the next poll is 25 ms after it. The old "30 ms a step" in "P25 search" above was the settle, not the step: a +-1 MHz pass (161 steps) is 8.0 s, 430-440 MHz 40 s | the settle: the PLL's lock and the strength reading's filter, neither measured on this radio (hardware-dm32.md 8.5: "the PLL lock time after each retune is not measured yet") |
+| DMR search, a quiet step | 100 ms (4 polls): 3 readings from 30 ms on, a poll apart (a direct mode burst is on air 30 ms in every 60: three readings 25 ms apart always meet one) | the settle and the 60 ms TDMA frame |
+| A hit that isn't P25 / DMR | P25: the native receiver's take and `P25S_PROBE_MS` 0.7 s for a frame with a NID (an LDU is 180 ms; the worker's start); DMR: 0.6 s for two bursts with a good check (sync once per 360 ms superframe in a call); then skipped 10 s (8 frequencies) | the frame sync windows: not shortened (a NID needs a whole frame, a DMR sync a burst; cutting them loses calls) |
+
+**What changed** (only with the switch; the engines without it are byte for byte as before, the host model builds
+both):
+
+- **A quick reading gates the step.** A step's first reading is taken at the poll after the retune (`P25S_QUICK_MS` /
+  `DMRS_QUICK_MS` 20 ms: the next poll even with a millisecond of jitter). Quiet: on to the next step at once. A quiet
+  P25 step is one poll (25 ms), a quiet DMR step three (the quick reading and two settled ones: 75 ms).
+- **Only settled readings make a hit.** P25: a strong quick reading is read again on the same step at the next poll
+  (now 50 ms settled) before it counts. DMR: the quick reading only marks a step (with half the hit's margin, as a
+  burst that began just before it reads part of its level), which then gets two more settled readings: together the
+  settled ones cover every phase of the 60 ms frame.
+- **A slow reading is caught by a look back.** If the receiver's reading lags the retune, the level read quickly on
+  step k may be step k-1's: strong at once, quiet settled. The engine then reads step k-1 again, settled (P25: two
+  polls; DMR: three readings), and goes on from k. So a signal is not lost when the reading is slower than 25 ms, only
+  its step costs a few polls more; a strong step already known (skipped) gets no look back.
+- **Busy carriers that are not P25 / DMR are probed less**: one found again within 60 s of its skip running out is
+  skipped for 30 s (`P25S_SKIP_LONG_MS`, `DMRS_SKIP_LONG_MS`) instead of 10.
+
+**Host model** (`tests/plus/test_search_model.c`, run by `tools/test_scan.py`; both engines built from the same source
+with the switch off and on): the radio task's polls (25 ms +-1 ms), the receiver's strength reading through a
+first-order lag of time constant tau after each retune (0, 5, 10, 15 ms), noise +-1 dB at -124 dBm, a neighbour 12.5
+kHz away 60 dB down; 200 signals per row at a random step of +-1 MHz, level -112 to -60 dBm, random TDMA phase:
+
+| | Before | After |
+|---|---|---|
+| P25, a quiet step / a +-1 MHz pass / 430-440 MHz | 50 ms / 8.0 s / 40.1 s | **25 ms / 4.0 s / 20.0 s** |
+| DMR, a quiet step / a +-1 MHz pass / 430-440 MHz | 100 ms / 16.1 s / 80.1 s | **75 ms / 12.1 s / 60.1 s** |
+| A busy FM carrier in the range, probes in 3 min (P25 / DMR) | 12 / 10 | 7 / 6 |
+| P25 found, tau 0 / 5 / 10 / 15 ms | 200 / 200 / 200 / 200 | 200 / 200 / 200 / 200 |
+| DMR repeater found, tau 0 / 5 / 10 / 15 ms | 200 / 200 / 200 / 200 | 200 / 200 / 200 / 200 |
+| DMR direct mode found, tau 0 / 5 / 10 / 15 ms | 200 / 200 / 198 / 198 | 200 / 200 / 200 / 197 |
+| Hits on another frequency (each a wasted probe), every row | 0 | 0 |
+
+The weakest direct mode signals (-112 dBm, 12 dB over the floor) are at the noise's mercy at tau 15 ms in both: a case
+either way. The model's checks: a quiet P25 step <= 26 ms and DMR <= 76 ms, fewer probes of the busy carrier, every
+signal found up to tau 10 ms (and never fewer than before there), no hit elsewhere. The P25 and DMR searches' state
+machine tests (`test_plus_p25search_sm`, `test_plus_dmrsearch_sm`) pass with the switch on (`tools/test_scan.py`'s
+radio suites), and `tests/plus/test_scan_radio.inc` checks a quiet step is one poll in the radio core.
+
+**To confirm on the radio** (rows SF-*): the quick reading assumes the FD6818's strength follows a retune within about
+25 ms; if it is slower, the look back keeps the finds and only the steps near a signal cost more (the pass time shows
+it). The revisits of found channels are unchanged (every 16 steps), so a find is re-read about every 0.4 s (P25) /
+1.2 s (DMR) instead of 0.8 s / 1.6 s.
+
+Cost (public build): FLASH 822,584 -> 823,184 B (+600), static RAM 209,408 -> 209,424 B (+16: the engines' stage,
+the step before and the look back's start), free 2,032 B.

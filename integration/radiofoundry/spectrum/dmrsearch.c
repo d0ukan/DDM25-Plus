@@ -25,6 +25,14 @@ static bool heard_here, was_call, ended;
 static uint32_t resume_hz;
 static uint8_t since_revisit, revisit_i;
 static bool revisiting;
+#if CONFIG_SEARCH_FAST
+/* The faster sweep (DMRS_QUICK_MS): the step's stage, a strong first reading, the step before (read the quick way) and
+ * the step a look back came from */
+enum { ST_QUICK, ST_MORE, ST_BACK };
+static uint8_t stage;
+static bool maybe, peaked;
+static uint32_t prev_hz, back_from;
+#endif
 
 static void begin_write(void) { seq++; __asm__ volatile("" ::: "memory"); }
 static void end_write(void) { __asm__ volatile("" ::: "memory"); seq++; }
@@ -39,6 +47,26 @@ static bool skipped(uint32_t hz, uint32_t now_ms)
 
 static void add_skip(uint32_t hz, uint32_t now_ms)
 {
+#if CONFIG_SEARCH_FAST
+	/* Its own entry (running or run out: a repeat gets the long skip), else one run out, else the one ending first */
+	unsigned pick = DMRS_SKIP_MAX;
+	for (unsigned i = 0; i < DMRS_SKIP_MAX && pick == DMRS_SKIP_MAX; i++)
+		if (skip[i].hz == hz)
+			pick = i;
+	bool again = pick < DMRS_SKIP_MAX && (int32_t)(now_ms - skip[pick].until_ms) < (int32_t)DMRS_AGAIN_MS;
+	for (unsigned i = 0; i < DMRS_SKIP_MAX && pick == DMRS_SKIP_MAX; i++)
+		if ((int32_t)(skip[i].until_ms - now_ms) <= 0)
+			pick = i;
+	if (pick == DMRS_SKIP_MAX) {
+		pick = 0;
+		for (unsigned i = 1; i < DMRS_SKIP_MAX; i++)
+			if ((int32_t)(skip[i].until_ms - skip[pick].until_ms) < 0)
+				pick = i;
+	}
+	skip[pick].hz = hz;
+	skip[pick].until_ms = now_ms + (again ? DMRS_SKIP_LONG_MS : DMRS_SKIP_MS);
+}
+#else
 	unsigned pick = 0;
 	for (unsigned i = 0; i < DMRS_SKIP_MAX; i++) {
 		if (skip[i].hz == hz || (int32_t)(skip[i].until_ms - now_ms) <= 0) {
@@ -51,6 +79,7 @@ static void add_skip(uint32_t hz, uint32_t now_ms)
 	skip[pick].hz = hz;
 	skip[pick].until_ms = now_ms + DMRS_SKIP_MS;
 }
+#endif
 
 /* The next found frequency to read again (round robin), 0 = none in the range */
 static uint32_t revisit_pick(uint32_t now_ms)
@@ -100,6 +129,9 @@ static void tuned(uint32_t now_ms)
 {
 	tuned_ms = now_ms;
 	nreads = 0;
+#if CONFIG_SEARCH_FAST
+	maybe = peaked = false;
+#endif
 }
 
 uint32_t dmrs_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t now_ms)
@@ -124,6 +156,10 @@ uint32_t dmrs_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 	revisiting = false;
 	since_revisit = revisit_i = 0;
 	resume_hz = 0;
+#if CONFIG_SEARCH_FAST
+	stage = ST_QUICK;
+	prev_hz = 0;
+#endif
 	read_ms = now_ms;
 	reads_seen = reads;
 	tuned(now_ms);
@@ -142,17 +178,55 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 		dmrs_stop();	/* nobody looks: the radio task tunes the channel again */
 		return 0;
 	}
+#if CONFIG_SEARCH_FAST
+	if (now_ms - tuned_ms < (stage == ST_BACK ? DMRS_SETTLE_MS : DMRS_QUICK_MS))
+		return 0;
+#else
 	if (now_ms - tuned_ms < DMRS_SETTLE_MS)
 		return 0;
+#endif
 	if (rssi_dbm == 0)
 		rssi_dbm = -140;
+	int16_t floor = (int16_t)(floor_q4 / 16);
+#if CONFIG_SEARCH_FAST
+	if (now_ms - tuned_ms < DMRS_SETTLE_MS) {
+		/* The quick reading: it only marks the step for more readings, it never makes a hit by itself. Half the hit's
+		 * margin: a burst that began just before it reads only part of its level yet */
+		maybe = rssi_dbm >= DMRS_HIT_MIN_DBM - DMRS_HIT_DB / 2 && rssi_dbm - floor >= DMRS_HIT_DB / 2;
+		nreads++;
+		return 0;
+	}
+	if (!peaked || rssi_dbm > peak)
+		peak = rssi_dbm;	/* the settled readings' peak */
+	peaked = true;
+#else
 	if (nreads == 0 || rssi_dbm > peak)
 		peak = rssi_dbm;
+#endif
 	nreads++;
-	int16_t floor = (int16_t)(floor_q4 / 16);
 	bool strong = peak >= DMRS_HIT_MIN_DBM && peak - floor >= DMRS_HIT_DB;
+#if CONFIG_SEARCH_FAST
+	if (!strong && nreads < DMRS_READS + (stage == ST_MORE ? DMRS_MORE_READS : 0u))
+		return 0;	/* a direct mode burst may still come in the other half of the frame */
+	if (!strong && maybe && stage == ST_QUICK) {
+		stage = ST_MORE;	/* only the quick reading was strong: more settled readings */
+		return 0;
+	}
+	if (!strong && stage == ST_MORE && prev_hz != 0) {
+		/* Nothing settled here: the step before, read the quick way, may be where the signal is */
+		begin_write();
+		back_from = s.at_hz;
+		s.at_hz = prev_hz;
+		prev_hz = 0;
+		stage = ST_BACK;
+		end_write();
+		tuned(now_ms);
+		return s.at_hz;
+	}
+#else
 	if (!strong && nreads < DMRS_READS)
 		return 0;	/* a direct mode burst may still come in the other half of the frame */
+#endif
 	begin_write();
 	if (!strong) {
 		floor_q4 += ((int32_t)peak * 16 - floor_q4) / 8;	/* only quiet steps move the floor */
@@ -161,12 +235,22 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	if (strong && !skipped(s.at_hz, now_ms)) {
 		s.phase = DMRS_PROBE;
 		s.hits++;
+#if CONFIG_SEARCH_FAST
+		stage = ST_QUICK;
+		prev_hz = 0;
+#endif
 		end_write();
 		hit_ms = now_ms;
 		heard_here = was_call = ended = false;
 		*hit = true;
 		return 0;
 	}
+#if CONFIG_SEARCH_FAST
+	if (stage == ST_BACK)
+		s.at_hz = back_from;	/* nothing there either: on from where the look back began */
+	prev_hz = stage != ST_BACK && !strong ? s.at_hz : 0u;	/* a strong (skipped) step is known: no look back to it */
+	stage = ST_QUICK;
+#endif
 	s.at_hz = advance(now_ms);
 	end_write();
 	tuned(now_ms);
@@ -216,6 +300,10 @@ static uint32_t resume(uint32_t now_ms)
 {
 	s.phase = DMRS_SWEEP;
 	s.playing = false;
+#if CONFIG_SEARCH_FAST
+	stage = ST_QUICK;
+	prev_hz = 0;	/* the last readings were the probe's */
+#endif
 	if (revisiting) {
 		revisiting = false;
 		s.at_hz = resume_hz;

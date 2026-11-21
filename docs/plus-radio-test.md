@@ -591,3 +591,14 @@ Search ranges (Tools > P25 search and DMR search, docs/plus.md "Search ranges").
 | SR-6 | Leave the search (Back), open it again; then power off and on | the manual range and step are kept on return; after the power cycle the default "+-1 MHz  12.5k" |
 | SR-7 | DMR search: a 1 MHz range around the other radio's DMR frequency, step 25 kHz, then 12.5 kHz | the find on 25 kHz steps only when the frequency is on the 25 kHz grid; on 12.5 kHz always |
 | SR-8 | On the search screen with the editor closed, press * | the editor opens (not quick settings); on any other screen * opens quick settings as before |
+
+Faster searches (docs/plus.md "Faster searches"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SF-1 | P25 search, 430-440 MHz, 12.5 kHz, quiet band; time two passes with a watch ("Pass N") | about 20 s a pass (before: about 40 s); the floor near -120..-125 |
+| SF-2 | DMR search, 430-440 MHz, quiet band | about 60 s a pass (before: about 80 s) |
+| SF-3 | The other radio sends P25 (NAC 0x659, TG 101) on 433.500 MHz, 5 s overs every 20 s; P25 search +-1 MHz around it | found on 433.5000 (not 433.4875 or 433.5125) within one pass; no probes ("Probe") on its neighbours |
+| SF-4 | The other radio in DMR direct mode (simplex) on 433.450, 5 s overs; DMR search +-1 MHz | found on 433.4500 with its CC and slot within one pass; repeat 5 times |
+| SF-5 | An FM signal (the other radio in FM, a long over) inside the P25 search range | probed once ("Probe" 433.xxxx), then passed: the next probe of it no sooner than 10 s, then 30 s while it stays |
+| SF-6 | A weak P25 signal (other radio at low power, far away, about -110 dBm on Home) | still found; if it is missed while the strong one of SF-3 is found, note its level (the quick reading may be slower than 25 ms) |

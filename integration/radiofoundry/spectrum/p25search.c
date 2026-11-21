@@ -18,6 +18,13 @@ static uint32_t reads_seen, read_ms, epoch;
 static uint32_t resume_hz;
 static uint8_t since_revisit, revisit_i;
 static bool revisiting;
+#if CONFIG_SEARCH_FAST
+/* The faster sweep (P25S_QUICK_MS): the step's stage, the step before it when only its quick reading was taken, and
+ * the step a look back came from */
+enum { ST_QUICK, ST_CONFIRM, ST_BACK };
+static uint8_t stage;
+static uint32_t prev_hz, back_from;
+#endif
 
 static void begin_write(void) { seq++; __asm__ volatile("" ::: "memory"); }
 static void end_write(void) { __asm__ volatile("" ::: "memory"); seq++; }
@@ -32,6 +39,26 @@ static bool skipped(uint32_t hz, uint32_t now_ms)
 
 static void add_skip(uint32_t hz, uint32_t now_ms)
 {
+#if CONFIG_SEARCH_FAST
+	/* Its own entry (running or run out: a repeat gets the long skip), else one run out, else the one ending first */
+	unsigned pick = P25S_SKIP_MAX;
+	for (unsigned i = 0; i < P25S_SKIP_MAX && pick == P25S_SKIP_MAX; i++)
+		if (skip[i].hz == hz)
+			pick = i;
+	bool again = pick < P25S_SKIP_MAX && (int32_t)(now_ms - skip[pick].until_ms) < (int32_t)P25S_AGAIN_MS;
+	for (unsigned i = 0; i < P25S_SKIP_MAX && pick == P25S_SKIP_MAX; i++)
+		if ((int32_t)(skip[i].until_ms - now_ms) <= 0)
+			pick = i;
+	if (pick == P25S_SKIP_MAX) {
+		pick = 0;
+		for (unsigned i = 1; i < P25S_SKIP_MAX; i++)
+			if ((int32_t)(skip[i].until_ms - skip[pick].until_ms) < 0)
+				pick = i;
+	}
+	skip[pick].hz = hz;
+	skip[pick].until_ms = now_ms + (again ? P25S_SKIP_LONG_MS : P25S_SKIP_MS);
+}
+#else
 	unsigned pick = 0;
 	for (unsigned i = 0; i < P25S_SKIP_MAX; i++) {
 		if (skip[i].hz == hz || (int32_t)(skip[i].until_ms - now_ms) <= 0) {
@@ -44,6 +71,7 @@ static void add_skip(uint32_t hz, uint32_t now_ms)
 	skip[pick].hz = hz;
 	skip[pick].until_ms = now_ms + P25S_SKIP_MS;
 }
+#endif
 
 /* The next found frequency to read again (round robin), 0 = none in the range */
 static uint32_t revisit_pick(uint32_t now_ms)
@@ -114,6 +142,10 @@ uint32_t p25s_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 	revisiting = false;
 	since_revisit = revisit_i = 0;
 	resume_hz = 0;
+#if CONFIG_SEARCH_FAST
+	stage = ST_QUICK;
+	prev_hz = 0;
+#endif
 	tuned_ms = read_ms = now_ms;
 	reads_seen = reads;
 	epoch++;
@@ -132,12 +164,23 @@ uint32_t p25s_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 		p25s_stop();	/* nobody looks: the radio task tunes the channel again */
 		return 0;
 	}
+#if CONFIG_SEARCH_FAST
+	if (now_ms - tuned_ms < (stage == ST_QUICK ? P25S_QUICK_MS : P25S_SETTLE_MS))
+		return 0;
+#else
 	if (now_ms - tuned_ms < P25S_SETTLE_MS)
 		return 0;
+#endif
 	if (rssi_dbm == 0)
 		rssi_dbm = -140;
 	int16_t floor = (int16_t)(floor_q4 / 16);
 	bool strong = rssi_dbm >= P25S_HIT_MIN_DBM && rssi_dbm - floor >= P25S_HIT_DB;
+#if CONFIG_SEARCH_FAST
+	if (strong && stage == ST_QUICK) {
+		stage = ST_CONFIRM;	/* read again settled, on the same step (no retune) */
+		return 0;
+	}
+#endif
 	begin_write();
 	if (!strong) {
 		floor_q4 += ((int32_t)rssi_dbm * 16 - floor_q4) / 8;	/* only quiet steps move the floor */
@@ -146,10 +189,30 @@ uint32_t p25s_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	if (strong && !skipped(s.at_hz, now_ms)) {
 		s.phase = P25S_PROBE;
 		s.hits++;
+#if CONFIG_SEARCH_FAST
+		stage = ST_QUICK;
+		prev_hz = 0;
+#endif
 		end_write();
 		*hit = true;
 		return 0;
 	}
+#if CONFIG_SEARCH_FAST
+	if (!strong && stage == ST_CONFIRM && prev_hz != 0) {
+		/* Strong at once, quiet settled: the step before, read quickly, may be where the signal is */
+		back_from = s.at_hz;
+		s.at_hz = prev_hz;
+		prev_hz = 0;
+		stage = ST_BACK;
+		end_write();
+		tuned_ms = now_ms;
+		return s.at_hz;
+	}
+	if (stage == ST_BACK)
+		s.at_hz = back_from;	/* nothing there either: on from where the look back began */
+	prev_hz = stage == ST_QUICK ? s.at_hz : 0u;
+	stage = ST_QUICK;
+#endif
 	s.at_hz = advance(now_ms);
 	end_write();
 	tuned_ms = now_ms;
@@ -206,6 +269,10 @@ uint32_t p25s_probe_done(bool was_p25, uint32_t now_ms)
 		s.at_hz = next_step(s.at_hz);
 	}
 	end_write();
+#if CONFIG_SEARCH_FAST
+	stage = ST_QUICK;
+	prev_hz = 0;	/* the last reading was the probe's */
+#endif
 	tuned_ms = read_ms = now_ms;
 	reads_seen = reads;
 	epoch++;
@@ -215,6 +282,10 @@ uint32_t p25s_probe_done(bool was_p25, uint32_t now_ms)
 void p25s_retuned(uint32_t now_ms)
 {
 	tuned_ms = now_ms;
+#if CONFIG_SEARCH_FAST
+	if (stage == ST_CONFIRM)
+		stage = ST_QUICK;	/* read anew from the start */
+#endif
 }
 
 uint32_t p25s_epoch(void)

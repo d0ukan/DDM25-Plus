@@ -10,6 +10,11 @@ through the hunks below.
                 2.5 kHz to 1 MHz, the range moved by a step or 1 MHz), remembered with the step while the radio is on.
                 The step rides on the search request's start frequency (radio/srange.h). Needs P25_SEARCH or
                 DMR_SEARCH.
+  SEARCH_FAST   (item 2) the searches step faster: a step's first reading at the poll after the retune gates it (a
+                quiet P25 step one poll instead of two, a DMR one three instead of four); a strong first reading is
+                read again settled, and when it turns out quiet the step before is looked at again (a slow reading);
+                a carrier found again not to be P25 / DMR is skipped for 30 s instead of 10. In the engines
+                (spectrum/p25search.c, dmrsearch.c). Needs P25_SEARCH or DMR_SEARCH.
 """
 
 SRANGE = 'integration/radiofoundry/srange/'
@@ -26,12 +31,16 @@ def prepare_scan(transform, install):
          '$(error DMR_SEARCH needs DMR=y and DMR_ANY=y)\nendif\nendif\n'
          'CONFIG_SEARCH_RANGE ?= n\nFEATURES += SEARCH_RANGE\n'
          'ifeq ($(CONFIG_SEARCH_RANGE),y)\nifeq ($(CONFIG_P25_SEARCH)$(CONFIG_DMR_SEARCH),nn)\n'
-         '$(error SEARCH_RANGE needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'),
+         '$(error SEARCH_RANGE needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'
+         'CONFIG_SEARCH_FAST ?= n\nFEATURES += SEARCH_FAST\n'
+         'ifeq ($(CONFIG_SEARCH_FAST),y)\nifeq ($(CONFIG_P25_SEARCH)$(CONFIG_DMR_SEARCH),nn)\n'
+         '$(error SEARCH_FAST needs P25_SEARCH=y or DMR_SEARCH=y)\nendif\nendif\n'),
     ])
     transform('core/config.h', [
         ('#ifndef CONFIG_DMR_SEARCH\n#define CONFIG_DMR_SEARCH 0\n#endif\n',
          '#ifndef CONFIG_DMR_SEARCH\n#define CONFIG_DMR_SEARCH 0\n#endif\n'
          '#ifndef CONFIG_SEARCH_RANGE\n#define CONFIG_SEARCH_RANGE 0\t/* DDM32 Plus search ranges (tools/plus_scan.py) */\n'
+         '#endif\n#ifndef CONFIG_SEARCH_FAST\n#define CONFIG_SEARCH_FAST 0\t/* DDM32 Plus faster searches (tools/plus_scan.py) */\n'
          '#endif\n'),
     ])
 
