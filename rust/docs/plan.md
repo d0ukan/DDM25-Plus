@@ -5,7 +5,7 @@ Owner's decision 2026-11-21: the programmer moves from C# / .NET (`win/`) to Rus
 | Stage | What | Status |
 |---|---|---|
 | 1 | `ddm32-core` + `ddm32-cli`: every non-UI part of the C# program, held to its fixtures | done (rust-app) |
-| 2 | `ddm32-gui`: the window in Slint, tr / en, light and dark themes | first version done (rust-app) |
+| 2 | `ddm32-gui`: the window in Slint, tr / en, light and dark themes | done but the first real radio run (rust-app) |
 | 3 | packaging: Windows setup, Linux AppImage (+ .deb), macOS .dmg; signing; the self-update hand-over | planned |
 
 ## Stage 1: the core (done)
@@ -87,12 +87,20 @@ install is locked and the page points to "Yedekler ve geri dönüş".
   switches live on every page, checks WCAG AA for both palettes, no colour outside the theme, every text key in both
   languages; writes `docs/screenshots/*.png` (light and dark, tr; the main screens also en).
 
+### Done in the second run (2026-11-21)
+
+- Home: the owner's DDM32+ logo (light / dark variants from art/mark-src.png, `packaging/art/make_logo.py`), the full
+  version with its label ("1.0.0-beta.5 (Beta)"), what the radio runs by its newest verified backup, the backups
+  folder with "Aç". Every version list in the C# order (tested per channel).
+- The program's own update in Settings and About (signed `app_rs`; Windows: download, stage, swap helper; Linux /
+  macOS: the release page).
+- Radio health, Live view (read-only debug link, the C# DebugLink / LiveData held to live-results.json) and My
+  channels (the codeplug viewer held to codeplug-results.json.gz; search, CSV).
+- The CH340 missing-driver hint on Windows (SetupAPI / CfgMgr32 device list, no port opened).
+- The Windows setup builds with Inno Setup 7 into `rust/dist/`.
+
 ### Still to do in stage 2
 
-- The cable check on Windows like the C# program (Device Manager problem code 28 = no CH340 driver): today the window
-  lists CH340 ports (`serialport`, no port opened) and says "no cable" otherwise.
-- The health and live panels (plus_live) of the Python program.
-- The self-update button (the core has download, stage and swap; the window does not offer it yet).
 - Keyboard order and screen reader labels checked on each platform; high-DPI screenshots.
 - A first real run on the owner's radio, one approved step at a time, compared with the C# program (backup byte
   compare first, then plan, then install), following firmware/docs/plus-radio-test.md.
