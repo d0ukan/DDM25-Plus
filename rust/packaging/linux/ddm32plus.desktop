@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=DDM32 Plus
+GenericName=Radio programmer
+GenericName[tr]=Telsiz programlayıcı
+Comment=Install, update and back up the DDM32 Plus firmware of a Baofeng DM-32UV
+Comment[tr]=Baofeng DM-32UV telsizde DDM32 Plus yazılımını kurar, günceller, yedekler
+Exec=DDM32Plus
+Icon=ddm32plus
+Terminal=false
+Categories=Utility;
+Keywords=DM-32UV;Baofeng;P25;DMR;firmware;
+StartupWMClass=DDM32Plus

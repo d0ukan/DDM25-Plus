@@ -26,8 +26,12 @@ rust/
   crates/ddm32-cli/          `ddm32`: a small command line (tests, the owner's first real runs)
   crates/ddm32-gui/          the window (Slint): ui/*.slint, src/lib.rs (controller), src/i18n.rs (tr / en)
   docs/plan.md               stage 2 (GUI) design and stage 3 (packaging) plan
-  docs/screenshots/          every screen in the light and the dark theme (written by crates/ddm32-gui/tests/screens.rs)
+  docs/screenshots/          every screen in the light and the dark theme (written by crates/ddm32-gui/tests/screens.rs;
+                             the 150 % / 200 % ones by tests/hidpi.rs)
   packaging/windows/         Inno Setup script (per-user install over the C# program, same AppId and folder)
+  packaging/linux/           AppImage / .deb script, .desktop file
+  packaging/macos/           .app / .dmg script, Info.plist
+  packaging/make_app_zip.py  the update zip per platform (app_rs); packaging/art/ the logo and the icon
 ```
 
 ## Radio access
@@ -51,6 +55,20 @@ packs), `settings.json`. On Windows the older programs' backup folders (`%LOCALA
 C# install folder when this program lives elsewhere) are found and read, never changed. `DDM32_DATA` overrides the
 folder (tests, screenshots).
 
+## Keyboard, screen readers, high DPI
+
+- **Keyboard**: Tab / Shift+Tab walk every page in reading order with a 3 px focus ring (`Theme.focus`, AA contrast in
+  both themes). The page's safe primary button takes the focus when the page opens, so **Enter** runs it (Home: update,
+  wizard: Next, first start: Türkçe, the no-backup confirmation: Cancel). Buttons that write to the radio never take
+  the focus on their own. Enter or Space runs a focused button or choice; Space toggles a check box.
+- **Screen readers** (UI Automation / AT-SPI / NSAccessibility through Slint's AccessKit): every button, choice, check
+  box and field has a role and a name in both languages; notices read as text, the progress bar reports 0-100.
+- **Scaling**: the layout is held at 150 % and 200 % at the default window and at the smallest one (640 x 560 logical),
+  so text wraps and buttons, choices and notices grow with it; pages that do not fit scroll. Screenshots:
+  `docs/screenshots/*-150.png`, `*-200.png`.
+- Tests: `crates/ddm32-gui/tests/a11y.rs` (names, Enter / Tab / Shift+Tab / Space, focus ring on every page) and
+  `tests/hidpi.rs` (no control overlaps another or leaves the window, every target at least 44 x 44).
+
 ## Build and test
 
 Rust 1.88 or newer (tested with 1.100.0).
@@ -67,10 +85,46 @@ cargo build --release -p ddm32-cli -p ddm32-gui --features ddm32-cli/radio,ddm32
 Linux: the window's font lookup links fontconfig, so a build needs `pkg-config` and `libfontconfig-dev`
 (`sudo apt install pkg-config libfontconfig-dev`); the window uses Wayland or X11 through winit (loaded at run time). The tests read the C# program's fixtures from `../win/tests/DDM32Plus.Core.Tests/Fixtures`.
 
-Windows setup (per user, over the C# program, keeps `yedekler`): build the window with `--features radio`, then
-`"C:\Program Files\Inno Setup 7\ISCC.exe" rust\packaging\windows\DDM32Plus.iss`; the setup lands in `rust/dist/`
-(git-ignored). Unsigned: SmartScreen asks "More info > Run anyway".
-
 Command line: `ddm32 version | paths | backups | detect --backup DIR | plan ... | releases | download VERSION |
 pack radioid|air|info ... | tool backup|install_plus|restore_stock|fast_install|datapack ARGS` (`ddm32 --help`).
 The window: `ddm32-gui` (`--demo` shows example contents without radio or network).
+
+## Packages
+
+Every script builds with radio access (`--features radio`) unless told `--no-radio`, writes only to `rust/dist/`
+(git-ignored) and publishes nothing. Each also makes the platform's **update zip** for a signed release
+(`packaging/make_app_zip.py`: `DDM32Plus/DDM32Plus[.exe]` + `DDM32Plus/ddm32[.exe]`, deterministic), which
+`pc/release/make_release.py build ... --app-rs-zip PLATFORM=ZIP --app-rs-version V` lists under `app_rs` (repeat
+`--app-rs-zip` once per platform; PLATFORM is `windows-x86_64`, `linux-x86_64`, `linux-aarch64`, `macos-aarch64`,
+`macos-x86_64`, as `releases::platform_key()` names it). `ddm32 verify-manifest DIR [--public-key HEX]` checks such a
+release the way this program reads it, including unpacking this platform's zip with the self-update's extractor.
+The Windows program replaces itself from its zip; on Linux and macOS the program shows the new version and opens the
+release page (an AppImage, a .deb or a .dmg is replaced by the user).
+
+**Windows** (per user, over the C# program, keeps `yedekler`): build the window with `--features radio`, then
+`"C:\Program Files\Inno Setup 7\ISCC.exe" rust\packaging\windows\DDM32Plus.iss`, and for the update zip
+`python rust\packaging\make_app_zip.py windows-x86_64 rust	arget
+elease rust\dist\DDM32Plus-VERSION-windows-x86_64.zip`.
+Unsigned: SmartScreen asks "More info > Run anyway".
+
+**Linux**: `rust/packaging/linux/build-linux.sh [--deb] [--appdir-only] [--no-build] [--no-radio]`
+
+- AppImage `DDM32Plus-VERSION-ARCH.AppImage`: needs `appimagetool` (from https://github.com/AppImage/appimagetool,
+  your choice of release) on PATH or in `$APPIMAGETOOL`; the script never downloads tools. `--appdir-only` stops at
+  `rust/dist/AppDir` (AppRun, `ddm32plus.desktop`, icon, `usr/bin/DDM32Plus` and `usr/bin/ddm32`).
+  `./DDM32Plus-*.AppImage ddm32 ARGS` runs the command line.
+- `--deb`: `ddm32plus_VERSION_ARCH.deb` (`3.0.0~alpha.1` so Debian orders prereleases as SemVer): the program in
+  `/opt/ddm32plus`, `/usr/bin/DDM32Plus` and `/usr/bin/ddm32`, the menu entry and the icon. Removing it never touches
+  `~/.local/share/DDM32Plus` (backups).
+- The serial cable needs the user in the `dialout` group (`sudo usermod -aG dialout $USER`, then log in again); no
+  package changes groups.
+- Build needs `pkg-config libfontconfig-dev`; at run time fontconfig, and Wayland or X11 (with libxkbcommon).
+
+**macOS**: `rust/packaging/macos/build-macos.sh [--no-build] [--no-radio]` on a Mac (Xcode command line tools):
+`rust/dist/DDM32 Plus.app` (Info.plist from `packaging/macos/Info.plist`, icon from `packaging/art/ddm32plus.png`)
+and `DDM32Plus-VERSION-macos-ARCH.dmg` (the app and an Applications link). The GitHub workflow builds it in the
+`macos-app` job on pushes to `rust-app` only, with no secret, and keeps the .dmg and the zip as workflow artifacts
+(the `linux-packages` job does the same for the .deb, the AppDir and the zip). Signed ad hoc only (no Developer ID,
+no notarisation): the first start needs right click > Open (or System Settings > Privacy & Security > Open
+Anyway). The cable appears as `/dev/cu.usbserial-*` or `/dev/cu.wchusbserial*` (CH340; recent macOS has the driver).
+

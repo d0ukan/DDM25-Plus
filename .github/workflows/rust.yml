@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # The Rust programmer (rust/): tests, clippy and format on Windows, Linux and macOS, then the release binaries as
-# build artifacts. Runs only on pushes to the rust-app branch (and by hand); no secret is used, nothing is signed or
-# published from here (see rust/docs/plan.md, stage 3).
+# build artifacts, the macOS .app/.dmg and the Linux .deb/AppDir. Runs only on pushes to the rust-app branch (and by
+# hand); no secret is used, nothing is signed (beyond macOS's ad-hoc signature) or published from here (see
+# rust/docs/plan.md, stage 3).
 name: rust
 
 on:
@@ -50,3 +51,46 @@ jobs:
             rust/target/release/ddm32-gui
             rust/target/release/ddm32-gui.exe
           if-no-files-found: ignore
+
+  # macOS: "DDM32 Plus.app" in a .dmg plus the app_rs update zip, from the rust-app branch only. Ad-hoc signed, no
+  # Developer ID, no notarisation, no secret. The files stay workflow artifacts; nothing is published.
+  macos-app:
+    if: github.ref == 'refs/heads/rust-app'
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build the .app and the .dmg
+        run: bash rust/packaging/macos/build-macos.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ddm32-macos-app
+          path: |
+            rust/dist/*.dmg
+            rust/dist/*.zip
+          if-no-files-found: error
+
+  # Linux: the .deb, the AppDir (packed to an AppImage by hand with an appimagetool you chose; the workflow downloads
+  # no packing tool) and the app_rs update zip, from the rust-app branch only.
+  linux-packages:
+    if: github.ref == 'refs/heads/rust-app'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux build packages
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libfontconfig-dev
+      - name: Build the .deb and the AppDir
+        run: bash rust/packaging/linux/build-linux.sh --deb --appdir-only
+      - name: Pack the AppDir (permissions kept)
+        run: tar -C rust/dist -czf rust/dist/DDM32Plus-AppDir-linux-x86_64.tar.gz AppDir
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ddm32-linux-packages
+          path: |
+            rust/dist/*.deb
+            rust/dist/*.zip
+            rust/dist/*.tar.gz
+          if-no-files-found: error

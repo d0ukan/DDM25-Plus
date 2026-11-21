@@ -125,6 +125,7 @@ component Home inherits VerticalLayout {
         text: Tr.t(Tr.lang, "home_update");
         kind: "primary";
         big: true;
+        default-focus: true;
         min-height: 92px;
         clicked => { App.navigate(1); }
     }
@@ -157,7 +158,7 @@ component Home inherits VerticalLayout {
                     horizontal-stretch: 0;
                     min-width: 110px;
                     max-height: 40px;
-                    min-height: 36px;
+                    min-height: 44px;
                     clicked => { App.navigate(5); }
                 }
                 Button {
@@ -165,7 +166,7 @@ component Home inherits VerticalLayout {
                     horizontal-stretch: 0;
                     min-width: 90px;
                     max-height: 40px;
-                    min-height: 36px;
+                    min-height: 44px;
                     clicked => { App.open-backups-folder(); }
                 }
             }
@@ -308,13 +309,13 @@ component Wizard inherits Page {
             clicked => { App.wizard-back(); }
         }
         if App.step < 5 : Button {
-            text: Tr.t(Tr.lang, "b_next"); kind: "primary";
+            text: Tr.t(Tr.lang, "b_next"); kind: "primary"; default-focus: true;
             enabled: !App.busy && (App.step == 0 ? App.versions.length > 0
                 : App.step == 1 ? (App.backup-choice != 2 || App.understood)
                 : App.step-done);
             clicked => { App.wizard-next(); }
         }
-        if App.step == 5 : Button { text: Tr.t(Tr.lang, "b_finish"); kind: "primary"; clicked => { App.navigate(0); } }
+        if App.step == 5 : Button { text: Tr.t(Tr.lang, "b_finish"); kind: "primary"; default-focus: true; clicked => { App.navigate(0); } }
     }
 }
 
@@ -390,51 +391,67 @@ component ProgramUpdate inherits Card {
 
 component Settings inherits Page {
     heading: Tr.t(Tr.lang, "home_settings");
-    Label { text: Tr.t(Tr.lang, "set_lang"); font-weight: 700; }
-    HorizontalLayout {
-        spacing: Theme.gap;
-        Choice { title: "Türkçe"; detail: ""; selected: Tr.lang == "tr"; clicked => { App.set-lang("tr"); } }
-        Choice { title: "English"; detail: ""; selected: Tr.lang == "en"; clicked => { App.set-lang("en"); } }
+    // scrolls when the window is small (150 % / 200 % scaling on a small screen)
+    ScrollView {
+        vertical-stretch: 1;
+        VerticalLayout {
+            spacing: Theme.gap;
+            padding-right: 8px;
+            alignment: start;
+            Label { text: Tr.t(Tr.lang, "set_lang"); font-weight: 700; }
+            HorizontalLayout {
+                spacing: Theme.gap;
+                Choice { title: "Türkçe"; detail: ""; selected: Tr.lang == "tr"; clicked => { App.set-lang("tr"); } }
+                Choice { title: "English"; detail: ""; selected: Tr.lang == "en"; clicked => { App.set-lang("en"); } }
+            }
+            Label { text: Tr.t(Tr.lang, "set_theme"); font-weight: 700; }
+            HorizontalLayout {
+                spacing: Theme.gap;
+                Choice { title: Tr.t(Tr.lang, "theme_light"); detail: ""; selected: !Theme.dark; clicked => { App.set-theme(false); } }
+                Choice { title: Tr.t(Tr.lang, "theme_dark"); detail: ""; selected: Theme.dark; clicked => { App.set-theme(true); } }
+            }
+            Label { text: Tr.t(Tr.lang, "set_channel"); font-weight: 700; }
+            HorizontalLayout {
+                spacing: Theme.gap;
+                Choice { title: Tr.t(Tr.lang, "ch_latest"); detail: Tr.t(Tr.lang, "ch_latest_d"); selected: App.channel == 0; clicked => { App.set-channel(0); } }
+                Choice { title: Tr.t(Tr.lang, "ch_beta"); detail: Tr.t(Tr.lang, "ch_beta_d"); selected: App.channel == 1; clicked => { App.set-channel(1); } }
+                Choice { title: Tr.t(Tr.lang, "ch_test"); detail: Tr.t(Tr.lang, "ch_test_d"); selected: App.channel == 2; danger: true; clicked => { App.set-channel(2); } }
+            }
+            Check {
+                text: Tr.t(Tr.lang, "set_auto");
+                checked <=> App.auto-check;
+                toggled => { App.set-auto-check(App.auto-check); }
+            }
+            ProgramUpdate {}
+        }
     }
-    Label { text: Tr.t(Tr.lang, "set_theme"); font-weight: 700; }
-    HorizontalLayout {
-        spacing: Theme.gap;
-        Choice { title: Tr.t(Tr.lang, "theme_light"); detail: ""; selected: !Theme.dark; clicked => { App.set-theme(false); } }
-        Choice { title: Tr.t(Tr.lang, "theme_dark"); detail: ""; selected: Theme.dark; clicked => { App.set-theme(true); } }
-    }
-    Label { text: Tr.t(Tr.lang, "set_channel"); font-weight: 700; }
-    HorizontalLayout {
-        spacing: Theme.gap;
-        Choice { title: Tr.t(Tr.lang, "ch_latest"); detail: Tr.t(Tr.lang, "ch_latest_d"); selected: App.channel == 0; clicked => { App.set-channel(0); } }
-        Choice { title: Tr.t(Tr.lang, "ch_beta"); detail: Tr.t(Tr.lang, "ch_beta_d"); selected: App.channel == 1; clicked => { App.set-channel(1); } }
-        Choice { title: Tr.t(Tr.lang, "ch_test"); detail: Tr.t(Tr.lang, "ch_test_d"); selected: App.channel == 2; danger: true; clicked => { App.set-channel(2); } }
-    }
-    Check {
-        text: Tr.t(Tr.lang, "set_auto");
-        checked <=> App.auto-check;
-        toggled => { App.set-auto-check(App.auto-check); }
-    }
-    ProgramUpdate {}
-    Rectangle {}
 }
 
 component About inherits Page {
     heading: Tr.t(Tr.lang, "home_about");
-    Card {
-        min-height: av.preferred-height;
-        av := VerticalLayout {
-            padding: Theme.pad; spacing: 8px;
-            Label { text: "DDM32 Plus " + App.version; font-weight: 700; font-size: Theme.font-big; }
-            Label { text: Tr.t(Tr.lang, "about_text"); }
-            Muted { text: Tr.t(Tr.lang, "about_data") + " " + App.data-folder; }
-            Muted { text: Tr.t(Tr.lang, "about_key") + " " + App.key-id; }
-            Muted { text: "d0ukan · TA2DOU — github.com/d0ukan/DDM32-Plus"; }
-            Muted { text: Tr.t(Tr.lang, "about_licence"); }
-            Muted { text: "Made with Slint (slint.dev)"; }
+    // scrolls when the window is small (150 % / 200 % scaling on a small screen)
+    ScrollView {
+        vertical-stretch: 1;
+        VerticalLayout {
+            spacing: Theme.gap;
+            padding-right: 8px;
+            alignment: start;
+            Card {
+                min-height: av.preferred-height;
+                av := VerticalLayout {
+                    padding: Theme.pad; spacing: 8px;
+                    Label { text: "DDM32 Plus " + App.version; font-weight: 700; font-size: Theme.font-big; }
+                    Label { text: Tr.t(Tr.lang, "about_text"); }
+                    Muted { text: Tr.t(Tr.lang, "about_data") + " " + App.data-folder; }
+                    Muted { text: Tr.t(Tr.lang, "about_key") + " " + App.key-id; }
+                    Muted { text: "d0ukan · TA2DOU — github.com/d0ukan/DDM32-Plus"; }
+                    Muted { text: Tr.t(Tr.lang, "about_licence"); }
+                    Muted { text: "Made with Slint (slint.dev)"; }
+                }
+            }
+            ProgramUpdate {}
         }
     }
-    ProgramUpdate {}
-    Rectangle {}
 }
 
 // the first start: the language, before anything else
@@ -447,7 +464,7 @@ component FirstStart inherits VerticalLayout {
     HorizontalLayout {
         spacing: Theme.gap;
         alignment: center;
-        Button { text: "Türkçe"; kind: "primary"; big: true; min-width: 220px; clicked => { App.set-lang("tr"); App.navigate(0); } }
+        Button { text: "Türkçe"; kind: "primary"; big: true; default-focus: true; min-width: 220px; clicked => { App.set-lang("tr"); App.navigate(0); } }
         Button { text: "English"; kind: "primary"; big: true; min-width: 220px; clicked => { App.set-lang("en"); App.navigate(0); } }
     }
 }
@@ -485,7 +502,7 @@ export component AppWindow inherits Window {
                 Label { text: Tr.t(Tr.lang, "confirm_text"); }
                 HorizontalLayout {
                     spacing: Theme.gap; alignment: end;
-                    Button { text: Tr.t(Tr.lang, "b_cancel"); clicked => { App.confirm-open = false; } }
+                    Button { text: Tr.t(Tr.lang, "b_cancel"); default-focus: true; clicked => { App.confirm-open = false; } }
                     Button { text: Tr.t(Tr.lang, "b_confirm_none"); kind: "danger"; min-width: 260px; clicked => { App.confirm-no-backup(); } }
                 }
             }

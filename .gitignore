@@ -639,6 +639,7 @@ __pycache__/
 !/rust/packaging/**/*.py
 !/rust/packaging/**/*.desktop
 !/rust/packaging/**/*.plist
+!/rust/packaging/art/*.png
 !/.github/workflows/rust.yml
 /rust/target/
 # status strip signal bars filled only while something is heard (tools/plus_sigbar.py)

@@ -192,6 +192,166 @@ class ReleaseToolTest(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(rt.sm.ManifestError):
                 rt.sm.verify_bytes(data, sig, rt.TEST_PUBLIC_HEX)
 
+    def rs_zip(self, name, platform, *members):
+        """A Rust program zip as rust/packaging/make_app_zip.py makes it"""
+        path = self.top / name
+        ext = '.exe' if platform.startswith('windows-') else ''
+        with zipfile.ZipFile(path, 'w') as z:
+            z.writestr(f'DDM32Plus/DDM32Plus{ext}', f'rust gui {platform}'.encode())
+            z.writestr(f'DDM32Plus/ddm32{ext}', f'rust cli {platform}'.encode())
+            for m in members:
+                info = zipfile.ZipInfo(m)
+                info.filename = m          # as given: zipfile would turn a backslash into '/' on Windows
+                z.writestr(info, b'x')
+        return path
+
+    def test_rust_program_zips(self):
+        """app_rs: one zip per platform, keyed as the Rust program's platform_key(); beside app and app_net"""
+        net = self.net_zip('net.zip')
+        win = self.rs_zip('w.zip', 'windows-x86_64')
+        lin = self.rs_zip('l.zip', 'linux-x86_64')
+        mac = self.rs_zip('m.zip', 'macos-aarch64')
+        code, out, text = self.run_build('--app-net-zip', str(net), '--app-net-version', '2.0.0-beta.1',
+                                         '--app-rs-zip', f'windows-x86_64={win}', '--app-rs-zip', f'linux-x86_64={lin}',
+                                         '--app-rs-zip', f'macos-aarch64={mac}', '--app-rs-version', '3.0.0-alpha.2',
+                                         '--app-rs-notes-tr', 'Rust programı', '--app-rs-notes-en', 'Rust program')
+        self.assertEqual(code, 0)
+        m = mr.verify(out, self.public)
+        self.assertEqual(list(m['app_rs']), ['windows-x86_64', 'linux-x86_64', 'macos-aarch64'])
+        tag = 'v1.0.0-beta.1'
+        for platform, src in (('windows-x86_64', win), ('linux-x86_64', lin), ('macos-aarch64', mac)):
+            e = m['app_rs'][platform]
+            name = f'DDM32Plus-3.0.0-alpha.2-{platform}.zip'
+            self.assertEqual(set(e), {'version', 'file', 'url', 'sha256', 'size', 'notes'})
+            self.assertEqual((e['version'], e['file']), ('3.0.0-alpha.2', name))
+            self.assertEqual(e['url'], f'https://github.com/d0ukan/DDM32-Plus/releases/download/{tag}/{name}')
+            self.assertEqual(e['notes'], {'tr': 'Rust programı', 'en': 'Rust program'})
+            self.assertEqual((out / name).read_bytes(), src.read_bytes())
+            self.assertEqual((e['size'], e['sha256']), (src.stat().st_size, mr.sha256(src.read_bytes())))
+        self.assertEqual(m['app_net']['version'], '2.0.0-beta.1')      # the others are untouched
+        self.assertNotIn('app', m)
+        # the Python program ignores app_rs (never an update for it)
+        cat = releases.Catalog()
+        cat.add(m['release'], m, out)
+        self.assertEqual(cat.apps, [])
+        # a changed zip fails verify
+        (out / 'DDM32Plus-3.0.0-alpha.2-linux-x86_64.zip').write_bytes(b'changed')
+        with self.assertRaisesRegex(SystemExit, 'differs from the manifest'):
+            mr.verify(out, self.public)
+
+    def test_packaging_zip_is_accepted(self):
+        """rust/packaging/make_app_zip.py's zips (what the packaging scripts make) pass --app-rs-zip, deterministically"""
+        sys.path.insert(0, str(rt.PC.parent / 'rust' / 'packaging'))
+        try:
+            import make_app_zip
+        finally:
+            sys.path.pop(0)
+        extra = []
+        for platform, ext in (('windows-x86_64', '.exe'), ('linux-x86_64', ''), ('macos-aarch64', '')):
+            bins = self.top / f'bin-{platform}'
+            bins.mkdir()
+            (bins / f'ddm32-gui{ext}').write_bytes(b'gui ' + platform.encode())
+            (bins / f'ddm32{ext}').write_bytes(b'cli ' + platform.encode())
+            a, b = self.top / f'{platform}-a.zip', self.top / f'{platform}-b.zip'
+            for z in (a, b):
+                with patch('sys.stdout', io.StringIO()):
+                    self.assertEqual(make_app_zip.main([platform, str(bins), str(z)]), 0)
+            self.assertEqual(a.read_bytes(), b.read_bytes())               # the same binaries, the same SHA-256
+            with zipfile.ZipFile(a) as z:
+                self.assertEqual(z.namelist(), [f'DDM32Plus/DDM32Plus{ext}', f'DDM32Plus/ddm32{ext}'])
+                self.assertEqual(z.read(f'DDM32Plus/DDM32Plus{ext}'), b'gui ' + platform.encode())
+            mr.check_app_rs_zip(a, platform)
+            extra += ['--app-rs-zip', f'{platform}={a}']
+        with self.assertRaises(SystemExit):
+            make_app_zip.main(['solaris-sparc', str(self.top), str(self.top / 'x.zip')])
+        code, out, _ = self.run_build(*extra, '--app-rs-version', '3.0.0')
+        self.assertEqual(sorted(mr.verify(out, self.public)['app_rs']), ['linux-x86_64', 'macos-aarch64',
+                                                                         'windows-x86_64'])
+
+    def test_rust_program_is_optional(self):
+        code, out, _ = self.run_build()
+        self.assertNotIn('app_rs', json.loads((out / 'ddm32-manifest.json').read_text(encoding='utf-8')))
+
+    def test_rust_program_zip_refusals(self):
+        ok = self.rs_zip('ok.zip', 'windows-x86_64')
+        cases = [
+            ('needs a version', ['--app-rs-zip', f'windows-x86_64={ok}'], '--app-rs-version'),
+            ('version without zip', ['--app-rs-version', '3.0.0'], 'at least one --app-rs-zip'),
+            ('no =', ['--app-rs-zip', str(ok), '--app-rs-version', '3.0.0'], 'PLATFORM=ZIP'),
+            ('unknown os', ['--app-rs-zip', f'freebsd-x86_64={ok}', '--app-rs-version', '3.0.0'], 'platform'),
+            ('no arch', ['--app-rs-zip', f'windows-={ok}', '--app-rs-version', '3.0.0'], 'platform'),
+            ('unsafe key', ['--app-rs-zip', f'windows-x86/64={ok}', '--app-rs-version', '3.0.0'], 'platform'),
+            ('twice', ['--app-rs-zip', f'windows-x86_64={ok}', '--app-rs-zip', f'windows-x86_64={ok}',
+                       '--app-rs-version', '3.0.0'], 'twice'),
+            ('bad version', ['--app-rs-zip', f'windows-x86_64={ok}', '--app-rs-version', '3.0'], ''),
+            # a Windows zip for a Linux key: the Linux program would find no DDM32Plus/DDM32Plus
+            ('wrong exe', ['--app-rs-zip', f'linux-x86_64={ok}', '--app-rs-version', '3.0.0'], 'DDM32Plus/DDM32Plus'),
+        ]
+        for i, member in enumerate(('DDM32Plus/yedekler/x.txt', 'DDM32Plus/settings.json', 'DDM32Plus/Paketler/a.dpk',
+                                    'DDM32Plus/Guncelleme/a', 'DDM32Plus/unins000.exe', 'Other/x.txt',
+                                    'DDM32Plus/../x', 'DDM32Plus/a:b', 'DDM32Plus/x/backup-manifest.json',
+                                    'DDM32Plus/progmem.bin', 'DDM32Plus\\x.txt')):
+            bad = self.rs_zip(f'bad-rs{i}.zip', 'windows-x86_64', member)
+            cases.append((member, ['--app-rs-zip', f'windows-x86_64={bad}', '--app-rs-version', '3.0.0'], ''))
+        for i, (what, extra, msg) in enumerate(cases):
+            out = self.top / f'r{i}'
+            with self.subTest(what=what), self.assertRaisesRegex((SystemExit, ValueError), msg):
+                self.run_build(*extra, out=out)
+            self.assertFalse(out.exists())
+
+    def test_app_rs_schema_is_checked(self):
+        """check_app_rs holds a manifest to the Rust program's rules (the Python checker ignores the key)"""
+        base = rt.manifest([rt.firmware_entry(fx.release_app('1.0.0'))])
+        entry = dict(rt.app_entry('3.0.0', b'r'), file='DDM32Plus-3.0.0-linux-x86_64.zip',
+                     url=rt.url('v3.0.0', 'DDM32Plus-3.0.0-linux-x86_64.zip'))
+        good = dict(base, app_rs={'linux-x86_64': entry})
+        self.assertIs(mr.check_app_rs(good), good)
+        rt.sm.check_manifest(good)                                    # older checkers accept it unchanged
+        bads = [dict(base, app_rs=[entry]), dict(base, app_rs={'linux x86': entry}),
+                dict(base, app_rs={'beos-x86': entry})]
+        for field, value in (('url', 'https://example.com/DDM32Plus-3.0.0-linux-x86_64.zip'), ('sha256', 'x'),
+                             ('notes', 'text'), ('version', '3.0'), ('size', 0)):
+            bad = json.loads(json.dumps(good))
+            bad['app_rs']['linux-x86_64'][field] = value
+            bads.append(bad)
+        for i, bad in enumerate(bads):
+            with self.subTest(i=i), self.assertRaises(rt.sm.ManifestError):
+                mr.check_app_rs(bad)
+
+    def test_rust_program_reads_the_release(self):
+        """The Rust program's own reader (ddm32 verify-manifest, when it is built in rust/target) verifies the
+        release and unpacks this platform's app_rs zip with its self-update extractor"""
+        import platform as pf
+        import subprocess
+        exe = 'ddm32.exe' if sys.platform == 'win32' else 'ddm32'
+        found = [p for p in (rt.PC.parent / 'rust' / 'target' / d / exe for d in ('debug', 'release')) if p.is_file()]
+        if not found:
+            self.skipTest('the Rust command line is not built (cargo build -p ddm32-cli in rust/)')
+        ddm32 = str(max(found, key=lambda p: p.stat().st_mtime))
+        os_name = {'win32': 'windows', 'darwin': 'macos'}.get(sys.platform, 'linux')
+        arch = {'amd64': 'x86_64', 'x86_64': 'x86_64', 'arm64': 'aarch64', 'aarch64': 'aarch64'}.get(
+            pf.machine().lower(), pf.machine().lower())
+        here = f'{os_name}-{arch}'
+        zips = [('windows-x86_64', 'w.zip'), ('linux-x86_64', 'l.zip'), ('macos-aarch64', 'm.zip')]
+        if here not in dict(zips):
+            zips.append((here, 'h.zip'))
+        extra = []
+        for platform, name in zips:
+            extra += ['--app-rs-zip', f'{platform}={self.rs_zip(name, platform)}']
+        code, out, _ = self.run_build(*extra, '--app-rs-version', '3.0.0-alpha.2')
+        r = subprocess.run([ddm32, 'verify-manifest', str(out), '--public-key', self.public],
+                           capture_output=True, text=True, timeout=120)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for platform, _ in zips:
+            self.assertIn(f'app_rs {platform} 3.0.0-alpha.2 DDM32Plus-3.0.0-alpha.2-{platform}.zip OK', r.stdout)
+        self.assertIn(f'app_rs {here}: unpacks as the self-update expects', r.stdout)
+        # a changed zip: the Rust reader refuses it too
+        (out / f'DDM32Plus-3.0.0-alpha.2-{here}.zip').write_bytes(b'changed')
+        r = subprocess.run([ddm32, 'verify-manifest', str(out), '--public-key', self.public],
+                           capture_output=True, text=True, timeout=120)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn('differs from the manifest', r.stderr)
+
     def test_refusals(self):
         nonpublic = rt.write_plus(self.top / 'np', fx.release_app('1.0.0'), signed_for=False)
         j = json.loads((nonpublic / 'rfoundry_dm32.json').read_text())

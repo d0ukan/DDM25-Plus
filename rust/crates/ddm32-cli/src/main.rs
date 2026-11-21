@@ -29,7 +29,9 @@ file-only commands (no radio):
   plan --backup DIR [--plus RELEASE] [--mode install_plus|install_plus_from_stock|install_plus_quick|restore|restore_stock]
   releases [--offline]                 the signed releases (GitHub, or the verified cache)
   download VERSION                     download and verify a firmware release into surumler/
-  verify-manifest DIR                  check a release folder's signed manifest
+  verify-manifest DIR [--public-key HEX]
+                                       check a release folder's signed manifest, every asset's size and SHA-256,
+                                       and this platform's program zip (app_rs) as the self-update unpacks it
   pack radioid --csv user.csv --out FILE.dpk [--country NAME]... [--name TEXT]
   pack air --out FILE.dpk [--name TEXT] PAGE.pdf|PAGE.txt ...
   pack info FILE.dpk
@@ -157,17 +159,7 @@ fn run(args: &[String]) -> Result<ExitCode, String> {
             println!("verified: {}", folder.display());
             Ok(ExitCode::SUCCESS)
         }
-        "verify-manifest" => {
-            let d = rest.first().ok_or("verify-manifest DIR")?;
-            let m = sm::verify_files(Path::new(d), None, None).map_err(|e| e.0)?;
-            println!(
-                "{}: {} firmware version(s), signed with key {}",
-                m.release,
-                m.firmware.len(),
-                ddm32_core::releases::PUBLIC_KEY_ID
-            );
-            Ok(ExitCode::SUCCESS)
-        }
+        "verify-manifest" => verify_manifest(rest),
         "pack" => pack(rest),
         "tool" => tool(rest),
         "-h" | "--help" | "help" => {
@@ -176,6 +168,56 @@ fn run(args: &[String]) -> Result<ExitCode, String> {
         }
         other => Err(format!("unknown command {other}\n\n{USAGE}")),
     }
+}
+
+/// A release folder as this program reads it: the signature (the embedded key, or --public-key for a test key), every
+/// asset present in the folder against its size and SHA-256, and this platform's `app_rs` zip unpacked by the
+/// self-update's own extractor (into a temporary folder that is removed again). make_release.py's output is checked
+/// with this (pc/tests/test_release_tool.py).
+fn verify_manifest(args: &[String]) -> Result<ExitCode, String> {
+    let d = args.first().filter(|a| !a.starts_with("--")).ok_or("verify-manifest DIR [--public-key HEX]")?;
+    let dir = Path::new(d);
+    let key = opt(args, "--public-key");
+    let m = sm::verify_files(dir, key.as_deref(), None).map_err(|e| e.0)?;
+    let key_id = match &key {
+        Some(k) => sm::key_id(&sm::public_key(Some(k)).map_err(|e| e.0)?),
+        None => ddm32_core::releases::PUBLIC_KEY_ID.to_string(),
+    };
+    println!("{}: {} firmware version(s), signed with key {key_id}", m.release, m.firmware.len());
+    let mut assets: Vec<(String, &ddm32_core::releases::AssetEntry)> =
+        m.firmware.iter().map(|f| ("firmware".to_string(), &f.asset)).collect();
+    for (k, a) in [("app", &m.app), ("app_net", &m.app_net)] {
+        if let Some(a) = a {
+            assets.push((k.to_string(), a));
+        }
+    }
+    for (p, a) in &m.app_rs {
+        assets.push((format!("app_rs {p}"), a));
+    }
+    for (what, a) in &assets {
+        let path = dir.join(&a.file);
+        if !path.is_file() {
+            println!("  {what} {} {} (not in the folder)", a.version, a.file);
+            continue;
+        }
+        let body = std::fs::read(&path).map_err(|e| e.to_string())?;
+        if body.len() as u64 != a.size || sm::sha256_hex(&body) != a.sha256 {
+            return Err(format!("{}: size or SHA-256 differs from the manifest", a.file));
+        }
+        println!("  {what} {} {} OK", a.version, a.file);
+    }
+    let platform = ddm32_core::releases::platform_key();
+    if let Some((_, a)) = m.app_rs.iter().find(|(p, _)| *p == platform) {
+        let zip = dir.join(&a.file);
+        if zip.is_file() {
+            let tmp = std::env::temp_dir().join(format!("ddm32-verify-{}", std::process::id()));
+            let r = su::safe_extract(&zip, &tmp);
+            let _ = std::fs::remove_dir_all(&tmp);
+            r.map_err(|e| format!("{}: {}", a.file, e.0))?;
+            println!("  app_rs {platform}: unpacks as the self-update expects ({})", app_info::EXE_FILE);
+        }
+    }
+    Ok(ExitCode::SUCCESS)
 }
 
 fn save(out: &str, built: &packs::BuiltPack) -> Result<ExitCode, String> {

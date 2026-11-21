@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- SPDX-License-Identifier: GPL-3.0-or-later. Filled in by build-macos.sh (@VERSION@, @SHORT_VERSION@). -->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>tr</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>tr</string>
+        <string>en</string>
+    </array>
+    <key>CFBundleDisplayName</key>
+    <string>DDM32 Plus</string>
+    <key>CFBundleName</key>
+    <string>DDM32 Plus</string>
+    <key>CFBundleExecutable</key>
+    <string>DDM32Plus</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.github.d0ukan.ddm32plus</string>
+    <key>CFBundleIconFile</key>
+    <string>ddm32plus</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@SHORT_VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@SHORT_VERSION@</string>
+    <key>CFBundleGetInfoString</key>
+    <string>DDM32 Plus @VERSION@</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>11.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>d0ukan · TA2DOU, GPL-3.0-or-later</string>
+</dict>
+</plist>
