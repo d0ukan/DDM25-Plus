@@ -101,11 +101,19 @@ install is locked and the page points to "Yedekler ve geri dönüş".
 
 ### Still to do in stage 2
 
-- Keyboard order and screen reader labels checked on each platform; high-DPI screenshots.
+- Done 2026-11-21 (third run): keyboard order, Enter on the primary button, screen reader names, 150 % / 200 %
+  scaling (tests `a11y.rs`, `hidpi.rs`; README "Keyboard, screen readers, high DPI"). Still to try by hand: Narrator,
+  Orca and VoiceOver on real desktops.
 - A first real run on the owner's radio, one approved step at a time, compared with the C# program (backup byte
   compare first, then plan, then install), following firmware/docs/plus-radio-test.md.
 
-## Stage 3: packaging (planned)
+## Stage 3: packaging (scripts done 2026-11-21, nothing published)
+
+Scripts: `packaging/linux/build-linux.sh` (AppImage with an appimagetool you supply, `--deb`, `--appdir-only`),
+`packaging/macos/build-macos.sh` (.app + .dmg, ad-hoc signed; the workflow's `macos-app` job on rust-app),
+`packaging/make_app_zip.py` (the `app_rs` update zip per platform), `pc/release/make_release.py --app-rs-zip
+PLATFORM=ZIP` (repeatable) to list them in a signed release. See README "Packages". The macOS .dmg is per CPU
+(`macos-aarch64` from macos-latest); a universal `lipo` build is left for later.
 
 | OS | Package | Notes |
 |---|---|---|

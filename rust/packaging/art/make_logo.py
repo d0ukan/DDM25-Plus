@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Makes the window's logo (rust/crates/ddm32-gui/ui/logo-light.png, logo-dark.png) from the owner's drawing
 art/mark-src.png (the same art as the C# program's icon): the radio "D" with its antenna arcs and the orange key, and
-"DDM32+" under it, on a transparent background.
+"DDM32+" under it, on a transparent background; and the Linux / macOS icon rust/packaging/art/ddm32plus.png.
 
 dark: the white strokes stay white (for the dark theme); light: they take the light theme's text colour #15181d.
 The orange stays orange in both (a little darker on light, so it still reads on white). Needs Pillow; deterministic:
@@ -42,6 +42,17 @@ def make(theme):
     return out.size
 
 
+def make_icon():
+    """The Linux / macOS application icon (rust/packaging/art/ddm32plus.png, 256x256): the C# program's icon, its
+    largest frame, so all three systems show the same picture."""
+    ico = Image.open(REPO / 'win' / 'src' / 'DDM32Plus' / 'Assets' / 'ddm32plus.ico')
+    ico.size = (256, 256)
+    icon = ico.convert('RGBA')
+    icon.save(Path(__file__).resolve().parent / 'ddm32plus.png', optimize=True)
+    return icon.size
+
+
 if __name__ == '__main__':
     for t in ('light', 'dark'):
         print(t, make(t))
+    print('icon', make_icon())
