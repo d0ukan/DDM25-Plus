@@ -304,6 +304,29 @@ channel; the search stops by itself 5 s after its screen was left. Code: `integr
 Tests: `tests/plus/test_p25search.c` (engine) and `test_plus_p25search_sm` in `tests/classic/test_scan.inc` (the real
 state machine and native admission: sweep, any-NAC probe, found list, give back, skip, PTT never keys).
 
+**Found list key (2026-11-21, owner: "how many frequencies, which NAC, which group have traffic").** The P25, DMR and
+all digital searches keep ONE entry per frequency + mode + code (P25 NAC, DMR colour code, YSF DG-ID, NXDN RAN) +
+group (P25 talkgroup, DMR / NXDN talkgroup or called ID; YSF none: its entry holds the last callsign), 8 at most. A
+call there updates that entry (calls + 1, heard time, last source) and moves it to the top; a new key goes on top and
+the oldest entry drops when the list is full. A report that doesn't know the code or the group yet (P25: the NAC reads
+0xFFFF, no link control yet; DMR: no colour code / LC yet) goes to the entry the probe already holds, or the newest
+entry of that frequency and mode it fits; the P25 search starts no entry without a NAC. When the group then turns out
+to be another one within 1.5 s (`P25S_MOVE_MS`, `DMRS_MOVE_MS`: the call's link control came late, or a reply on the
+other slot still carried the last call's talkgroup), the call just counted moves to its own entry. Two entries of one
+frequency and mode therefore always differ in a code or group both know. Revisits read a frequency with several
+entries once a round. The PC search log (`p25s` / `dmrs` / `alls` sections, `searchlog_view.c`) is unchanged.
+Root cause of the beta.7 duplicate (159.125 NAC $178 TG 1 listed with 1 and 2 calls, the PC log flipping between
+them): the P25 search keyed by frequency + NAC and took the NAC from `voice.active_nac`, which the decoder resets to
+`P25_NAC_ANY` (0xFFFF) after a terminator (TDU) and a frame that failed, while the frame counter still moved; that
+report started a second entry for the same frequency, with the talkgroup and source of the last caller (taken even
+when no new caller had been heard on this frequency, `native_lab.c` now compares the caller sequence with the take).
+Tests: `test_found_key` in `tests/plus/test_p25search.c` and `test_dmrsearch.c`, the key block in
+`tests/plus/test_allsearch.c`, the terminator and stale caller steps of `test_plus_p25search_sm`.
+The search screens' Up / Down pick keeps the entry's key too (not only its frequency), so every entry of a
+frequency can be picked and saved. Budget (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild
+identical, the least free prvIdleTask 136 B): `ddm25` 8e4647d FLASH 844,896 B, RAM 209,608 B (1,848 free); this
+branch FLASH 845,652 B (+756), RAM 209,640 B (+32, 1,816 free).
+
 The channel scan of saved P25 channels (P25 scan above) with NAC F7E, TG 0 and RX only also listens to any NAC and
 talkgroup; its dwell is 150 ms a channel (Settings: scan dwell).
 

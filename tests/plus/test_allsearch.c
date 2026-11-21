@@ -259,6 +259,58 @@ int main(void)
 	CHECK(dmrs_snapshot_all(&v) && v.found_n == 5 && v.found[0].hz == 438100000u &&
 	      v.found[0].mode == DMRS_MODE_DMR && v.found[2].hz == 438100000u && v.found[2].mode == DMRS_MODE_YSF);
 
+	/* --- The found list's key (owner 2026-11-21): frequency + mode + code + group, one entry with a call counter --- */
+	{
+		const uint32_t F = 438500000u;
+		while (dmrs_at_hz() != F) {
+			dmrs_snapshot_all(&v);
+			dmrs_sweep(-124, now += POLL_MS, &hit);
+		}
+		hit = false;
+		for (unsigned i = 0; i < 6u && !hit; i++)
+			dmrs_sweep(-70, now += POLL_MS, &hit);
+		CHECK(hit && dmrs_mode() == DMRS_MODE_P25);
+		h = nothing();
+		h.bursts = 9;
+		h.cc = 0x1C8;
+		h.call = h.group = true;
+		h.dst = 655;
+		h.src = 1234567;
+		hold(&h, 500u);
+		/* the terminator: the native receiver's NAC reads "any" (0xFFFF = DMRS_CC_NONE), the same entry */
+		h.cc = DMRS_CC_NONE;
+		h.bursts = 10;
+		hold(&h, 200u);
+		CHECK(dmrs_snapshot_all(&v) && v.found[0].hz == F && v.found[0].mode == DMRS_MODE_P25 && v.found[0].cc == 0x1C8 &&
+		      v.found[0].dst == 655 && v.found[0].calls == 1 && v.found_n == 6 && v.found[1].hz != F);
+		h.call = false;
+		CHECK(hold(&h, 5000u) != 0 && dmrs_phase() == DMRS_SWEEP);
+		/* hit again: P25 first (its find's mode); the same NAC, another talkgroup: its own entry */
+		while (dmrs_at_hz() != F) {
+			dmrs_snapshot_all(&v);
+			dmrs_sweep(-124, now += POLL_MS, &hit);
+		}
+		hit = false;
+		for (unsigned i = 0; i < 6u && !hit; i++)
+			dmrs_sweep(-70, now += POLL_MS, &hit);
+		CHECK(hit && dmrs_mode() == DMRS_MODE_P25);
+		h = nothing();
+		h.bursts = 9;
+		h.cc = 0x1C8;
+		h.call = h.group = true;
+		h.dst = 656;
+		h.src = 7654321;
+		hold(&h, 500u);
+		h.call = false;
+		CHECK(hold(&h, 5000u) != 0);
+		CHECK(dmrs_snapshot_all(&v) && v.found_n == 7 && v.found[0].hz == F && v.found[0].dst == 656 &&
+		      v.found[0].calls == 1 && v.found[1].hz == F && v.found[1].dst == 655 && v.found[1].calls == 1);
+		for (unsigned i = 0; i < v.found_n; i++)
+			for (unsigned j = i + 1u; j < v.found_n; j++)
+				CHECK(!(v.found[i].hz == v.found[j].hz && v.found[i].mode == v.found[j].mode &&
+					v.found[i].cc == v.found[j].cc && v.found[i].dst == v.found[j].dst));
+	}
+
 	/* --- Nobody looks (the screen was left): it stops; the DMR search's screen keeps nothing alive --- */
 	t0 = now;
 	while (dmrs_on() && now - t0 < 20000u) {

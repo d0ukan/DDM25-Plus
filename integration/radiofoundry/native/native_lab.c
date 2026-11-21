@@ -197,6 +197,8 @@ static uint32_t search_taken_ms, search_hz, search_frames0;
  * since it took the frequency and hands it back when the engine moves on (the next mode, the sweep, a stop). The
  * caller's sequence at the take (a call heard before is not this frequency's) */
 static bool search_all;
+#endif
+#if CONFIG_ALL_SEARCH || CONFIG_P25_CALLER
 static uint32_t search_seq0;
 #endif
 static void search_take(radio_sm_t *sm)
@@ -225,6 +227,12 @@ static void search_take(radio_sm_t *sm)
 #endif
         dmrs_retuned(search_taken_ms);    /* the mode's window starts now */
     }
+#endif
+#if CONFIG_P25_CALLER
+#if CONFIG_ALL_SEARCH
+    if(!search_all)
+#endif
+    search_seq0=p25_lab_p25_caller(NULL,NULL);  /* the P25 search: a caller heard before is not this frequency's */
 #endif
     search_owned=true;search_release=search_was_p25=false;
     channel_selected=live_enabled=live_rx_pending=true;
@@ -300,7 +308,7 @@ static void search_service(radio_sm_t *sm)
             uint16_t tg=0;
             uint32_t src=0;
 #if CONFIG_P25_CALLER
-            p25_lab_p25_caller(&tg,&src);
+            if(p25_lab_p25_caller(&tg,&src)==search_seq0) { tg=0;src=0; }   /* no call heard here yet: not the last one's */
 #endif
             p25s_probe_found(nac,tg,src,now);
             search_was_p25=true;

@@ -35,6 +35,7 @@ static uint8_t range_i = R_1M;
 #define sv	(ui_scratch.p25s)
 #if CONFIG_FIND_SAVE
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
+static uint32_t sel_key;	/* ... and its NAC and talkgroup (a frequency may have more entries) */
 #endif
 
 #if !CONFIG_SEARCH_RANGE
@@ -81,13 +82,25 @@ static bool snap(void)
 }
 
 #if CONFIG_FIND_SAVE
-/* The picked find's row in the snapshot, -1 = none */
+static void pick_row(int r)
+{
+	sel_hz = sv.found[r].hz;
+	sel_key = (uint32_t)sv.found[r].nac << 16 | sv.found[r].tg;
+}
+
+/* The picked find's row in the snapshot (its frequency's first entry when its key has changed since), -1 = none */
 static int sel_row(void)
 {
-	for (uint8_t i = 0; sel_hz != 0 && i < sv.found_n; i++)
-		if (sv.found[i].hz == sel_hz)
+	int first = -1;
+	for (uint8_t i = 0; sel_hz != 0 && i < sv.found_n; i++) {
+		if (sv.found[i].hz != sel_hz)
+			continue;
+		if (((uint32_t)sv.found[i].nac << 16 | sv.found[i].tg) == sel_key)
 			return i;
-	return -1;
+		if (first < 0)
+			first = i;
+	}
+	return first;
 }
 
 bool ui_p25search_find(uint8_t i, findsave_item_t *out)
@@ -275,7 +288,7 @@ static bool p25s_key(const input_event_t *ev)
 		if (!have || r < 0 || sv.found_n == 0)
 			sel_hz = 0;
 		else
-			sel_hz = sv.found[r < sv.found_n ? r : sv.found_n - 1].hz;
+			pick_row(r < sv.found_n ? r : sv.found_n - 1);
 		ui_dirty();
 		return true;
 	}

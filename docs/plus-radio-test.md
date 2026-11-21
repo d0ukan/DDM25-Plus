@@ -694,3 +694,13 @@ keyed in any row. The other radio sends on 433.500 (or a free authorised frequen
 | AD-12 | Tools > DMR search after AD-3..AD-5; then back to All digital search, OK | DMR search starts with an empty list; the all digital search's list was cleared by it (the two share one list) |
 | AD-13 | The PC programmer's search log during AD-3..AD-6 | a row per call with the mode P25 / DMR / YSF / NXDN, its code ($659, CC1, DG0, RAN1), the YSF callsign in the caller column |
 | AD-14 | Turkish: Settings > Language Türkçe, open the screen | title "Tüm dijital arama", "Durdu: OK başlatır" / "Tarama ..." / "Deneme P25 ..." texts fit the screen |
+
+### Found list: one entry per frequency + code + group (branch `finds`)
+
+| # | Steps | Expected |
+|---|---|---|
+| FL-1 | P25 search around the source (e.g. 159.125 NAC $178 TG 1, or 433.500 NAC $659 TG 101); five calls a minute apart, short and long, the screen and the PC search log open | ONE entry for the frequency (never twice, also right after a call ends); the PC log's line for it counts 5 calls; the entry's TG and ID are the call's |
+| FL-2 | The same frequency and NAC, the other radio on another talkgroup (e.g. TG 102), then back on TG 101 | two entries for the frequency (TG 101, TG 102), each with its own calls on the PC; the one heard last on top |
+| FL-3 | The same frequency, another NAC (e.g. $293) | its own entry; FL-1's entries unchanged |
+| FL-4 | DMR search: calls on TG 91 and TG 9 (TS1 / TS2 or one after the other) on one frequency; then All digital search with FL-1..FL-3 | DMR: one entry per talkgroup with its calls; all digital: the same per mode, a mixed P25 / DMR frequency one entry per mode and group |
+| FL-5 | More than 8 keys found | the oldest (least recently heard) entry drops, the new one on top |

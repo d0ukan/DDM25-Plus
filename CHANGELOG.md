@@ -5,6 +5,11 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+- Search found lists (P25 search, DMR search, All digital search): one entry per frequency + mode + NAC / colour code
+  / DG-ID / RAN + talkgroup, with a call counter, the most recently heard on top; another talkgroup or NAC on the same
+  frequency is an entry of its own. The beta.7 candidate listed 159.125 twice (calls 1 and 2): the native receiver's
+  NAC reads "any" (0xFFFF) after a terminator or a damaged frame and the P25 search took that as another NAC; a found
+  entry also no longer takes the talkgroup and source of a call heard before the probe (another frequency's).
 - Air watch in AM: Home's top bar said "FM DUAL" (and a two-frequency airfield's panes "VFO FM") although every air
   letter is received in AM; it now says "AM DUAL" / "VFO AM". A priority channel set in Settings is no longer a stop
   of the air watch's ring (it put the user's FM channel in the middle of it); your own scans and watches keep it.

@@ -18,6 +18,9 @@ static uint32_t reads_seen, read_ms, epoch;
 static uint32_t resume_hz;
 static uint8_t since_revisit, revisit_i;
 static bool revisiting;
+/* The found list's key (p25search.h): found[0] is the entry of the probe held now (held), a call counted there and when */
+static bool held, credited;
+static uint32_t credit_ms;
 #if CONFIG_SEARCH_FAST
 /* The faster sweep (P25S_QUICK_MS): the step's stage, the step before it when only its quick reading was taken, and
  * the step a look back came from */
@@ -79,7 +82,10 @@ static uint32_t revisit_pick(uint32_t now_ms)
 	for (unsigned k = 0; k < s.found_n; k++) {
 		revisit_i = (uint8_t)((revisit_i + 1u) % s.found_n);
 		uint32_t hz = s.found[revisit_i].hz;
-		if (hz >= s.lo_hz && hz <= s.hi_hz && !skipped(hz, now_ms))
+		bool again = false;	/* a frequency with more entries (NACs, talkgroups) is read once a round */
+		for (unsigned j = 0; j < revisit_i && !again; j++)
+			again = s.found[j].hz == hz;
+		if (!again && hz >= s.lo_hz && hz <= s.hi_hz && !skipped(hz, now_ms))
 			return hz;
 	}
 	return 0;
@@ -142,6 +148,7 @@ uint32_t p25s_start(uint32_t lo_hz, uint32_t hi_hz, uint32_t step_hz, uint32_t n
 	revisiting = false;
 	since_revisit = revisit_i = 0;
 	resume_hz = 0;
+	held = false;
 #if CONFIG_SEARCH_FAST
 	stage = ST_QUICK;
 	prev_hz = 0;
@@ -189,6 +196,7 @@ uint32_t p25s_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	if (strong && !skipped(s.at_hz, now_ms)) {
 		s.phase = P25S_PROBE;
 		s.hits++;
+		held = false;	/* a new probe: no entry of it yet */
 #if CONFIG_SEARCH_FAST
 		stage = ST_QUICK;
 		prev_hz = 0;
@@ -219,37 +227,87 @@ uint32_t p25s_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	return s.at_hz;
 }
 
+/* The found list's key (p25search.h): frequency + NAC + talkgroup. An entry fits a report when the frequency is the
+ * same and the NAC and talkgroup are the same or not known on one side; the same key: all three equal */
+static bool fits(const p25s_found_t *f, uint16_t nac, uint16_t tg)
+{
+	return f->hz == s.at_hz && (f->nac == nac || f->nac == P25S_NAC_NONE || nac == P25S_NAC_NONE) &&
+	       (f->tg == tg || f->tg == 0 || tg == 0);
+}
+
+/* Entry i to the top (newest first) */
+static void to_front(unsigned i)
+{
+	p25s_found_t f = s.found[i];
+	memmove(&s.found[1], &s.found[0], i * sizeof f);
+	s.found[0] = f;
+}
+
+/* The entry a report goes to, moved to the top: the newest that fits (two entries of a frequency always differ in a NAC
+ * or talkgroup both know, so a report knowing both fits one at most), else a new one on top (the oldest drops when the
+ * list is full; none without a NAC). False: none */
+static bool pick(uint16_t nac, uint16_t tg, bool *fresh)
+{
+	unsigned i = 0;
+	while (i < s.found_n && !fits(&s.found[i], nac, tg))
+		i++;
+	if (i < s.found_n) {
+		to_front(i);
+		*fresh = false;
+		return true;
+	}
+	if (nac == P25S_NAC_NONE)
+		return false;
+	if (s.found_n < P25S_FOUND_MAX)
+		s.found_n++;
+	memmove(&s.found[1], &s.found[0], (size_t)(s.found_n - 1u) * sizeof s.found[0]);
+	memset(&s.found[0], 0, sizeof s.found[0]);
+	s.found[0].hz = s.at_hz;
+	s.found[0].nac = P25S_NAC_NONE;
+	*fresh = true;
+	return true;
+}
+
 void p25s_probe_found(uint16_t nac, uint16_t tg, uint32_t src, uint32_t now_ms)
 {
 	if (s.phase != P25S_PROBE)
 		return;
+	if (nac > 0xFFFu)
+		nac = P25S_NAC_NONE;	/* no NAC known (the receiver's "any" after a terminator or a damaged frame) */
 	begin_write();
 	if (!s.playing)
 		s.probes_p25++;
 	s.playing = true;
-	unsigned i = 0;
-	while (i < s.found_n && !(s.found[i].hz == s.at_hz && s.found[i].nac == nac))
-		i++;
-	p25s_found_t f;
-	if (i < s.found_n) {
-		f = s.found[i];
-		memmove(&s.found[1], &s.found[0], i * sizeof f);	/* to the front */
+	bool fresh = false, call;
+	if (held && fits(&s.found[0], nac, tg)) {
+		call = now_ms - s.found[0].heard_ms > P25S_CALL_GAP_MS;	/* the probe's entry (on top) */
 	} else {
-		memset(&f, 0, sizeof f);
-		if (s.found_n < P25S_FOUND_MAX)
-			s.found_n++;
-		memmove(&s.found[1], &s.found[0], (size_t)(s.found_n - 1u) * sizeof f);
+		/* Not held yet, or the report names another NAC / talkgroup than the held entry's: that key's entry. A call
+		 * just counted on the held entry was this one's (its link control came late) */
+		bool moved = held && credited && now_ms - credit_ms < P25S_MOVE_MS;
+		if (!pick(nac, tg, &fresh)) {
+			end_write();
+			return;
+		}
+		if (moved && s.found[1].calls)
+			s.found[1].calls--;	/* the held entry, one down now */
+		held = true;
+		credited = false;
+		call = fresh || moved || s.found[0].heard_ms == 0 || now_ms - s.found[0].heard_ms > P25S_CALL_GAP_MS;
 	}
-	if (f.hz != s.at_hz || f.heard_ms == 0 || now_ms - f.heard_ms > 3000u)
-		f.calls++;
-	f.hz = s.at_hz;
-	f.nac = nac;
-	if (tg)
-		f.tg = tg;
+	p25s_found_t *f = &s.found[0];
+	if (f->nac == P25S_NAC_NONE)
+		f->nac = nac;
+	if (f->tg == 0)
+		f->tg = tg;
 	if (src)
-		f.src = src;
-	f.heard_ms = now_ms;
-	s.found[0] = f;
+		f->src = src;
+	if (call) {
+		f->calls++;
+		credited = true;
+		credit_ms = now_ms;
+	}
+	f->heard_ms = now_ms;
 	end_write();
 }
 
@@ -262,6 +320,7 @@ uint32_t p25s_probe_done(bool was_p25, uint32_t now_ms)
 	begin_write();
 	s.playing = false;
 	s.phase = P25S_SWEEP;
+	held = false;
 	if (revisiting) {
 		revisiting = false;	/* a revisit's probe: the sweep goes on where it was */
 		s.at_hz = resume_hz;

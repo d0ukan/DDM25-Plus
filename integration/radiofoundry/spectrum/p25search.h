@@ -31,6 +31,16 @@
 #define P25S_SKIP_MAX		8u
 #define P25S_REVISIT_STEPS	16u	/* a found frequency in the range is read again after this many steps */
 #define P25S_IDLE_MS		5000u	/* the screen didn't read the search this long (it was left): it stops */
+/* The found list (owner 2026-11-21: how many frequencies, which NAC, which talkgroup have traffic): ONE entry per
+ * frequency + NAC + talkgroup with a call counter. A probe's report updates its key's entry (calls, when heard, the
+ * last source) and moves it to the top; a new key goes on top and the oldest entry drops when the list is full. A
+ * report may not know the NAC (P25S_NAC_NONE: the receiver's NAC after a terminator or a damaged frame) or the
+ * talkgroup (0: no link control yet): it updates the entry the probe holds, or the newest one that fits, and starts
+ * no entry without a NAC. A call counted on an entry whose talkgroup then turns out another within P25S_MOVE_MS moves
+ * to the right one */
+#define P25S_NAC_NONE		0xFFFFu
+#define P25S_CALL_GAP_MS	3000u	/* heard again after this long: a new call */
+#define P25S_MOVE_MS		1500u
 
 typedef enum { P25S_OFF, P25S_SWEEP, P25S_PROBE } p25s_phase_t;
 

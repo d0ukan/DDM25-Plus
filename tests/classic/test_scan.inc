@@ -14,7 +14,11 @@ static uint16_t ps_nac, ps_tg;
 static uint32_t ps_src;
 uint32_t p25_lab_channel_frames(uint32_t *last_ms, uint16_t *heard_nac)
 { if(last_ms)*last_ms=ps_frame_ms; if(heard_nac)*heard_nac=ps_nac; return ps_frames; }
-uint32_t p25_lab_p25_caller(uint16_t *tg, uint32_t *src) { if(tg)*tg=ps_tg; if(src)*src=ps_src; return ps_frames; }
+/* The caller's sequence follows the frames, unless frozen (no new caller heard: tg / src are the last one's) */
+static bool ps_caller_frozen;
+static uint32_t ps_caller_seq;
+uint32_t p25_lab_p25_caller(uint16_t *tg, uint32_t *src)
+{ if(tg)*tg=ps_tg; if(src)*src=ps_src; return ps_caller_frozen?ps_caller_seq:ps_frames; }
 static void test_plus_p25search_sm(void);
 #endif
 
@@ -232,6 +236,10 @@ static void test_plus_p25search_sm(void)
     for(int i=0;i<40;i++){ if(i%9==0){ps_frames++;ps_frame_ms=now;ps_nac=0x1C8;ps_tg=655;ps_src=1234567;} now+=20;classic_pump(); }
     CHECK(p25s_snapshot(&v) && v.playing && v.found_n==1 && v.found[0].hz==433500000u && v.found[0].nac==0x1C8 &&
           v.found[0].tg==655 && v.found[0].src==1234567 && native_lab_owns());
+    /* the terminator: the receiver's NAC reads "any" (0xFFFF) after it; the same entry, no second one (beta.7) */
+    ps_frames++;ps_frame_ms=now;ps_nac=0xFFFFu;
+    for(int i=0;i<5;i++){ now+=20;classic_pump(); }
+    CHECK(p25s_snapshot(&v) && v.found_n==1 && v.found[0].nac==0x1C8 && v.found[0].tg==655 && v.found[0].calls==1);
     /* the call ends: given back 1.5 s after the last frame, the sweep resumes at the next step */
     for(int i=0;i<200 && native_lab_owns();i++){ now+=10;classic_pump(); }
     CHECK(!native_lab_owns() && p25s_phase()==P25S_SWEEP && p25s_at_hz()==433512500u);
@@ -245,6 +253,12 @@ static void test_plus_p25search_sm(void)
     /* PTT during a probe: consumed, the search stops, nothing is keyed */
     for(int i=0;i<4000 && !native_lab_owns();i++) ps_step();    /* the next pass: 433.500 again */
     CHECK(native_lab_owns() && p25s_at_hz()==433500000u);
+    /* P25 there, but no new caller since the take: the last caller's talkgroup (another frequency's, a call ago) is
+     * not this frequency's; the frames go to its entry, no entry for a stale talkgroup */
+    ps_caller_frozen=true;ps_caller_seq=ps_frames;ps_tg=999;ps_src=42;
+    for(int i=0;i<20;i++){ if(i%9==0){ps_frames++;ps_frame_ms=now;ps_nac=0x1C8;} now+=20;classic_pump(); }
+    CHECK(p25s_snapshot(&v) && v.found_n==1 && v.found[0].tg==655 && v.found[0].src==1234567);
+    ps_caller_frozen=false;
     radio_req_t ptt={.type=RREQ_PTT,.arg=1};
     CHECK(native_lab_request(&sm,&ptt)==1);
     for(int i=0;i<50;i++){ now+=10;classic_pump(); }

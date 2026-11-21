@@ -41,6 +41,7 @@ static const char *const range_names[R_COUNT] = { "+-500 kHz", "+-1 MHz", "+-2.5
 static uint8_t range_i = R_1M;
 #endif
 static uint32_t sel_hz;		/* the find picked with Up / Down, 0 = none */
+static uint32_t sel_code, sel_dst;	/* ... and its mode, code and group (a frequency may have more entries) */
 #if CONFIG_ALL_SEARCH
 static bool all;		/* the screen is Tools > All digital search (its enter sets it) */
 #else
@@ -107,13 +108,26 @@ static void sb_mhz4(sbuf_t *b, uint32_t hz)
 	sb_u32(b, (hz / 100u) % 10000u, 4);
 }
 
-/* The picked find's row in the snapshot, -1 = none */
+static void pick_row(int r)
+{
+	sel_hz = sv.found[r].hz;
+	sel_code = (uint32_t)sv.found[r].mode << 16 | sv.found[r].cc;
+	sel_dst = sv.found[r].dst;
+}
+
+/* The picked find's row in the snapshot (its frequency's first entry when its key has changed since), -1 = none */
 static int sel_row(void)
 {
-	for (uint8_t i = 0; sel_hz != 0 && i < sv.found_n; i++)
-		if (sv.found[i].hz == sel_hz)
+	int first = -1;
+	for (uint8_t i = 0; sel_hz != 0 && i < sv.found_n; i++) {
+		if (sv.found[i].hz != sel_hz)
+			continue;
+		if (((uint32_t)sv.found[i].mode << 16 | sv.found[i].cc) == sel_code && sv.found[i].dst == sel_dst)
 			return i;
-	return -1;
+		if (first < 0)
+			first = i;
+	}
+	return first;
 }
 
 /* The search's request: this screen's kind */
@@ -430,7 +444,7 @@ static bool dmrs_key(const input_event_t *ev)
 		if (!have || r < 0 || sv.found_n == 0)
 			sel_hz = 0;
 		else
-			sel_hz = sv.found[r < sv.found_n ? r : sv.found_n - 1].hz;
+			pick_row(r < sv.found_n ? r : sv.found_n - 1);
 		ui_dirty();
 		return true;
 	}

@@ -50,6 +50,125 @@ static uint32_t hold(const dmrs_heard_t *h, uint32_t ms)
 	return 0;
 }
 
+/* Sweep (quiet) to `hz` and make it a hit there: the probe holds it */
+static void probe_at(uint32_t hz)
+{
+	dmrs_view_t v;
+	bool hit = false;
+	for (unsigned i = 0; i < 40000u && dmrs_at_hz() != hz; i++) {
+		dmrs_snapshot(&v);
+		dmrs_sweep(-124, now += POLL_MS, &hit);
+	}
+	for (unsigned i = 0; i < 6u && !hit; i++)
+		dmrs_sweep(-70, now += POLL_MS, &hit);
+	CHECK(hit && dmrs_at_hz() == hz && dmrs_phase() == DMRS_PROBE);
+}
+
+static unsigned entries_at(const dmrs_view_t *v, uint32_t hz)
+{
+	unsigned n = 0;
+	for (unsigned i = 0; i < v->found_n; i++)
+		n += v->found[i].hz == hz;
+	return n;
+}
+
+static const dmrs_found_t *entry(const dmrs_view_t *v, uint32_t hz, uint16_t cc, uint32_t dst)
+{
+	for (unsigned i = 0; i < v->found_n; i++)
+		if (v->found[i].hz == hz && v->found[i].cc == cc && v->found[i].dst == dst)
+			return &v->found[i];
+	return NULL;
+}
+
+/* The found list keyed by frequency + mode + color code + group (owner 2026-11-21): calls of one key are ONE entry with
+ * a call counter, another talkgroup (or color code) on the same frequency is its own entry; reports that don't name
+ * the color code or the talkgroup yet go to the entry the probe holds or the newest that fits; a call counted before
+ * its talkgroup was heard moves to its own entry */
+static void test_found_key(void)
+{
+	const uint32_t F = 433800000u;
+	dmrs_view_t v;
+	dmrs_heard_t h;
+	const dmrs_found_t *e;
+	dmrs_start(433000000u, 434000000u, 12500u, now);
+	/* A repeater with a call on TG 91: bursts first (no color code, no talkgroup), then the call */
+	probe_at(F);
+	memset(&h, 0, sizeof h);
+	h.cc = DMRS_CC_NONE;
+	h.bursts = 3;
+	h.sync_mask = DMRS_SYNC_BS;
+	hold(&h, 50u);
+	h.cc = 1;
+	h.ts_mask = 1;
+	hold(&h, 50u);
+	h.call = h.group = true;
+	h.dst = 91;
+	h.src = 2860001;
+	hold(&h, 1000u);
+	CHECK(dmrs_snapshot(&v) && entries_at(&v, F) == 1 && v.found[0].cc == 1 && v.found[0].dst == 91 &&
+	      v.found[0].calls == 1);
+	/* a reply in the hang, the same talkgroup: the same entry, a second call */
+	h.call = false;
+	hold(&h, 500u);
+	h.call = true;
+	h.src = 2860002;
+	hold(&h, 1000u);
+	CHECK(dmrs_snapshot(&v) && entries_at(&v, F) == 1 && v.found[0].calls == 2 && v.found[0].src == 2860002);
+	/* then a call on TG 9 on the other slot: the call starts with the last call's talkgroup still in the reports
+	 * (counted on TG 91), its own link control moves it to a new entry for TG 9 */
+	h.call = false;
+	hold(&h, 500u);
+	h.call = true;
+	h.ts_mask = 3;
+	hold(&h, 100u);
+	CHECK(dmrs_snapshot(&v) && v.found[0].dst == 91 && v.found[0].calls == 3);
+	h.dst = 9;
+	h.src = 2860003;
+	hold(&h, 1000u);
+	CHECK(dmrs_snapshot(&v) && entries_at(&v, F) == 2 && v.found[0].dst == 9 && v.found[0].calls == 1 &&
+	      v.found[0].src == 2860003 && (e = entry(&v, F, 1, 91)) && e->calls == 2);
+	h.call = false;
+	CHECK(hold(&h, 5000u) != 0 && dmrs_phase() == DMRS_SWEEP);
+	/* Hit again later (a revisit or the next pass): TG 91 again, the reports without a talkgroup first */
+	probe_at(F);
+	memset(&h, 0, sizeof h);
+	h.cc = DMRS_CC_NONE;
+	h.bursts = 3;
+	hold(&h, 50u);
+	h.cc = 1;
+	h.call = h.group = true;
+	hold(&h, 100u);
+	h.dst = 91;
+	h.src = 2860001;
+	hold(&h, 1000u);
+	CHECK(dmrs_snapshot(&v) && entries_at(&v, F) == 2 && v.found[0].dst == 91 && v.found[0].calls == 3 &&
+	      (e = entry(&v, F, 1, 9)) && e->calls == 1);
+	h.call = false;
+	CHECK(hold(&h, 5000u) != 0);
+	/* Another color code on the same frequency: its own entry */
+	probe_at(F);
+	memset(&h, 0, sizeof h);
+	h.bursts = 3;
+	h.cc = 2;
+	h.call = h.group = true;
+	h.dst = 91;
+	hold(&h, 500u);
+	CHECK(dmrs_snapshot(&v) && entries_at(&v, F) == 3 && v.found[0].cc == 2 && v.found[0].dst == 91 &&
+	      v.found[0].calls == 1);
+	h.call = false;
+	CHECK(hold(&h, 5000u) != 0);
+	/* Never two entries of one key; the PC's log sees the same */
+	for (unsigned i = 0; i < v.found_n; i++)
+		for (unsigned j = i + 1u; j < v.found_n; j++)
+			CHECK(!(v.found[i].hz == v.found[j].hz && v.found[i].cc == v.found[j].cc &&
+				v.found[i].dst == v.found[j].dst));
+	dmrs_peek_t pk;
+	unsigned n = 0;
+	for (unsigned i = 0; dmrs_peek(i, &pk); i++)
+		n += pk.f.hz == F;
+	CHECK(n == 3);
+}
+
 int main(void)
 {
 	dmrs_view_t v;
@@ -126,13 +245,15 @@ int main(void)
 	/* (the hit may be a revisit: then the sweep goes on where it was, not from the next step) */
 	CHECK(hold(&h, 5000u) != 0 && now - t0 >= DMRS_LATE_MS && now - t0 <= DMRS_LATE_MS + POLL_MS);
 	CHECK(run(one, 81u * 8u) == 433500000u);	/* probed again on the next pass */
-	/* an encrypted call: noted as such, not held for it */
+	/* an encrypted call: noted as such, not held for it; another talkgroup there: an entry of its own (the found list
+	 * is keyed by frequency + mode + color code + group), TG 2620's keeps its two calls */
 	h.other = true;
 	h.dst = 9;
 	h.group = true;
 	h.src = 1234;
 	CHECK(hold(&h, 5000u) != 0);
-	CHECK(dmrs_snapshot(&v) && v.found_n == 1 && v.found[0].enc && v.found[0].dst == 9 && v.found[0].calls == 2);
+	CHECK(dmrs_snapshot(&v) && v.found_n == 2 && v.found[0].enc && v.found[0].dst == 9 && v.found[0].calls == 0 &&
+	      v.found[1].dst == 2620 && v.found[1].calls == 2 && !v.found[1].enc);
 
 	/* A carrier that isn't DMR: given up after DMRS_PROBE_MS and skipped for DMRS_SKIP_MS */
 	uint32_t first = run(two, 81u * 8u);	/* 433.5 may come first: it was found, so it is revisited */
@@ -162,12 +283,13 @@ int main(void)
 		hold(&h, 5000u);
 		now += 7u * pass;	/* another phase next time */
 	}
-	CHECK(dmrs_snapshot(&v) && v.found[0].hz == 433500000u && v.found[0].cc == 7 &&
-	      v.found[0].sync_mask == (DMRS_SYNC_BS | DMRS_SYNC_MS));
+	/* (another color code on the same frequency: its own entry, one for every pass) */
+	CHECK(dmrs_snapshot(&v) && v.found[0].hz == 433500000u && v.found[0].cc == 7 && v.found[0].sync_mask == DMRS_SYNC_MS &&
+	      v.found_n == 3 && v.found[1].cc == 1 && v.found[2].cc == 1);
 
 	/* The found list: newest first, at most DMRS_FOUND_MAX, survives a restart */
 	dmrs_start(430000000u, 440000000u, 12500u, now);
-	CHECK(dmrs_snapshot(&v) && v.found_n == 1);	/* 433.500; 433.025 never was DMR */
+	CHECK(dmrs_snapshot(&v) && v.found_n == 3);	/* 433.500's three keys; 433.025 never was DMR */
 	for (unsigned k = 0; k < 10u; k++) {
 		uint32_t hz = 430000000u + 25000u * k;
 		while (dmrs_at_hz() != hz) {
@@ -250,6 +372,8 @@ int main(void)
 		seen |= pk.f.hz == 433500000u && pk.f.dst == 101u && pk.f.src == 77285u && pk.f.calls > 0;
 	CHECK(seen && pk.found_n > 0 && pk.phase == DMRS_SWEEP && pk.lo_hz == 432500000u);
 	CHECK(!dmrs_peek(DMRS_FOUND_MAX, &pk));
+
+	test_found_key();
 
 	/* Nobody looks (the screen was left): the search stops by itself, also while the PC reads it all the time */
 	dmrs_start(433000000u, 434000000u, 12500u, now);

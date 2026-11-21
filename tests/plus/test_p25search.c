@@ -29,6 +29,113 @@ static int16_t one(uint32_t hz) { return hz == 433500000u ? -80 : -124; }
 static int16_t two(uint32_t hz) { return hz == 433500000u || hz == 433025000u ? -90 : -123; }
 static int16_t weak(uint32_t hz) { return hz == 433500000u ? -118 : -124; }
 
+/* Sweep (quiet) to `hz` and make it a hit there: the probe holds it */
+static void probe_at(uint32_t hz)
+{
+	p25s_view_t v;
+	bool hit = false;
+	for (unsigned i = 0; i < 20000u && p25s_at_hz() != hz; i++) {
+		p25s_snapshot(&v);
+		p25s_sweep(-124, now += 40, &hit);
+	}
+	p25s_sweep(-70, now += 40, &hit);
+	CHECK(hit && p25s_at_hz() == hz && p25s_phase() == P25S_PROBE);
+}
+
+/* The found list's entries for one frequency */
+static unsigned entries_at(const p25s_view_t *v, uint32_t hz)
+{
+	unsigned n = 0;
+	for (unsigned i = 0; i < v->found_n; i++)
+		n += v->found[i].hz == hz;
+	return n;
+}
+
+static const p25s_found_t *entry(const p25s_view_t *v, uint32_t hz, uint16_t nac, uint16_t tg)
+{
+	for (unsigned i = 0; i < v->found_n; i++)
+		if (v->found[i].hz == hz && v->found[i].nac == nac && v->found[i].tg == tg)
+			return &v->found[i];
+	return NULL;
+}
+
+/* The found list keyed by frequency + NAC + talkgroup (owner 2026-11-21, beta.7 candidate: 159.125 NAC $178 TG 1 was
+ * listed twice, one entry with 1 call and one with 2) */
+static void test_found_key(void)
+{
+	const uint32_t F = 159125000u;
+	p25s_view_t v;
+	const p25s_found_t *e;
+	p25s_start(159000000u, 160000000u, 12500u, now);
+	/* The duplicate: a call, then the receiver's NAC reads "any" (0xFFFF) after the terminator or a damaged frame.
+	 * That report used to start a second entry for the same frequency */
+	probe_at(F);
+	p25s_probe_found(0x178, 1, 1, now);
+	p25s_probe_found(0xFFFFu, 1, 1, now += 180);	/* the terminator */
+	p25s_probe_found(0xFFFFu, 0, 0, now += 180);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, F) == 1 && v.found[0].nac == 0x178 && v.found[0].tg == 1 &&
+	      v.found[0].calls == 1);
+	p25s_probe_done(true, now += 1500);
+	/* The next call (a revisit or the next pass): the same entry counts it, whatever comes first in the reports */
+	now += 10000u;
+	probe_at(F);
+	p25s_probe_found(0xFFFFu, 0, 0, now);		/* no NAC yet: the entry that fits, no new one */
+	p25s_probe_found(0x178, 0, 0, now += 180);	/* NAC, no link control yet */
+	p25s_probe_found(0x178, 1, 1, now += 180);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, F) == 1 && (e = entry(&v, F, 0x178, 1)) && e->calls == 2 &&
+	      e == &v.found[0]);
+	p25s_probe_done(true, now += 1500);
+	/* Another talkgroup on the same frequency and NAC: its own entry, on top */
+	now += 10000u;
+	probe_at(F);
+	p25s_probe_found(0x178, 2, 5, now);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, F) == 2 && v.found[0].tg == 2 && v.found[0].calls == 1 &&
+	      v.found[0].src == 5 && (e = entry(&v, F, 0x178, 1)) && e->calls == 2);
+	p25s_probe_done(true, now += 1500);
+	/* The link control comes late: the call is first counted on the newest entry that fits (TG 2), then moves to
+	 * TG 1's when its talkgroup is heard */
+	now += 10000u;
+	probe_at(F);
+	p25s_probe_found(0x178, 0, 0, now);
+	CHECK(p25s_snapshot(&v) && v.found[0].tg == 2 && v.found[0].calls == 2);
+	p25s_probe_found(0x178, 1, 9, now += 360);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, F) == 2 && v.found[0].tg == 1 && v.found[0].calls == 3 &&
+	      v.found[0].src == 9 && (e = entry(&v, F, 0x178, 2)) && e->calls == 1);
+	/* ... and a talkgroup change later in the same hold is a call of that talkgroup (not moved) */
+	p25s_probe_found(0x178, 2, 5, now += 4000);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, F) == 2 && v.found[0].tg == 2 && v.found[0].calls == 2 &&
+	      (e = entry(&v, F, 0x178, 1)) && e->calls == 3);
+	p25s_probe_done(true, now += 1500);
+	/* Another NAC on the same frequency: its own entry */
+	now += 10000u;
+	probe_at(F);
+	p25s_probe_found(0x293, 1, 1, now);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, F) == 3 && v.found[0].nac == 0x293 && v.found[0].calls == 1);
+	p25s_probe_done(true, now += 1500);
+	/* A frequency new to the list: no entry before a NAC is known */
+	probe_at(159500000u);
+	p25s_probe_found(0xFFFFu, 0, 0, now);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, 159500000u) == 0 && v.playing);
+	p25s_probe_found(0x111, 0, 0, now += 180);
+	CHECK(p25s_snapshot(&v) && entries_at(&v, 159500000u) == 1 && v.found[0].nac == 0x111 && v.found[0].tg == 0 &&
+	      v.found[0].calls == 1);
+	p25s_probe_found(0x111, 77, 3, now += 180);	/* its talkgroup: the same entry */
+	CHECK(p25s_snapshot(&v) && entries_at(&v, 159500000u) == 1 && v.found[0].tg == 77 && v.found[0].calls == 1);
+	p25s_probe_done(true, now += 1500);
+	/* Full: a new key on top, the oldest drops; never two entries of one key */
+	for (unsigned k = 0; k < P25S_FOUND_MAX; k++) {
+		probe_at(159600000u + 12500u * k);
+		p25s_probe_found((uint16_t)(0x200 + k), 1, 1, now);
+		p25s_probe_done(true, now += 1500);
+	}
+	CHECK(p25s_snapshot(&v) && v.found_n == P25S_FOUND_MAX && v.found[0].nac == 0x200 + P25S_FOUND_MAX - 1u &&
+	      v.found[P25S_FOUND_MAX - 1u].nac == 0x200 && entries_at(&v, F) == 0);
+	for (unsigned i = 0; i < v.found_n; i++)
+		for (unsigned j = i + 1u; j < v.found_n; j++)
+			CHECK(!(v.found[i].hz == v.found[j].hz && v.found[i].nac == v.found[j].nac &&
+				v.found[i].tg == v.found[j].tg));
+}
+
 int main(void)
 {
 	p25s_view_t v;
@@ -149,6 +256,7 @@ int main(void)
 			seen |= pk.f.hz == 433500000u;
 		CHECK(seen && pk.found_n > 0 && !p25s_peek(P25S_FOUND_MAX, &pk));
 	}
+	test_found_key();
 	/* Nobody looks (the screen was left): the search stops by itself, also while the PC reads it */
 	p25s_start(433000000u, 434000000u, 12500u, now);
 	uint32_t t0 = now, e0 = p25s_epoch();

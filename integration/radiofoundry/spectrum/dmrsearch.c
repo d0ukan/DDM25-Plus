@@ -39,6 +39,9 @@ static bool heard_here, was_call, ended;
 static uint32_t resume_hz;
 static uint8_t since_revisit, revisit_i;
 static bool revisiting;
+/* The found list's key (note): found[0] is the entry of the probe held now (held), a call counted there and when */
+static bool held, credited;
+static uint32_t credit_ms;
 #if CONFIG_SEARCH_FAST
 /* The faster sweep (DMRS_QUICK_MS): the step's stage, a strong first reading, the step before (read the quick way) and
  * the step a look back came from */
@@ -101,7 +104,10 @@ static uint32_t revisit_pick(uint32_t now_ms)
 	for (unsigned k = 0; k < s.found_n; k++) {
 		revisit_i = (uint8_t)((revisit_i + 1u) % s.found_n);
 		uint32_t hz = s.found[revisit_i].hz;
-		if (hz >= s.lo_hz && hz <= s.hi_hz && !skipped(hz, now_ms))
+		bool again = false;	/* a frequency with more entries (modes, codes, groups) is read once a round */
+		for (unsigned j = 0; j < revisit_i && !again; j++)
+			again = s.found[j].hz == hz;
+		if (!again && hz >= s.lo_hz && hz <= s.hi_hz && !skipped(hz, now_ms))
 			return hz;
 	}
 	return 0;
@@ -174,6 +180,7 @@ static uint32_t start(uint8_t kind, uint32_t lo_hz, uint32_t hi_hz, uint32_t ste
 	revisiting = false;
 	since_revisit = revisit_i = 0;
 	resume_hz = 0;
+	held = false;
 #if CONFIG_SEARCH_FAST
 	stage = ST_QUICK;
 	prev_hz = 0;
@@ -312,6 +319,7 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 		s.phase = DMRS_PROBE;
 		s.mode = first_mode();
 		s.hits++;
+		held = false;	/* a new probe: no entry of it yet */
 #if CONFIG_SEARCH_FAST
 		stage = ST_QUICK;
 		prev_hz = 0;
@@ -334,53 +342,97 @@ uint32_t dmrs_sweep(int16_t rssi_dbm, uint32_t now_ms, bool *hit)
 	return s.at_hz;
 }
 
-/* The frequency held now into the found list (to the front), with what was heard there */
-static void note(const dmrs_heard_t *h, bool new_call, uint32_t now_ms)
+/* The found list's key (dmrsearch.h): frequency + mode + code (P25 NAC, DMR color code, YSF DG-ID, NXDN RAN) + group
+ * (the talkgroup or called ID; YSF none: its dst / src hold the callsign). The group of an entry or a report */
+static uint32_t group_of(uint8_t mode, uint32_t dst)
+{
+	return mode == DMRS_MODE_YSF ? 0u : dst;
+}
+
+/* An entry fits a report when frequency and mode are the same and code and group the same or not known on one side */
+static bool fits(const dmrs_found_t *f, uint16_t cc, uint32_t grp)
+{
+	uint32_t g = group_of(f->mode, f->dst);
+	return f->hz == s.at_hz && f->mode == s.mode && (f->cc == cc || f->cc == DMRS_CC_NONE || cc == DMRS_CC_NONE) &&
+	       (g == grp || g == 0 || grp == 0);
+}
+
+/* The entry a report goes to, moved to the top: the newest that fits (two entries of a frequency and mode always differ
+ * in a code or group both know, so a report knowing both fits one at most), else a new one on top (the oldest drops
+ * when the list is full). True when it is new */
+static bool pick(uint16_t cc, uint32_t grp)
 {
 	unsigned i = 0;
-	while (i < s.found_n && !(s.found[i].hz == s.at_hz && s.found[i].mode == s.mode))
-		i++;	/* a frequency and its mode (a mixed mode repeater has an entry for each) */
+	while (i < s.found_n && !fits(&s.found[i], cc, grp))
+		i++;
 	dmrs_found_t f;
-	if (i < s.found_n) {
+	bool fresh = i >= s.found_n;
+	if (!fresh) {
 		f = s.found[i];
-		memmove(&s.found[1], &s.found[0], i * sizeof f);
 	} else {
 		memset(&f, 0, sizeof f);
+		f.hz = s.at_hz;
 		f.cc = DMRS_CC_NONE;
 		f.mode = s.mode;
 		if (s.found_n < DMRS_FOUND_MAX)
 			s.found_n++;
-		memmove(&s.found[1], &s.found[0], (size_t)(s.found_n - 1u) * sizeof f);
+		i = s.found_n - 1u;	/* the oldest drops when full */
 	}
-	f.hz = s.at_hz;
+	memmove(&s.found[1], &s.found[0], i * sizeof f);
+	s.found[0] = f;
+	return fresh;
+}
+
+/* The frequency held now into the found list, with what was heard there (owner 2026-11-21: ONE entry per frequency +
+ * mode + code + group with a call counter, the newest on top; a mixed mode repeater has an entry for each mode, a
+ * frequency with two talkgroups one for each). A report that doesn't know the code or the group yet updates the entry
+ * this probe holds (found[0]), or the newest that fits; a call counted on the held entry whose group then turns out
+ * another within DMRS_MOVE_MS (its link control came late) moves to the right entry */
+static void note(const dmrs_heard_t *h, bool new_call, uint32_t now_ms)
+{
+	uint32_t grp = group_of(s.mode, h->dst);
+	if (!held || !fits(&s.found[0], h->cc, grp)) {
+		bool moved = held && credited && now_ms - credit_ms < DMRS_MOVE_MS;
+		bool fresh = pick(h->cc, grp);
+		if (moved && s.found[1].calls)
+			s.found[1].calls--;	/* the held entry, one down now */
+		/* the call moves with its key; a key change in a call playing is a call there too */
+		if (moved || (held && h->call && !new_call && (fresh || now_ms - s.found[0].heard_ms > DMRS_HANG_MS)))
+			new_call = true;
+		held = true;
+		credited = false;
+	}
+	dmrs_found_t *f = &s.found[0];
 	if (h->cc != DMRS_CC_NONE)
-		f.cc = h->cc;
-	f.ts_mask |= h->ts_mask;
-	f.sync_mask |= h->sync_mask;
+		f->cc = h->cc;
+	f->ts_mask |= h->ts_mask;
+	f->sync_mask |= h->sync_mask;
 #if CONFIG_ALL_SEARCH
 	if (s.mode == DMRS_MODE_YSF) {
 		if (h->src != 0) {	/* a callsign: both halves are its (a shorter one leaves no tail of the last) */
-			f.src = h->src;
-			f.dst = h->dst;
+			f->src = h->src;
+			f->dst = h->dst;
 		}
 	} else
 #endif
 	{
 		if (h->dst != 0) {
-			f.dst = h->dst;
-			f.group = h->group;
+			f->dst = h->dst;
+			f->group = h->group;
 		}
 		if (h->src != 0)
-			f.src = h->src;
+			f->src = h->src;
 	}
-	if (new_call)
-		f.calls++;
+	if (new_call) {
+		f->calls++;
+		credited = true;
+		credit_ms = now_ms;
+	}
 	if (h->other)
-		f.enc = true;
+		f->enc = true;
 	else if (h->call)
-		f.enc = false;
-	f.heard_ms = now_ms;
-	s.found[0] = f;
+		f->enc = false;
+	f->heard_ms = now_ms;
 }
 
 /* Back to sweeping: where the sweep was before a revisit, else the next step */
@@ -388,6 +440,7 @@ static uint32_t resume(uint32_t now_ms)
 {
 	s.phase = DMRS_SWEEP;
 	s.playing = false;
+	held = false;
 #if CONFIG_SEARCH_FAST
 	stage = ST_QUICK;
 	prev_hz = 0;	/* the last readings were the probe's */
@@ -439,6 +492,7 @@ uint32_t dmrs_probe(const dmrs_heard_t *h, uint32_t now_ms)
 				uint8_t m = next_mode();
 				if (m != DMRS_MODES) {
 					s.mode = m;	/* not this mode: the next one, on the same frequency */
+					held = false;
 					hit_ms = now_ms;
 					was_call = ended = false;
 					end_write();

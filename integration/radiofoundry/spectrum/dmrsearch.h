@@ -52,6 +52,9 @@
 #define DMRS_REVISIT_STEPS	16u	/* a found frequency in the range is read again after this many steps */
 #define DMRS_IDLE_MS		5000u	/* the screen didn't read the search this long (it was left): it stops */
 #define DMRS_CC_NONE		0xFFFFu	/* found / heard cc: not named yet (P25 NAC, DMR CC, YSF DG-ID, NXDN RAN) */
+/* The found list (owner 2026-11-21): ONE entry per frequency + mode + code + group (dmrsearch.c note). A call counted
+ * on the entry a probe holds whose group then turns out another within this long moves to the right entry */
+#define DMRS_MOVE_MS		1500u
 
 /* The kinds (view.kind) and the modes a find has (found.mode; view.mode: the one probed or played now) */
 #define DMRS_KIND_DMR		0u
