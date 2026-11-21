@@ -85,6 +85,8 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   order with their counts ("06 Ankara (5)"), as Tools > Repeaters does; OK lists that province's airfields nearest
   first, with the details, listening and air watch as before. Each airfield's province comes from its position (the
   map's provinces; at a border OurAirports' own province decides: Sabiha Gökçen is in İstanbul, Çukurova in Mersin).
+- Spectrum in colour: the waterfall and the 3D waterfall draw signal strength as a colour ramp (dark blue, blue,
+  cyan, green, yellow, orange, red; the light theme its own shades) instead of a few grey and theme colours.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

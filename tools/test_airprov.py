@@ -7,7 +7,10 @@ branch r16-airprov), run by tools/test_classic.py after its own (the build tree 
   position: kept and reported, no region), the generated rows' province byte and the comment line; the committed
   table: every airfield in a province, known ones where they are, the distribution printed;
 - the shipped table's walks by province (tests/plus/test_airprov.c);
-- Tools > Airfields by province in upstream's simulator, English and Turkish (tests/plus/test_ui_airprov.c)."""
+- Tools > Airfields by province in upstream's simulator, English and Turkish (tests/plus/test_ui_airprov.c);
+- the spectrum in colour (CONFIG_SPECTRUM_COLOR): the ramp of each theme and the 3D view drawn with it into a test
+  frame buffer (tests/plus/test_wfcolor.c), then Tools > Spectrum's waterfall and 3D view in the simulator's 16 colour
+  frame buffer, dark and light, English and Turkish (tests/plus/test_ui_wfcolor.c)."""
 import re
 import shlex
 import subprocess
@@ -109,9 +112,38 @@ def ui_tests(ROOT, APP, OUT, flags, host):
     run([OUT / 'test_ui_airprov'], cwd=host)
 
 
+def colour_tests(ROOT, APP, OUT, flags, host):
+    tp = ROOT / 'tests/plus'
+    ui = APP / 'core/ui'
+    wf = ['-DCONFIG_SPECTRUM=1', '-DCONFIG_SPECTRUM_WF=1', '-DCONFIG_SPECTRUM_WF3D=1', '-DCONFIG_SPECTRUM_COLOR=1']
+    run(['clang', *flags, *wf, tp / 'test_wfcolor.c', ui / 'wf3d.c', ui / 'wfall.c', '-o', OUT / 'test_wfcolor'], cwd=ROOT)
+    run([OUT / 'test_wfcolor'], cwd=ROOT)
+    # Tools > Spectrum as tools/test_air.py builds its 3D view's flows (the toolbox job's simulator), with the switch
+    run(['make', 'out/gen/lang_tables.h'], cwd=host, stdout=subprocess.DEVNULL)
+    command = run(['make', '-Bn', 'uiFlowTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout
+    argv = shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))
+    argv[argv.index('uiFlowTest.c')] = str(tp / 'test_ui_wfcolor.c')
+    argv[argv.index('sim/ui_sim.c')] = str(tp / 'ui_sim_toolbox.c')
+    argv[argv.index('-o') + 1] = str(OUT / 'test_ui_wfcolor')
+    run([*argv, '-I' + str(host), '-I' + str(tp), '-Wno-unused-function', '-DUI_HOST_HEAP', '-DCONFIG_P25_CHANNELS=1',
+         '-DCONFIG_MAP=1', '-DCONFIG_NAV=1', '-DCONFIG_REPEATERS=1', '-DCONFIG_MAP_TRACK=1', '-DCONFIG_MAP_COVERAGE=1',
+         *wf, '-DCONFIG_P25_SEARCH=1', '-DCONFIG_DMR_SEARCH=1', '-DCONFIG_DMR_ANY=1', '-DCONFIG_FIND_SAVE=1',
+         '-DCONFIG_P25_TRUNK=1', '-DCONFIG_DMR_TRUNK=1', '-DCONFIG_MSG_RX=1', '-DCONFIG_CALL_LOG=1', '-DCONFIG_HEARD=1',
+         '-DCONFIG_VFO_MODES=1', '-DCONFIG_GPS_DASH=1', '-DCONFIG_CLOCK_TOOLS=1', '-DCONFIG_LANG_TR=1',
+         *(str(ui / f) for f in ('ui_map.c', 'map.c', 'turkey_map_data.c', 'turkey_district_data.c', 'mapnav.c',
+                                 'ui_mapnav.c', 'nav.c', 'ui_goto.c', 'rpt.c', 'ui_rpt.c', 'ui_spectrum.c',
+                                 'ui_p25search.c', 'ui_dmrsearch.c', 'ui_p25trunk.c', 'ui_dmrtrunk.c', 'ui_msg.c',
+                                 'ui_scratch.c', 'findsave.c', 'ui_findsave.c', 'heard.c', 'ui_heard.c', 'wfall.c',
+                                 'wf3d.c', 'tripm.c', 'ui_gpsdash.c', 'clockx.c', 'ui_clock.c')),
+         str(APP / 'core/radio/spectrum.c'), str(APP / 'core/radio/vfox.c'), str(APP / 'core/aprs/aprs_fmt.c'), '-lm'],
+        cwd=host)
+    run([OUT / 'test_ui_wfcolor'], cwd=host)
+
+
 def main(ROOT, APP, OUT, flags, host):
     province_tests(Path(ROOT))
     ui_tests(Path(ROOT), Path(APP), Path(OUT), flags, Path(host))
+    colour_tests(Path(ROOT), Path(APP), Path(OUT), flags, Path(host))
 
 
 if __name__ == '__main__':

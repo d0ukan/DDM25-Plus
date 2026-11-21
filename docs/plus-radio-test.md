@@ -631,3 +631,13 @@ Airfields by province (Tools > Airfields, docs/plus.md "Airfields by province").
 | AP-6 | In Antalya's details, # | air watch on its six frequencies as before (Home's ring A..F); Back Back stops it |
 | AP-7 | "All airfields", OK | the whole list nearest first as before; # on the first level opens the nearest airfield's details |
 | AP-8 | With an air band pack installed (Settings > About shows it) | a province's list shows the pack's frequencies for the airfields it names, as "All" does |
+
+Spectrum in colour (Tools > Spectrum, docs/plus.md "The spectrum in colour"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SC-1 | Tools > Spectrum on a busy band (or the other radio sending FM nearby), waterfall view | quiet points dark blue, weak ones blue / cyan, stronger green, yellow, orange, the strongest red; the bars and texts as before |
+| SC-2 | * (3D waterfall) | the ridges in the same colours by height: the strongest peaks red |
+| SC-3 | Settings > Display > Theme: Light, back to Tools > Spectrum | a pale blue for the weakest, darker blue, teal, green, dark yellow, orange, red on white; every colour distinct |
+| SC-4 | Look closely at the texts on the spectrum screen (title, frequency, Hit / Floor, the key hint) in both themes | readable; their edges may look a little harder than on other screens (the palette's entries go to the colours first) |
+| SC-5 | * again (bars alone), then *: waterfall | bars alone without colours; the waterfall back in colour |

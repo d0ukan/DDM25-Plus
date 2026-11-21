@@ -22,6 +22,27 @@ uint8_t wf_level(int16_t dbm, int16_t floor_dbm)
 	return (uint8_t)(d > 15 ? 15 : d);
 }
 
+#if CONFIG_SPECTRUM_COLOR
+/* Slots 1..7 on a dark background (the dark and high contrast themes) and on a light one; 0: the theme's colour (slot
+ * 4 its RX green, slot 7 its TX red) */
+static const color_t ramp[2][WF_SLOTS] = {
+	{ 0, RGB565(16, 40, 168), RGB565(16, 120, 255), RGB565(0, 216, 232), 0, RGB565(248, 232, 0), RGB565(255, 128, 0),
+	  0 },
+	{ 0, RGB565(168, 204, 255), RGB565(32, 104, 232), RGB565(0, 160, 192), 0, RGB565(200, 168, 0),
+	  RGB565(232, 104, 0), 0 },
+};
+
+void wf_ramp(color_t slot[WF_SLOTS], color_t bg, color_t rx, color_t tx)
+{
+	const color_t *r = ramp[((bg >> 5) & 0x3Fu) >= 32u];	/* a light background: green over half */
+	for (uint8_t s = 0; s < WF_SLOTS; s++)
+		slot[s] = r[s];
+	slot[0] = bg;
+	slot[4] = rx;
+	slot[7] = tx;
+}
+#endif
+
 uint8_t wf_slot(uint8_t level)
 {
 	static const uint8_t slot[16] = { 0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7 };

@@ -593,3 +593,5 @@ __pycache__/
 !/tools/test_airprov.py
 !/tests/plus/test_airprov.c
 !/tests/plus/test_ui_airprov.c
+!/tests/plus/test_wfcolor.c
+!/tests/plus/test_ui_wfcolor.c

@@ -723,6 +723,7 @@ def main():
         "CONFIG_SEARCH_FAST="+("y" if args.plus else "n"),	# DDM32 Plus faster searches (round 15 item 2, tools/plus_scan.py)
         "CONFIG_MWATCH_FAST="+("y" if args.plus else "n"),	# DDM32 Plus faster multi-watch ring (round 15 item 3, tools/plus_scan.py)
         "CONFIG_AIR_PROV="+("y" if args.plus else "n"),	# DDM32 Plus airfields by province (round 16, tools/plus_airprov.py)
+        "CONFIG_SPECTRUM_COLOR="+("y" if args.plus else "n"),	# DDM32 Plus spectrum in colour (round 16, tools/plus_airprov.py)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

@@ -2982,3 +2982,39 @@ older flows (`test_ui_misc`, `test_ui_air`, `test_ui_datapack`) are built withou
 
 Cost (public build on bb6f554): FLASH 837,952 -> 838,908 B (+956), static RAM 209,544 -> 209,560 B (+16), free
 1,896 B. The `--plus` build: the same figures.
+
+### 2. The spectrum in colour (`CONFIG_SPECTRUM_COLOR`; needs SPECTRUM_WF)
+
+Tools > Spectrum's waterfall and 3D view (item 45) drew each level in one of the theme's few colours (background,
+line, idle, dim, RX, warning twice, TX: mostly greys). On a colour panel both views now draw the waterfall's 8 slots
+(`wf_slot`: levels 1..15 above the floor, 3 dB each) in a signal strength ramp (`wfall.c` `wf_ramp`):
+
+| Slot (levels) | 1 (1-3) | 2 (4-5) | 3 (6-7) | 4 (8-9) | 5 (10-12) | 6 (13-14) | 7 (15) |
+|---|---|---|---|---|---|---|---|
+| Dark and high contrast themes | dark blue (16,40,168) | blue (16,120,255) | cyan (0,216,232) | the theme's RX green | yellow (248,232,0) | orange (255,128,0) | the theme's TX red |
+| Light theme (a light background) | pale blue (168,204,255) | blue (32,104,232) | teal (0,160,192) | the theme's RX green | dark yellow (200,168,0) | orange (232,104,0) | the theme's TX red |
+
+The flat waterfall uses the same ramp (it was not coloured before either). A mono panel keeps the old slots (any
+non-zero colour is ink there, so its picture is the same either way). The light ramp is chosen by the background's
+brightness, so an accent or the high contrast theme needs nothing more.
+
+- **The 16 colour palette** (the DM-32's bpp 4 panel, `gfx.c`): the screen's own solid colours are 8 (background,
+  text, dim, line, idle, RX, warning, the status strip's grey), and anti-aliased text edges take entries while more
+  than four are free. The ramp adds 5 colours of its own (green and red are the theme's RX and TX) plus TX red, which
+  the screen does not otherwise draw. Counted in the simulator with the ramp drawn where the waterfall is (last): all
+  16 entries taken (8 solids, 4 text edges, 4 ramp colours), orange and red fell to the nearest entry. Now each frame with the waterfall on first draws the
+  ramp and the screen's own colours on one pixel (then the background over it, `wf_reserve`), so they hold their
+  entries: 15 of 16 in use (dark and light themes, flat and 3D view), every level in its exact colour; the text edges
+  take the nearest existing grey (the upstream rule once the palette is short; the dark theme's greys suit it).
+- Host tests: `tests/plus/test_wfcolor.c` (each theme's ramp: background, RX and TX reused, the eight distinct, at most
+  five added, the hues running blue > cyan > green > yellow > orange > red, the weakest dark on black and light on
+  white; the 3D view drawn into a test frame buffer with every level's ridge in its slot's colour);
+  `tests/plus/test_ui_wfcolor.c` (Tools > Spectrum in the simulator's 16 colour frame buffer, dark and light,
+  English and Turkish: the newest waterfall row has every point in its level's exact ramp colour, the 3D view draws
+  every slot, the colours on the screen counted, bars alone draw none of the ramp, the layout check). The existing
+  3D view flows (`test_ui_wf3d`, built without the switch) pass unchanged.
+
+Cost (public build): FLASH 838,908 -> 839,056 B (+148), static RAM 209,560 -> 209,560 B (+0), free 1,896 B.
+The `--plus` build: the same figures. **Both items** (public build on bb6f554): FLASH 837,952 -> 839,056 B
+(+1,104), static RAM 209,544 -> 209,560 B (+16), **1,896 B free**. Zero warnings, forced rebuilds identical,
+every task's stack fits.
