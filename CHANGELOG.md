@@ -81,6 +81,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   signal that isn't ours (FM on its frequency, another NAC) no longer freezes the ring: it is given back after 1.2 s
   and passed over while the signal lasts. Dual watch (2 channels) is unchanged. **Not tried on the radio yet** (rows
   MR-*).
+- Airfields by province: Tools > Airfields opens on "All airfields" and the provinces that have airfields, in plate
+  order with their counts ("06 Ankara (5)"), as Tools > Repeaters does; OK lists that province's airfields nearest
+  first, with the details, listening and air watch as before. Each airfield's province comes from its position (the
+  map's provinces; at a border OurAirports' own province decides: Sabiha Gökçen is in İstanbul, Çukurova in Mersin).
 
 ## v1.0.0-beta.3 (2026-11-20)
 

@@ -2935,3 +2935,50 @@ Turkish, the layout). The test fixture's frame time is now cleared between the m
 Cost (public build): FLASH 823,184 -> 823,428 B (+244), static RAM unchanged (209,424 B, free 2,032 B). In the same
 commit: the search range editor lets PTT, the monitor and the emergency key through (item 1's editor had taken every
 key while open).
+
+## Round 16: airfields by province, spectrum in colour (branch `r16-airprov`)
+
+The owner's requests after using v1.0.0-beta.4 on the radio. Code: `tools/plus_airprov.py` (the switches),
+`integration/radiofoundry/air/` (the airfield table, its walks and screen), `tools/airfields.py` (the province of each
+airfield). Host tests: `tools/test_airprov.py` (run by `tools/test_classic.py`). Radio rows: `docs/plus-radio-test.md`
+"Round 16 airprov".
+
+### 1. Airfields by province (`CONFIG_AIR_PROV`; needs AIRFIELDS and MAP)
+
+Tools > Airfields now opens as Tools > Repeaters does (item 37): a first level "All airfields (74)", then the provinces
+that have airfields in plate order with their counts ("01 Adana (2)", "06 Ankara (5)", ... "76 Iğdır (1)": the map's
+names, only provinces with airfields, "Unknown" last if an airfield had no province). OK opens that province's list:
+the same rows (distance and direction, the tower or first frequency, "+N"), nearest first from the position APRS uses
+(by code without one), Up / Down round within the province, # its nearest; OK on an airfield its details, listening
+and air watch (#) as before. "All" is the whole list as before. Back: details -> the province's list -> the first
+level (its focus kept) -> out. # on the first level: the nearest airfield's details in "All". The air band data pack
+(`air_count` / `air_freq`) still answers every airfield's frequencies (the province only filters the walk).
+
+- **Province of each airfield, at build time** (`tools/airfields.py`): the repeater list's own lookup
+  (`tools/rpt_list.py` `Provinces`: the map's province outlines, then a district centre within 10 km, the
+  municipality naming a province, a district centre within 30 km). One byte in what was `air_field_t`'s tail padding
+  (44 B a row as before, `_Static_assert`), so the table costs no flash. **Deviation**: on the pinned data the
+  outlines alone put two airports in the neighbouring province: Sabiha Gökçen (Pendik, İstanbul) inside the
+  simplified Kocaeli outline and Çukurova (near Tarsus, Mersin) inside Adana's. OurAirports' own `iso_region` (ISO
+  3166-2:TR, whose numbers are the plates) is now checked: where it differs and a district centre of that province is
+  within 30 km (`REGION_KM`: a border the simplified outlines do not follow), the region wins; farther, the position
+  stays and the build line reports it (none on the pinned data). Result: 74 airfields in 54 provinces, unknown 0 (71
+  by outline, 1 by a district centre: Ordu-Giresun off the simplified coast, 2 by region). The generated table's
+  comment line gives the distribution; `--list` prints each airfield's plate.
+- **Walks**: `air_next_in` / `air_rank_in` / `air_count_in` keep to one province (`AIR_PROV_ALL`: all; `air_next` /
+  `air_rank` are the All wrappers), one pass over the table a step as before: no RAM for the order.
+- RAM: the first level's state (which groups have airfields: 11 B, the filter, the picked and top rows), as Tools >
+  Repeaters keeps its own.
+
+Host tests: synthetic OurAirports rows (inside an outline, off the coast, at both borders where the region wins, a
+region far from the position kept and reported, no region), the generated rows and comment line, the committed table
+(every airfield in a province, 14 known places); `tests/plus/test_airprov.c` (every province's walk from Kızılay and
+Antalya and without a position: only its airfields, each once, nearest first, rank = place, backward the reverse; All
+as before); `tests/plus/test_ui_airprov.c` in upstream's simulator with the data chip, English and Turkish, the layout
+check on every page: the first level (counts, plate order, no empty province, round), every province label fitting a
+row, Ankara's list (only its five, round, # its nearest), Antalya ("+1", every frequency, OK listens), air watch from a
+province, an air band pack's frequencies in a province's list, no position (by code), All, Back and #. The screens'
+older flows (`test_ui_misc`, `test_ui_air`, `test_ui_datapack`) are built without the switch and pass unchanged.
+
+Cost (public build on bb6f554): FLASH 837,952 -> 838,908 B (+956), static RAM 209,544 -> 209,560 B (+16), free
+1,896 B. The `--plus` build: the same figures.

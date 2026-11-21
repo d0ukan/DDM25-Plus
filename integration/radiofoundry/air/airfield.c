@@ -44,13 +44,20 @@ static bool before(uint64_t ka, uint16_t a, uint64_t kb, uint16_t b)
 	return ka < kb || (ka == kb && a < b);
 }
 
-uint16_t air_next(const air_here_t *h, uint16_t cur, int dir)
+static bool in_prov(uint16_t i, uint8_t prov)
+{
+	return prov == AIR_PROV_ALL || air_fields[i].prov == prov;
+}
+
+uint16_t air_next_in(const air_here_t *h, uint16_t cur, int dir, uint8_t prov)
 {
 	uint16_t n = air_field_count, best = AIR_NONE;
 	if (cur != AIR_NONE && cur >= n)
 		return AIR_NONE;
 	uint64_t kc = cur < n ? key(h, cur) : 0, kb = 0;
 	for (uint16_t i = 0; i < n; i++) {
+		if (!in_prov(i, prov))
+			continue;
 		uint64_t k = key(h, i);
 		if (cur != AIR_NONE && (dir > 0 ? !before(kc, cur, k, i) : !before(k, i, kc, cur)))
 			continue;
@@ -62,15 +69,23 @@ uint16_t air_next(const air_here_t *h, uint16_t cur, int dir)
 	return best;
 }
 
-uint16_t air_rank(const air_here_t *h, uint16_t i)
+uint16_t air_rank_in(const air_here_t *h, uint16_t i, uint8_t prov)
 {
 	uint16_t n = air_field_count, r = 0;
 	if (i >= n)
 		return 0;
 	uint64_t ki = key(h, i);
 	for (uint16_t j = 0; j < n; j++)
-		if (before(key(h, j), j, ki, i))
+		if (in_prov(j, prov) && before(key(h, j), j, ki, i))
 			r++;
+	return r;
+}
+
+uint16_t air_count_in(uint8_t prov)
+{
+	uint16_t r = 0;
+	for (uint16_t i = 0; i < air_field_count; i++)
+		r += in_prov(i, prov);
 	return r;
 }
 
