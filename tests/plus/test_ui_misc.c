@@ -142,15 +142,16 @@ static void air_list(void)
 {
 	tool("Airfields");
 	expect("screen=airfields shows=Nearest_first shows=LTAB_G shows=LTAD_Etimesgut_AB shows=9.8_km_W");
+	expect("shows=TWR_132.000 hides=TWR_132.000_+");	/* one tower frequency: no "+N" */
 	run("shot:airfields");
 	layout();
 	run("ok");
-	expect("screen=airfields shows=ATIS_118.675 shows=TWR_132.000 shows=AM,_RX_only shows=Not_for_navigation");
+	expect("screen=airfields shows=GND_120.200 shows=TWR_132.000 shows=AM,_RX_only shows=Not_for_navigation");
 	run("shot:airfield");
 	layout();
 	run("ok");
-	expect("screen=home vfo=1 freq=118675000 toast=LTAB_ATIS_118.675:_AM,_RX_only");
-	requests("vfo:1 vfo_set:118675000");
+	expect("screen=home vfo=1 freq=120200000 toast=LTAB_GND_120.200:_AM,_RX_only");
+	requests("vfo:1 vfo_set:120200000");
 }
 
 static void air_pick_tune(void)
@@ -169,8 +170,8 @@ static void air_833(void)
 	tool("Airfields");
 	expect("shows=LTFJ");
 	run("ctx");			/* # the nearest's details */
-	expect("shows=LTFJ shows=8.33 shows=ATIS_128.200");
-	run("down down down");		/* ATIS, ATIS, DEL, GND 121.580 */
+	expect("shows=LTFJ shows=8.33 shows=DEL_122.625");
+	run("down");			/* DEL, GND 121.580 */
 	expect("shows=GND_121.580");
 	run("ok");
 	expect("screen=home freq=121575000 toast=LTFJ_GND_121.580");
@@ -184,7 +185,16 @@ static void air_no_position(void)
 	expect("shows=No_position:_by_code shows=LTAB hides=km");
 	run("up");			/* round to the last code */
 	run("ok");
-	expect("shows=TR-0040");
+	expect("shows=TR-0004");
+	layout();
+}
+
+/* A service with several frequencies: "+N" on the list line (item 44a); one frequency: none */
+static void air_more(void)
+{
+	pos(36.8969, 30.7133);		/* Antalya */
+	tool("Airfields");
+	expect("shows=LTAI shows=TWR_125.000_+1");
 	layout();
 }
 
@@ -193,7 +203,7 @@ static void air_no_freq(void)
 	pos(41.3142, 33.7958);		/* Kastamonu */
 	tool("Airfields");
 	run("ok");
-	expect("shows=LTAL shows=No_frequencies_in_the_data");
+	expect("shows=LTAL shows=No_frequencies");
 	run("ok");
 	expect("screen=airfields toast=No_frequencies_in_the_data");
 	requests("");
@@ -306,10 +316,12 @@ static void battery_graph(void)
 
 static void large_text_home(void)
 {
+	expect("screen=home shows=467.37");	/* the channel's frequency under the chips (CONFIG_HOME_FREQ) */
 	run("shot:home");
+	layout();
 	ui_svc_setting_set(UI_SET_LARGE_TEXT, 1);
 	run("reboot wait:200");
-	expect("screen=home");
+	expect("screen=home shows=COUNTY shows=467.37");	/* Large text: name, frequency, talk target */
 	run("shot:home-large");
 	layout();
 }
@@ -321,6 +333,7 @@ int main(void)
 		{ "AF pick and tune", air_pick_tune },
 		{ "AF 8.33 kHz name", air_833 },
 		{ "AF no position", air_no_position },
+		{ "AF several on one service", air_more },
 		{ "AF without frequencies", air_no_freq },
 		{ "AF refused while transmitting", air_tx },
 		{ "MV channel 16", marine_16 },

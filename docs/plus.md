@@ -2114,6 +2114,31 @@ plus-radio-test.md):
   209,672 B (+504 of the 600 B budget), **1,784 B free**; every task's deepest stack path unchanged (UI 268 B free,
   radio 760, p25-lab 328). The whole job: FLASH 852,472 -> 862,860 B, RAM 210,688 -> 209,672 B (768 -> 1,784 B free).
 
+## DOTA Transfer (`CONFIG_DOTA`, ours; branch `dota`)
+
+Radio-to-radio transfer of channels, zones, contacts and RX group lists over FM (AFSK 1200, CTCSS) or DMR (data
+service). Design, owner's decisions and test plan: [dota.md](dota.md). Code in `integration/radiofoundry/dota/`,
+hooks in `tools/plus_dota.py`, host tests in `tools/test_dota.py` (run from `tools/test_classic.py`).
+
+Budget, measured after each phase 2 step (`--plus --stack-check --verify-rebuild`: zero warnings, forced rebuild
+identical, every task inside its stack). Limits for the job: FLASH headroom >= 12 KB (<= 888,832 B of 901,120),
+static RAM free >= 1,500 B (<= 209,956 B); from the rebase onto `ddm25` 3032f91 (CONFIG_HOME_FREQ, +344 B) on, the
+owner relaxed the flash rule to >= 11,500 B free (<= 889,620 B).
+
+| Step | What | FLASH B | RAM B | RAM free | Stacks: UI / radio free |
+|---|---|---:|---:|---:|---|
+| base | ddm25 at 1c391c7 | 864,036 | 209,672 | 1,784 | 268 / 760 |
+| 0 | `audio_mux.c`'s APRS ring compiled out (`PLUS_AUDIO_MUX_NO_APRS`; the DM-32 reads APRS audio from its own AFSK receive path) | 863,704 (-332) | 207,616 (-2,056) | 3,840 | 268 / 760 |
+| 1 | `CONFIG_DOTA`, the protocol (`dota_proto.c`: frames, manifest, both ends' ARQ). Built, not linked until the radio core calls it (object: 4,487 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
+| 2 | The records, format version 1 (`dota_rec.c`). Not linked yet (object: 2,560 B text) | 863,704 (0) | 207,616 (0) | 3,840 | 268 / 760 |
+| 3 | The import (`dota_import.c`, `codeplug_dota.inc`: staging without in-use bits, one commit, undo); `codeplug_set_channel` gains a staging twin. Import not linked yet (object: 2,404 B text) | 863,760 (+56) | 207,616 (0) | 3,840 | 268 / 760 |
+| 4-5 | The session (`dota.c`: preparation, windows, answers, FM over AX.25 and the AFSK path with `tx_more`, DMR over chained UDP, sounds), the radio core's side (`radio_dota.inc`: the session channel, PTT refused, requests held, keying), hooks in `aprs.c`, `dmrDataService.c`, `hrc_afsk.c`, `radio_dm32.c`, `beep.c`. `dota_buf` 1,740 B | 878,356 (+14,596) | 209,632 (+2,016) | 1,824 | 268 / 760 |
+| 6 | Tools > DOTA Transfer and its picker (`ui_dota.c`: the form, questions, run page and PTT prompt as `ui_draw_list` pages), 43 Turkish entries, the PTT prompt's path. First measured at 892,012 B (over the limit); trimmed to fit: shorter texts and reused catalog strings, table-driven results, the power as a class, list pages instead of hand drawing. Flash headroom left: 12,580 B (292 B above the job's limit) | 888,540 (+10,184) | 209,648 (+16) | 1,808 | 216 / 760 |
+| 7 | Docs: `dota.md` sections 13.1 (sound paths), 17 (the owner's answers), 19 (as built); radio rows D-* in `plus-radio-test.md` | 888,540 (0) | 209,648 (0) | 1,808 | 216 / 760 |
+| 7b | Review: the stack check names the storage job and the session's transport calls (`plus_dota.STACK_EDGES`; the job's chain 1,988 B on the start task, 376 B free beyond the margin); singular / plural result texts with the counts where the language puts them; `radio_dota.inc` includes `hal_time.h`; host tests `test_dota_fm.c` (AFSK through audio, CTCSS, noise) and `test_dota_radio.inc` (the radio core) | 888,652 (+112) | 209,648 (0) | 1,808 | 196 / 760 |
+| rebase | onto `ddm25` 3032f91 (beta.2 prep, README, CONFIG_HOME_FREQ: base now 864,380 B / 209,672 B, UI stack 268 free); DOTA's share unchanged (+24,616 B flash, -16 B RAM). DOTA's screens are lists and use none of Home's layout fields (`freq_y`). Free flash: 12,124 B | 888,996 | 209,656 | 1,800 | 196 / 760 |
+| ux | Pairing without typing (owner): the frequency source row (Default 433.450 / Current channel / Last used / Manual), the tone from a short list, DMR CC 1 / TS 1 fixed and hidden. Public build (the owner's radio now): 810,388 B (+164), RAM 209,616 B (1,840 free); owner build below | 889,160 (+164) | 209,664 | 1,792 | 200 / 760 |
+
 ## Name and public build
 
 The product's name on the radio is **DDM32 Plus**. The internal names stay (`CONFIG_*`, `--plus`, `prepare_*`, file
@@ -2154,3 +2179,759 @@ stretch that equals our IMBE codec's `cos_table` (open-source `imbe_vocoder` `ma
 carry); every 32-byte window of the backup's data chip (calibration, codeplug): none. On the r13 base (2026-11-20, map
 and size only, the byte search not repeated): `__codec_slot` still 0x030E8000, the image ends at 0x030D9550 (public
 0x030C6198), `__codec_*` symbols as `tools/install_plus.py` expects.
+
+## Round 14 APRS job (branch `r14-aprs`, ROADMAP rows 47 and 49)
+
+Owner items of 2026-11-20 (feasibility and costs in `docs/r14.md` on branch `r14`), one commit each, on top of item
+48 (`r14-48`, cherry-picked). Patches in `tools/plus_aprs.py` (called last from `plus_features.prepare`), host tests
+in `tools/test_aprsx.py` (run by `tools/test_classic.py`), Turkish in `tr.po`'s last block.
+
+**Item 47, Mic-E beacons (`CONFIG_APRS_MICE`, needs `APRS_MSG`).** Settings gets an **APRS** group (the owner chose
+Settings over Tools > APRS; it is the 11th group, after Advanced and without a digit, so upstream's flows that open
+the others by their digits stay as they are): "Beacon format" Standard / Mic-E and, only while Mic-E is chosen,
+"Mic-E message" Off duty / En route / In service / Returning / Committed / Special / Priority (M0-M6; Turkish Görev
+dışı, Yolda, Hizmette, Dönüyor, Görevde, Özel, Öncelikli). Turning Mic-E on starts at En route (the owner's default)
+or the message chosen before. Emergency is not offered: it stays the SOS's (`aprs_sos_set`). The engine
+(`build_beacon` in `aprs.c`) builds the beacon with the existing encoder `aprs_mice_build` (the SOS's) from the same
+position, speed, course, altitude, symbol and codeplug comment, and queues it to the Mic-E destination
+(`queue_frame_to`); every beacon that goes through `build_beacon` follows the setting: "Send position now", the
+interval, SmartBeaconing, after PTT, boot, distance and the ISS digipeater shot. The APRS-IS copy (`own_to_is`) gets
+the same destination ("CALL>TY0S5P,TCPIP*:`..."). Messages, acks, status and DMR positions are unchanged. Stored in
+three spare bits the older firmware masks off (`settings_aprs_mice`: `aprs_flags2` bits 6-7, `aprs_misc` bit 7; 0 =
+standard, 1..7 = M0..M6), taken and saved with the other APRS settings (`aprs_set_cfg`, which turns anything past M6
+into the standard format). The Settings rows read and write through two light engine calls (`aprs_mice`,
+`aprs_set_mice`: no copy of the configuration on the UI task's stack; going through `ui_svc_aprs_set_cfg` first cost
+156 B of the UI stack's 196 B in the stack check). Position ambiguity does not apply to Mic-E beacons. Cost (public
+build, on item 48): +824 B flash, +16 B static RAM (the beacon's destination, the configuration byte); stacks
+unchanged (UI 196 B free).
+
+Tests: `tests/plus/test_aprs_mice.c` runs upstream's `aprsRadioTest` with it built in (all pass: the standard format
+stays the default), then 1,610 encoder round trips through the engine's own parser (every message M0-M6 over latitudes
+and longitudes in all four quadrants and every band of the Mic-E longitude code, the poles and 179 59.99, speeds
+0-799 kn with the shifted codes and >799, courses 1-360 and unknown, altitudes, comments: destination and information
+field decode back), the beacons on the air through the fake radio decoded back (manual for each message, automatic
+every 60 s, SmartBeaconing from moving host NMEA with speed and course, the APRS-IS line), and the setting stored and
+read back with the neighbouring APRS bits intact. UI: Settings > APRS in English and Turkish with the layout check.
+
+**Item 49, the APRS station page (`CONFIG_APRS_STATION`, needs `APRS_RX`, `MAP` and `NAV_FOLLOW`).** Tools > APRS >
+Stations heard: OK opens the station's page (`integration/radiofoundry/aprsx/ui_aprsx.c`, `SCR_APRS_STATION`; the
+list's hint "OK details  Back"; before, OK started Go-To, which is now one key on the page). Lines, cut to the
+240 px screen: the callsign (medium font); the symbol by name and its two characters with the distance and direction
+from our GPS position ("Car /> 2.8 km NE"; "No GPS fix" / "No position heard" otherwise); the position in degrees
+and the Maidenhead locator (`loc_encode`, CONFIG_LOCATOR); altitude, speed in km/h and heading as a compass point when
+the station sent them; its comment without the "/A=" altitude (`mapnav_comment`); "Heard: 3m ago" and "Direct
+(or Via digi), 5 packets"; under a line, the message we sent it last ("> QSL (delivered)": the composer's addressee
+and text, the engine's sending / delivered / not delivered) and its messages in our inbox ("< text", unread ones in
+the warning colour, newest first, as many as fit; another station's are not shown), or "No messages with it".
+Symbol names (Turkish in `tr.po`): APRS101 appendix 2's common primary-table symbols (police, digipeater, gateway,
+aircraft, house, motorcycle, car, balloon, camper, bus, helicopter, boat, person, weather, ambulance, bicycle, fire
+truck, hospital, jeep, truck, laptop, repeater, van); on the alternate table or with an overlay only digipeater,
+gateway, house, car and weather keep their name; others show the two characters only. Keys: OK Go-To follows the
+station (`ui_follow_start`, as the list's OK did; Back returns to the page); 0 opens Tools > Map centred on it at zoom
+6 or closer with it picked and its details under the map (`ui_map_show_station` in `ui_map.c`; Back steps out of the
+details, the pick, then the map); # the composer to it (CONFIG_APRS_MSG); Up / Down the station before / after it in
+the list (round). The page names its station by the callsign's hash (2 B) and looks it up in the engine's list at each
+draw (no copy kept); one that drops out of the list shows "Not heard any more" and its keys do nothing. Drawn again
+once a second (`ui_aprsx_tick` in `ui_app.c`) so the age moves on. Its working copies (the station, one inbox
+message, two 48-character lines) live in the tool screens' shared buffer (`ui_scratch.h`, `UI_SCRATCH_APRSX`; it is
+larger already), so the page costs 7 B of static RAM (the hash, the tick, the map's centring flag) and nothing of
+the UI stack beyond what the stack check already counted. Cost (public build, on item 47): +3,124 B flash (the page,
+its texts and the 23 symbol names in two languages, the map's centring; above the 1.5-2.5 KB estimate), +8 B static
+RAM; stacks unchanged (UI 196 B free). The map also keeps other labels off the picked station's name now (the layout
+check found a district name under it at zoom 6). Not done from the design: the
+"how often" figure (the list keeps only the packet count) and the station's own Mic-E status (not kept in the list).
+
+**The empty SOS page (after item 48).** With no action chosen, the SOS key's page read "No SOS actions chosen" in the
+medium font (252 px, wider than the 240 px screen; Turkish 240 px) over "Tools > SOS key picks them", stale since the
+actions moved to Settings > Keys > SOS key. Now "No SOS actions" / "SOS eylemi yok" over "Pick: Settings > Keys" /
+"Seç: Ayarlar > Tuşlar", and the toast on OK "No SOS actions: Settings > Keys"; `test_ui_aprsx` (English and Turkish)
+and the round 13 flow check its layout.
+
+**Found, not fixed (upstream).** A host test that feeds the same `$GPRMC...\r\n` sentence through
+`aprs_host_feed` (the KISS / NMEA host port) every few seconds sees the host position go stale after a few
+sentences: later lines are no longer taken as NMEA. Likely the `\n` after the `\r` that ended a sentence goes to the
+KISS decoder, which then holds a byte, and a `$` is only taken as NMEA while that decoder is empty
+(`aprs_host.c`, `aprs_host_feed`); not confirmed. A host program that sends CR LF NMEA through the KISS
+port (APRS position from the PC) may be hit. `tests/plus/test_aprs_mice.c` feeds `aprs_nmea` directly instead.
+
+## Round 14: air band and spectrum (branch `r14-air`)
+
+ROADMAP rows 44 and 45, the owner's decisions in `docs/r14.md` (branch `r14`). Hooks in `tools/plus_air.py`, host
+tests in `tools/test_air.py` (run from `tools/test_classic.py`). Budget per commit, both profiles
+(`--stack-check --verify-rebuild`: zero warnings, forced rebuild identical, every task inside its stack):
+
+| Step | What | Public FLASH B | Public RAM B (free) | Owner FLASH B | Owner RAM B (free) | Stacks: UI / radio free |
+|---|---|---:|---:|---:|---:|---|
+| base | `ddm25` 22b4049 | 810,224 | 209,608 (1,848) | 888,996 | 209,656 (1,800) | 196 / 760 |
+| 44a | the airfield table (67 rows out: -484 B of table), "+N", the short "No frequencies" | 809,912 (-312) | 209,608 (1,848) | 888,684 (-312) | 209,656 (1,800) | 196 / 760 |
+| 44b | air watch: the UI (`ui_airwatch.inc`, `mw_keep` 54 B), the radio core's two requests and flag, # on the airfield page, 3 Turkish entries | 811,712 (+1,800) | 209,664 (1,792) | 890,484 (+1,800) | 209,712 (1,744) | 196 / 760 |
+| 45 | 3D waterfall (`wf3d.c`, the third view on *), 1 Turkish entry; multi-watch rows in the air band say "AM" | 812,500 (+788) | 209,664 (1,792) | 891,272 (+788) | 209,712 (1,744) | 196 / 760 |
+| rebase | onto `ddm25` 42a0ff4 (dota-ux, r14-aprs: base 814,356 / 209,640 B public, 893,132 / 209,688 B owner, UI 200 B free); this branch's share | 816,636 (+2,280) | 209,696 (1,760) | 895,408 (+2,276) | 209,744 (1,712) | 200 / 760 |
+
+The three items together: FLASH +2,276 B, static RAM +56 B, no stack path deeper (UI 196 B, radio 760 B free beyond the margin). Public build: 88,620 B flash free, 1,792 B RAM free (rule >= 1,500 B: kept). **Owner build: 9,848 B flash free, under the owner's >= 11,500 B rule** (the base had 624 B above it; docs/r14.md: every item but 48 needs the reclaim of owner question Q1 there), 1,744 B RAM free.
+After the rebase onto 42a0ff4: public 84,484 B flash and **1,760 B RAM free**; owner 5,712 B flash free (the owner runs the public build; the ID database moves to a data-chip pack), 1,712 B RAM free.
+
+### 44a. The airfield table (owner: "D", 2026-11-20)
+
+- **Only removed, nothing added**: the entries of the pinned OurAirports data that are not in that aerodrome's own
+  official publication (its AD 2.18 table), compared by the owner's research outside this repository. The
+  publication is copyrighted: no frequency was added, changed or given another service from it. `tools/airfields.py`
+  `EXCLUDE`: 61 entries (code, channel name, reason), applied by code and channel name whatever the type (LTAJ's
+  "TWR/APP 120.100" goes as both rows). 58 are "not in the aerodrome's official publication" (among them 119.100 at
+  LTAD Etimesgut and LTAE Akıncı: Esenboğa approach's); TR-0018 Bolu's 122.100 and 123.300 are unofficial (no published
+  aerodrome); TR-0040 Manavgat's 128.025 is Antalya approach's. The list must match the pinned data: an exclusion that
+  matches nothing fails the run (a refresh reviews it), as `--check` does for the table. Result: **74 airfields, 122
+  frequencies, 3,744 B** (was 79 / 188 / 4,228; 67 rows removed, the duplicate counted before was one of them). Five
+  small airfields are no longer listed: the selection keeps a small field only with a frequency (LTBK Gaziemir, LTBP
+  Yalova, LTBV Bodrum-İmsık, TR-0018 Bolu, TR-0040 Manavgat); 18 large / medium ones now say "No frequencies in the
+  data" (13 before).
+- **Every frequency of an airfield**: `FREQ_MAX` 10 -> 64 (`air_field_t.count` is a `uint8_t`; the generator refuses
+  more than 255; the 12 KB byte cap stays). Today's most is LTAI Antalya with 7. The details page scrolls (its rows
+  follow the picked one) and Up / Down wrap; the list line is unchanged in height.
+- **"+N" on the list line** when the service shown (the tower, else the first frequency) has more frequencies:
+  "TWR 125.000 +1" at LTAI, none at LTAB's one tower. No new text.
+- **Fixed on the way**: an airfield's page without frequencies drew "No frequencies in the data" wider than the
+  panel (the layout check found it once TR-0004, without frequencies, became the last airfield by code); it now
+  has the shorter alternate "No frequencies" ("Frekans yok"); the toast keeps the long text. One Turkish entry.
+- Tests: `tools/test_air.py` (the list well formed: 61 entries, codes as the table has them, channel names of the band,
+  once each, a reason each; applied to a synthetic pair: removed whatever the type, counted, a small field left without
+  a frequency dropped, an unmatched one reported, bad entries refused; none of them in the committed table);
+  `tests/plus/test_airfield.c` (the shipped table: 74 / 122); `tests/plus/test_ui_misc.c` (its airfield flows on the
+  new table: LTAB GND 120.200 tuned, LTFJ's DEL first, TR-0004 last by code, Antalya "TWR 125.000 +1", LTAB without
+  "+"); `tests/plus/test_ui_air.c` (English and Turkish: "+1", Antalya's seven frequencies scrolled to the last and
+  tuned, Etimesgut without 119.100, Kastamonu without frequencies, layout). Radio rows AW1-AW2.
+
+### 44b. Air watch (`CONFIG_AIR_WATCH`; needs MULTI_WATCH, VFO_MODES, AIRFIELDS)
+
+- **Use**: Tools > Airfields, OK on an airfield, **#** ("OK listen  # watch all"; Turkish "OK dinle  # tümünü izle"):
+  its frequencies go on the multi-watch ring, letters A..F, **each letter its own VFO** (VFOs 0..5): up to 6, in the
+  airfield's list order, a channel name used by two services once (LTAH's TWR / APP 122.100 is one), **the ATIS left
+  out** (deviation from "all": an ATIS recording never stops, so the ring would stay on it and never reach the tower;
+  OK still tunes it). Toast "LTAI: Air watch on", Home shows the ring's rows ("VFO 121.9000" ...). The VFOs are FM
+  VFOs in the air band, so each letter is **received in AM** (`radio_am_channel`), its squelch on the signal strength
+  (`radio_am_noise`), and **never transmits** (TXDENY_AM). The ring is multi-watch's own: the one receiver hops
+  (150 ms a quiet letter: 0.9 s round six), a signal holds it on its letter, the Dual watch delay's wait looks at the
+  others and the ring goes on. Two frequencies make dual watch's pair of two VFOs (LTAB: GND 120.200, TWR 132.000);
+  one is tuned as OK does. Refused while transmitting ("Can't tune while transmitting"), without AM receive, outside
+  the radio's bands; an airfield without frequencies says so. Only from the airfield's page: the typed list in Tools >
+  Air band (docs/r14.md 44a, owner question 3) is not built.
+- **Leaving** is how any watch stops: Back twice, # 5 Stop, * 7, the watch key. Toast "Air watch off" and **everything
+  as before**: the radio core brings VFOs A / B and the position back from the settings as its start does
+  (`radio_sm_init`'s way), then the user's watch is asked for again as it was kept (off; or dual watch / the ring with
+  its letters, selected letter and pane 1's letter). Keys used during it (Up / Down on a letter, Change C, the VFO key)
+  change the air ring only and go with it. **Nothing of it is saved**: the UI's `state_save` / `mw_save` and the radio
+  core's `persist` return while it runs, so a power off during it comes back exactly as before it. Not kept: the
+  contents of C..F's own VFOs (RAM only; emptied as a power off empties them), so a user ring with a C..F VFO letter
+  gets that letter back as a fresh VFO. A Watch channels change made during it applies after it.
+- **How**: the UI (`integration/radiofoundry/air/ui_airwatch.inc`, included in `ui_dual.c` after `ui_mwatch.inc`)
+  keeps the user's watch (`mw_keep`, 54 B; the airfield page's two toast buffers became one), asks the radio core for each letter's VFO (`ui_svc_air_vfo` ->
+  `radio_req_air_vfo`, RREQ_AIR_VFO: arg the VFO, arg2 Hz; the queue keeps their order before the ring's RREQ_MWATCH),
+  then starts the ring through multi-watch's own `apply`; `ui_dual_tick` finds the watch off and ends it
+  (`ui_svc_air_end` -> RREQ_AIR_END). The radio core (`radio_airwatch.inc`): the first RREQ_AIR_VFO stops a scan or the
+  user's watch (back on its selected channel), notes the position and VFOs A / B (`persist`) and sets `sm.air`; each
+  VFO becomes a fresh VFO at the frequency (the one in use, the other of A / B, a parked one, or a C..F slot); RREQ_AIR_END
+  stops the ring, reloads VFOs A / B from the settings (`restore_vfo` + `vfox_load`), empties C..F, and selects the
+  saved position (`select_position`, then the VFO or the channel tuned). Requests while transmitting or in hotspot mode
+  are refused, as RREQ_MWATCH is.
+- Tests: `tests/plus/test_airwatch_radio.inc` (run by `tools/test_air.py` after upstream's radio suite, the Classic /
+  Plus P25 suites, the multi-watch ring and every mode in the VFO again with it built in): four air frequencies on the
+  letters' VFOs and the ring over them, each tuned on its own frequency in AM through the board's AM receiver, TX
+  refused; a signal on one letter holds the ring there (2 s) and the ring moves on after; nothing noted while it runs;
+  the end back on the channel and VFO A as before, C..F empty; a power off during it back as before; the user's ring
+  stopped on its selected channel and noted there; refusals (TX, off the band, a seventh VFO, an end without it).
+  `tests/plus/test_ui_air.c` (English and Turkish, the radio core's side faked in `ui_sim_air.c` on the simulator's
+  VFOs): Antalya's six on A..F (each VFO's frequency, the receiver on A, E on its own), Home's rows; Back twice: the
+  radio back on its channel, the watch off, the settings untouched throughout; the user's ring of four with C
+  selected kept and back with # 5 Stop; two frequencies the pair; one tuned; a channel name on two services once;
+  refusals; a power off during it doesn't bring it back; layout of the airfield page and Home. Radio rows AW3-AW7.
+
+### 45. 3D waterfall (`CONFIG_SPECTRUM_WF3D`; needs SPECTRUM_WF)
+
+- **Use**: Tools > Spectrum, **\*** cycles **waterfall > 3D > bars alone > waterfall** (owner: a third view, the flat
+  waterfall stays; RAM only, the waterfall at power on, the view chosen kept for the next entry). Toasts "3D
+  waterfall" ("3B şelale"), "Waterfall off", "Waterfall on"; without heap room "Waterfall: no room" as before. The 3D
+  view takes 13 / 20 of the area under the header (the flat one 11 / 20) and the bars stay above it.
+- **Picture** (`integration/radiofoundry/toolbox/wf3d.{c,h}`, installed as `core/ui/wf3d.*`): the waterfall's newest
+  24 rows as a ridge plot, the newest in front at the bottom and full width (its points exactly under the bars),
+  each older row further back: scaled by 16 / (16 + depth) towards the centre and raised towards a vanishing line
+  above the box, placed so the last row's highest peak just reaches the top. A point's level (wf_level: 3 dB a step
+  above the sweep's floor) lifts its row by up to 9 / 20 of the box at the front. Back to front (painter's order):
+  each row first clears the area under its ridge down to its own base, which hides the rows behind there, then draws
+  the ridge, each segment in the colour slot of its higher level (the waterfall's eight slots; slot 0, the background,
+  is drawn in slot 1's colour so a quiet row still shows as a line). It "flows" one row a sweep, as the waterfall does.
+- **RAM 0**: it draws from the waterfall's own heap rows (`wf_t.buf`, 1,280 B, only while the screen is open), keeps
+  nothing (every point worked out as it is drawn), and its locals are a few integers; the colour table (16 B) is on the
+  stack of `wf3d_view` only while it draws. CPU: about two 1-pixel `gfx_vline` calls a column a row (24 x ~190
+  columns), once a redraw.
+- Tests: `tests/plus/test_wf3d.c` (into a test frame buffer, ASan / UBSan): nothing without a buffer or rows; nothing
+  outside the box; a quiet front row is the bottom line in slot 1's colour from the first point to the last, at the
+  bars' x; a level-15 peak lifts it by the amplitude in the TX slot's colour, a level-8 one by 8 / 15 in slot 4's; the
+  area under a peak cleared; 24 rows each a line, higher and narrower going back (the last under 3 / 5 of the
+  width); a wall in front hides row 1's line and not the last row's above it; 40 rows kept draw exactly as their
+  newest 24; every row a wall: the last row's peaks on the box's top row (within 2 px), none above; a narrow (1 px
+  bars) and a too-short box. `tests/plus/test_ui_wf3d.c` (English and Turkish, `ui_sim_toolbox.c`): * from the
+  waterfall to 3D keeps the same heap block (no second allocation), draws the strong point's ridge in the TX colour
+  low in the box (the newest in front; the waterfall's newest is on top), new sweeps drawn; * to the bars gives the block back and draws no rows; * to
+  the waterfall takes it again; Back gives it back and 3D comes back on the next entry; without heap: "No room" and
+  the toasts; layout of each view. The existing waterfall flows (`test_ui_toolbox.c`) run as before in their own build
+  without the switch. Radio rows WF3-1 - WF3-3.
+- **Also in this commit (item 44b's Home)**: a multi-watch row of an FM channel or VFO in the air band now says "AM"
+  ("AM 124.425") where it said "FM": it is received in AM (`ui_mwatch_draw.inc`; the air watch's rows are all such).
+
+## User data packs (`CONFIG_DATAPACK`, ours; branch `datapack`, round 14)
+
+Data the user builds from sources they download themselves (RadioID.net's user list; the aerodromes' own
+publications), kept on the data chip in **0xE70000-0xEFFFFF**, the one region AGENTS.md rule 2 opens to the firmware
+(owner, 2026-11-20; checked erased in the owner's backups). Design: `docs/r14.md` section 7. Code:
+`integration/radiofoundry/datapack/`, hooks in `tools/plus_datapack.py`, host tests in `tools/test_datapack.py`.
+
+- Store (`core/storage/datapack.c`): per type two slots (RadioID 2 x 256 KB at 0xE70000 / 0xEB0000, air band 2 x 16 KB
+  at 0xEF0000 / 0xEF4000); a slot is a 64-byte header (`DPK1`, type, format, sequence, length, payload CRC-32, date,
+  name, builder tag, header CRC-32) and the payload. Written into the slot not in force: its sectors erased, the
+  payload programmed (any order), read back against its CRC, the header programmed last. The higher valid sequence is
+  in force; checked at boot (`dpk_scan` after `storage_init`). Every erase / program goes through `dpk_erase` /
+  `dpk_program`, which refuse anything outside the region. RAM: 2 x 40 B (what is kept of the pack in force).
+
+| Step | What | Public FLASH B | Public RAM B (free) | Owner FLASH B |
+|---|---|---:|---:|---:|
+| base | `ddm25` da7577c | 810,388 | 209,616 (1,840) | 889,160 |
+| 1 | the store, boot scan | 810,928 (+540) | 209,696 (1,760) | 889,700 |
+| 2-3 | RadioID from the pack (a caller's name: the codeplug contact, then the pack, then the built-in table, then the CPS-uploaded database; binary search on the chip, no RAM copy); Settings > About: "RadioID pack: RadioID TR, 2026-11-17, 98 KB" / "none" / "damaged, not used", the same for the air band pack; the airfield screens ask `air_count` / `air_freq` (`core/ui/air_pack.c`): a pack that names an airfield replaces its frequency list, the table answers for the others | 812,204 (+1,276) | 209,824 (1,632) | 890,964 |
+
+- RadioID pack payload (format 1): an 8-byte header (count, record size, text characters) and records sorted by ID:
+  3 bytes LE, then 16 characters 6 bits each ("TA1ABC Ahmet"), 15 bytes a record (Turkey's ~8,700 IDs: ~130 KB).
+- Air band pack payload (format 1): a 4-byte header (count), per airfield its code (8 bytes), its frequency count and
+  the frequencies as `air_freq_t` (channel 2 bytes, type 1). Airfields the table lacks are not added (format 1:
+  frequencies only).
+| 4 | Loading from the PC: the CPS session's close (`C` 5) checks the slots again; the builder `tools/datapack.py` (RadioID pack from the user's radioid.net `user.csv`, air band pack from the aerodromes' AD 2.18 pages the user downloads, `info`) | 812,208 (+4) | 209,824 (1,632) | 890,968 |
+| rebase | onto `main` 42a0ff4 (r14-aprs merged): base public 814,356 B, RAM 209,640 B (1,816 free) | | | |
+| 5a | **The built-in ID database leaves program flash in every profile** (owner, 2026-11-21: the RadioID pack replaces it; `CONFIG_ID_DB=n` in `build_radiofoundry.py`, `tools/iddb.py` stays as the pack builder's source). RAM: the kept pack state cut to 8 bytes a type (the rest of the header is read from the chip when About draws), and **Settings > About's text is built in the heap while the page draws** instead of a 752-byte static buffer ("No room" if the heap has none) | 816,232 (+1,876 over main) | 209,040 (**2,416**: +600 over main) | 816,232: the same image |
+| rebase | onto `main` 16a9f46 (r14-air merged: base public 816,636 B, RAM 209,696 B, 1,760 free). The airfield screens take both sides: r14-air's "+N", every frequency (up to 64) and the air watch (#) all ask `air_count` / `air_freq`, so an air band pack's list is what the line, the details, OK and the watch use (the ATIS left out of the watch as before); "+N" keeps the shown service's type, not the pack's one copy `air_freq` hands back. `air_pack.c` also stops at an airfield whose list would run past the payload (a pack that checks but is malformed is never read beyond its end) | 818,500 (+1,864 over main) | 209,096 (**2,360**: +600 over main) | 818,500: the same image |
+| UI | simulator flows with packs in force (`tests/plus/test_ui_datapack.c`, English and Turkish, layout-checked): About with a RadioID pack ("RadioID pack: RadioID TR, 2026-11-20, 1 KB", "Air band pack: none") and with a damaged air band pack ("damaged, not used", the table again); Tools > Airfields with an air band pack naming LTAB ("TWR 132.000 +1", its five frequencies, OK on one only the pack has); the air watch on the pack's frequencies (four letters, its ATIS left out) | 818,500 (tests only) | 209,096 (2,360) | |
+| 5b | **DOTA content type "data pack"** (`docs/dota.md` section 20): Tools > DOTA Transfer sends the RadioID or the air band pack in force to another radio; the receiver is asked "Data pack: RadioID TR, 2026-11-17, 98 KB. Accept?" (the sender's HELLOs give ~20 s), writes the slot not in force in storage jobs (`dpk_begin` / `dpk_put` / `dpk_commit`) and switches only when it is whole and checked; any failure leaves the old pack. HELLO carries the 64-byte header after the 21-byte manifest (older builds drop it: "No answer"); 120-byte chunks as channels records; the receiver keeps a 32-frame window instead of a bitmap (up to 2,240 frames). `dpk_describe` (About's text for any header); the slot scan takes its result in one go (another task never sees a half scan). Fixed on the way: a DMR receiver's refusal went to ID 0 | 820,796 (+2,296) | 209,072 (**2,384**: -24) | 820,796: the same image |
+
+**Profiles after 5a.** `--plus` and `--plus --public` build the same image (the same bytes; only the output directory,
+the manifest's "kind" text and the public build's audit that no ID database code is in the ELF differ). The public
+profile still has to differ only by that audit and by refusing `--feature ID_DB=y`; a `--plus` developer build can
+still turn the old table on with `--feature ID_DB=y` (not for release).
+
+**Loading a pack from the PC (for the Windows programmer).** Through the firmware's own open-firmware CPS protocol
+(`docs/spec/open-firmware-cps.md` 2), never our flash tools: flash area 1 takes physical addresses and the pack
+region lies inside the window the CPS may write (0x720000-0xEFFFFF), so the CPS's journaled sector writes (prepare
+sector, write, commit; power-cut safe) carry it.
+
+1. Start the CPS session as for a codeplug write (`C` 0 ...).
+2. Read both slots' first 64 bytes of the pack's type (area 1: RadioID 0xE70000 / 0xEB0000, air band 0xEF0000 /
+   0xEF4000) and pick the slot **not** in force: `datapack.inactive_slot`; the new sequence is `datapack.next_seq`.
+3. Build the slot image (`datapack.header(type, payload, date, name, seq)` + payload; `datapack.py` writes `.dpk`
+   images with sequence 0: set it from step 2 and recompute the header CRC with `header()`).
+4. Write it sector by sector in `datapack.cps_plan(slot, image)` order: the payload's sectors first, **the header's
+   sector last** (its rewrite is the commit; until then the slot does not count, and the pack in force stays).
+5. Close the session (`C` 5): the radio checks the slots and the new pack is in force (Settings > About shows it).
+
+The data never comes from us: the user downloads RadioID.net's user list and the State's AIP pages (in Turkey the
+DHMI eAIP, AD 2.18) themselves, and the programmer builds the pack on their PC. Nothing derived from them is ever in
+this repository, a release or the firmware.
+
+**Loading from another radio (DOTA, step 5b; `docs/dota.md` section 20).** Both radios: Tools > DOTA Transfer, the same
+method and frequency (the defaults pair without typing). The sender: Role Send, What "RadioID pack" or "Air band
+pack" (the row under it names the pack in force, greyed "none" without one), the receiver's code, Send. The receiver:
+Role Receive, Ready as for channels (the import rows do not matter for a pack; "New zone" still wants a name, so pick
+"Current zone"), then answer "Data pack: <name>, <date>, <size>. Accept?" with OK within about 20 s. Deviation from
+`docs/r14.md` 7.6: the receiver has no "What: Data pack" of its own; it is asked about whatever pack a sender offers,
+and a sender of channels is received as before. Nothing reaches the codeplug; the new pack replaces the one of its
+type only when every byte arrived and checked, and About shows it at once.
+
+## Last calls (`CONFIG_LAST_CALLS`, ours; branch `r14-xband`, ROADMAP item 43)
+
+Tools > Last call is now a list of the **last 8 calls** heard, newest first, from every mode (DMR, P25, YSF, NXDN,
+dPMR, and the FM caller IDs MDC1200 / FleetSync / DTMF) and from every watched channel: one row a call, "B DMR Joe"
+(the multi-watch letter A-F, or dual watch's A / B; the mode; the caller's name, else its ID or callsign) and
+"TG2862 2m" (the talkgroup, or the unit a private call went to; how long ago; the talkgroup gives way where the row is
+short). Encrypted calls say so. Owner's decisions (docs/r14.md on `r14`, 2026-11-20): 8 calls; **no stored audio for
+the new modes**; the P25 replay stays as it was for the latest P25 call: OK on the newest P25 call (shown "> TG101")
+plays it again on the P25 channel in use, OK again stops it, the same toasts as before; OK on any other row says "No
+audio kept for this call". Design and code:
+
+- `integration/radiofoundry/lastcall/lastcall.{c,h}` (portable, installed as `core/ui/`): 8 entries of 16 bytes
+  (source and destination 24 bits each, or a YSF callsign / DTMF string's first 8 characters at 6 bits each; the
+  letter; private / encrypted / text flags; the UI clock's ms; NAC / RAN / colour code | slot; the mode). One entry a
+  call: a call going on updates its entry (P25's source arrives with its first LDU1), the same station heard again
+  after 5 s of quiet is a call of its own, a new call naming the same known source within those 5 s is the same call
+  (a caller reported twice), one whose source is still unknown never is (a P25 reply on the same talkgroup).
+- `ui_lastcall.c`: fed at exactly the heard list's hooks in `ui_app.c` (recent_add for a new call, the DMR and P25
+  "call goes on" spots, the tick's view), so every mode Recent already logs arrives through one path; the caller's
+  name is looked up in Recent when the row is drawn (no copy). The letter comes from `ui_dual_letter_here()` (added to
+  `ui_dual.c`): the ring's `mw_tuned()` or dual watch's `tuned_pane()` on the view of that tick (the ring's own
+  `mw_rx` follows a tick later, after Recent is fed).
+- Reuse, not duplication: the heard list keeps a station once with its count; Recent keeps 20 stations with their
+  names; this list keeps the last calls in order and points back to Recent for the names. The r14 study's shared
+  multi-mode audio ring is not built (no audio for the new modes).
+
+Cost (public build, `--plus --public --stack-check --verify-rebuild`): FLASH 810,224 -> 812,416 B (+2,192), static
+RAM 209,608 -> 209,744 B (+136; **1,712 B free**); stacks unchanged (UI 196 B, radio 760 B free beyond the margin).
+Owner build (`--plus`): 888,996 -> 891,192 B (+2,196; **9,928 B free: below the 11,500 B owner rule**, as docs/r14.md
+foresaw for every r14 item without a reclaim), RAM 209,792 B (1,664 free). Both zero warnings, forced rebuild
+identical.
+
+Tests: `tests/plus/test_lastcall.c` (the list's rules: calls and continuations, the gap, the P25 source rule, stations
+told apart by letter / mode / private / destination, the oldest dropped, texts with `*` and `#`, the 16-byte entry)
+and `tests/plus/test_ui_lastcall.c` (12 flows, English and Turkish, through the real UI in upstream's simulator: a DMR
+call through Recent's own feed, MDC / FleetSync / DTMF through `radio_fmid_logged`, P25 / YSF / NXDN / dPMR as
+`call_log_update` hands them over, the oldest dropped; letters A-F on a six-channel ring and A / B in dual watch;
+Tools > Last call; the P25 row's replay refused off a P25 channel, stopped while playing, not offered for an older or
+encrypted P25 call; empty list; RAM only; the layout on every page), run by `tools/test_xband.py` from
+`tools/test_classic.py`. Radio rows: `docs/plus-radio-test.md` "Round 14 xband".
+
+## Cross-band store and forward (`CONFIG_XBAND`, ours; branch `r14-xband`, ROADMAP item 46)
+
+**Real-time cross-band is impossible on this radio** (docs/r14.md 46: one FD6818 transceiver with one synthesizer,
+both LNAs off while it transmits). Tools > Cross-band is therefore a store-and-forward relay between two frequencies
+A and B: an over heard on one is recorded whole, then transmitted on the other (A to B and B to A); while nothing is
+heard the receiver goes between A and B, a second on each (held while bursts are heard). **DMR only.**
+
+| Mode | Can | Cannot |
+|---|---|---|
+| DMR | relay whole overs between two simplex frequencies in the amateur bands, the same colour code and slot on both: the over's AMBE+2 air frames are kept as heard (9 bytes a 20 ms frame) and sent again through the call stack's voice source, so the voice is bit for bit what was heard (no decode / encode); sent as a new call from our own DMR ID to the talkgroup (or unit) it was heard for; up to **37.98 s an over** (the memory: 1,899 frames); longer overs are cut with the alert tone and "!" on Home (the 3-minute rule is in the engine too, but the memory always cuts first) | keep the caller's own ID (we transmit, so the call is ours), relay encrypted calls (no clear voice), hear the other side while it sends, catch the start of an over that begins while it listens on the other frequency (up to about a second can be lost: the dwell, then DMR late entry), different colour codes or slots on A and B (one pair of settings) |
+| FM | - | **not built.** As PCM an over needs 16 KB/s: the memory holds 1 s. Through the AMBE codec (the r14 study's idea) it needs the owner's stock codec to encode FM audio, which no host test can run (the owner's condition was "only if it works in host tests"), and the FM audio-to-encoder path has never been measured. Through our own IMBE codec it would need the P25 worker's codec context and FIFO, which are the very memory the recording uses |
+| P25 | - | **not built.** Its frames come through the P25 worker, whose buffers are the recording's memory (both cannot run at once); the worker has no path to transmit stored IMBE frames (its transmitter encodes the microphone live), and without the worker's buffers only the call replay's 4.4 KB (8 s) would be left |
+
+Owner's rules (2026-11-20) and how they are kept:
+
+- **Attended only**: the question "Attended only: stay at the radio while it relays. Start?" before every start.
+- **The screen is locked; only the stop key works**: while a session runs every key but Back is refused with "Cross-band
+  on: Back stops" (`ui_xband_lock`, first in `ui_app_key`: the emergency / SOS key too); Back stops it at once (off the
+  air at once, `dmr_end`). The radio core drops every request but beeps, settings, the volume and power off; PTT gets
+  the deny tone and never keys. DOTA cannot take the radio meanwhile (`radio_dota.inc`), nor APRS beacons, nor a
+  codeplug reload.
+- **A clear CROSS mark**: "CROSS" in the status strip of every screen (warn colour), and Home's bottom line says what the
+  relay does ("Listen A", "Record A 0:12", "Send B 0:12", "CW ID", "!" when cut) whatever Settings says of hints.
+- **Refused frequencies** (`xband_check_hz`, IARU Region 1 band plan): outside 144-146 / 430-440 MHz; PMR446
+  446.000-446.200 MHz (its own refusal: no repeaters there, the radio is not type-approved); the repeater segments
+  (2 m inputs 145.000-145.1875 and outputs 145.600-145.7875, 70 cm inputs 431.050-431.825 and outputs 438.650-439.425,
+  each with half a 12.5 kHz channel around it); the satellite segments (145.800-146.000, 435-438 MHz); APRS 144.800;
+  A = B; any input or output of the repeater list (Tools > Repeaters' table); a channel whose RX and TX differ when
+  picked from a zone; frequencies the radio cannot transmit on.
+- **CW ID every 10 minutes**: the callsign (the radio name, `radio_cwid_callsign`: refused to start without one) in
+  Morse on each frequency transmitted on since the last ID: after the first over, then again once 10 minutes have passed
+  and there was traffic (as the SFR repeater's ID); the CW beacon's keyer (FM carrier, the settings' speed and tone).
+- **At most 3 minutes an over**: cut at 9,000 frames or at the memory's end, whichever comes first (here the memory).
+
+Design: `integration/radiofoundry/xband/` - `xband.c` (portable: the rules, the state machine LISTEN / RECORD / SEND /
+ID, the frame store over up to three memory pieces), `radio_xband.inc` (the radio core: the session channel, the
+voice sink and source wrapped for the session, keying through `ptt_down` so every gate of a user's transmission holds
+- TX inhibit, the battery, the band, the radio's time-out - the CW ID through `cw_begin`, the request filter, the
+restore), `ui_xband.c` (the form, the picker, the question, the lock, Home's line). The memory: the P25 worker's `voice`
+(6,916 B), `fifo` (5,788 B) and the call replay's `rp_buf` (4,400 B), lent while the worker is idle (`p25_lab_lend`;
+the session's DMR channel stops a P25 receive first, 2 s at most, else it ends "no memory") and given back zeroed
+before the user's channel returns (`p25_lab_give_back`); while lent, every worker start refuses. The cost of that: no
+P25 / YSF receive during a session (it is DMR anyway) and the call replay's last P25 call is gone after one.
+Deviations from docs/r14.md: no separate duty limit (the owner's rules name the 3-minute over; the radio's own time-out
+applies to each transmission too); no ID at the very end (the stop must be immediate); the ID on each frequency
+actually used rather than always both.
+
+Cost (public build, `--plus --public --stack-check --verify-rebuild`, on top of last calls): FLASH 812,416 ->
+820,032 B (+7,616, strings and Turkish included), static RAM 209,744 -> 209,904 B (+160; **1,552 B free**: the
+picker's zone and channel share the tool screens' buffer, the session's memory is the P25 worker's, the engine's own
+state is packed); every task's deepest stack path unchanged (UI 196 B, radio 760 B, start 348 B free beyond the margin;
+the stack check follows the wrapped voice sink and source and the engine's io through `plus_xband.STACK_EDGES`).
+Owner build (`--plus`): FLASH 891,192 -> 898,804 B (+7,612; **2,316 B free: below the 11,500 B owner rule**, as
+docs/r14.md foresaw without a reclaim), RAM 209,792 -> 209,952 B (1,504 B free). Both zero warnings, forced rebuild
+identical. Round 14 xband in all (items 43 and 46): public +9,808 B flash / +296 B RAM, owner +9,808 B / +296 B.
+
+Rebased onto `ddm25` da7577c (DOTA pairing without typing: base public 810,388 B / 209,616 B, owner 889,160 B /
+209,664 B); `radio_dota.inc`'s take is unchanged there, so the guard that keeps DOTA off a cross-band session stands
+as it was. 8 B more of static RAM taken back for the owner build (the radio core's time is `hal_millis()`, the session
+counters 8-bit). Now: public FLASH 820,184 B, RAM 209,904 B (**1,552 B free**); owner FLASH 898,960 B (2,160 B free;
+the owner build's flash is not a blocker any more: the owner's radio runs the public build and the ID database moves
+to a data pack), RAM 209,952 B (1,504 B free). Round 14 xband over the new base: public +9,796 B flash / +288 B RAM,
+owner +9,800 B / +288 B. Both zero warnings, forced rebuild identical, stacks unchanged.
+
+Rebased again onto `ddm25` 42a0ff4 (round 14 APRS job: items 48, 47, 49; the shared tool-screen buffer now also holds
+the APRS station page's copy, the cross-band picker's zone and channel beside it). Public build: the base with last
+calls and cross-band compiled out (`--feature LAST_CALLS=n --feature XBAND=n`) 814,976 B / 209,640 B; with them
+**824,132 B flash, 209,928 B static RAM: 1,528 B free** (round 14 xband +9,156 B / +288 B); zero warnings, forced
+rebuild identical, stacks unchanged (UI 200 B, radio 760 B free). **The owner build (`--plus`, with the ID database) no
+longer links: FLASH overflows by 1,784 B** with the APRS job and this one together; it waits for the ID database's
+move to a data pack (coordinator, 2026-11-20).
+
+Rebased onto `ddm25` 8242a43 (round 14 air items and the user data packs: the built-in ID database gone, so `--plus`
+and `--plus --public` build the same image; About's text buffer on the heap; DOTA can send a data pack). The data
+pack sessions are DOTA sessions taken through the same `dota_take`, so `radio_dota.inc`'s guard (no DOTA while a
+cross-band session runs) covers them, and Tools > Cross-band refuses to start while any DOTA session runs
+(`dota_on()`). The last calls' hook into `ui_dual.c` now anchors right after multi-watch's part (air watch's follows
+it). Both builds: **830,568 B flash, 209,368 B static RAM: 2,088 B free** (the base with both compiled out 821,412 B / 209,072 B: round 14 xband +9,156 B / +296 B);
+zero warnings, forced rebuild identical, stacks unchanged (UI 184 B, radio 760 B, start 348 B free: as the base).
+
+Tests: `tests/plus/test_xband.c` (the rules at every segment's edge; an over recorded and sent in order; B to A, a
+private call; the dwell, held by bursts; a key-up and an encrypted call not relayed; a recording whose end never comes;
+the cut at the memory and at 3 minutes, one beep; a refused transmission; one cut short on the air; the CW ID's first
+time, the 10 minutes, a refused ID; the stop on the air, the battery, no memory), `tests/plus/test_xband_radio.inc`
+(the real radio core and DMR call stack on the simulated modem, after upstream's and Classic's radio suites: the
+session channel, PTT refused, requests dropped, a call heard on A sent on B with every voice burst as heard, the
+header to the talkgroup from our ID, the terminator, the CW ID in FM on B and DMR back, the dwell, the stop restoring
+the FM channel and the memory, a refused transmission, a P25 worker that keeps its memory), `tests/plus/test_ui_xband.c`
+(10 flows, English and Turkish: the form, every refusal, the picker, the question, Home while it relays, the lock, the
+stop, an end by itself; the layout). Radio rows: `docs/plus-radio-test.md` "Round 14 xband", XB-*.
+
+## DMR receive audio diagnostics (`CONFIG_DMR_AUDIO_DIAG`, ours; branch `fix-dmr-audio`)
+
+Owner's report on v1.0.0-beta.3 (public build): received DMR audio sounds crackly / scratchy and artificial; our
+transmit is heard clean. Whether beta.2 or earlier builds did the same is not known.
+
+**What changed since beta.2, against the receive audio path.** None of it runs in that path during a call:
+
+| Change | Why it is not the cause |
+|---|---|
+| DOTA step 0, `PLUS_AUDIO_MUX_NO_APRS` | the ring was written only when `aprs_on`, set only through `rx_by_stream()`, which needs `board.audio_tap`; the DM-32 has none, so the ring was dead code before (`core/aprs/aprs.c` `rx_by_stream`) |
+| DOTA amplifier (`AMP_DOTA`, `speaker_click`, `afsk_monitor`) | only with `afsk_tx` (a DOTA FM transmission) or a click asked by a session (`radio_dm32.c` patch in `tools/plus_dota.py`) |
+| DOTA radio core, data service hook, beeps | `dota_request` / `dota_rf_poll` return at once without a session; the UDP hook only for DOTA's port |
+| Home frequency (`CONFIG_HOME_FREQ`) | one text row drawn by the UI task (priority 1, below the audio and DMR tasks at 5) |
+| Data packs (main after beta.3) | ID lookups run in the radio task (priority 4) on the data chip's own SPI bus with a mutex: no interrupt lock, nothing the audio task waits for |
+| Last calls, cross-band (main after beta.3) | last calls are fed in the UI task, RAM only; cross-band wraps the voice sink only while a session runs (`radio_xband.inc` `xb_take` / `xb_give`) |
+
+**The path itself** (unchanged since Classic r12): `dmr_call` (DMR task, priority 5) -> `ambeVoice.c` `sink_frame`
+(FEC, a queue of 8 frames, playback after 3) -> the audio task (priority 5, woken by the microphone interrupt every
+20 ms) runs `rx_block` -> the stock AMBE+2 decoder from the codec slot -> one 160-sample block into the speaker queue
+(4 slots) -> a 2 ms timer pushes 32-sample chunks into the HR_C7000 prompt FIFO while AUDIO_CONTROL b31 says there is
+room (`build_radiofoundry.py` r12 patch on `audio_pcm.c`).
+
+**Ranked candidates.**
+
+1. **No margin when the speaker starts** (most likely; a design weakness, host-tested). The speaker route turns on
+   inside the first voice block's callback and empties the queue; the next block is pushed into an empty FIFO at once,
+   so it and the queue hold exactly one block. Any later block that comes out of the decoder later than the first one
+   leaves the FIFO empty: a click / crackle, until enough late blocks have built a margin. A block's latency varies
+   with the decoder and with the DMR task (same priority, time sliced) handling a burst every 60 ms.
+   `tests/plus/test_dmraudio_pcm.c` reproduces it on the real driver: first block 2 ms, later ones 2 / 7 ms -> the
+   FIFO runs dry for 4 ms (mode 0); with one block of prefill, never. The FIFO has no empty flag and may replay stale
+   chunks when it runs dry (`modem-hrc7000.md` 8.4: "Flushing stale audio: fill with 0x7F bytes"): that would sound
+   rough rather than silent.
+2. **Feeding by the b31 flag instead of a clock.** P25 on this FIFO sounded "choppy, accelerated" with this feeding
+   and "works perfectly" paced at one chunk per 4 ms (lab `PROGRESS.md` 2026-11-06, `results/playback-pacing.json`:
+   legacy 546 full refusals and 86 pushes within 500 us; paced none). DMR still uses the b31 feeding (lab
+   `docs/receive-audio.md`: "Normal non-P25 audio retains legacy FIFO service"). That P25 test changed two things at
+   once, so it does not prove which one helped.
+3. **Frames lost or concealed** (`un`, `cc`, `ls`, `bd` counters): an underrun of the AMBE queue repeats the last frame
+   (robotic); `bd` / `be` high means a weak or distorted signal, not our audio path.
+4. **Decoder arguments.** `vocoder.c` calls the stock decoder with flags 0 and `r3 = D[0x1166]`; the vendor wrapper
+   passes "a flags word" not documented (`codec-dm32.md`: "Audio quality against the vendor firmware has not been
+   compared"). Only a comparison with another radio on the same transmission can point here; nothing is changed from
+   a guess (clean room: no stock disassembly).
+5. **Clipping**: `pk` near 32767 on normal speech would mean the decoded level clips at the DAC (codec DAC gain 0 dB).
+
+**What is built.** `tools/plus_dmraudio.py` (one line in `plus_features.prepare`, one switch), the driver part in
+`integration/radiofoundry/dmraudio/pcm_diag.inc` (included by `audio_pcm.c` after `pcm_playback.inc`):
+
+- Tools > Diagnostics, page one, five lines first (debug text, not translated; at most 26 characters, counters stop
+  at a cap):
+
+  | Line | Fields |
+  |---|---|
+  | `dv m1 in150 pl147` | FIFO feed mode; AMBE frames from the air; frames played |
+  | `dv cc2 un1 q4 pk12000` | blocks concealed; AMBE queue underruns; the queue's most; the call's peak sample |
+  | `dv bd3 ls4 be56` | frames FEC could not fix; frames lost; bit errors fixed |
+  | `sp gp7/4.0 fu300 dr1` | times the FIFO ran dry / the longest (ms), by an 8 kHz play model; FIFO full refusals; blocks dropped (each call's first block is dropped by the route change, as before) |
+  | `au bl2.0-8.0 sl1 ov2` | block latency min-max (microphone block complete -> speaker block queued, voice blocks only, ms); blocks 15 ms late or more; microphone blocks the audio task missed |
+
+- On that page with a channel shown: **0** steps the feed mode m0 -> m1 -> m2 -> m3 -> m0, **9** zeroes the counters
+  (the voice queue's, the FIFO's, the DMR glue's). m0 = as shipped; m1 = prefill (after the queue empties, the FIFO
+  waits for 2 queued blocks or 25 ms); m2 = P25's pacing for every stream; m3 = both. RAM only: power-on is m0.
+- Costs (public build on 743c1b7): FLASH 830,592 -> 831,984 B (+1,392), static RAM 209,368 -> 209,432 B (+64; 2,024 B
+  free). m1 adds 20 ms of delay at the start of each over and may cut up to 20 ms more of its tail (the route turns
+  off when the AMBE queue ends, which empties the speaker queue, as before).
+
+Tests: `tests/plus/test_dmraudio_pcm.c` (the real generated driver and audio task against a prompt FIFO model: m0 runs
+dry after a fast first block, m1 and m3 do not, the counters match the model, a one-block stream still plays, the
+mode applied while running, the reset), `tests/plus/test_ui_dmraudio.c` (the real formatter and digit handler cut out
+of the generated `diag_dm32.c`; 4 flows, English and Turkish, layout). Radio rows: `docs/plus-radio-test.md` "DMR
+receive audio", DA-*. Next: the default becomes the mode the rows show clean (one line), or the counters point at 3-5.
+## Round 15: channels, zones and DMR rows (branch `r15-channels`, `CONFIG_CHAN_EXTRAS`)
+
+The owner's reports after v1.0.0-beta.3 (`tools/plus_chux.py`, tests `tools/test_chux.py`). One switch for the job; it
+needs `ZONE_EDIT` and `CHANNEL_EDIT`.
+
+### 1. Zone size ("I can add a 27th channel, but on Home I can only go up to 26")
+
+The limits are the codeplug's: **80 channels a zone** (`codeplug_zone_capacity()`; 16 in a codeplug that still has
+the old 16-channel zone records), **68 zones**, **1024 channels**. Nothing between the codeplug and Home stops below
+them, measured on host: the real codeplug, its RFKV records and `zone_edit.c` over a simulated flash grow a zone of FM,
+DMR and P25 channels one at a time from 26 to 80, every one read back, after a power cycle too, the 81st refused
+(`tests/plus/test_zone_cap.c`; also all 68 zones x 80 checked once); the real radio state machine steps Home through 26,
+then 27 added underneath (as a zone edit's write arrives), then 80 positions both ways, and keeps position 80 over a
+reboot (`tests/plus/test_zone_radio.inc`). No host path gives 26, so the radio's case is one of: a channel the radio
+cannot read (Home's `find_channel` skips it silently, and the zone list hid it: its row vanished), or Up / Down set to
+the zone or the talk target (Settings > Keys), or dual / multi-watch skipping the positions the other watched channels
+hold. What changed:
+
+- the zone list's **Add channel** row shows `26/80` (dimmed at the capacity, and OK there refuses at once), the channel
+  editor's Zones list `26/80` beside each zone the channel is not in, Zones > Create New Zone `5/68`;
+- a full zone refuses with **"Zone full: max 80 channels"** (Add channel, Copy here, the channel editor's Zones; the
+  last one's toast was not translated);
+- a zone position whose channel cannot be read now **shows** in the zone list as `27 ? Ch 123`, "Can't be read"
+  (warning colour) instead of vanishing, so the user sees why Home skips it and can remove it (# menu).
+
+Radio test row Z-1 (`docs/plus-radio-test.md`) narrows the owner's case down.
+
+#### Above 80 channels a zone? (owner's question; not changed)
+
+Measured on the public build (`--plus --public`, base 743c1b7: RAM 209,368 B, 2,088 B free; rule >= 1,500 B free).
+A `zone_t` is 180 B (name 17 + count 2 + 80 x 2); every extra channel costs 2 B in each copy. Static copies in the image
+(map file): the radio core's `sm.zone` and `buf` (radio_sm.c), 12 in `ui_dual.c` (dual / multi-watch, `mw_z`), 8 in
+`ui_menus.c` (zone list cache, the zone editor's `ze_z`, `chz_z`, Find, ...), 2 in `ui_find.c`, 1 each in
+`ui_app.c`, `ui_svc_radio.c` and `zone_edit.c` (`work`): **27 copies, about 54 B per channel**; the tool screens'
+shared buffer (`ui_scratch`, the cross-band picker) grows too if a zone becomes its largest member. Stack copies: the
+codeplug's zone read buffer (176 B, every task that reads a zone, the UI task among them: 184 B free), `zone_t` locals
+in the radio core (select_in_zone, RREQ_ZONE, persist), scan priority (3) and Find & save (3, UI task).
+
+| Per zone | Static RAM | Free (rule 1,500) | UI stack | Data chip record | CPS tools |
+|---:|---:|---:|---|---|---|
+| 80 (today) | 0 | 2,088 | 184 B free | 0xB0, 68 slots at EE 0x8030-0xAEF0 | qdmr, upstream web CPS, our viewer: 80 |
+| 90 | +540 | ~1,550 | ~140 B | does not fit the record | lost past 80 |
+| 100 | +1,080 | ~1,010 (fails) | ~100 B | does not fit the record | lost past 80 |
+| 128 | +2,590 | negative (does not link) | overflow likely | does not fit | lost past 80 |
+| 250 | +9,180 | negative | overflow | does not fit | lost past 80 |
+
+The format is the hard limit, not RAM: the open-firmware zone record is a fixed 0xB0 bytes (16 name + 80 x 2), 68 of
+them packed from 0x8030 to 0xAEF0 with the layout byte at 0x806F (`docs/spec/open-firmware-cps.md` 7.3.4); qdmr, the
+upstream web CPS and our programmer's read-only viewer (`pc/ddm32_app/codeplug.py`, `zone_capacity = 80`) all write or
+read exactly that, and the 16-channel legacy layout is told apart by that byte. More channels would need a second
+record type (an extension area or RFKV entries keyed by zone slot with a check of the base record, as the P25 tags do),
+which the CPS tools would neither show nor keep: a CPS write of the zone would leave a stale extension behind. DOTA's
+zone record also caps `total` at `CODEPLUG_ZONE_MAX` (a protocol change with other radios). Flash cost of a larger
+constant is negligible (< 200 B).
+
+Recommendation: **keep 80**. If the owner needs more in one place, the cheap path is two zones (Zones > Copy, or a
+"continued" zone the zone step reaches next), not bigger records. If 100 is ever wanted on our own format, first fold
+`ui_dual.c`'s 12 static zones into one shared buffer (-1,980 B at 80), which makes 100 fit with ~1,100 B margin left of
+the rule's; 128 and 250 need on-demand reads instead of whole-zone copies everywhere.
+
+### 2. DMR channel rows ("RX group list 'Any' doesn't work sensibly")
+
+Any was digital monitor in disguise: the radio core set the call layer's `hear_all` for it, so such a channel also
+played private calls between other stations, Home showed DMon whatever the user's toggle said, and the toggle could not
+turn it off (item 3). Any is now its own filter, `dmr_listen_filter_t.any_group`: **every group call on the channel's
+slot** (the talk target, the reply window and all call as before), nothing else; digital monitor is the user's alone.
+In the channel editor:
+
+| Row | Now |
+|---|---|
+| RX list (was "RX group list": the value didn't fit) | Any reads `All TGs TS1` (`All TGs` with timeslot Any); the picker offers None, **Any: all TGs**, then the lists (Any used to come after all 76 list slots); picking Any says "Any: every TG on this slot", None "None: only the TX contact's TG" |
+| Mode | a channel made DMR gets the first group contact as its TX contact when it has none, colour code 1 and timeslot 1 when it has none |
+| TX contact | an RX only DMR channel saves without one (before: "Pick a TX contact first" for every DMR channel) |
+| Direct mode | on: "Direct: TX on the RX frequency" |
+| Color code, Timeslot, Own ID | unchanged (Any colour code / timeslot make the channel RX only, as before; Own ID: empty is the radio's) |
+
+The VFO's RX list row (VFO settings) shows the same text. Tests: `tests/plus/test_any_group.c` in upstream's DMR call
+fixture (Any plays another talkgroup, not a private call between others, ours yes; digital monitor plays both),
+`tests/plus/test_ui_chux.c` (made DMR, the picker order, both one-liners, the row, save, RX only without a contact,
+Direct mode; English and Turkish, the layout).
+
+### 3. Digital monitor ("I turn it on and off and the screen still says DMon")
+
+Home drew DMon for `v->dmr.hear_all || s->hear_all`, and a channel with RX list Any kept `hear_all` on whatever the
+toggle said. Since item 2 `hear_all` is the user's again (the toggle, the monitor key held, Settings > digital monitor
+by default); the channel's own Any gets its own chip on Home's DMR row, **AllTG** (Turkish "TümG"; the normal colour:
+nothing to turn off), and DMon (warning colour) wins when both are on. The toggle (monitor key, quick tile) says in one
+line what it does: "Digital monitor on: every call", "Digital monitor off", and on a channel that hears every
+talkgroup anyway "Monitor off: channel hears all TGs". Home's hint "Digital monitor  Back off" now shows only for the
+user's monitor. Tests: `tests/plus/test_ui_chux.c` (AllTG without DMon, DMon on and off with their lines, a channel
+without Any; English and Turkish, the layout).
+
+### 4. Delete channel
+
+Before, a channel could only leave a zone (# > Remove from zone); its record stayed. Now **Delete channel** is the last
+row of the channel editor (Channels > OK on a channel; not on a new, unsaved one or on VFO settings) and the last entry
+of a zone's channel menu (#, after Remove from zone / Set as priority: entry 7 in the public build, the hint says
+1-7 or 1-8). It asks first, **No focused**: "Delete channel?", the name, "Leaves zones: n", "Can't be undone.". Yes
+posts one zone editor job (`ZONE_OP_DROP` -> `zone_edit_drop_channel`, so the foreign codeplug question and the
+failure toast are the zone editor's): the channel leaves every zone that holds it (a zone left empty stays: its name
+is the user's), then `codeplug_delete_channel` clears its in-use bit and its RFKV record (P25); the slot is free for
+the next new channel, which is in no zone. "Deleted <name>"; from the editor the editor closes too. Refused: the channel
+in use ("In use: switch to another channel first": the radio would have to move first) and while cross-band runs
+("Cross-band on: stop it first"; the screen is locked then anyway, and a session keeps frequencies, not channel
+numbers). A channel dual watch's other side or the scan priority holds is handled as a channel deleted by the CPS:
+the radio core moves on when it reads the codeplug again. The host simulator can delete a built-in channel for the
+flows. Tests: `tests/plus/test_zone_cap.c` (the real codeplug: out of two zones and "All channels", the P25 tag gone,
+the free slot reused in no zone, an empty zone kept, unknown numbers refused, after a power cycle),
+`tests/plus/test_ui_chux.c` (No keeps it, Yes from the zone menu and from the editor, the channel in use refused, no
+row on a new channel; English and Turkish, the layout).
+
+### 5. P25 NAC in decimal (owner: "I want to type the decimal value")
+
+`CONFIG_NAC_DEC` (`plus_features.prepare_nac_decimal`) now puts decimal first. The channel editor's and VFO settings'
+RX NAC / TX NAC rows read **`659 ($293)`**; OK opens the entry in decimal: digits build the value (`[293] ($125)` while
+typed; a digit that would pass 4095 is refused, "NAC goes 0 to 4095", the value kept), Up / Down and the knob step it by
+one (wrapping 0-4095), Back takes the last digit back (an untouched value: Back leaves the row as before). The special
+values: **RX Any** is `#` as before and reads `Any 3966 ($F7E)`; **TX Same as RX** is `#` on the TX NAC as before;
+`#` again on either switches to the hex digits (`$2[9]3 (659)`, the cursor and the knob as before; `#` there back to
+decimal). OK refuses an RX NAC 3967 ($F7F: "3967 ($F7F) is not a NAC: # is Any") and a TX NAC 3966 / 3967 ($F7E /
+$F7F: "TX NAC can't be 3966 or 3967") and keeps the row open; before, those reached the save and got the general
+"Check P25 NAC, talkgroup and ID". Home's VFO row (`tools/plus_p25nac.py`) shows the NACs in decimal too:
+`P25 NAC 1110 TG 99`, `NAC 659>1625` with a TX NAC of its own. P25 search and P25 trunk keep listing both ways.
+Upstream's own builds (no `NAC_DEC`) are unchanged. Updated with it: `tests/plus/test_ui_any.c`, `test_ui_vfox.c`,
+`test_ui_p25nac.c` (their typed NACs and expected rows now decimal), and `integration/radiofoundry/vfox/ui_vfox.inc`
+(the flag is `ced_nac_hex` now). New flows in `tests/plus/test_ui_chux.c` (English and Turkish).
+
+## Round 15: search ranges and speed, the multi-watch ring (branch `r15-scan`)
+
+The owner's requests after using v1.0.0-beta.3 on the radio. Code: `tools/plus_scan.py` (the hunks into upstream
+files), `integration/radiofoundry/srange/` (installed into `core/radio`, `core/ui`), and our own search screens and
+engines (`spectrum/ui_p25search.c`, `ui_dmrsearch.c`, `p25search.*`, `dmrsearch.*`). Host tests: `tools/test_scan.py`
+(run by `tools/test_classic.py`). Radio rows: `docs/plus-radio-test.md` "Round 15 scan".
+
+**Cost of the three** (public build on e5d8cbf, with the repeater lists of `research-data/`; the `--plus` build is the
+same): FLASH 834,352 -> 837,952 B (+3,600), static RAM 209,488 -> 209,544 B (+56), **1,912 B free**. Zero warnings,
+forced rebuilds identical, every task's stack fits. Each item's own figures below were measured on 743c1b7 with the
+sample repeater list (the flash there is about 10.7 KB lower; RAM the same).
+
+### 1. Search ranges (`CONFIG_SEARCH_RANGE`; needs P25_SEARCH or DMR_SEARCH)
+
+Tools > P25 search and DMR search take any range of the receiver's bands and ten steps:
+
+| Key (search screen) | Does |
+|---|---|
+| Left / Right | the presets as before (+-500 kHz, +-1 MHz, +-2.5 MHz around the frequency in use, 430-440, 144-146 MHz), then the manual range once one is set |
+| * | opens the range editor ("Search range, MHz") on the range swept now |
+| 0-9 | opens it typing Lower |
+
+| Editor row | Left / Right (and the knob) | Held Left / Right (DM-32: long Left / Right) | Digits |
+|---|---|---|---|
+| Lower | - / + one step | - / + 1 MHz | type it (positional, as the VFO entry: "4 3 3 5" = 433.5); OK goes on to Upper |
+| Upper | - / + one step | - / + 1 MHz | type it; OK applies the range |
+| Step | 2.5, 5, 6.25, 10, 12.5, 20, 25, 50, 100 kHz, 1 MHz (round) | | |
+| Move (the width shown) | the whole range - / + one step | - / + 1 MHz | |
+
+OK applies (the range becomes the manual one; a running search starts again on it, a stopped one waits for OK);
+Back deletes the last digit typed, else leaves the editor unchanged; Up / Down move between rows (a typed value is
+taken first). Refused, with a toast and the editor kept: Upper not above Lower; a range not inside one of the
+transmit bands (136-174, 400-480 MHz: the FD6818 the searches step; the air and broadcast bands are other receivers);
+an end moved out of the bands is simply not moved. The range line shows "Range +-1 MHz  12.5k" (shorter forms when it
+is too wide: without "Range ", or a long manual range alone).
+
+**Remembered**: each search keeps its own preset, manual range and step in RAM while the radio is on (leaving the
+screen and coming back finds them). Not across a power off: `settings_t` has no room (docs above, "Settings record"),
+and the owner's request did not need a stored record; a later round can add it to a data pack style record.
+
+**How the step reaches the radio**: `radio_req_p25_search(lo, hi)` and `radio_req_dmr_search(lo, hi)` keep their
+form (no change for the simulators and other callers): the start frequency's last decimal digit carries the step
+(`radio/srange.h`; every frequency the FD6818 takes is a multiple of 10 Hz). Digit 0 is 12.5 kHz, the step the
+searches always had, so an untagged request sweeps as before. The radio core (`RREQ_P25_SEARCH`,
+`RREQ_DMR_SEARCH`) passes the decoded start and step to `p25s_start` / `dmrs_start`; the engines already took any
+step. * on the two search screens opens the editor instead of quick settings (`ui_app.c`'s QUICK exceptions).
+
+Host tests: `tests/plus/test_ui_scan.c` (`tests/plus/ui_sim_scan.c` records the requests and decodes them as the
+radio core does), 8 flows in English and Turkish with the layout checked on the screen and the editor: the presets and
+the range line; typing (a digit opens the editor, OK on, OK applies, nothing asked before OK); Back deleting digits
+and leaving; every step both ways, 6.25 kHz and 1 MHz in the request; one step, held Left / Right and the DM-32's
+long Left / Right on Lower, Upper and Move; the refusals; a running search started again on an applied range, the
+range kept across leaving the screen and then among the presets; the DMR search's range and step.
+`tests/plus/test_scan_radio.inc`, after upstream's radio suite and the Classic / Plus P25 suites (the searches' own
+state machines among them) built with the switch: the P25 search requested with a tagged start steps the receiver
+by 25 kHz, 1 MHz (round to the start), 6.25 kHz, and by 12.5 kHz untagged.
+
+Cost (public build): FLASH 819,832 -> 822,584 B (+2,752), static RAM 209,368 -> 209,408 B (+40: the two ranges
+2 x 12 B, the editor 16 B), free 2,048 B. The ID database build (`--plus`) is the same size (the database is a data
+pack since round 14).
+
+### 2. Faster searches (`CONFIG_SEARCH_FAST`; needs P25_SEARCH or DMR_SEARCH)
+
+**What a step cost, and what bounds it** (read from the code, measured in the host model below; nothing measured on
+the radio yet). The radio task polls every 25 ms (`RADIO_POLL_MS`); a sweep step retunes the FD6818 at one poll and
+reads its strength (register 0x67, one SPI read: no time worth counting) at a later one:
+
+| | Before | Bound by |
+|---|---|---|
+| P25 search, a quiet step | 50 ms (2 polls): the reading must be `P25S_SETTLE_MS` = 30 ms after the retune, and the next poll is 25 ms after it. The old "30 ms a step" in "P25 search" above was the settle, not the step: a +-1 MHz pass (161 steps) is 8.0 s, 430-440 MHz 40 s | the settle: the PLL's lock and the strength reading's filter, neither measured on this radio (hardware-dm32.md 8.5: "the PLL lock time after each retune is not measured yet") |
+| DMR search, a quiet step | 100 ms (4 polls): 3 readings from 30 ms on, a poll apart (a direct mode burst is on air 30 ms in every 60: three readings 25 ms apart always meet one) | the settle and the 60 ms TDMA frame |
+| A hit that isn't P25 / DMR | P25: the native receiver's take and `P25S_PROBE_MS` 0.7 s for a frame with a NID (an LDU is 180 ms; the worker's start); DMR: 0.6 s for two bursts with a good check (sync once per 360 ms superframe in a call); then skipped 10 s (8 frequencies) | the frame sync windows: not shortened (a NID needs a whole frame, a DMR sync a burst; cutting them loses calls) |
+
+**What changed** (only with the switch; the engines without it are byte for byte as before, the host model builds
+both):
+
+- **A quick reading gates the step.** A step's first reading is taken at the poll after the retune (`P25S_QUICK_MS` /
+  `DMRS_QUICK_MS` 20 ms: the next poll even with a millisecond of jitter). Quiet: on to the next step at once. A quiet
+  P25 step is one poll (25 ms), a quiet DMR step three (the quick reading and two settled ones: 75 ms).
+- **Only settled readings make a hit.** P25: a strong quick reading is read again on the same step at the next poll
+  (now 50 ms settled) before it counts. DMR: the quick reading only marks a step (with half the hit's margin, as a
+  burst that began just before it reads part of its level), which then gets two more settled readings: together the
+  settled ones cover every phase of the 60 ms frame.
+- **A slow reading is caught by a look back.** If the receiver's reading lags the retune, the level read quickly on
+  step k may be step k-1's: strong at once, quiet settled. The engine then reads step k-1 again, settled (P25: two
+  polls; DMR: three readings), and goes on from k. So a signal is not lost when the reading is slower than 25 ms, only
+  its step costs a few polls more; a strong step already known (skipped) gets no look back.
+- **Busy carriers that are not P25 / DMR are probed less**: one found again within 60 s of its skip running out is
+  skipped for 30 s (`P25S_SKIP_LONG_MS`, `DMRS_SKIP_LONG_MS`) instead of 10.
+
+**Host model** (`tests/plus/test_search_model.c`, run by `tools/test_scan.py`; both engines built from the same source
+with the switch off and on): the radio task's polls (25 ms +-1 ms), the receiver's strength reading through a
+first-order lag of time constant tau after each retune (0, 5, 10, 15 ms), noise +-1 dB at -124 dBm, a neighbour 12.5
+kHz away 60 dB down; 200 signals per row at a random step of +-1 MHz, level -112 to -60 dBm, random TDMA phase:
+
+| | Before | After |
+|---|---|---|
+| P25, a quiet step / a +-1 MHz pass / 430-440 MHz | 50 ms / 8.0 s / 40.1 s | **25 ms / 4.0 s / 20.0 s** |
+| DMR, a quiet step / a +-1 MHz pass / 430-440 MHz | 100 ms / 16.1 s / 80.1 s | **75 ms / 12.1 s / 60.1 s** |
+| A busy FM carrier in the range, probes in 3 min (P25 / DMR) | 12 / 10 | 7 / 6 |
+| P25 found, tau 0 / 5 / 10 / 15 ms | 200 / 200 / 200 / 200 | 200 / 200 / 200 / 200 |
+| DMR repeater found, tau 0 / 5 / 10 / 15 ms | 200 / 200 / 200 / 200 | 200 / 200 / 200 / 200 |
+| DMR direct mode found, tau 0 / 5 / 10 / 15 ms | 200 / 200 / 198 / 198 | 200 / 200 / 200 / 197 |
+| Hits on another frequency (each a wasted probe), every row | 0 | 0 |
+
+The weakest direct mode signals (-112 dBm, 12 dB over the floor) are at the noise's mercy at tau 15 ms in both: a case
+either way. The model's checks: a quiet P25 step <= 26 ms and DMR <= 76 ms, fewer probes of the busy carrier, every
+signal found up to tau 10 ms (and never fewer than before there), no hit elsewhere. The P25 and DMR searches' state
+machine tests (`test_plus_p25search_sm`, `test_plus_dmrsearch_sm`) pass with the switch on (`tools/test_scan.py`'s
+radio suites), and `tests/plus/test_scan_radio.inc` checks a quiet step is one poll in the radio core.
+
+**To confirm on the radio** (rows SF-*): the quick reading assumes the FD6818's strength follows a retune within about
+25 ms; if it is slower, the look back keeps the finds and only the steps near a signal cost more (the pass time shows
+it). The revisits of found channels are unchanged (every 16 steps), so a find is re-read about every 0.4 s (P25) /
+1.2 s (DMR) instead of 0.8 s / 1.6 s.
+
+Cost (public build): FLASH 822,584 -> 823,184 B (+600), static RAM 209,408 -> 209,424 B (+16: the engines' stage,
+the step before and the look back's start), free 2,032 B.
+
+### 3. The multi-watch ring (`CONFIG_MWATCH_FAST`; needs MULTI_WATCH)
+
+The owner misses calls with 6 channels. **Why** (read from the code, reproduced in the host model):
+
+| # | Cause | Change (ring of 3..6 only; dual watch's pair keeps upstream's timing) |
+|---|---|---|
+| 1 | Every quiet stop listens the whole scan dwell (150 ms, Settings: scan dwell) although the receiver's reading is ready at the settle (`SCAN_SETTLE_MS` 50 ms): 6 channels took 0.9 s a round, so a call waited up to 0.9 s (and its first syllables) before the ring came to it | a stop with nothing heard since the settle (no carrier by the noise reading, nor sync, nor a signal to hold) ends at the first reading after the settle: 50 ms; a DMR stop at the third (100 ms), as direct mode bursts are on air 30 ms in 60. Anything heard keeps the dwell, the probe and the hold as before; a signal still holds at once |
+| 2 | **A carrier on a P25 channel that brings no frame for us (an FM user on that frequency, another NAC) froze the ring**: the native receiver gave it back after 2.5 s with an 8 s cooldown, but the ring then stayed on the channel's FM path, holding on the carrier (the zone scan's pass-over of a channel in its cooldown was for zone scans only), until the carrier ended plus the wait. Host model: a 20 s carrier there, and the ring's A was visited **0 times** in those 20 s | the ring gives a P25 channel back by the zone scan's rules (`native_lab.c` `scan_by_frames`): no frame of ours in 1.2 s: back, 2 s cooldown (8 s when it repeats); frames then none for 0.6 s (a call's tail): back without a cooldown; frames without voice for us: 2.5 s and the cooldown. A channel in its cooldown is passed over at once. Host model: A visited **54 times** in the same 20 s |
+| 3 | A P25 stop was found by the FM noise reading only (on this modem the reading may stay put on C4FM, "P25 in a zone scan" cause 4) | the strength counts too, on the DMR squelch scale, as in a zone scan: the second strong poll holds |
+| 4 | The cooldown's key was the zone position only; a ring may hold VFOs (C..F) | `native_lab_scan_key`: the zone position or 0xFFF0 + the VFO's index, as the give back names it |
+
+Not changed: the hold, the wait after a signal and its looks at the others, Busy, PTT on the selected letter, a DMR
+channel's probe and late entry, the P25 hand-over to the native receiver (scan_allows: a hold on the ring), voice
+given back 1.5 s after the last. One receiver: a call on one channel is still missed while the receiver is on
+another, only for much less time.
+
+**Host model** (`tests/plus/test_mwatch_radio.inc`: the real radio state machine, native receiver and the fake
+board; run without the switch by `tools/test_classic.py`'s suites, with it by `tools/test_scan.py`):
+
+| Ring | Before | After |
+|---|---|---|
+| 2 channels (dual watch), any mode | 0.30 s | 0.30 s (unchanged) |
+| 3 / 4 / 5 / 6 channels, FM (or P25, NXDN, dPMR, AM on the FM path) | 0.45 / 0.60 / 0.75 / 0.90 s | **0.15 / 0.20 / 0.25 / 0.30 s** |
+| 3 / 4 / 5 / 6 channels, DMR | 0.45 / 0.60 / 0.75 / 0.90 s | **0.30 / 0.40 / 0.50 / 0.60 s** |
+| Time to hold on a call starting at a random moment, 3 / 4 / 6 FM channels: mean (worst) | 161 (375) / 275 (500) / 427 (825) ms | **86 (150) / 130 (200) / 163 (300) ms** |
+| A P25 channel with a 2 s signal without voice for us: the ring held there | 3.6 s | **1.3 s** |
+| A 20 s foreign carrier on a P25 channel of 6: rounds the others got | **0** (frozen) | **54** |
+
+Home's "Ring 0.3 s" follows (`radio_mwatch.h` `radio_mw_ring_ms(n, n_dmr)`: the DMR letters counted; ", P25 +2.5 s"
+for a P25 letter: the hold alone, no wait after it). On the radio each FM <-> DMR switch and each retune adds its
+own time (not modelled; rows MR-*). Air watch (AM VFOs on the ring) and cross-band (which stops any watch) are
+unchanged; air watch's suite passes with the switch (`tools/test_scan.py`).
+
+Host tests with the switch: the multi-watch suite (order, a 50 ms stop, hold and wait with looks, PTT, refusals, a
+P25 channel on the FM path, the period table against the estimate, the catch time, the foreign carrier) after
+upstream's radio suite and the Classic / Plus P25 suites; air watch's and every mode in the VFO's suites;
+`tests/plus/test_ui_mwfast.c` (Home's ring line with 4 and 6 letters, dual watch's panes without it, English and
+Turkish, the layout). The test fixture's frame time is now cleared between the multi-watch cases
+(`mw_start_radio`): a stale one from the suites before had made a take look like a call's tail.
+
+Cost (public build): FLASH 823,184 -> 823,428 B (+244), static RAM unchanged (209,424 B, free 2,032 B). In the same
+commit: the search range editor lets PTT, the monitor and the emergency key through (item 1's editor had taken every
+key while open).

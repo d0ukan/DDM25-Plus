@@ -62,7 +62,7 @@ static void mw_start_radio(void)
     fake_power.battery_mv = classic_battery;
     classic_busy = classic_stop = classic_receiving = false;
     classic_starts = classic_restores = 0;
-    scan_voice_ms = 0;
+    scan_voice_ms = zs_sync_ms = 0;   /* no frame or voice left from the suites before (the time starts over) */
     now += 1000;
     radio_sm_poll(&sm, now);
 }
@@ -145,14 +145,14 @@ static void test_mwatch_order_dwell(void)
     }
     CHECK(k == 6 && seq[0] == 1 && seq[1] == 2 && seq[2] == 3 && seq[3] == 0 && seq[4] == 1 && seq[5] == 2);
     for (int i = 1; i < k; i++)
-        CHECK(at[i] - at[i - 1] == radio_mw_stop_ms());
-    CHECK(at[0] - t0 <= radio_mw_stop_ms());
+        CHECK(at[i] - at[i - 1] == radio_mw_quiet_ms(4, false));
+    CHECK(at[0] - t0 <= radio_mw_quiet_ms(4, false));
     CHECK(sm.view.scan == SCAN_DUAL && sm.view.dual_sel == 0);
     /* The same ring with C selected: the selection only, no retune now */
     int calls = hw.rx_calls;
     uint8_t here = sm.dual_at;
     CHECK(mw_watch(4, 2) && sm.dual_at == here && hw.rx_calls == calls && sm.view.dual_sel == 2);
-    printf("Plus multi-watch: order A B C D, %u ms a stop\n", (unsigned)radio_mw_stop_ms());
+    printf("Plus multi-watch: order A B C D, %u ms a stop\n", (unsigned)radio_mw_quiet_ms(4, false));
 }
 
 static void test_mwatch_hold_wait(void)
@@ -274,7 +274,12 @@ static uint32_t test_mwatch_p25(void)
     }
     uint32_t stayed = now - arrived;
     CHECK(took && sm.dual_at == 3 && !native_lab_owns() && sm.scan.kind == SCAN_DUAL);
-    CHECK(stayed >= RADIO_MW_P25_HOLD_MS && stayed <= radio_mw_p25_extra_ms(sm.set.dual_delay_ms) + 1500u);
+#if CONFIG_MWATCH_FAST
+    /* The faster ring: no frame of ours in the zone scan's probe time, given back then, and passed over meanwhile */
+    CHECK(stayed <= radio_mw_p25_extra_ms(4, sm.set.dual_delay_ms) + 1500u);
+#else
+    CHECK(stayed >= RADIO_MW_P25_HOLD_MS && stayed <= radio_mw_p25_extra_ms(4, sm.set.dual_delay_ms) + 1500u);
+#endif
     printf("Plus multi-watch: P25 channel on the FM path, handed to the native receiver, %u ms with a voiceless signal\n",
            (unsigned)stayed);
     return stayed;
@@ -293,15 +298,77 @@ static void test_mwatch_period(uint32_t p25_stayed)
             mw_busy_hz = 0;
             CHECK(mw_watch(n, 0));
             ms[kind] = mw_period(4);
-            if (ms[kind] != radio_mw_ring_ms(n))
-                printf("FAIL %s n=%u: %u ms, estimate %u\n", kinds[kind], n, (unsigned)ms[kind], (unsigned)radio_mw_ring_ms(n));
-            CHECK(ms[kind] == radio_mw_ring_ms(n));
+            uint32_t est = radio_mw_ring_ms(n, kind == 1 ? n : 0);
+            if (ms[kind] != est)
+                printf("FAIL %s n=%u: %u ms, estimate %u\n", kinds[kind], n, (unsigned)ms[kind], (unsigned)est);
+            CHECK(ms[kind] == est);
         }
-        printf("  %u   %-6u  %-6u  %-6u  %u ms\n", n, (unsigned)ms[0], (unsigned)ms[1], (unsigned)ms[2],
-               (unsigned)radio_mw_ring_ms(n));
+        printf("  %u   %-6u  %-6u  %-6u  %u / %u ms\n", n, (unsigned)ms[0], (unsigned)ms[1], (unsigned)ms[2],
+               (unsigned)radio_mw_ring_ms(n, 0), (unsigned)radio_mw_ring_ms(n, n));
     }
     printf("  P25 channel with a voiceless signal: +%u ms measured (estimate +%u ms)\n", (unsigned)p25_stayed,
-           (unsigned)radio_mw_p25_extra_ms(RADIO_DUAL_DELAY_MS));
+           (unsigned)radio_mw_p25_extra_ms(4, RADIO_DUAL_DELAY_MS));
+}
+
+/* DDM32 Plus round 15 item 3 (docs/plus.md "The multi-watch ring"): how fast the ring catches a call, in this build
+ * (the faster ring with CONFIG_MWATCH_FAST, else as before). A signal starts on the last channel at a random moment of
+ * the round (40 times; a fresh ring each time, all channels FM): the time until the ring holds there. Then a P25
+ * channel in a ring of 6 with a carrier that brings no P25 frame for us (an analog signal on its frequency) for 20 s:
+ * how many rounds the other channels still get. Printed for docs/plus.md; checked against the estimate */
+static void test_mwatch_catch(void)
+{
+    static const uint8_t ns[3] = { 3, 4, 6 };
+    unsigned seed = 7;
+    printf("Plus multi-watch catch time (host model, FM; a call starting at a random moment):\n");
+    for (int i = 0; i < 3; i++) {
+        uint8_t n = ns[i];
+        uint32_t sum = 0, worst = 0;
+        for (int k = 0; k < 40; k++) {
+            mw_codeplug(RADIO_MODE_FM, -1);
+            mw_start_radio();
+            mw_busy_hz = 0;
+            CHECK(mw_watch(n, 0));
+            seed = seed * 1103515245u + 12345u;
+            uint32_t polls = 8u + (seed >> 16) % (radio_mw_ring_ms(n, 0) / RADIO_POLL_MS + 1u);
+            for (uint32_t q = 0; q < polls; q++)
+                mw_poll();
+            mw_busy_hz = mw_hz[n - 1];
+            uint32_t t0 = now;
+            while (now - t0 < 5000u && !(sm.dual_at == n - 1u && sm.scan.phase == SCAN_PH_HOLD))
+                mw_poll();
+            uint32_t took = now - t0;
+            sum += took;
+            worst = took > worst ? took : worst;
+        }
+        mw_busy_hz = 0;
+        printf("  n=%u: mean %u ms, worst %u ms (ring %u ms)\n", n, (unsigned)(sum / 40u), (unsigned)worst,
+               (unsigned)radio_mw_ring_ms(n, 0));
+        CHECK(worst <= radio_mw_ring_ms(n, 0) + 2u * RADIO_POLL_MS);
+    }
+    /* A P25 channel (C) with a foreign carrier for 20 s: the rounds A still gets */
+    mw_codeplug(RADIO_MODE_FM, 2);
+    mw_start_radio();
+    mw_busy_hz = 0;
+    CHECK(mw_watch(6, 0));
+    CHECK(mw_until_at(1, 1000));
+    mw_busy_hz = mw_hz[2];
+    uint8_t prev = sm.dual_at;
+    int rounds = 0;
+    uint32_t t0 = now;
+    while (now - t0 < 20000u) {
+        mw_poll();
+        if (sm.dual_at != prev) {
+            prev = sm.dual_at;
+            rounds += prev == 0;
+        }
+    }
+    mw_busy_hz = 0;
+    for (int i = 0; i < 400 && native_lab_owns(); i++)
+        mw_poll();
+    printf("  6 channels, a foreign carrier on the P25 one for 20 s: A visited %d times\n", rounds);
+#if CONFIG_MWATCH_FAST
+    CHECK(rounds >= 5);	/* given back after the probe time, passed over in its cooldown */
+#endif
 }
 
 int main(void)
@@ -314,6 +381,7 @@ int main(void)
     test_mwatch_refuse_stop();
     uint32_t stayed = test_mwatch_p25();
     test_mwatch_period(stayed);
+    test_mwatch_catch();
     printf("Plus multi-watch radio core: %d failures\n", failures - before);
     return prior || failures != before ? 1 : 0;
 }

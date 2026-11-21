@@ -531,6 +531,11 @@ def main():
     run([OUT/'test_audio_mux'],cwd=ROOT)
     run(['clang',*mux_flags,*mux,APP/'core/usbaudio/pcm_slip.c','-o',OUT/'test_audio_mux_upstream'],cwd=ROOT)
     run([OUT/'test_audio_mux_upstream'],cwd=ROOT)
+    # DDM32 Plus (docs/dota.md step 0): and without its APRS ring (the DM-32 has its own AFSK receive path)
+    run(['clang',*mux_flags,'-DCONFIG_DMR_IP_GATEWAY=0',f'-DPLUS_AUDIO_MUX_NO_HOST={trim["PLUS_AUDIO_MUX_NO_HOST"]}',
+         f'-DPLUS_AUDIO_MUX_NO_APRS={trim["PLUS_AUDIO_MUX_NO_APRS"]}',ROOT/'tests/plus/test_audio_mux_noaprs.c',
+         APP/'core/usbaudio/audio_mux.c','-o',OUT/'test_audio_mux_noaprs'],cwd=ROOT)
+    run([OUT/'test_audio_mux_noaprs'],cwd=ROOT)
     usrp=subprocess.run(['clang',*mux_flags,'-DCONFIG_DMR_IP_GATEWAY=1','-DPLUS_AUDIO_MUX_NO_HOST=1','-c',
                          APP/'core/usbaudio/audio_mux.c','-o',OUT/'audio_mux_usrp.o'],cwd=ROOT,capture_output=True,text=True)
     if usrp.returncode==0 or 'USRP needs the host audio side' not in usrp.stderr:
@@ -744,6 +749,36 @@ def main():
     run([*argv_cw,'-DCONFIG_CW_RX=1','-I'+str(ROOT/'tests/classic'),str(APP/'core/radio/cw_train.c'),
          str(APP/'core/radio/cwdec.c')],cwd=host)
     run([OUT/'test_radio_cw'],cwd=host)
+    # DDM32 Plus DOTA Transfer in the radio core: the same suites with it built in (the fake board gains a fake AFSK
+    # transmitter), then the session channel, PTT refused, requests dropped and released, the channel / VFO restored,
+    # keyed spans (tests/plus/test_dota_radio.inc)
+    dotarad=OUT/'radioCoreDota.c'
+    dotarad.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n'+
+                       fixture.replace('const board_t board = {\n\t.native_modem=&classic_ops,',
+                                       'extern const hal_afsk_t dota_afsk;\nconst board_t board = {\n'
+                                       '\t.native_modem=&classic_ops,\n\t.afsk=&dota_afsk,')+
+                       '\n#define main classic_radio_main\n#include "'+str(ROOT/'tests/classic/test_radio.inc')+'"\n#undef main\n'
+                       '#include "'+str(ROOT/'tests/plus/test_dota_radio.inc')+'"\n')
+    argv_dota=list(argv_cw)
+    argv_dota[argv_dota.index(str(cwrad))]=str(dotarad)
+    argv_dota[argv_dota.index('-o')+1]=str(OUT/'test_radio_dota')
+    run([*argv_dota,'-DCONFIG_DOTA=1','-I'+str(ROOT/'tests/classic'),'-Wl,--wrap=beep_play',
+         *(str(APP/'core/radio'/f) for f in ('dota.c','dota_proto.c','dota_rec.c','dota_import.c')),
+         str(APP/'core/aprs/ax25.c'),str(APP/'core/aprs/hdlc.c')],cwd=host)
+    run([OUT/'test_radio_dota'],cwd=host)
+    # DDM32 Plus cross-band store and forward in the radio core: the same suites with it built in, then a DMR call on A
+    # recorded and sent on B through the real call stack, the CW ID, the lock on requests and PTT, the channel back,
+    # a refused transmission, the P25 worker's memory not lent (tests/plus/test_xband_radio.inc)
+    xbrad=OUT/'radioCoreXband.c'
+    xbrad.write_text('#include "native_modem/native_lab.h"\nextern const nt_ops classic_ops;\n'+fixture+
+                     '\n#define main classic_radio_main\n#include "'+str(ROOT/'tests/classic/test_radio.inc')+'"\n#undef main\n'
+                     '#include "'+str(ROOT/'tests/plus/test_xband_radio.inc')+'"\n')
+    argv_xb=list(argv_cw)
+    argv_xb[argv_xb.index(str(cwrad))]=str(xbrad)
+    argv_xb[argv_xb.index('-o')+1]=str(OUT/'test_radio_xband')
+    run([*argv_xb,'-DCONFIG_XBAND=1','-I'+str(ROOT/'tests/classic'),'-Wl,--wrap=beep_play',
+         str(APP/'core/radio/xband.c')],cwd=host)
+    run([OUT/'test_radio_xband'],cwd=host)
     command=run(['make','-Bn','uiFlowTest','SANITIZE=1'],cwd=host,capture_output=True,text=True).stdout
     argv=shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))
     argv[argv.index('uiFlowTest.c')]=str(ROOT/'tests/classic/test_ui.c')
@@ -852,5 +887,29 @@ def main():
     # DDM32 Plus round 13 ideas 2: shared screen buffer, heard list, waterfall, coverage, GPS, clock (tools/test_toolbox.py)
     import test_toolbox
     test_toolbox.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus DOTA Transfer (tools/test_dota.py, docs/dota.md 16.1)
+    import test_dota
+    test_dota.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 14 APRS job: SOS key actions, Mic-E beacons, the station page (tools/test_aprsx.py)
+    import test_aprsx
+    test_aprsx.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 14 air items: the airfield table, air watch, the 3D waterfall (tools/test_air.py)
+    import test_air
+    test_air.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus user data packs (tools/test_datapack.py, docs/r14.md 7)
+    import test_datapack
+    test_datapack.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 14 xband: last calls of every mode and letter (tools/test_xband.py)
+    import test_xband
+    test_xband.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus DMR receive audio diagnostics: the PCM driver's counters and prefill, the page (tools/test_dmraudio.py)
+    import test_dmraudio
+    test_dmraudio.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus r15 channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/test_chux.py)
+    import test_chux
+    test_chux.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 15 scan: search ranges and speed, the multi-watch ring (tools/test_scan.py)
+    import test_scan
+    test_scan.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

@@ -75,15 +75,15 @@ def prepare_toolbox(transform, install):
          '#if CONFIG_CLOCK_TOOLS\n\t[SCR_CLOCK] = &ui_clock_screen,\n#endif\n'),
         # Tools > Heard list, GPS, Clock after SOS key (CW decoder and Battery stay the last two)
         ('T_SELCALL, T_SOS, T_CW, T_BATTERY,', 'T_SELCALL, T_SOS, T_HEARD, T_GPSDASH, T_CLOCK, T_CW, T_BATTERY,'),
-        ('(i != T_SOS || CONFIG_SOS_KEY) &&',
-         '(i != T_SOS || CONFIG_SOS_KEY) && (i != T_HEARD || CONFIG_HEARD) && (i != T_GPSDASH || CONFIG_GPS_DASH) && '
+        ('i != T_SOS &&',
+         'i != T_SOS && (i != T_HEARD || CONFIG_HEARD) && (i != T_GPSDASH || CONFIG_GPS_DASH) && '
          '(i != T_CLOCK || CONFIG_CLOCK_TOOLS) &&'),
         ('TRN("SOS key"), TRN("CW decoder"),', 'TRN("SOS key"), TRN("Heard list"), "GPS", TRN("Clock"), TRN("CW decoder"),'),
-        ('#if CONFIG_SOS_KEY\n\tcase T_SOS: ui_push(SCR_SOS_SET, 0); break;\n#endif\n',
-         '#if CONFIG_SOS_KEY\n\tcase T_SOS: ui_push(SCR_SOS_SET, 0); break;\n#endif\n'
+        ('\tcase T_CW: ui_push(SCR_CW, 0); break;\n',
          '#if CONFIG_HEARD\n\tcase T_HEARD: ui_push(SCR_HEARD, 0); break;\n#endif\n'
          '#if CONFIG_GPS_DASH\n\tcase T_GPSDASH: ui_push(SCR_GPSDASH, 0); break;\n#endif\n'
-         '#if CONFIG_CLOCK_TOOLS\n\tcase T_CLOCK: ui_push(SCR_CLOCK, 0); break;\n#endif\n'),
+         '#if CONFIG_CLOCK_TOOLS\n\tcase T_CLOCK: ui_push(SCR_CLOCK, 0); break;\n#endif\n'
+         '\tcase T_CW: ui_push(SCR_CW, 0); break;\n'),
         ('\t\t[T_SOS] = ART_ICON_BEACON + 1,\t// the SOS beacon\'s\n',
          '\t\t[T_SOS] = ART_ICON_BEACON + 1,\t// the SOS beacon\'s\n'
          '\t\t[T_HEARD] = ART_ICON_RECENT + 1,\t// a list of calls, as Recent\n'

@@ -20,6 +20,12 @@ rounds it), so Up / Down on the radio's 8.33 kHz step stays on the same grid. Re
 (the military UHF air band, typing errors such as "25.125", a PMR 433 entry), off the grid, a duplicate. Types are
 normalised (the last word, upper case: "Gokcen TWR" -> TWR, "Clearance" -> DEL, "APP/DEP" -> APP, ...).
 
+Removed (EXCLUDE, owner decision 2026-11-20, docs/plus.md "Airfield table cleanup"): the entries of the data that are
+not in the aerodrome's official publication (its AD 2.18 table), each by code and channel name with the reason. Only
+removed: nothing is added, changed or reclassified from that publication (it is copyright). The list must match the
+pinned data (an exclusion that matches nothing fails the run, so a refresh reviews it). A small airfield left without a
+frequency is not listed, as the selection says.
+
 Reproducible: both inputs are pinned by SHA-256 (research-data/ourairports/, git-ignored; --unpinned for test
 fixtures only); the output depends only on them. Hard cap: MAX_BYTES of table. Untrusted input: read as data only;
 run with python -I.
@@ -52,7 +58,7 @@ OUT_DIR = ROOT / 'integration' / 'radiofoundry' / 'air'
 
 CODE_MAX = 7            # airfield.h AIR_CODE_MAX
 NAME_MAX = 22           # airfield.h AIR_NAME_MAX
-FREQ_MAX = 10           # frequencies kept for one airfield
+FREQ_MAX = 64           # frequencies kept for one airfield (air_field_t.count is a uint8_t)
 FIELD_BYTES = 44        # sizeof(air_field_t)
 FREQ_BYTES = 4          # sizeof(air_freq_t)
 MAX_BYTES = 12 * 1024   # a hard cap on the table (docs/plus.md: the job's flash budget)
@@ -60,6 +66,74 @@ LO_KHZ, HI_KHZ = 118000, 137000     # the VHF aeronautical mobile band (hi exclu
 CH_BASE_KHZ = 108000    # air_freq_t.ch = (name - CH_BASE_KHZ) / 5
 
 KINDS = {'large_airport': 0, 'medium_airport': 1, 'small_airport': 2}
+
+# Entries of the pinned data that are not in the aerodrome's official publication: (code, channel name, reason).
+# Removed only; the list matches the pinned data exactly (main() fails on one that matches nothing)
+NOT_PUBLISHED = "not in the aerodrome's official publication"
+UNOFFICIAL = 'not in an official publication: unofficial (no published aerodrome)'
+EXCLUDE = (
+    ('LTAB', '118.675', NOT_PUBLISHED),
+    ('LTAD', '119.100', NOT_PUBLISHED + ": another unit's (Esenboga approach)"),
+    ('LTAE', '119.100', NOT_PUBLISHED + ": another unit's (Esenboga approach)"),
+    ('LTAF', '126.500', NOT_PUBLISHED),
+    ('LTAG', '121.950', NOT_PUBLISHED),
+    ('LTAG', '123.025', NOT_PUBLISHED),
+    ('LTAG', '126.500', NOT_PUBLISHED),
+    ('LTAG', '128.000', NOT_PUBLISHED),
+    ('LTAG', '131.900', NOT_PUBLISHED),
+    ('LTAI', '122.050', NOT_PUBLISHED),
+    ('LTAI', '123.175', NOT_PUBLISHED),
+    ('LTAI', '131.450', NOT_PUBLISHED),
+    ('LTAJ', '120.100', NOT_PUBLISHED),
+    ('LTAN', '131.425', NOT_PUBLISHED),
+    ('LTAP', '121.950', NOT_PUBLISHED),
+    ('LTAR', '118.100', NOT_PUBLISHED),
+    ('LTAT', '121.950', NOT_PUBLISHED),
+    ('LTAT', '128.350', NOT_PUBLISHED),
+    ('LTAV', '121.950', NOT_PUBLISHED),
+    ('LTAY', '121.600', NOT_PUBLISHED),
+    ('LTAZ', '119.000', NOT_PUBLISHED),
+    ('LTAZ', '119.100', NOT_PUBLISHED),
+    ('LTBA', '121.700', NOT_PUBLISHED),
+    ('LTBA', '121.800', NOT_PUBLISHED),
+    ('LTBA', '121.900', NOT_PUBLISHED),
+    ('LTBH', '122.100', NOT_PUBLISHED),
+    ('LTBI', '121.950', NOT_PUBLISHED),
+    ('LTBJ', '119.500', NOT_PUBLISHED),
+    ('LTBK', '120.100', NOT_PUBLISHED),
+    ('LTBL', '120.100', NOT_PUBLISHED),
+    ('LTBL', '121.950', NOT_PUBLISHED),
+    ('LTBL', '122.425', NOT_PUBLISHED),
+    ('LTBO', '121.425', NOT_PUBLISHED),
+    ('LTBO', '122.350', NOT_PUBLISHED),
+    ('LTBP', '121.950', NOT_PUBLISHED),
+    ('LTBQ', '120.500', NOT_PUBLISHED),
+    ('LTBQ', '121.950', NOT_PUBLISHED),
+    ('LTBR', '120.325', NOT_PUBLISHED),
+    ('LTBR', '121.950', NOT_PUBLISHED),
+    ('LTBR', '122.100', NOT_PUBLISHED),
+    ('LTBU', '120.500', NOT_PUBLISHED),
+    ('LTBV', '126.000', NOT_PUBLISHED),
+    ('LTCA', '118.100', NOT_PUBLISHED),
+    ('LTCC', '122.425', NOT_PUBLISHED),
+    ('LTCC', '123.200', NOT_PUBLISHED),
+    ('LTCE', '118.100', NOT_PUBLISHED),
+    ('LTCE', '121.950', NOT_PUBLISHED),
+    ('LTCG', '120.100', NOT_PUBLISHED),
+    ('LTCI', '118.100', NOT_PUBLISHED),
+    ('LTCJ', '121.950', NOT_PUBLISHED),
+    ('LTCK', '121.950', NOT_PUBLISHED),
+    ('LTCT', '126.000', NOT_PUBLISHED),
+    ('LTFA', '120.100', NOT_PUBLISHED),
+    ('LTFA', '121.950', NOT_PUBLISHED),
+    ('LTFE', '119.775', NOT_PUBLISHED),
+    ('LTFE', '121.950', NOT_PUBLISHED),
+    ('LTFJ', '128.200', NOT_PUBLISHED),
+    ('LTFJ', '130.250', NOT_PUBLISHED),
+    ('TR-0018', '122.100', UNOFFICIAL),
+    ('TR-0018', '123.300', UNOFFICIAL),
+    ('TR-0040', '128.025', "not in an official publication for this field: another unit's (Antalya approach)"),
+)
 # airfield.h air_type_t, in display order within an airfield
 TYPES = ['ATIS', 'DEL', 'GND', 'RMP', 'TWR', 'APP', 'DEP', 'AFIS', 'INFO', 'CTAF', 'PAR', 'SAR', 'EMR', 'OPS', 'OTH']
 TYPE_WORDS = {
@@ -143,9 +217,28 @@ def read_csv(text):
     return list(csv.DictReader(io.StringIO(text)))
 
 
-def build(airports_text, freqs_text):
-    """-> (fields, stats); fields sorted by code: dict(code, name, lat, lon, kind, freqs=[(type, khz)])"""
-    stats = {'airfields': 0, 'frequencies': 0, 'refused': {}, 'dropped_over_max': 0, 'without_frequency': 0}
+def field_code(r):
+    return (r.get('icao_code') or r.get('gps_code') or r.get('ident') or '').strip().upper()
+
+
+def exclusions(exclude):
+    """EXCLUDE -> {(code, khz): reason}; each a channel name of the band, once, with a reason"""
+    out = {}
+    for code, name, reason in exclude:
+        khz, why = channel_khz(name)
+        if why or (code, khz) in out or not reason:
+            raise AirError('exclusion %s %s: %s' % (code, name, why or 'twice or without a reason'))
+        out[(code, khz)] = reason
+    return out
+
+
+def build(airports_text, freqs_text, exclude=EXCLUDE):
+    """-> (fields, stats); fields sorted by code: dict(code, name, lat, lon, kind, freqs=[(type, khz)]).
+    stats['unused_exclusions']: the exclusions that matched nothing (main() refuses them for the pinned data)"""
+    stats = {'airfields': 0, 'frequencies': 0, 'refused': {}, 'dropped_over_max': 0, 'without_frequency': 0,
+             'excluded': 0}
+    ex = exclusions(exclude)
+    used = set()
     aps = {}
     for r in read_csv(airports_text):
         if r.get('iso_country') != 'TR' or r.get('type') not in KINDS:
@@ -159,6 +252,11 @@ def build(airports_text, freqs_text):
         if why:
             stats['refused'][why] = stats['refused'].get(why, 0) + 1
             continue
+        key = (field_code(aps[r['airport_ref']]), khz)
+        if key in ex:
+            stats['excluded'] += 1
+            used.add(key)
+            continue
         t = norm_type(r.get('type'))
         lst = by_ap.setdefault(r['airport_ref'], [])
         if (t, khz) in lst:
@@ -170,7 +268,7 @@ def build(airports_text, freqs_text):
         fr = by_ap.get(ref, [])
         if r['type'] == 'small_airport' and not fr:
             continue
-        code = (r.get('icao_code') or r.get('gps_code') or r.get('ident') or '').strip().upper()
+        code = field_code(r)
         if not code or len(code) > CODE_MAX or not re.match(r'^[A-Z0-9-]+$', code):
             raise AirError('airport %s: code %r' % (ref, code))
         try:
@@ -190,6 +288,7 @@ def build(airports_text, freqs_text):
     codes = [f['code'] for f in fields]
     if len(set(codes)) != len(codes):
         raise AirError('a code twice')
+    stats['unused_exclusions'] = sorted('%s %d.%03d' % (c, k // 1000, k % 1000) for c, k in ex if (c, k) not in used)
     stats['airfields'] = len(fields)
     stats['frequencies'] = sum(len(f['freqs']) for f in fields)
     stats['bytes'] = len(fields) * FIELD_BYTES + stats['frequencies'] * FREQ_BYTES
@@ -197,7 +296,7 @@ def build(airports_text, freqs_text):
         raise AirError('table %d bytes > the %d byte cap' % (stats['bytes'], MAX_BYTES))
     if not fields or not stats['frequencies']:
         raise AirError('no airfield with a frequency: wrong input?')
-    if len(fields) > 255 or stats['frequencies'] > 0xFFFF:
+    if len(fields) > 255 or stats['frequencies'] > 0xFFFF or FREQ_MAX > 255:
         raise AirError('too many airfields or frequencies for the table')
     return fields, stats
 
@@ -246,9 +345,9 @@ def load(path, sha, unpinned):
 
 def describe(stats):
     ref = ', '.join('%s %d' % kv for kv in sorted(stats['refused'].items())) or 'none'
-    return ('Airfields: %d (%d without a frequency), %d frequencies, %d bytes; refused: %s; over %d an airfield: %d'
-            % (stats['airfields'], stats['without_frequency'], stats['frequencies'], stats['bytes'], ref, FREQ_MAX,
-               stats['dropped_over_max']))
+    return ('Airfields: %d (%d without a frequency), %d frequencies, %d bytes; refused: %s; excluded: %d; over %d an '
+            'airfield: %d' % (stats['airfields'], stats['without_frequency'], stats['frequencies'], stats['bytes'], ref,
+                              stats['excluded'], FREQ_MAX, stats['dropped_over_max']))
 
 
 def main():
@@ -265,6 +364,8 @@ def main():
                               load(args.freqs, FREQS_SHA256, args.unpinned))
     except (AirError, OSError) as e:
         sys.exit('airfields: %s' % e)
+    if stats['unused_exclusions'] and not args.unpinned:
+        sys.exit('airfields: exclusions that match nothing in the data: ' + ', '.join(stats['unused_exclusions']))
     source = ('OurAirports of %s, %s (airports.csv SHA-256 %s, airport-frequencies.csv SHA-256 %s)'
               % (SOURCE_DATE, SOURCE_URL, AIRPORTS_SHA256, FREQS_SHA256)) if not args.unpinned else 'test fixture'
     if args.list:

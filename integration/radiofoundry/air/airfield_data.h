@@ -7,8 +7,8 @@
 
 #include "ui/airfield.h"
 
-#define AIR_FIELDS	79u
-#define AIR_FREQS	188u
+#define AIR_FIELDS	74u
+#define AIR_FREQS	122u
 #define AIR_ATTRIBUTION	"Airfield data: OurAirports (public domain)"
 #define AIR_SOURCE_DATE	"2026-11-19"
 

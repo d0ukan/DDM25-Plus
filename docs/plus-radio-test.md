@@ -424,6 +424,75 @@ traffic) open. Build 7c90427b (artifacts/plus-20261117c) is installed but its ne
 | I34-4 | With a GPS fix: the title shows local time (+03:00) equal to a phone's; Alarm two minutes ahead, OK (On); open Tools > Map | at that minute a tone and the banner "Alarm hh:mm" over the map; the alarm row shows Off afterwards |
 | I34-5 | Alarm set and on; lose the fix (indoors) until it is due | it still rings on time (the clock runs on without the fix) |
 
+### DOTA Transfer (docs/dota.md, branch `dota`; two radios with the same DOTA build)
+
+**Every row transmits from both radios (the receiver answers): owner approval for the step, an authorised amateur
+frequency, Power Low, FM with a CTCSS tone. Both radios need their callsign as the radio name; DMR rows need the
+sender's DMR ID set and the receiver's ID typed on the sender.** Sender A, receiver B, 2 m apart unless the row says
+otherwise. Times: FM from the host test in real time (tests/plus/test_dota_fm.c), DMR docs/dota.md 8.2's estimates.
+
+| # | Do | Expect |
+|---|---|---|
+| D-F1 | B: Tools > DOTA Transfer, Role Receive, FM, Frequency Default (433.450, 88.5: nothing typed), Import New zone, Zone name "DOTA1", Ready (note B's code). A: Role Send, FM, One channel (a DMR channel with a contact), the defaults, the code, Send, OK | both play "dit dit diiit"; B's speaker plays the AFSK; A "Sent 1 channel", B "Imported 1 channel, 1 zone" and the success tones; on B the zone "DOTA1" holds the channel, identical in the editor (frequency, mode, CC, slot, contact, RX group list), receive only |
+| D-F2 | As D-F1 with A sending "A zone" of 16 channels | done in about 13 s (the host test's real-time figure); the zone and its channels identical on B; the contacts and RX group lists the channels use are on B once (matched by ID where B had them) |
+| D-F3 | A third radio (or the SDR) on the frequency, first without, then with A's tone; then a run with B on another tone than A | the third radio's speaker opens only with the tone set; B with the wrong tone takes nothing (A: "No answer") |
+| D-F4 | FM, 80 channels (Selected channels from two zones, or a zone of 80) | about 25 s (64 channels took 20.3 s in the host test); the progress counts up; a resend is a pause, never a failure; after each minute keyed A rests 5 s |
+| D-S1 | Listen to A during its transmissions in D-F1 / D-F2 | A's own AFSK at the knob's level (the amplifier on during AFSK transmit). If A is silent while keyed, note it: owner answer 6 accepts a silent FM sender only when this fails |
+| D-S2 | During D-D1 / D-D2 listen to A and B | while either transmits: a click every 50-140 ms (the amplifier's switch-on pop); between transmissions: the crackle while data comes in and while A waits for the answer; note any silent gap and its length |
+| D-D1 | As D-F1 over DMR: both on the defaults (433.450; CC 1 / TS 1 are fixed and not shown); A's Receiver ID = B's DMR ID (B's run page shows it) | as D-F1; A and B show "On air" in turns |
+| D-D2 | DMR, 80 channels | about 18 s; note the time from A's last burst to B's answer (A shows "Waiting for answer") |
+| D-P1 | During D-F2: PTT on A, then Back (No); on a new run PTT on A, then OK (Yes) | the deny tone and "Stop the transfer?"; No: the transfer goes on and completes; Yes: A stops, B shows "Nothing changed" within a few seconds and its codeplug is unchanged |
+| D-R1 | B: Back during a transfer, OK (Yes); on a new run, B powered off in the middle and on again | "Nothing changed"; after power on no new channel, zone, contact or RX group list on B |
+| D-R2 | Refusals: A with a wrong code; B nearly full (Import Current zone with 75 of 80 used, A sends 16) | wrong code: B stays silent, A "No answer"; no room: A "Codeplug full"; B never changes |
+| D-R3 | DOTA Clone of the owner's codeplug over DMR, then over FM, into a radio with a CPS-stored codeplug and room | about 3 min 40 s DMR / 4 min 45 s FM; every zone (the sender's names, " 2" when taken) and channel equal (compare with the PC app); battery and case temperature noted |
+
+### Round 14 APRS job (branch `r14-aprs`, items 47 and 49)
+
+| # | Step | Expected |
+|---|---|---|
+| A47-1 | Menu > Settings, Up once (the last group, no digit): APRS | "Beacon format: Standard", no message row |
+| A47-2 | OK on Beacon format | "Mic-E", the row "Mic-E message: En route" appears; OK on it steps In service ... Priority, Off duty, never Emergency |
+| A47-3 | Tools > APRS > Send position now with Mic-E / En route; the SDR or a second radio on 144.800 decoding APRS (or aprs.fi through an iGate) | one packet, destination like `TY0S5P` (not APZRDF), `` ` `` information field; the decoder shows our position, "En route", the comment; aprs.fi shows the Mic-E status |
+| A47-4 | As A47-3 while moving (GPS, SmartBeaconing on) | speed and heading in the decoded packet match the GPS page; packets shorter than with Standard (note the air time if the SDR shows it) |
+| A47-5 | Beacon format back to Standard; Send position now | `APZRDF` and `!` / `=` position as before |
+| A47-6 | Power off and on | Settings > APRS keeps the format and message |
+| A49-1 | APRS receive on 144.800, a second station beaconing (or a local digipeater); Tools > APRS > Stations heard, OK on it | its page: callsign, symbol name ("Car /> ..."), distance and direction from us (GPS fix), degrees and locator, altitude / speed / heading if it sends them, comment, "Heard: ... direct" or "via digi", packets; the age counts up every second |
+| A49-2 | On the page: OK, then Back | Go-To following that station (as I28), Back returns to the page |
+| A49-3 | On the page: 0 | the map centred on the station, picked, its details under the map; Back x3: the page |
+| A49-4 | On the page: #, Canned text QSL, Send; Back to the page; the other station acks | "> QSL (sending)", then "(delivered)"; a message it sends us appears as "< text" (newest first) |
+| A48-S | SK1 = SOS, every action Off (Settings > Keys > SOS key); press SK1, then OK | "No SOS actions" and "Pick: Settings > Keys", nothing cut at the right edge (Turkish too); OK: toast "No SOS actions: Settings > Keys", nothing keyed |
+| A49-5 | Up / Down on the page | the previous / next heard station; turn the other radio off and wait until it drops out of the list (12 stations): "Not heard any more" |
+
+### User data packs (branch `datapack`; the data chip is written only by the firmware, in 0xE70000-0xEFFFFF)
+
+| # | Do | Expect |
+|---|---|---|
+| DP1 | Settings > About on a radio that never had a pack | "RadioID pack: none", "Air band pack: none"; DMR caller names and the airfield list as before |
+| DP2 | Load a RadioID pack built by `tools/datapack.py radioid` from the owner's radioid.net download, through the programmer (CPS protocol, docs/plus.md "User data packs"); close the session | About: "RadioID pack: <name>, <date>, <size> KB"; a DMR call from a station not in the codeplug shows "CALLSIGN Name" |
+| DP3 | Load a second RadioID pack; power off in the middle of the transfer, power on, look at About; load it again completely | after the cut the first pack is still in force; after the full load the second |
+| DP4 | Load an air band pack built from the AD 2.18 pages the owner downloaded | Tools > Airfields: the listed airfields show the pack's frequencies, the others the built-in ones; About shows the pack |
+| DP5 | A read-only backup of the data chip before and after DP2-DP4 (the existing backup tool), compared outside the region | identical outside 0xE70000-0xEFFFFF |
+| DP6 | Tools > Airfields with the air band pack of DP4 in force: OK on an airfield the pack names, then # | its line shows the pack's tower ("+N" when the pack has more than one); the page lists the pack's frequencies; # puts them (not the ATIS) on the air watch ring, Back twice ends it as before |
+| DP7 | DOTA (each step transmits: approval, an authorised frequency, low power): radio A sends its air band pack (What "Air band pack") over FM to radio B (Role Receive, Import "Current zone", Ready) | B asks "Data pack: <name>, <date>, <size> KB. Accept?" (Turkish "Veri paketi: ..., Kabul?"); OK: A "Sent data pack", B "Imported data pack", B's About shows A's pack at once, B's airfields use it |
+| DP8 | As DP7 over DMR (A types B's ID); then the RadioID pack (long: ~18 min FM / ~14 min DMR for ~100 KB; once is enough) | as DP7; B names DMR callers from the new RadioID pack |
+| DP9 | As DP7, B answers Back (No); again, B answers nothing | A "Not accepted" both times (the second after ~20 s); B's About unchanged; B's question gone ~10 s after A stopped asking |
+| DP10 | As DP8 with the RadioID pack: stop A part way (Back, OK); again, power B off part way and on | B's About shows its old pack (or "none") both times, the DMR names as before; a full transfer afterwards works |
+
+### Round 14 air band and spectrum (docs/plus.md "Round 14: air band and spectrum", branch `r14-air`)
+
+| # | Do | Expect |
+|---|---|---|
+| AW1 | Tools > Airfields near Antalya (or the fixed APRS position there); then near Ankara | LTAI's line "TWR 125.000 +1"; LTAB's "TWR 132.000" without "+"; LTAD Etimesgut shows only TWR 122.100 (no APP 119.100) |
+| AW2 | OK on LTAI; Down to the last frequency; OK | seven rows (ATIS, GND, TWR x2, APP x3), the page scrolls to APP 124.425; OK tunes 124.425 in AM, receive only |
+| AW3 | Air watch: on a channel (note it), Tools > Airfields, OK on LTAC Esenboğa (or the nearest busy one), # | toast "LTAC: Air watch on"; Home shows the ring's rows (GND 121.900, TWR 118.100, APP 119.100 as VFOs, "AM"), the ring's period under them; the receiver hops |
+| AW4 | During AW3, a transmission on one of them (an aircraft calling the tower) | the ring stops on that letter (green), the audio in AM, clear; after it ends and the Dual watch delay passes the ring goes on; note whether a weak call opens the AM squelch per letter |
+| AW5 | PTT during AW3 | refused ("Air band: receive only"), nothing transmitted |
+| AW6 | Back twice (or # 5) | toast "Air watch off"; the radio back on the channel noted in AW3, VFO A / B as before (check their frequencies); repeat with your own multi-watch of 3-4 channels running first: it comes back with the same letters and selected letter |
+| AW7 | Start the air watch, power off and on | the radio comes up as before the air watch (your channel, your watch on or off); no air ring |
+| WF3-1 | Tools > Spectrum around an active frequency (a repeater, or the other radio keyed on and off); * | toast "3D waterfall" ("3B şelale"); the rows as ridges, the newest in front at the bottom, older ones smaller towards the back; a carrier is a ridge line running back; it flows a row a sweep |
+| WF3-2 | * again; * again; Back and open the spectrum again | "Waterfall off" (bars alone); "Waterfall on" (flat); after * to 3D, Back and back in: the 3D view again |
+| WF3-3 | 3D view open for a minute: `tools/plus_txdiag.py --health` (read only) | `tasks.heap_min_free` as with the flat waterfall (I26-3: the same 1,280 B block, nothing more); the UI task's stack free not lower; no crash record |
+
 ## 7. Not testable here
 
 YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec2 too heavy for the CPU).
@@ -437,3 +506,113 @@ YSF (no YSF transmitter), NXDN (not in Plus; see docs/plus.md), M17 voice (Codec
 
 The data chip is never written by these tools: after Classic's "Start new" the stock codeplug lives only in the
 Firmware Utility backup and in `backups/dm32-047-20261113/q128-pass1.bin`.
+
+## Round 14 xband (branch `r14-xband`)
+
+Last calls (Tools > Last call, docs/plus.md "Last calls"). Receive only: nothing here transmits.
+
+| # | Do | Expect |
+|---|---|---|
+| LC-1 | Hear a DMR call, a P25 call, a YSF call and an FM call with an MDC1200 or DTMF ID (the other radio, the SDR); open Tools > Last call | one row each, newest first: "DMR <name or ID>  TG..", "P25 <ID>  TG..", "YSF <callsign>", "FM MDC ...." / "FM DTMF ...", each with its age counting up |
+| LC-2 | Watch channels 4 (multi-watch on), a call on C, then on A, then on D | the rows start with C, A, D (newest first), each with the caller and the talkgroup |
+| LC-3 | After LC-1, on the P25 channel: OK on the P25 row (marked ">"), then OK again | the call plays again as Tools > Last call did before ("Playing the last call"), the second OK stops it ("Replay stopped"); OK on the DMR row: "No audio kept for this call" |
+| LC-4 | The same station calls twice with 10 s between; then an 8-call burst from several stations | two rows for the first station; the list never holds more than 8, the oldest goes |
+
+Cross-band store and forward (Tools > Cross-band, docs/plus.md "Cross-band store and forward"). **Transmits**: attended
+only, amateur frequencies only, the owner's callsign as the radio name (the CW ID). Needs a DMR radio on A (2 m) and
+one on B (70 cm), or the SDR; an FM radio or the SDR on B to hear the CW ID.
+
+| # | Do | Expect |
+|---|---|---|
+| XB-1 | Tools > Cross-band: A 145500, B 433500 (typed), DMR, CC 1, slot 1, Low, Start | the question "Attended only: stay at the radio while it relays. Start?"; OK: Home with CROSS in the status strip, the bottom line "Listen A  Back", then "Listen B" and back every second |
+| XB-2 | While it runs: Up, Down, OK, a digit, #, the side keys, PTT; the volume knob | each key: "Cross-band on: Back stops", nothing changes; PTT: the deny tone, nothing keyed; the volume follows the knob |
+| XB-3 | Radio 1 on 145.500 (CC 1, TS 1) talks 10 s to TG 9 | the DM-32 plays it; "Record A 0:10"; at its end "Send B 0:10": radio 2 on 433.500 hears the over from the DM-32's DMR ID to TG 9, the voice as radio 1 said it; then the CW ID (the callsign, 20 wpm) on 433.500 in FM; then "Listen B" |
+| XB-4 | Radio 2 answers on 433.500; within 10 minutes a third over; after 10 minutes another one | the answer sent on 145.500; no ID for the second and third overs; after the 10 minutes the CW ID on each frequency it transmitted on since the last ID |
+| XB-5 | Radio 1 talks 45 s | the alert tone and "!" on Home at about 38 s (the memory full); 38 s sent on B, the rest not |
+| XB-6 | Refusals: B 446.00625, 439.000, 145.600, 435.500, 144.800, 145.500 (= A), 162.550; the picker's repeater channel; Mode FM and P25; a radio name that is not a callsign | the toasts "PMR446: no repeaters allowed", "Repeater frequency" (x2), "Satellite segment", "APRS frequency", "A and B are the same", "Not an amateur band", "Repeater channel (RX and TX differ)", "DMR only for now", "Set your callsign ..."; nothing transmits |
+| XB-7 | Back while it sends (XB-3) | off the air at once, "Cross-band off"; the user's channel back (frequency, mode, power) |
+| XB-8 | Start from a P25 channel while it receives; stop after one relay | it starts within 2 s; after the stop the P25 channel receives again; Tools > Last call's P25 replay: nothing kept (the memory came back cleared) |
+
+DMR receive audio (Tools > Diagnostics, docs/plus.md "DMR receive audio diagnostics"). Receive only. Needs a steady
+DMR source on a channel: the other radio a few metres away on Low (its frequency, colour code, slot and talkgroup on
+the DM-32's channel), the same 20-30 s of speech each time; the volume as usual. Where possible also listen to the
+same over on a third, stock radio: it decodes the same transmission.
+
+| # | Do | Expect |
+|---|---|---|
+| DA-1 | On the DMR channel: Tools > Diagnostics, press 9; receive one 30 s over (m0, as shipped); photograph the five `dv` / `sp` / `au` lines and note how it sounded | the counters move (`in` and `pl` about 1,500 for 30 s); note `cc`, `un`, `bd`, `ls`, `gp` and its longest, `bl` min-max, `ov`, `pk` |
+| DA-2 | Press 0 once (`dv m1`), 9, the same over again; photograph | compare the sound with DA-1; `gp` stays 0 (or near it) if candidate 1 is the cause |
+| DA-3 | Press 0 (`m2`), 9, the same over; then 0 (`m3`), 9, the same over; photograph each | the sound, `gp` and `fu` for paced feeding alone and for both |
+| DA-4 | In m1: one over from the DM-32 to the other radio and its answer | our transmit unchanged (the modes touch only the speaker) |
+| DA-5 | In m1: a key beep, the talk permit tone, the start and end of a DMR call | beeps whole (20 ms later), no click at a call's start; the last syllable of an over not cut |
+| DA-6 | Power off and on; open Diagnostics | `dv m0`: the default came back |
+
+Reading the result: a mode that sounds clean with `gp0` where m0 had `gp` above 0 -> that mode becomes the default
+(candidates 1 / 2). `un` / `cc` growing in every mode -> the AMBE queue starves (DMR task or air timing). `bd` / `be`
+high -> the signal, not the audio path (move the radios, check the frequency). `pk` near 32767 on normal speech ->
+clipping. Every mode as rough as m0 with clean counters while the stock radio sounds clean on the same over -> the
+decoder call itself (candidate 4).
+## Round 15 channels (branch `r15-channels`)
+
+Zones, DMR channel rows, digital monitor, Delete channel, P25 NAC in decimal (docs/plus.md "Round 15"). Receive only
+unless a row says it transmits.
+
+| # | Do | Expect |
+|---|---|---|
+| Z-1 | Menu > Zones > the 27-channel zone: look at the Add channel row and the list; then on Home step Up past 26 | "Add channel 27/80"; every position listed (one that can't be read shows "27 ? Ch nnn", "Can't be read"); Home's top right counts "27/27" on the 27th. If Home still stops at 26: note whether Home shows "x/27" or "x/26", the Settings > Keys > Up/Down value and whether dual / multi-watch is on |
+| Z-2 | Add channels to a zone until it holds 80, then Add channel once more; Copy here on one of its channels; the channel editor's Zones row | "80/80" dimmed; "Zone full: max 80 channels" each time, nothing written; in the editor's Zones list "80/80" dimmed beside that zone |
+| Z-3 | Menu > Zones, Create New Zone row | "n/68" with n the zones stored |
+| D-1 | A DMR repeater channel, Edit > RX list: OK | the picker lists None, "Any: all TGs", then the lists; on Any: "Any: every TG on this slot", the row "All TGs TS1"; hold OK saves |
+| D-2 | On that channel (DMon off) another station calls a talkgroup not in the channel's lists on TS1; then on TS2; then a private call between two other IDs | the TS1 group call plays; the TS2 call and the private call do not |
+| D-3 | Edit an FM channel: Mode to DMR, look at TX contact; RX only Yes, TX contact None, hold OK | TX contact is the codeplug's first talkgroup contact; the RX only channel saves ("Saved channel n") |
+| M-1 | On the D-1 channel (RX list Any): Home; press the monitor key; again | Home's DMR row shows "AllTG" (no DMon); first press: "DMon" (amber) and "Digital monitor on: every call"; second: DMon gone, "AllTG" back, "Monitor off: channel hears all TGs" |
+| M-2 | On a DMR channel with an ordinary RX list: monitor key on, off; the quick tile Digital monitor on, off | DMon appears and goes each time with the toggle ("Digital monitor off"); no AllTG |
+| X-1 | Menu > Zones > a zone > # on a channel that is not the one in use > Delete channel | "Delete channel?" with its name and "Leaves zones: n", "No, keep it" focused; OK: nothing changes |
+| X-2 | The same, Yes | "Deleted <name>"; the channel is gone from every zone that held it and from Channels; Channels > New from current takes its number next |
+| X-3 | Delete the channel in use (zone menu or Channels > OK > Delete channel) | "In use: switch to another channel first", nothing deleted |
+| X-4 | Channels > OK on another channel > the last row Delete channel > Yes | the editor closes, "Deleted <name>"; after a power cycle it is still gone; a P25 channel deleted this way and its number reused for an FM channel: the new one is FM (no P25 left over) |
+| N-1 | A P25 channel (NAC $293), Edit > RX NAC | the row reads "659 ($293)"; OK, 2 9 3, OK: "293 ($125)"; hold OK saves; the channel then hears the other radio programmed with NAC 293 in its factory CPS (decimal) |
+| N-2 | RX NAC: OK, 4 0 9 6 | "NAC goes 0 to 4095" at the 6, the row keeps "[409] ($199)"; Back twice: "[4] ($004)" |
+| N-3 | RX NAC: OK, #, OK; TX NAC: OK, 3 9 6 6, OK | RX reads "Any 3966 ($F7E)"; TX: "TX NAC can't be 3966 or 3967", the row stays open; Back x4, 1 6 2 5, OK: "1625 ($659)" |
+| N-4 | RX NAC: OK, # #, then the knob / digits | "NAC: type it in hex", the hex digits with the cursor ("$2[9]3 (659)") as before; # again: decimal |
+| N-5 | VFO in P25 (Quick > Mode), VFO settings: RX NAC 1110, TX NAC 1625, back to Home | Home's VFO row "P25 NAC 1110>1625 TG .." (or the shorter forms) |
+
+## Round 15 scan (branch `r15-scan`)
+
+Search ranges (Tools > P25 search and DMR search, docs/plus.md "Search ranges"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SR-1 | Tools > P25 search; Left / Right through the presets | "Range +-1 MHz  12.5k", then +-2.5 MHz, 430-440, 144-146, +-500 kHz; no "Manual" yet |
+| SR-2 | 4 3 3 (the editor opens), 5, OK, 4 3 4, OK | the editor "Search range, MHz": Lower 433.5, then "Range 433.5-434  12.5k" on the search screen; OK starts the sweep there ("Sweep 433.5000" counting up to 434.0000) |
+| SR-3 | * , Down Down (Step), Left Left (6.25 kHz), OK, OK | "433.5-434  6.25k"; the sweep shows 433.50625 steps (the screen shows 4 decimals: 433.5062, 433.5125); the other radio's P25 on 433.5125 or 433.50625 is found |
+| SR-4 | * , Down x3 (Move), Right, then hold Right (DM-32: long Right) | Lower / Upper +6.25 kHz, then +1 MHz per repeat; hold Left: -1 MHz |
+| SR-5 | * , type Lower 173, Upper 401 | toast "Range must lie in one band", the editor stays; Upper below Lower: "Upper must be above Lower" |
+| SR-6 | Leave the search (Back), open it again; then power off and on | the manual range and step are kept on return; after the power cycle the default "+-1 MHz  12.5k" |
+| SR-7 | DMR search: a 1 MHz range around the other radio's DMR frequency, step 25 kHz, then 12.5 kHz | the find on 25 kHz steps only when the frequency is on the 25 kHz grid; on 12.5 kHz always |
+| SR-8 | On the search screen with the editor closed, press * | the editor opens (not quick settings); on any other screen * opens quick settings as before |
+
+Faster searches (docs/plus.md "Faster searches"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SF-1 | P25 search, 430-440 MHz, 12.5 kHz, quiet band; time two passes with a watch ("Pass N") | about 20 s a pass (before: about 40 s); the floor near -120..-125 |
+| SF-2 | DMR search, 430-440 MHz, quiet band | about 60 s a pass (before: about 80 s) |
+| SF-3 | The other radio sends P25 (NAC 0x659, TG 101) on 433.500 MHz, 5 s overs every 20 s; P25 search +-1 MHz around it | found on 433.5000 (not 433.4875 or 433.5125) within one pass; no probes ("Probe") on its neighbours |
+| SF-4 | The other radio in DMR direct mode (simplex) on 433.450, 5 s overs; DMR search +-1 MHz | found on 433.4500 with its CC and slot within one pass; repeat 5 times |
+| SF-5 | An FM signal (the other radio in FM, a long over) inside the P25 search range | probed once ("Probe" 433.xxxx), then passed: the next probe of it no sooner than 10 s, then 30 s while it stays |
+| SF-6 | A weak P25 signal (other radio at low power, far away, about -110 dBm on Home) | still found; if it is missed while the strong one of SF-3 is found, note its level (the quick reading may be slower than 25 ms) |
+
+The multi-watch ring (docs/plus.md "The multi-watch ring"). Receive only except MR-5 (PTT on the selected letter, the
+owner's channel and licence).
+
+| # | Do | Expect |
+|---|---|---|
+| MR-1 | Watch channels 6, all FM, quiet | Home "Ring 0.3 s" (before: 0.9 s); the rows' receiver marker (or the audible clicks, if any) goes round visibly faster |
+| MR-2 | Same ring with 4 DMR + 2 FM channels | "Ring 0.5 s"; watch whether the FM <-> DMR switch slows it (time 10 rounds with the debug link or by ear) |
+| MR-3 | The other radio calls on F (FM), 3 s overs, 10 times at random moments | every over caught, the first syllable at most cut (before: up to 0.9 s lost) |
+| MR-4 | The same on a DMR letter (repeater or direct) | every over played (late entry as before) |
+| MR-5 | A P25 letter (C); the other radio sends **FM** on C's frequency for 20 s, then calls on A (FM) | the ring does not stop on C for long (about 1.2 s, then C is passed over while the FM lasts); the call on A is heard (before: the ring froze on C until the FM ended) |
+| MR-6 | The other radio sends P25 on C with the right NAC and talkgroup (TG 101, NAC 659) | held, the native receiver plays it, given back 1.5 s after the last voice, the ring goes on after the wait |
+| MR-7 | Watch channels 2 (dual watch) | as before: 150 ms a stop, no "Ring" line |
+| MR-8 | A weak FM signal near the squelch on one letter | it opens there as before (a single reading at 50 ms decides a quiet stop, as the squelch itself does); note if it is missed more than with the build before |

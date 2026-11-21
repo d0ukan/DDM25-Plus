@@ -12,10 +12,25 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "config.h"
 
 #define DMRS_SETTLE_MS		30u	/* readings this long after a retune are the step's */
 #define DMRS_READS		3u	/* readings per step, a poll (25 ms) apart: a direct mode burst (30 ms in 60) lands
 					 * in one of them; the step's level is their peak */
+#if CONFIG_SEARCH_FAST
+/* DDM32 Plus faster sweep (docs/plus.md "Search ranges and speed"): the first of the DMRS_READS readings at the poll
+ * after the retune (25 ms), the others settled, so a quiet step takes three polls instead of four. A strong settled
+ * reading is a hit. A strong first reading alone (a burst caught only there, or the step before's level on a slow
+ * reading; half the margin counts there, as a burst that began just before it reads only part of its level) gets
+ * DMRS_MORE_READS more settled ones, which cover every phase of the 60 ms frame without it; still
+ * nothing: the step before, if it was read so, is read again settled */
+#define DMRS_QUICK_MS		20u
+#define DMRS_MORE_READS		2u
+/* A carrier found again not to be DMR within DMRS_AGAIN_MS of its skip running out (an FM repeater, a beacon) is
+ * skipped for DMRS_SKIP_LONG_MS: fewer probes of the same busy channels on every pass */
+#define DMRS_SKIP_LONG_MS	30000u
+#define DMRS_AGAIN_MS		60000u
+#endif
 #define DMRS_HIT_DB		10	/* a hit: this far above the floor ... */
 #define DMRS_HIT_MIN_DBM	(-115)	/* ... and at least this strong */
 #define DMRS_PROBE_MS		600u	/* a hit: bursts within this long are DMR (sync comes once per 360 ms superframe in

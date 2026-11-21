@@ -75,7 +75,7 @@ static void order_from(double la, double lo, const char *nearest)
 
 int main(void)
 {
-	CHECK(air_field_count == AIR_FIELDS && AIR_FIELDS >= 60 && AIR_FREQS >= 150);
+	CHECK(air_field_count == AIR_FIELDS && AIR_FIELDS >= 60 && AIR_FREQS >= 100);	/* after the cleanup: 74, 122 */
 	/* The table: sorted by code, frequencies in place, on a channel name of the band, the 8.33 kHz grid */
 	uint32_t next_first = 0;
 	unsigned n833 = 0;

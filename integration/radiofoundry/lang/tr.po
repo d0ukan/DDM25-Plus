@@ -5401,10 +5401,6 @@ msgid "off"
 msgstr "kapalı"
 
 #: core/ui/ui_sos.c
-msgid "No SOS actions chosen: Tools > SOS key"
-msgstr "SOS eylemi seçilmedi: Araçlar > SOS tuşu"
-
-#: core/ui/ui_sos.c
 msgid "SOS started"
 msgstr "SOS başladı"
 
@@ -5419,14 +5415,6 @@ msgstr "CW SOS gönderildi"
 #: core/ui/ui_sos.c
 msgid "CW SOS not sent: can't transmit here"
 msgstr "CW SOS gitmedi: burada yayın yapılamaz"
-
-#: core/ui/ui_sos.c
-msgid "No SOS actions chosen"
-msgstr "SOS eylemi seçilmedi"
-
-#: core/ui/ui_sos.c
-msgid "Tools > SOS key picks them"
-msgstr "Araçlar > SOS tuşu ile seçilir"
 
 #: core/ui/ui_sos.c
 msgid "Send SOS now?"
@@ -5607,3 +5595,668 @@ msgstr "Bu telsizin okuyabildiği bölge değil"
 #: core/ui/ui_svc_zone.c
 msgid "The offer is gone"
 msgstr "Teklif artık yok"
+
+#: core/ui/ui_dota.c
+msgid "One channel"
+msgstr "Tek kanal"
+
+#: core/ui/ui_dota.c
+msgid "Selected channels"
+msgstr "Seçili kanallar"
+
+#: core/ui/ui_dota.c
+msgid "A zone"
+msgstr "Bir bölge"
+
+#: core/ui/ui_dota.c
+msgid "DOTA Clone (all)"
+msgstr "DOTA Klon (tümü)"
+
+#: core/ui/ui_dota.c
+msgid "Role"
+msgstr "Rol"
+
+#: core/ui/ui_dota.c
+msgid "Method"
+msgstr "Yöntem"
+
+#: core/ui/ui_dota.c
+msgid "What"
+msgstr "Ne"
+
+#: core/ui/ui_dota.c
+msgid "Receiver ID"
+msgstr "Alıcı ID"
+
+#: core/ui/ui_dota.c
+msgid "Code"
+msgstr "Kod"
+
+#: core/ui/ui_dota.c
+msgid "Zone name"
+msgstr "Bölge adı"
+
+#: core/ui/ui_dota.c
+msgid "May transmit"
+msgstr "Gönderebilir"
+
+#: core/ui/ui_dota.c
+msgid "Receive"
+msgstr "Al"
+
+#: core/ui/ui_dota.c
+msgid "Low"
+msgstr "Düşük"
+
+#: core/ui/ui_dota.c
+msgid "Mid"
+msgstr "Orta"
+
+#: core/ui/ui_dota.c
+msgid "High"
+msgstr "Yüksek"
+
+#: core/ui/ui_dota.c
+msgid "New zone"
+msgstr "Yeni bölge"
+
+#: core/ui/ui_dota.c
+msgid "Current zone"
+msgstr "Geçerli bölge"
+
+#: core/ui/ui_dota.c
+msgid "Ready"
+msgstr "Hazır"
+
+#: core/ui/ui_dota.c
+msgid "DOTA Transfer"
+msgstr "DOTA Aktarım"
+
+#: core/ui/ui_dota.c
+msgid "About "
+msgstr "Yaklaşık "
+
+#: core/ui/ui_dota.c
+msgid "Stop the transfer?"
+msgstr "Aktarım durdurulsun mu?"
+
+#: core/ui/ui_dota.c
+msgid "Not amateur band: send?"
+msgstr "Amatör bant değil: gönderilsin mi?"
+
+#: core/ui/ui_dota.c
+msgid "Battery low. Sure?"
+msgstr "Pil zayıf. Emin misiniz?"
+
+#: core/ui/ui_dota.c
+msgid "Receiver ready?"
+msgstr "Alıcı hazır mı?"
+
+#: core/ui/ui_dota.c
+msgid "No answer"
+msgstr "Yanıt yok"
+
+#: core/ui/ui_dota.c
+msgid "Other version"
+msgstr "Farklı sürüm"
+
+#: core/ui/ui_dota.c
+msgid "Not ready"
+msgstr "Hazır değil"
+
+#: core/ui/ui_dota.c
+msgid "Receiver stopped"
+msgstr "Alıcı durdurdu"
+
+#: core/ui/ui_dota.c
+msgid "Nothing changed"
+msgstr "Hiçbir şey değişmedi"
+
+#: core/ui/ui_dota.c
+msgid "No final answer"
+msgstr "Son yanıt yok"
+
+#: core/ui/ui_dota.c
+msgid "Flash write failed"
+msgstr "Flaş yazılamadı"
+
+#: core/ui/ui_dota.c
+msgid "Nothing to send"
+msgstr "Gönderilecek bir şey yok"
+
+#: core/ui/ui_dota.c
+msgid "Back stop"
+msgstr "Geri durdur"
+
+#: core/ui/ui_dota.c
+msgid "Waiting for sender"
+msgstr "Gönderici bekleniyor"
+
+#: core/ui/ui_dota.c
+msgid "Preparing"
+msgstr "Hazırlanıyor"
+
+#: core/ui/ui_dota.c
+msgid "Writing"
+msgstr "Yazılıyor"
+
+#: core/ui/ui_dota.c
+msgid "Waiting for answer"
+msgstr "Yanıt bekleniyor"
+
+#: core/ui/ui_dota.c
+msgid "OK pick  <> change"
+msgstr "OK seç  <> değiştir"
+
+#: core/ui/ui_dota.c
+msgid "Set your DMR ID first"
+msgstr "Önce DMR ID'nizi girin"
+
+#: core/ui/ui_dota.c
+msgid "APRS frequency"
+msgstr "APRS frekansı"
+
+#: core/ui/ui_dota.c
+msgid "Code / ID needed"
+msgstr "Kod / ID gerekli"
+
+#: core/ui/ui_dota.c
+msgid "Zone name needed"
+msgstr "Bölge adı gerekli"
+
+#: core/ui/ui_dota.c
+msgid "Sent ^"
+msgstr "^ gönderildi"
+
+#: core/ui/ui_dota.c
+msgid "Imported ^"
+msgstr "^ içe aktarıldı"
+
+#: core/ui/ui_dota.c
+msgid "Current channel"
+msgstr "Mevcut kanal"
+
+#: core/ui/ui_dota.c
+msgid "Last used"
+msgstr "Son kullanılan"
+
+#: core/ui/ui_dota.c
+msgid "Manual"
+msgstr "Elle gir"
+
+# DDM32 Plus round 14 APRS job (branch r14-aprs): Mic-E beacons, the APRS station page, the empty SOS page
+#: core/ui/ui_sos.c
+msgid "No SOS actions"
+msgstr "SOS eylemi yok"
+
+#: core/ui/ui_sos.c
+msgid "Pick: Settings > Keys"
+msgstr "Seç: Ayarlar > Tuşlar"
+
+#: core/ui/ui_sos.c
+msgid "No SOS actions: Settings > Keys"
+msgstr "SOS eylemi yok: Ayarlar > Tuşlar"
+
+#: core/ui/ui_menus.c
+msgid "Standard"
+msgstr "Standart"
+
+#: core/ui/ui_menus.c
+msgid "Off duty"
+msgstr "Görev dışı"
+
+#: core/ui/ui_menus.c
+msgid "En route"
+msgstr "Yolda"
+
+#: core/ui/ui_menus.c
+msgid "In service"
+msgstr "Hizmette"
+
+#: core/ui/ui_menus.c
+msgid "Returning"
+msgstr "Dönüyor"
+
+#: core/ui/ui_menus.c
+msgid "Committed"
+msgstr "Görevde"
+
+#: core/ui/ui_menus.c
+msgid "Special"
+msgstr "Özel"
+
+#: core/ui/ui_menus.c
+msgid "Priority"
+msgstr "Öncelikli"
+
+#: core/ui/ui_menus.c
+msgid "Beacon format"
+msgstr "Beacon biçimi"
+
+#: core/ui/ui_menus.c
+msgid "Mic-E message"
+msgstr "Mic-E mesajı"
+
+#: core/ui/ui_aprsx.c
+msgid "Police"
+msgstr "Polis"
+
+#: core/ui/ui_aprsx.c
+msgid "Digipeater"
+msgstr "Digipeater"
+
+#: core/ui/ui_aprsx.c
+msgid "Gateway"
+msgstr "Ağ geçidi"
+
+#: core/ui/ui_aprsx.c
+msgid "House"
+msgstr "Ev"
+
+#: core/ui/ui_aprsx.c
+msgid "Motorcycle"
+msgstr "Motosiklet"
+
+#: core/ui/ui_aprsx.c
+msgid "Car"
+msgstr "Araç"
+
+#: core/ui/ui_aprsx.c
+msgid "Balloon"
+msgstr "Balon"
+
+#: core/ui/ui_aprsx.c
+msgid "Camper"
+msgstr "Karavan"
+
+#: core/ui/ui_aprsx.c
+msgid "Bus"
+msgstr "Otobüs"
+
+#: core/ui/ui_aprsx.c
+msgid "Helicopter"
+msgstr "Helikopter"
+
+#: core/ui/ui_aprsx.c
+msgid "Boat"
+msgstr "Tekne"
+
+#: core/ui/ui_aprsx.c
+msgid "Person"
+msgstr "Kişi"
+
+#: core/ui/ui_aprsx.c
+msgid "Weather"
+msgstr "Hava istasyonu"
+
+#: core/ui/ui_aprsx.c
+msgid "Ambulance"
+msgstr "Ambulans"
+
+#: core/ui/ui_aprsx.c
+msgid "Bicycle"
+msgstr "Bisiklet"
+
+#: core/ui/ui_aprsx.c
+msgid "Fire truck"
+msgstr "İtfaiye"
+
+#: core/ui/ui_aprsx.c
+msgid "Hospital"
+msgstr "Hastane"
+
+#: core/ui/ui_aprsx.c
+msgid "Jeep"
+msgstr "Cip"
+
+#: core/ui/ui_aprsx.c
+msgid "Truck"
+msgstr "Kamyon"
+
+#: core/ui/ui_aprsx.c
+msgid "Laptop"
+msgstr "Dizüstü"
+
+#: core/ui/ui_aprsx.c
+msgid "Van"
+msgstr "Minibüs"
+
+#: core/ui/ui_aprsx.c
+msgid "No position heard"
+msgstr "Konum duyulmadı"
+
+#: core/ui/ui_aprsx.c
+msgid " (delivered)"
+msgstr " (iletildi)"
+
+#: core/ui/ui_aprsx.c
+msgid " (not delivered)"
+msgstr " (iletilemedi)"
+
+#: core/ui/ui_aprsx.c
+msgid "No messages with it"
+msgstr "Mesajlaşma yok"
+
+#: core/ui/ui_aprsx.c
+msgid "Heard: "
+msgstr "Duyuldu: "
+
+#: core/ui/ui_aprsx.c
+msgid "Direct, "
+msgstr "Doğrudan, "
+
+#: core/ui/ui_aprsx.c
+msgid "Via digi, "
+msgstr "Digi ile, "
+
+#: core/ui/ui_aprsx.c
+msgid " packet"
+msgstr " paket"
+
+#: core/ui/ui_aprsx.c
+msgid " packets"
+msgstr " paket"
+
+#: core/ui/ui_aprsx.c
+msgid "{OK Go-To  0 map  # message|OK Go-To  0 map  # msg|OK Go-To  0 map}"
+msgstr "{OK git  0 harita  # mesaj|OK git  0 harita  # msj|OK git  0 harita}"
+
+#: core/ui/ui_aprsx.c
+msgid "{OK Go-To  0 map  Back|OK Go-To  0 map}"
+msgstr "{OK git  0 harita  Geri|OK git  0 harita}"
+
+#: core/ui/ui_aprsx.c
+msgid "Not heard any more"
+msgstr "Artık duyulmuyor"
+
+#: core/ui/ui_aprs.c
+msgid "OK details  Back"
+msgstr "OK ayrıntı  Geri"
+
+# Branch r14-air (round 14: airfield table, air watch, 3D waterfall)
+#: core/ui/ui_airfield.c
+msgid "{No frequencies in the data|No frequencies}"
+msgstr "{Veride frekans yok|Frekans yok}"
+
+#: core/ui/ui_airfield.c
+msgid "{OK listen  # watch all|OK listen  # all}"
+msgstr "{OK dinle  # tümünü izle|OK dinle  # tümü}"
+
+#: core/ui/ui_airfield.c
+msgid "Air watch on"
+msgstr "Hava izleme açık"
+
+#: core/ui/ui_dual.c
+msgid "Air watch off"
+msgstr "Hava izleme kapalı"
+
+#: core/ui/ui_spectrum.c
+msgid "3D waterfall"
+msgstr "3B şelale"
+
+# --- branch datapack: user data packs (tools/plus_datapack.py) ---
+
+#: core/ui/ui_menus.c
+msgid "RadioID pack: "
+msgstr "RadioID paketi: "
+
+#: core/ui/ui_menus.c
+msgid "Air band pack: "
+msgstr "Hava bandı paketi: "
+
+#: core/ui/ui_menus.c
+msgid "damaged, not used"
+msgstr "bozuk, kullanılmıyor"
+
+# DOTA content type "data pack" (branch datapack, docs/dota.md 20)
+#: core/ui/ui_dota.c
+msgid "RadioID pack"
+msgstr "RadioID paketi"
+
+#: core/ui/ui_dota.c
+msgid "Air band pack"
+msgstr "Hava bandı paketi"
+
+#: core/ui/ui_dota.c
+msgid "Data pack: ^. Accept?"
+msgstr "Veri paketi: ^. Kabul?"
+
+#: core/ui/ui_dota.c
+msgid "data pack"
+msgstr "veri paketi"
+
+#: core/ui/ui_dota.c
+msgid "Not accepted"
+msgstr "Kabul edilmedi"
+
+# DDM32 Plus branch r14-xband: last calls (item 43), cross-band store and forward (item 46)
+#: core/ui/ui_lastcall.c
+msgid "Last calls"
+msgstr "Son çağrılar"
+
+#: core/ui/ui_lastcall.c
+msgid "OK play  Back"
+msgstr "OK çal  Geri"
+
+#: core/ui/ui_lastcall.c
+msgid "No audio kept for this call"
+msgstr "Bu çağrının sesi tutulmadı"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band"
+msgstr "Çapraz bant"
+
+#: core/ui/ui_xband.c
+msgid "A and B are the same"
+msgstr "A ile B aynı"
+
+#: core/ui/ui_xband.c
+msgid "PMR446: no repeaters allowed"
+msgstr "PMR446: röle yasak"
+
+#: core/ui/ui_xband.c
+msgid "Not an amateur band"
+msgstr "Amatör bant değil"
+
+#: core/ui/ui_xband.c
+msgid "Repeater frequency"
+msgstr "Röle frekansı"
+
+#: core/ui/ui_xband.c
+msgid "Satellite segment"
+msgstr "Uydu bölümü"
+
+#: core/ui/ui_xband.c
+msgid "DMR only for now"
+msgstr "Şimdilik yalnız DMR"
+
+#: core/ui/ui_xband.c
+msgid "Repeater channel (RX and TX differ)"
+msgstr "Röle kanalı (RX ve TX farklı)"
+
+#: core/ui/ui_xband.c
+msgid "A DOTA transfer runs"
+msgstr "DOTA aktarımı sürüyor"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band on: Back stops"
+msgstr "Çapraz bant açık: Geri durdurur"
+
+#: core/ui/ui_xband.c
+msgid "Start"
+msgstr "Başlat"
+
+#: core/ui/ui_xband.c
+msgid "Attended only: stay at the radio while it relays. Start?"
+msgstr "Yalnızca başında: aktarırken telsizin yanında kalın. Başlasın mı?"
+
+#: core/ui/ui_xband.c
+msgid "OK pick  <> zone  Back"
+msgstr "OK seç  <> bölge  Geri"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off"
+msgstr "Çapraz bant kapalı"
+
+#: core/ui/ui_xband.c
+msgid "Starting"
+msgstr "Başlıyor"
+
+#: core/ui/ui_xband.c
+msgid "Record"
+msgstr "Kayıt"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off: battery low"
+msgstr "Çapraz bant kapalı: pil zayıf"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off: no memory"
+msgstr "Çapraz bant kapalı: bellek yok"
+
+#: core/ui/ui_xband.c
+msgid "Cross-band off: refused"
+msgstr "Çapraz bant kapalı: reddedildi"
+
+# DDM32 Plus branch r15-channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/plus_chux.py)
+#: core/ui/ui_menus.c
+msgid "Zone full: max "
+msgstr "Bölge dolu: en çok "
+
+#: core/ui/ui_menus.c
+msgid "Can't be read"
+msgstr "Okunamıyor"
+
+#: core/ui/ui_menus.c
+msgid "All TGs TS"
+msgstr "Tüm TG TS"
+
+#: core/ui/ui_menus.c
+msgid "All TGs"
+msgstr "Tüm TG"
+
+#: core/ui/ui_menus.c
+msgid "Any: all TGs"
+msgstr "Tümü: tüm gruplar"
+
+#: core/ui/ui_menus.c
+msgid "Any: every TG on this slot"
+msgstr "Tümü: bu slottaki tüm gruplar"
+
+#: core/ui/ui_menus.c
+msgid "None: only the TX contact's TG"
+msgstr "Yok: yalnız TX kişisinin grubu"
+
+#: core/ui/ui_menus.c
+msgid "Direct: TX on the RX frequency"
+msgstr "Direkt: TX, RX frekansında"
+
+#: core/ui/ui_menus.c
+msgid "RX list"
+msgstr "RX listesi"
+
+#: core/ui/ui_screens.c
+msgid "AllTG"
+msgstr "TümG"
+
+#: core/ui/ui_app.c
+msgid "Digital monitor on: every call"
+msgstr "Dijital dinleme açık: tüm çağrılar"
+
+#: core/ui/ui_app.c
+msgid "Monitor off: channel hears all TGs"
+msgstr "Dinleme kapalı: kanal tüm TG'leri duyar"
+
+#: core/ui/ui_menus.c
+msgid "Delete channel"
+msgstr "Kanalı sil"
+
+#: core/ui/ui_menus.c
+msgid "Delete channel?"
+msgstr "Kanal silinsin mi?"
+
+#: core/ui/ui_menus.c
+msgid "In use: switch to another channel first"
+msgstr "Kullanımda: önce başka kanala geçin"
+
+#: core/ui/ui_menus.c
+msgid "Cross-band on: stop it first"
+msgstr "Çapraz bant açık: önce durdurun"
+
+#: core/ui/ui_menus.c
+msgid "Leaves zones: "
+msgstr "Çıktığı bölge: "
+
+#: core/ui/ui_menus.c
+msgid "Can't be undone."
+msgstr "Geri alınamaz."
+
+#: core/ui/ui_menus.c
+msgid "1-8 pick  Back"
+msgstr "1-8 seç  Geri"
+
+#: core/ui/ui_menus.c
+msgid "NAC goes 0 to 4095"
+msgstr "NAC 0 ile 4095 arası"
+
+#: core/ui/ui_menus.c
+msgid "3967 ($F7F) is not a NAC: # is Any"
+msgstr "3967 ($F7F) NAC değil: # Tümü"
+
+#: core/ui/ui_menus.c
+msgid "TX NAC can't be 3966 or 3967"
+msgstr "TX NAC 3966 ya da 3967 olamaz"
+
+# --- branch r15-scan: search ranges and speed, multi-watch ring (tools/plus_scan.py) ---
+
+#: core/ui/ui_srange.c
+msgid "Lower"
+msgstr "Alt"
+
+#: core/ui/ui_srange.c
+msgid "Upper"
+msgstr "Üst"
+
+#: core/ui/ui_srange.c
+msgid "Step"
+msgstr "Adım"
+
+#: core/ui/ui_srange.c
+msgid "Move"
+msgstr "Kaydır"
+
+#: core/ui/ui_srange.c
+msgid "Search range, MHz"
+msgstr "Arama aralığı, MHz"
+
+#: core/ui/ui_srange.c
+msgid "Upper must be above Lower"
+msgstr "Üst, alttan büyük olmalı"
+
+#: core/ui/ui_srange.c
+msgid "Range must lie in one band"
+msgstr "Aralık tek bantta olmalı"
+
+#: core/ui/ui_srange.c
+msgid "<> step, hold <> 1 MHz"
+msgstr "<> adım, basılı <> 1 MHz"
+
+#: core/ui/ui_srange.c
+msgid "0-9 type Lower / Upper"
+msgstr "0-9 Alt / Üst yazar"
+
+#: core/ui/ui_srange.c
+msgid "OK next  Back delete"
+msgstr "OK sonraki  Geri sil"
+
+#: core/ui/ui_srange.c
+msgid "OK apply  Back delete"
+msgstr "OK uygula  Geri sil"
+
+#: core/ui/ui_srange.c
+msgid "OK apply  Back cancel"
+msgstr "OK uygula  Geri iptal"
+
+#: core/ui/ui_p25search.c core/ui/ui_dmrsearch.c
+msgid "{OK start  <> range  * edit|OK start  * range}"
+msgstr "{OK başlat  <> aralık  * düzenle|OK başlat  * aralık}"

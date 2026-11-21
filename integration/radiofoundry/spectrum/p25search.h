@@ -10,8 +10,20 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "config.h"
 
 #define P25S_SETTLE_MS		30u	/* a reading this long after a retune is the step's */
+#if CONFIG_SEARCH_FAST
+/* DDM32 Plus faster sweep (docs/plus.md "Search ranges and speed"): a step's first reading at the poll after the retune
+ * (25 ms) gates it. Quiet: on to the next step at once. Strong: read again settled (P25S_SETTLE_MS) before it is a hit;
+ * strong then quiet: the first reading may have carried the step before's level (a slow reading), so that step is
+ * read again settled. A quiet step costs one poll instead of two */
+#define P25S_QUICK_MS		20u
+/* A carrier found again not to be P25 within P25S_AGAIN_MS of its skip running out (an FM repeater, a beacon) is
+ * skipped for P25S_SKIP_LONG_MS: fewer probes of the same busy channels on every pass */
+#define P25S_SKIP_LONG_MS	30000u
+#define P25S_AGAIN_MS		60000u
+#endif
 #define P25S_HIT_DB		10	/* a hit: this far above the floor ... */
 #define P25S_HIT_MIN_DBM	(-115)	/* ... and at least this strong */
 #define P25S_SKIP_MS		10000u	/* a carrier that wasn't P25 is not probed again for this long */

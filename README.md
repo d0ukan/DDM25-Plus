@@ -10,7 +10,7 @@ by **d0ukan · TA2DOU**
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSING.md)
 [![Based on Open25-DM32](https://img.shields.io/badge/based%20on-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
-[![Status: beta, not yet field-tested](https://img.shields.io/badge/status-beta%20%C2%B7%20not%20field--tested-orange)](#status)
+[![Release: v1.0.0-beta.3](https://img.shields.io/badge/release-v1.0.0--beta.3-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.3)
 
 [Türkçe README](README.tr.md)
 
@@ -37,9 +37,12 @@ by **d0ukan · TA2DOU**
 
 ## Status
 
-DDM32 Plus is in **beta**. Every feature below is built and covered by host tests (a simulator of the radio's
-screens, radio core and modems), but **most of it has not yet been tried on a real radio**. The first public
-release will be marked as a pre-release. Radio test notes live in [`docs/plus-radio-test.md`](docs/plus-radio-test.md).
+DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.3](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.3)** (2026-11-20). It was
+installed and checked on the author's radio (boot screen, themes, Home with its frequency, Large text, Marine, map,
+multi-watch, the DOTA Transfer screens).
+Every feature below is built and covered by host tests (a simulator of the radio's screens, radio core and
+modems), but **many features have not yet been tried on the air**. Radio test notes live in
+[`docs/plus-radio-test.md`](docs/plus-radio-test.md); changes per release in [CHANGELOG.md](CHANGELOG.md).
 
 ## Where it comes from
 
@@ -67,6 +70,7 @@ README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
 
 ### Listening
 
+- **Frequency on Home** under the channel (RX/TX for repeaters), and Large text up to twice as big.
 - **Multi-watch 2–6 channels**: rows A–F on Home, each letter a channel **or its own VFO** in any mode.
 - **Every mode in the VFO**: type a frequency and pick FM / DMR / P25 / YSF / NXDN / dPMR / AM with all parameters,
   including Any.
@@ -92,7 +96,8 @@ README is kept in [`docs/UPSTREAM-README.md`](docs/UPSTREAM-README.md).
 
 ### Tools
 
-Tone finder (CTCSS/DCS), DTMF / SelCall decoder, CW decoder and practice, pager (POCSAG) and ACARS, SSTV receive,
+**DOTA Transfer**: send channels, zones or everything to another DDM32 Plus radio over FM or DMR (beta, not yet
+tried between two radios). Tone finder (CTCSS/DCS), DTMF / SelCall decoder, CW decoder and practice, pager (POCSAG) and ACARS, SSTV receive,
 CW beacon, lone worker (sound, DMR emergency or APRS SOS), call history with QSO marks, battery graph with time
 left, MMDVM hotspot over the programming cable, FM caller ID, signal quality.
 
@@ -110,12 +115,34 @@ The whole interface is translated to Turkish (and remains available in English).
 
 ## Installing
 
-Use the **DDM32 Plus programmer** for Windows (no Python needed): download it from
-[Releases](https://github.com/d0ukan/DDM32-Plus/releases) once the first release is out. It backs the radio up,
+Use the **DDM32 Plus programmer** for Windows (no Python needed):
+
+1. Download `DDM32Plus-1.0.0-beta.2.zip` (the programmer; it lists and installs the newest firmware, v1.0.0-beta.3)
+   from the [v1.0.0-beta.2 release](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.2) and unzip it.
+2. Run `DDM32Plus.exe`. Windows may warn about an unknown publisher (the program is not code-signed yet):
+   **More info → Run anyway**.
+3. Connect the programming cable (CH340) and follow the steps; the program tells you when to switch the radio off
+   and on.
+
+Coming from v1.0.0-beta.1 (published as DDM25 Plus)? That program cannot update itself across the rename:
+download the zip above once. Your backups and settings are found and kept.
+
+The programmer backs the radio up,
 shows exactly what will change, installs (also from the radio's stock firmware, using the radio's own codec), goes
 back to the previous version or to stock from your own backup, checks signed updates and lists every version.
 Guide: [`pc/README.en.md`](pc/README.en.md) · source: [`pc/`](pc/). Everything **at your own risk** (see the
 disclaimer above).
+
+## In development
+
+- **DOTA Transfer** (Tools, in v1.0.0-beta.3): radio-to-radio transfer of channels, zones or the whole channel set
+  (DOTA Clone) over FM (AFSK, with a CTCSS tone) or DMR data, with a pairing code, progress on both radios, and
+  nothing changed on the receiver unless everything arrived. Host-tested; two-radio tests pending.
+- **New Windows programmer** (C# / .NET, one exe, installer, Turkish / English, self-update, quick update from
+  your last backup). Its backup and its install have been checked on a real radio (v1.0.0-beta.3 was installed
+  with it).
+- Last calls of every mode, several air frequencies at once, a 3D waterfall, APRS station pages, Mic-E, a
+  store-and-forward cross-band repeater (attended only).
 
 ## Building
 

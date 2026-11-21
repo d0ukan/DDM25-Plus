@@ -17,9 +17,10 @@ test done; not yet seen on the real screen (the radio still runs 7c90427b, which
 | Path | What |
 |---|---|
 | `art/icons.txt` | 28 icons, 16x16, `#` ink / `.` none; order = `ART_ICON_*` enum order |
-| `art/mark.txt` | splash mark, 56x56, `.` none, `a` `b` `c` = its three colors (RGB + mono role in the header) |
-| `art/mark_gen.py` | draws `mark.txt` from shapes (optional; `mark.txt` may be edited by hand instead) |
-| `art/wordmark.txt` | "DDM32 Plus", 79x12, 1 bit; columns from `split` on are drawn in the accent color |
+| `art/mark.txt` | splash mark, 38x56, `.` none, `a` `b` `c` = its three colors (RGB + role in the header: ink, paper or fg) |
+| `art/mark_gen.py` | traces `mark.txt` from the owner's drawing `art/mark-src.png` (needs Pillow; `mark.txt` may be edited by hand instead) |
+| `art/mark-src.png` | the owner's logo drawing, the source of the mark |
+| `art/wordmark.txt` | "DDM32+ Plus", 87x12, 1 bit; columns from `split` on (the plus and "Plus") are drawn in the accent color |
 | `art/preview.png` | contact sheet: mark 2x/1x, wordmark 2x/1x, every icon at 3x and 1x on dark, light, focus blue |
 | `art/mock-splash.png` | 240x320 boot screen, dark and light theme, shown at 2x |
 | `art/mock-tools.png` | 240x320 Tools list with the icon column, dark (focus on 2) and light, shown at 2x |
@@ -39,15 +40,17 @@ row is 24 px (`ui_layout_init`), so 16x16 icons fit with 4 px above and below.
   is small (fox, plane, pin). Keep a pixel of air between separate parts.
 - Icons are a mask tinted with **one color**: the row's text color (label color, focus text, dim gray). So an
   icon never adds a palette entry on the 4 bpp panel and follows every theme and accent automatically.
-- The mark (owner's design, 2026-11-20): a handheld radio drawn as a "D" - the antenna is the D's stem with two
-  signal arcs at its tip, a chamfered D outline as the body, a smaller D inside, an orange key on the stem's left.
-  Outlines, antenna and arcs use the role `fg` (the theme's text color: white on dark, black on light), the key the
-  accent orange `(240,120,0)`, which reads on black and on white. Drawn at 2x (112x112) on 240 px panels: square
-  pixels on purpose, matching the pixel wordmark. One fixed color + the theme's bg/fg/dim stay well under 16.
+- The mark (owner's design, 2026-11-20): a handheld radio drawn as a "D" - a thick stem is the antenna, with two
+  signal arcs at its tip, and the shared left side of an outer D frame and an inner D; an orange key sits on the
+  stem. Traced from the owner's drawing `art/mark-src.png` by `art/mark_gen.py` (Pillow; 38x56, square pixels, each
+  pixel from its source box's coverage), not redrawn by hand. The white parts use the role `fg` (the theme's text
+  color: white on dark, black on light), the key the accent orange `(240,120,0)`, which reads on black and on
+  white. Drawn at 2x (76x112) on 240 px panels. One fixed color + the theme's bg/fg/dim stay well under 16.
 - Color roles in `mark.txt`: `ink` / `paper` (a fixed RGB; on a 1 bpp panel fg / bg) or `fg` (the theme's text
   color; RGB is only the preview's stand-in). Color `a` is the accent (`art_accent`: "Plus", the rule, the callsign)
   and must be a fixed color that reads on both themes.
-- The wordmark: "DDM32" in the theme's text color, "Plus" in the accent (white/black on mono).
+- The wordmark: "DDM32" in the theme's text color, then a superscript plus and "Plus" in the accent (owner
+  2026-11-20: "DDM32+ Plus"; white/black on mono). 87 px wide: 174 px at 2x.
 - Mono (1 bpp) fallback: mark colors marked `ink` or `fg` in fg, `paper` in bg; wordmark in fg.
 - Source order is the ABI: append new icons at the end of `icons.txt`, never reorder (the enum follows it).
 
@@ -68,7 +71,7 @@ put under `#if !CONFIG_PLUS_ART` later if the flash is wanted (the fallback then
 ## Regenerating and testing
 
 ```sh
-python3 art/mark_gen.py                     # only after changing the mark's shapes
+python3 art/mark_gen.py                     # only after changing art/mark-src.png
 python3 tools/art_build.py                  # writes integration/radiofoundry/art/art_data.[ch]
 python3 tools/art_build.py --check          # CI: fails if art_data.[ch] are stale
 python3 tools/art_build.py --preview <dir>  # PNGs; <dir> holds jbmono_8x16.inc, jbmono_9x18.inc, jbmono_12x24.inc

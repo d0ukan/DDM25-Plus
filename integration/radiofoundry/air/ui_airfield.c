@@ -7,7 +7,10 @@
  * frequency (radio_req_vfo + radio_req_vfo_set), received in AM because it is in the air band, and receive only: the
  * radio core refuses TX there whatever the VFO says (radio_sm_tx_check: TXDENY_AM). An 8.33 kHz channel name tunes its
  * grid point (air_freq_hz). The order is walked, never stored (air_next): the screen keeps the picked and the top
- * row's airfields and the picked frequency (6 B). */
+ * row's airfields and the picked frequency (6 B).
+ * CONFIG_AIR_WATCH (DDM32 Plus, item 44b): # in the details watches them: up to 6 (each channel name once, not the
+ * ATIS) on the multi-watch ring, each letter its own VFO, received in AM; one frequency is simply tuned
+ * (ui_airwatch.inc). */
 #include "config.h"
 #if CONFIG_AIRFIELDS
 #include "board.h"
@@ -20,10 +23,15 @@
 #include "radio/radio_am.h"
 #include "aprs/aprs.h"
 #include "ui/airfield.h"
+#include "ui/air_pack.h"	/* DDM32 Plus: the user's air band pack over the table */
+#if CONFIG_AIR_WATCH
+#include "ui_svc.h"	/* UI_MW_MAX */
+#endif
 
 static uint16_t sel = AIR_NONE, top = AIR_NONE;
 static uint8_t fsel;
 static bool info;
+static char done[48];		/* the toast after tuning (or watching) */
 
 /* Where we are now (the position APRS would send, ambiguity and all) */
 static void here_now(air_here_t *h, int32_t *lat, int32_t *lon)
@@ -82,13 +90,23 @@ static void __attribute__((noinline)) row(int y, int h, uint16_t i, bool focus, 
 		sb_range(&b, meters, brg);
 		sb_str(&b, "  ");
 	}
-	if (a->count == 0) {
+	uint8_t n = air_count(i);	/* the user's air band pack over the built-in table (air_pack.h) */
+	if (n == 0) {
 		sb_str(&b, TR("No frequencies in the data"));
 	} else {
-		uint8_t k = 0;
-		while (k + 1u < a->count && air_freqs[a->first + k].type != AIR_TWR)
+		uint8_t k = 0, more = 0;
+		while (k + 1u < n && air_freq(i, k)->type != AIR_TWR)
 			k++;
-		sb_air_freq(&b, &air_freqs[a->first + (air_freqs[a->first + k].type == AIR_TWR ? k : 0u)]);
+		const air_freq_t *f = air_freq(i, air_freq(i, k)->type == AIR_TWR ? k : 0u);
+		uint8_t type = f->type;	/* f may be the pack's one copy, which the loop below overwrites */
+		sb_air_freq(&b, f);
+		/* "TWR 125.000 +1": the service has more frequencies (all of them in the details) */
+		for (k = 0; k < n; k++)
+			more = (uint8_t)(more + (air_freq(i, k)->type == type));
+		if (more > 1u) {
+			sb_str(&b, " +");
+			sb_u32(&b, more - 1u, 1);
+		}
 	}
 	gfx_text_fit(s, buf, w - 4, fit, sizeof fit);
 	gfx_text(s, 2, y + m->h + 2, fit, dim);
@@ -152,19 +170,22 @@ static void __attribute__((noinline)) draw_info(int y, uint16_t i, const air_her
 	gfx_text_fit(s, buf, w, fit, sizeof fit);
 	gfx_text(s, 0, y, fit, ui_col.dim);
 	y += s->h + 4;
-	if (a->count == 0) {
-		gfx_text(s, 0, y, TR("No frequencies in the data"), ui_col.warn);
+	uint8_t n = air_count(i);
+	if (n == 0) {
+		gfx_text_fit(s, TR(TEXT_ALT_OPEN "No frequencies in the data" TEXT_ALT_NEXT "No frequencies" TEXT_ALT_CLOSE), w,
+			     fit, sizeof fit);	/* the long one is wider than the panel */
+		gfx_text(s, 0, y, fit, ui_col.warn);
 		return;
 	}
-	if (fsel >= a->count)
+	if (fsel >= n)
 		fsel = 0;
 	int rh = m->h + 4;
 	int rows = (ui_layout.hint_y - y - 2 * (s->h + 2) - 2) / rh;
 	if (rows < 1)
 		rows = 1;
 	int first = fsel >= rows ? fsel - rows + 1 : 0;
-	for (int k = first; k < a->count && k < first + rows; k++) {
-		const air_freq_t *f = &air_freqs[a->first + k];
+	for (int k = first; k < n && k < first + rows; k++) {
+		const air_freq_t *f = air_freq(i, (uint8_t)k);
 		bool focus = k == fsel;
 		if (focus)
 			gfx_fill(0, y, w, rh, ui_col.focus);
@@ -194,17 +215,21 @@ static void airfield_draw(void)
 		draw_info(y, sel, &h, lat, lon);
 	else
 		draw_list(y, &h, lat, lon);
+#if CONFIG_AIR_WATCH
+	ui_draw_bottom(&ui_st, info ? TR(TEXT_ALT_OPEN "OK listen  # watch all" TEXT_ALT_NEXT "OK listen  # all"
+					 TEXT_ALT_CLOSE) : TR("^v pick  OK info  # nearest"));
+#else
 	ui_draw_bottom(&ui_st, info ? TR("OK listen  ^v pick  Back") : TR("^v pick  OK info  # nearest"));
+#endif
 	ui_draw_banner(&ui_st);
 }
 
 void ui_airfield_tune(uint16_t i, uint8_t k)
 {
-	static char done[48];
-	if (i >= air_field_count || k >= air_fields[i].count)
+	if (i >= air_field_count || k >= air_count(i))
 		return;
 	const air_field_t *a = &air_fields[i];
-	const air_freq_t *f = &air_freqs[a->first + k];
+	const air_freq_t *f = air_freq(i, k);
 	uint32_t hz = air_freq_hz(f);
 	if (!radio_am_capable()) {
 		ui_toast(TR("No AM receive on this radio"));
@@ -231,6 +256,59 @@ void ui_airfield_tune(uint16_t i, uint8_t k)
 	ui_go_home();
 }
 
+#if CONFIG_AIR_WATCH
+/* # in airfield i's details: its frequencies on the multi-watch ring (up to UI_MW_MAX, the first ones, each channel
+ * name once, the ATIS left out: its recording never stops, so the ring would stay on it); one alone is tuned as OK
+ * does (an ATIS alone too) */
+static void __attribute__((noinline)) watch_all(uint16_t i)
+{
+	const air_field_t *a = &air_fields[i];
+	uint32_t hz[UI_MW_MAX];
+	uint8_t n = 0, first = 0;
+	for (uint8_t k = 0, count = air_count(i); k < count && n < UI_MW_MAX; k++) {
+		const air_freq_t *af = air_freq(i, k);	/* the user's air band pack over the table (air_pack.h) */
+		if (af->type == AIR_ATIS)
+			continue;
+		uint32_t f = air_freq_hz(af);
+		bool twice = false;
+		for (uint8_t j = 0; j < n; j++)
+			twice = twice || hz[j] == f;
+		if (twice)
+			continue;
+		if (n == 0)
+			first = k;
+		hz[n++] = f;
+	}
+	if (n < 2) {
+		ui_airfield_tune(i, first);
+		return;
+	}
+	if (!radio_am_capable()) {
+		ui_toast(TR("No AM receive on this radio"));
+		return;
+	}
+	if (ui_view()->state == RS_TX) {
+		ui_toast(TR("Can't tune while transmitting"));
+		return;
+	}
+	for (uint8_t k = 0; k < n; k++) {
+		if (!radio_am_band(hz[k]) || !board_in_band(hz[k], false)) {
+			ui_toast(TR("Not in the radio's bands"));
+			return;
+		}
+	}
+	ui_go_home();
+	if (!ui_dual_air_watch(hz, n))
+		return;
+	sbuf_t b;
+	sb_init(&b, done, sizeof done);
+	sb_str(&b, a->code);
+	sb_str(&b, ": ");
+	sb_str(&b, TR("Air watch on"));
+	ui_toast(done);
+}
+#endif
+
 static bool airfield_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
@@ -239,7 +317,7 @@ static bool airfield_key(const input_event_t *ev)
 	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {
 		int dir = ev->action == ACT_ENC_STEP ? (ev->value > 0 ? 1 : -1) : ev->action == ACT_NAV_DOWN ? 1 : -1;
 		if (info) {
-			uint8_t n = sel < air_field_count ? air_fields[sel].count : 0;
+			uint8_t n = air_count(sel);
 			if (n)
 				fsel = (uint8_t)((fsel + n + (dir > 0 ? 1 : n - 1)) % n);
 		} else {
@@ -257,7 +335,7 @@ static bool airfield_key(const input_event_t *ev)
 			if (!info) {
 				info = true;
 				fsel = 0;
-			} else if (air_fields[sel].count == 0) {
+			} else if (air_count(sel) == 0) {
 				ui_toast(TR("No frequencies in the data"));
 			} else {
 				ui_airfield_tune(sel, fsel);
@@ -266,6 +344,16 @@ static bool airfield_key(const input_event_t *ev)
 		ui_dirty();
 		return true;
 	}
+#if CONFIG_AIR_WATCH
+	if (ev->action == ACT_CONTEXT && ev->gesture == GESTURE_PRESS && info && sel < air_field_count) {
+		if (air_count(sel) == 0)
+			ui_toast(TR("No frequencies in the data"));
+		else
+			watch_all(sel);
+		ui_dirty();
+		return true;
+	}
+#endif
 	if (ev->action == ACT_CONTEXT && ev->gesture == GESTURE_PRESS) {
 		air_here_t h;
 		int32_t lat, lon;

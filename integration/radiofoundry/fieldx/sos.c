@@ -17,7 +17,7 @@
 #include "radio/cw_beacon.h"
 #endif
 
-static uint8_t mask;			/* chosen in Tools > SOS (RAM only: none after power on) */
+static uint8_t mask;			/* chosen in Settings > Keys > SOS key (RAM only: none after power on) */
 static uint8_t r_cw, r_dmr, r_aprs;	/* sos_res_t */
 static uint8_t ours;			/* what this SOS started and Stop ends */
 static uint8_t evs;			/* events not yet taken: bit (sos_ev_t - 1) */

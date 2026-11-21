@@ -184,6 +184,15 @@ def prepare(transform, install):
     __import__((__package__ + "." if __package__ else "") + "plus_fieldx", fromlist=["x"]).prepare_fieldx(transform, install)
     __import__((__package__ + "." if __package__ else "") + "plus_toolbox", fromlist=["x"]).prepare_toolbox(transform, install)
     prepare_large_scale(transform)
+    prepare_home_freq(transform)
+    __import__((__package__ + "." if __package__ else "") + "plus_dota", fromlist=["x"]).prepare_dota(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_aprs", fromlist=["x"]).prepare_aprs(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_air", fromlist=["x"]).prepare_air(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_datapack", fromlist=["x"]).prepare_datapack(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_xband", fromlist=["x"]).prepare_xband(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_dmraudio", fromlist=["x"]).prepare_dmraudio(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_chux", fromlist=["x"]).prepare_chux(transform, install)
+    __import__((__package__ + "." if __package__ else "") + "plus_scan", fromlist=["x"]).prepare_scan(transform, install)
 
 
 def prepare_large_scale(transform):
@@ -298,6 +307,79 @@ def prepare_large_scale(transform):
          '\tf = large_font(buf, room, form, sizeof form);\n'
          '\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
          '\tgfx_text(f, 0, y, fit, c2);\n'),
+    ])
+
+
+def prepare_home_freq(transform):
+    """The channel's frequency on Home (CONFIG_HOME_FREQ, owner 2026-11-20): a channel's receive frequency was shown
+    nowhere on Home (FM's talk row has the TX one, DMR's the talk target). On panels with room (240x320) a row under
+    the chips reads "RX 438.5000  TX 430.9000", or "438.5000 MHz" when both are the same; the VFO shows its frequency
+    large already. Large text gets a third line, the frequency (TX while transmitting), between the channel and the
+    talk target. Runs after prepare_large_scale: it anchors on that patch."""
+    transform('config/features.mk', [
+        ('CONFIG_LARGE_SCALE ?= n\nFEATURES += LARGE_SCALE\n',
+         'CONFIG_LARGE_SCALE ?= n\nFEATURES += LARGE_SCALE\nCONFIG_HOME_FREQ ?= n\nFEATURES += HOME_FREQ\n'),
+    ])
+    transform('core/config.h', [
+        ('#ifndef CONFIG_LARGE_SCALE\n',
+         '#ifndef CONFIG_HOME_FREQ\n#define CONFIG_HOME_FREQ 0\n#endif\n#ifndef CONFIG_LARGE_SCALE\n'),
+    ])
+    transform('core/ui/ui_screens.h', [
+        ('\tint channel_y, talk_y, chips_y;\n',
+         '\tint channel_y, talk_y, chips_y;\n'
+         '#if CONFIG_HOME_FREQ\n\tint freq_y;\t\t// DDM32 Plus: the channel\'s frequencies under the chips; < 0: no room\n#endif\n'),
+    ])
+    transform('core/ui/ui_screens.c', [
+        # The row only where Home keeps room for activity under it (five small rows), so smaller panels keep theirs
+        ('\tL->chips_y = y;\n\ty += L->small->h;\n',
+         '\tL->chips_y = y;\n\ty += L->small->h;\n'
+         '#if CONFIG_HOME_FREQ\n'
+         '\tL->freq_y = L->hint_y - y >= 7 * L->small->h ? y : -1;\n'
+         '\tif (L->freq_y >= 0)\n\t\ty += L->small->h;\n'
+         '#endif\n'),
+        ('static void draw_chips(const radio_view_t *v, const ui_state_t *s)\n{\n',
+         '#if CONFIG_HOME_FREQ\n'
+         '// DDM32 Plus: "RX 438.5000  TX 430.9000" under the chips, one number when both are the same (TX off or RX only:\n'
+         '// the receive one). Not in the VFO: its frequency is the large line\n'
+         'static void __attribute__((noinline)) draw_home_freq(const radio_view_t *v)\n{\n'
+         '\tconst ui_layout_t *L = &ui_layout;\n'
+         '\tif (L->freq_y < 0 || v->vfo || v->ch.rx_hz == 0)\n\t\treturn;\n'
+         '\tchar buf[40], fit[40];\n\tsbuf_t b;\n\tsb_init(&b, buf, sizeof buf);\n'
+         '\tbool split = !v->ch.rx_only && v->ch.tx_hz != 0 && v->ch.tx_hz != v->ch.rx_hz;\n'
+         '\tif (split)\n\t\tsb_str(&b, "RX ");\n'
+         '\tsb_freq(&b, v->ch.rx_hz);\n'
+         '\tif (split) {\n\t\tsb_str(&b, "  TX ");\n\t\tsb_freq(&b, v->ch.tx_hz);\n\t} else {\n\t\tsb_str(&b, " MHz");\n\t}\n'
+         '\tgfx_text_fit(L->small, buf, gfx_width(), fit, sizeof fit);\n'
+         '\tgfx_text(L->small, 0, L->freq_y, fit, ui_col.dim);\n}\n#endif\n\n'
+         'static void draw_chips(const radio_view_t *v, const ui_state_t *s)\n{\n'),
+        ('\t\tdraw_chips(v, s);\n\t\tif (ui_layout.sep_y >= 0)\n',
+         '\t\tdraw_chips(v, s);\n#if CONFIG_HOME_FREQ\n\t\tdraw_home_freq(v);\n#endif\n\t\tif (ui_layout.sep_y >= 0)\n'),
+        # Large text: three lines for a channel (name, frequency, talk target), two in the VFO (its line is the
+        # frequency)
+        ('\tint room = (L->hint_y - y) / 2;\n\tchar form[48];\n',
+         '#if CONFIG_HOME_FREQ\n'
+         '\tint room = (L->hint_y - y) / (v->vfo ? 2 : 3);\n'
+         '#else\n'
+         '\tint room = (L->hint_y - y) / 2;\n'
+         '#endif\n'
+         '\tchar form[48];\n'),
+        ('\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.fg);\n\t}\n\ty += room;\n',
+         '\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.fg);\n\t}\n\ty += room;\n'
+         '#if CONFIG_HOME_FREQ\n'
+         '\tif (!v->vfo) {\n'
+         '\t\tsb_init(&b, buf, sizeof buf);\n'
+         '\t\tsb_freq(&b, tx ? v->ch.tx_hz : v->ch.rx_hz);\n'
+         '#if CONFIG_LARGE_SCALE\n'
+         '\t\tif (!large_scaled(buf, y, room, tx ? ui_col.tx : ui_col.dim, form, sizeof form))\n'
+         '#endif\n'
+         '\t\t{\n'
+         '\t\t\tf = large_font(buf, room, form, sizeof form);\n'
+         '\t\t\tgfx_text_fit(f, form, w, fit, sizeof fit);\n'
+         '\t\t\tgfx_text(f, 0, y, fit, tx ? ui_col.tx : ui_col.dim);\n'
+         '\t\t}\n'
+         '\t\ty += room;\n'
+         '\t}\n'
+         '#endif\n'),
     ])
 
 
@@ -1746,6 +1828,7 @@ PLUS_RAM_TRIM = {
     'PLUS_VIEW_NONE_CONST': 1,	# ui_app.c view_none (720 B) in flash
     'PLUS_STARTUP_STACK_IN_HEAP': 2048,	# bytes main() may use at the top of the heap (was the 2 KB .stack section)
     'PLUS_AUDIO_MUX_NO_HOST': 1,	# audio_mux.c without its host audio side (4.4 KB; only USRP uses it: prepare_audio_mux)
+    'PLUS_AUDIO_MUX_NO_APRS': 1,	# ... and without its APRS ring (2 KB; the DM-32 has its own AFSK receive path)
     # +2,048 B back (2026-11-18): the radio read heap_min_free 1,640 B with FM caller ID's 2 KB ring running, and the
     # SSTV screen takes 1,472 B more while it is open (docs/plus-radio-test.md RR1, SV7)
     'PLUS_HEAP_BYTES': 36 * 1024 + 512 - 3840 - (731 - PLUS_HOST_TASK_WORDS) * 4 + 2048,
@@ -1841,6 +1924,35 @@ def prepare_audio_mux(transform):
          '#if MUX_HOST\n\tpcm_slip_pull(&slip, pcm, n);\n#else\n\tmemset(pcm, 0, n * sizeof *pcm);\n#endif\n\tst.fm_pulls += n;\n'),
         ('\t*out = slip.stats;\n', '#if MUX_HOST\n\t*out = slip.stats;\n#else\n\tmemset(out, 0, sizeof *out);\n#endif\n'),
     ])
+    prepare_audio_mux_no_aprs(transform)
+
+
+def prepare_audio_mux_no_aprs(transform):
+    """DDM32 Plus (docs/dota.md, phase 2 step 0): APRS receive reads the board's own AFSK receive path when the board
+    has one (aprs.c rx_service: own = rx_by_board()); the shared stream's APRS ring (2,048 B) is read only on boards
+    without one (rx_by_stream: an audio tap with AUDIO_TAP_FM_RX). The DM-32 has its own path (hrc_afsk rx_*) and no
+    audio tap, so the ring is never written or read there. With PLUS_AUDIO_MUX_NO_APRS it goes: the API stays (the
+    stream carries nothing for APRS), and aprs.c no longer offers the stream as a receive path, so a board without its
+    own path built this way has no APRS receive instead of a silent one. Without the macro the file is as before."""
+    transform('core/usbaudio/audio_mux.c', [
+        ('#define MUX_HOST\t1\n#endif\n',
+         '#define MUX_HOST\t1\n#endif\n'
+         '// DDM32 Plus: no APRS ring where the board has its own AFSK receive path (docs/dota.md step 0)\n'
+         '#if CONFIG_APRS_RX && !defined(PLUS_AUDIO_MUX_NO_APRS)\n#define MUX_APRS\t1\n#else\n#define MUX_APRS\t0\n#endif\n'),
+        ('#if CONFIG_APRS_RX\n// --- APRS (radio task) ---\n', '#if MUX_APRS\n// --- APRS (radio task) ---\n'),
+        ('\taprs_rd = r + n;\n\treturn n;\n}\n#endif\n',
+         '\taprs_rd = r + n;\n\treturn n;\n}\n'
+         '#elif CONFIG_APRS_RX\t// PLUS_AUDIO_MUX_NO_APRS: the board has its own path; the stream carries nothing for APRS\n'
+         'void audio_mux_aprs_rx(bool on)\n{\n\t(void)on;\n}\n\n'
+         'uint32_t audio_mux_aprs_read(int16_t *pcm, uint32_t n)\n{\n\t(void)pcm;\n\t(void)n;\n\treturn 0;\n}\n#endif\n'),
+        ('#if CONFIG_APRS_RX\n', '#if MUX_APRS\n', 3),
+    ])
+    transform('core/aprs/aprs.c', [
+        ('static bool rx_by_stream(void)\n{\n\treturn board.audio != NULL',
+         'static bool rx_by_stream(void)\n{\n'
+         '#ifdef PLUS_AUDIO_MUX_NO_APRS\n\treturn false;\t// DDM32 Plus: the shared stream has no APRS ring (audio_mux.c)\n#endif\n'
+         '\treturn board.audio != NULL'),
+    ])
 
 
 def prepare_startup_stack(transform):
@@ -1928,6 +2040,8 @@ def ram_reclaim_audit(nm_text, size_text):
     view = sym.get('view_none', (0, 0, ''))
     if PLUS_RAM_TRIM.get('PLUS_VIEW_NONE_CONST') and not (view[2] in ('r', 'R') and view[0] >= 0x03000000):
         problems.append('view_none is not in flash')
+    if PLUS_RAM_TRIM.get('PLUS_AUDIO_MUX_NO_APRS') and 'aprs_ring' in sym:
+        problems.append('audio_mux.c still holds its APRS ring')	# docs/dota.md step 0
     if problems:
         raise SystemExit('Plus RAM reclaim audit: ' + '; '.join(problems))
     return {'plus_startup_stack_in_heap': True, 'plus_startup_stack_top': hex(top), 'plus_heap': [hex(heap), heap_size]}
@@ -3977,10 +4091,15 @@ def prepare_repeaters(transform, install):
 
 
 def prepare_nac_decimal(transform):
-    """NAC in decimal too (CONFIG_NAC_DEC, docs/plus.md): the NAC is a 12-bit value that this firmware shows and takes
-    in hex ($293), while some factory radios and their CPS show and take it in decimal (659 = $293; a factory "293" is
-    $125). The channel editor's NAC row adds the decimal value ("$293 = 659"); while the NAC is edited, # once is
-    Any (F7E) as before, # again switches to decimal entry (0-4095), # there goes back to hex digits. P25 search and P25 trunk list the NAC both ways."""
+    """NAC in decimal first (CONFIG_NAC_DEC, docs/plus.md; owner 2026-11-21, round 15 item 5): the NAC is a 12-bit value
+    that factory radios and their CPS show and take in decimal (659 = $293; a factory "293" is $125). The channel
+    editor's and VFO settings' NAC rows show "659 ($293)" and take the decimal value: digits build it (0-4095, a digit
+    that would go past 4095 is refused with a toast), Up / Down and the knob step it by one, Back takes the last digit
+    back; while it is edited "[659] ($293)". # once is Any (RX NAC, "Any 3966 ($F7E)") / Same as RX (TX NAC) as
+    before; # again switches to the hex digits ("$2[9]3 (659)", the cursor and the knob as before), # there back to
+    decimal. OK refuses an RX NAC of 3967 ($F7F, not a NAC: # is Any) and a TX NAC of 3966 / 3967 ($F7E / $F7F),
+    keeping the editor open. P25 search and P25 trunk list the NAC both ways. Until 2026-11-21 the rows were hex first
+    ("$293 = 659") with the decimal entry behind # #."""
     transform('config/features.mk', [
         ('CONFIG_ID_DB ?= n\n',
          'CONFIG_NAC_DEC ?= n\nFEATURES += NAC_DEC\n'
@@ -3993,61 +4112,88 @@ def prepare_nac_decimal(transform):
     transform('core/ui/ui_menus.c', [
         ('static void chinfo_item(uint16_t i, ui_item_t *it)\n',
          '#if CONFIG_NAC_DEC\n'
-         'static bool ced_nac_dec;\t// DM32 Plus: the NAC is being typed in decimal (# twice)\n'
+         'static bool ced_nac_hex;\t// DM32 Plus: the NAC is being typed in hex digits (# twice); else in decimal\n'
+         '\n// "$293", three hex digits\n'
+         'static void sb_nac_hex(sbuf_t *b, unsigned v)\n{\n\tsb_chr(b, \'$\');\n'
+         '\tfor (unsigned d = 0; d < 3; d++)\n\t\tsb_chr(b, "0123456789ABCDEF"[(v >> (4 * (2 - d))) & 15u]);\n}\n'
          '#endif\n\n'
          'static void chinfo_item(uint16_t i, ui_item_t *it)\n'),
-        # The row: "$293 = 659"; typing in decimal: "[659] = $293"
+        # RX Any: "Any 3966 ($F7E)"
+        ('\t\tif (r == CE_P25_NAC && value == 0xF7Eu && cursor == 3) { sb_str(&b, TR("Any (F7E)")); break; }\n',
+         '#if CONFIG_NAC_DEC\n'
+         '\t\tif (r == CE_P25_NAC && value == 0xF7Eu && cursor == 3) { sb_str(&b, TR("Any")); sb_str(&b, " 3966 ($F7E)"); break; }\n'
+         '#else\n'
+         '\t\tif (r == CE_P25_NAC && value == 0xF7Eu && cursor == 3) { sb_str(&b, TR("Any (F7E)")); break; }\n'
+         '#endif\n'),
+        # The row: "659 ($293)"; typing in decimal: "[659] ($293)"; in hex digits: "$2[9]3 (659)"
         ('\t\tsb_chr(&b, \'$\');\n\t\tfor (unsigned digit = 0; digit < 3; digit++) {\n',
          '#if CONFIG_NAC_DEC\n'
-         '\t\tif (editing && ced_nac_dec) {\n'
-         '\t\t\tsb_chr(&b, \'[\');\n\t\t\tsb_u32(&b, value, 1);\n\t\t\tsb_str(&b, "] = $");\n'
-         '\t\t\tfor (unsigned digit = 0; digit < 3; digit++)\n'
-         '\t\t\t\tsb_chr(&b, "0123456789ABCDEF"[(value >> (4 * (2 - digit))) & 15u]);\n'
+         '\t\tif (!editing || !ced_nac_hex) {\n'
+         '\t\t\tif (editing)\n\t\t\t\tsb_chr(&b, \'[\');\n\t\t\tsb_u32(&b, value, 1);\n'
+         '\t\t\tif (editing)\n\t\t\t\tsb_chr(&b, \']\');\n'
+         '\t\t\tsb_str(&b, " (");\n\t\t\tsb_nac_hex(&b, value);\n\t\t\tsb_chr(&b, \')\');\n'
          '\t\t\tbreak;\n\t\t}\n'
          '#endif\n'
          '\t\tsb_chr(&b, \'$\');\n\t\tfor (unsigned digit = 0; digit < 3; digit++) {\n'),
         ('\t\t\tif (digit == cursor) sb_chr(&b, \']\');\n\t\t}\n\t\tbreak;\n\t}\n#endif\n\tcase CE_NUMBER:',
          '\t\t\tif (digit == cursor) sb_chr(&b, \']\');\n\t\t}\n'
-         '#if CONFIG_NAC_DEC\n\t\tsb_str(&b, " = ");\n\t\tsb_u32(&b, value, 1);\n#endif\n'
+         '#if CONFIG_NAC_DEC\n\t\tsb_str(&b, " (");\n\t\tsb_u32(&b, value, 1);\n\t\tsb_chr(&b, \')\');\n#endif\n'
          '\t\tbreak;\n\t}\n#endif\n\tcase CE_NUMBER:'),
-        # A digit in decimal mode builds the value (the first digit starts over; past 4095 starts over too)
+        # A digit in decimal builds the value (the first one starts over, Same as RX included); past 4095: refused
         ('\tcase CE_P25_TX_NAC: {\n        if (ced_len==3) ced_len=0;\n\t\tunsigned shift = 4u * (2u - ced_len);\n'
          '\t\tced_val = (ced_val & ~(15u << shift)) | ((unsigned)(d - \'0\') << shift);\n',
          '\tcase CE_P25_TX_NAC: {\n'
          '#if CONFIG_NAC_DEC\n'
-         '\t\tif (ced_nac_dec) {\n'
-         '\t\t\tint32_t n = ced_len ? ced_val * 10 + (d - \'0\') : (d - \'0\');\n'
-         '\t\t\tced_val = n > 4095 ? (d - \'0\') : n;\n'
-         '\t\t\tced_len = 1;\n\t\t\tbreak;\n\t\t}\n'
+         '\t\tif (!ced_nac_hex) {\n'
+         '\t\t\tint32_t n = ced_typed && ced_len != 3 ? ced_val * 10 + (d - \'0\') : (d - \'0\');\n'
+         '\t\t\tif (n > 4095) {\n\t\t\t\tui_toast(TR("NAC goes 0 to 4095"));\n\t\t\t\tbreak;\n\t\t\t}\n'
+         '\t\t\tced_val = n;\n\t\t\tced_len = 0;\n\t\t\tced_typed = true;\n\t\t\tbreak;\n\t\t}\n'
          '#endif\n'
          '        if (ced_len==3) ced_len=0;\n\t\tunsigned shift = 4u * (2u - ced_len);\n'
          '\t\tced_val = (ced_val & ~(15u << shift)) | ((unsigned)(d - \'0\') << shift);\n'),
-        # # once: Any (RX NAC F7E) / Same as RX (TX NAC); # again: decimal entry; # in decimal entry: back to hex
-        # digits (* opens the Quick menu on every screen, so it is not used). The arrows and the knob do nothing in
-        # decimal entry
+        # # once: Any (RX NAC F7E) / Same as RX (TX NAC); # again: the hex digits; # in hex: decimal again (* opens the
+        # Quick menu on every screen, so it is not used). In decimal the arrows and the knob step the value, Back takes
+        # the last digit back
         ('#if CONFIG_P25_ANY\n    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC || ced_edit == CE_P25_TG) &&\n',
          '#if CONFIG_NAC_DEC\n'
          '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && ev->action == ACT_CONTEXT &&\n'
-         '        ev->gesture == GESTURE_PRESS && (ced_nac_dec || (ced_edit == CE_P25_NAC ? ced_val == 0xF7E && ced_len == 0 :\n'
+         '        ev->gesture == GESTURE_PRESS && (ced_nac_hex || (ced_edit == CE_P25_NAC ? ced_val == 0xF7E && ced_len == 0 :\n'
          '                                                     ced_len == 3))) {\n'
-         '        ced_nac_dec = !ced_nac_dec;\n'
-         '        if (ced_nac_dec)\n            ced_val = 0;\n'
-         '        ced_len = 0;\n'
-         '        ui_toast(ced_nac_dec ? TR("NAC: type it in decimal") : TR("NAC: type it in hex"));\n'
+         '        ced_nac_hex = !ced_nac_hex;\n'
+         '        if (ced_nac_hex && ced_edit == CE_P25_TX_NAC)\n            ced_val = codeplug_p25_tx_nac(&ced_ch);\n'
+         '        ced_len = 0;\n        ced_typed = false;\n'
+         '        ui_toast(ced_nac_hex ? TR("NAC: type it in hex") : TR("NAC: type it in decimal"));\n'
          '        ui_dirty();\n        return true;\n    }\n'
-         '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && ced_nac_dec &&\n'
-         '        (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {\n'
-         '        return true;\n    }\n'
+         '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && !ced_nac_hex && dir != 0 && ev->gesture != GESTURE_UP) {\n'
+         '        if (ced_len == 3)\n            ced_len = 0;\t// off Same as RX: the NAC it sends\n'
+         '        else\n            ced_val = (ced_val + dir + 4096) % 4096;\n'
+         '        ced_typed = false;\n        ui_dirty();\n        return true;\n    }\n'
+         '    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC) && !ced_nac_hex && ced_typed &&\n'
+         '        ev->action == ACT_BACK && ev->gesture == GESTURE_PRESS) {\n'
+         '        ced_val /= 10;\n        ced_typed = ced_val != 0;\n        ui_dirty();\n        return true;\n    }\n'
          '#endif\n'
          '#if CONFIG_P25_ANY\n    if ((ced_edit == CE_P25_NAC || ced_edit == CE_P25_TX_NAC || ced_edit == CE_P25_TG) &&\n'),
         ('\tcase CE_P25_NAC: ced_edit = r; ced_val = c->p25_nac; ced_len = 0; break;\n'
          '    case CE_P25_TX_NAC: ced_edit=r; ced_val=codeplug_p25_tx_nac(c); ced_len=c->p25_tx_nac_override ? 0 : 3; break;',
          '\tcase CE_P25_NAC: ced_edit = r; ced_val = c->p25_nac; ced_len = 0;\n'
-         '#if CONFIG_NAC_DEC\n\t\tced_nac_dec = false;\n#endif\n\t\tbreak;\n'
+         '#if CONFIG_NAC_DEC\n\t\tced_nac_hex = false;\n\t\tced_typed = false;\n#endif\n\t\tbreak;\n'
          '    case CE_P25_TX_NAC: ced_edit=r; ced_val=codeplug_p25_tx_nac(c); ced_len=c->p25_tx_nac_override ? 0 : 3;\n'
-         '#if CONFIG_NAC_DEC\n\t\tced_nac_dec = false;\n#endif\n\t\tbreak;'),
+         '#if CONFIG_NAC_DEC\n\t\tced_nac_hex = false;\n\t\tced_typed = false;\n#endif\n\t\tbreak;'),
+        # OK: an RX NAC $F7F (3967) or a TX NAC $F7E / $F7F (3966, 3967) is refused, the editor stays open
+        ('\tcase CE_P25_NAC: c->p25_nac = (uint16_t)ced_val; break;\n',
+         '\tcase CE_P25_NAC:\n'
+         '#if CONFIG_NAC_DEC\n'
+         '\t\tif (ced_val == 0xF7F) {\n\t\t\tui_toast(TR("3967 ($F7F) is not a NAC: # is Any"));\n\t\t\treturn;\n\t\t}\n'
+         '#endif\n'
+         '\t\tc->p25_nac = (uint16_t)ced_val;\n\t\tbreak;\n'),
+        ('    case CE_P25_TX_NAC: c->p25_tx_nac_override=ced_len==3 ? 0 : (uint16_t)(ced_val+1); break;\n',
+         '    case CE_P25_TX_NAC:\n'
+         '#if CONFIG_NAC_DEC\n'
+         '\t\tif (ced_len != 3 && (ced_val == 0xF7E || ced_val == 0xF7F)) {\n'
+         '\t\t\tui_toast(TR("TX NAC can\'t be 3966 or 3967"));\n\t\t\treturn;\n\t\t}\n'
+         '#endif\n'
+         '\t\tc->p25_tx_nac_override=ced_len==3 ? 0 : (uint16_t)(ced_val+1);\n\t\tbreak;\n'),
     ])
-
 
 def mw_if(old, new, count=1):
     """(old, new under CONFIG_MULTI_WATCH, else old): a multi-watch change that leaves the line as it was without it"""

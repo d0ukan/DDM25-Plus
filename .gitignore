@@ -165,6 +165,7 @@
 !/tools/bootstrap_rust.sh
 !/tools/bootstrap_toolchain.sh
 !/tools/build_radiofoundry.py
+!/tools/cc_vendored.sh
 !/tools/classic_channels.py
 !/tools/codec_cache.py
 !/tools/prepare_web_firmware.py
@@ -484,6 +485,109 @@ __pycache__/
 !/tests/plus/ui_sim_toolbox.c
 !/tests/plus/ui_sim_toolbox.h
 !/CHANGELOG.md
+# DDM32 Plus DOTA Transfer: radio-to-radio channel and zone transfer (design, docs/dota.md)
+!/docs/dota.md
+!/tests/plus/test_audio_mux_noaprs.c
+# DDM32 Plus DOTA Transfer (tools/plus_dota.py, docs/dota.md)
+!/tools/plus_dota.py
+!/tools/test_dota.py
+!/integration/radiofoundry/dota/dota_proto.h
+!/integration/radiofoundry/dota/dota_proto.c
+!/tests/plus/test_dota_proto.c
+!/integration/radiofoundry/dota/dota_rec.h
+!/integration/radiofoundry/dota/dota_rec.c
+!/tests/plus/test_dota_rec.c
+!/integration/radiofoundry/dota/dota_import.h
+!/integration/radiofoundry/dota/dota_import.c
+!/integration/radiofoundry/dota/codeplug_dota.inc
+!/tests/plus/test_dota_import.c
+!/integration/radiofoundry/dota/dota.h
+!/integration/radiofoundry/dota/dota.c
+!/integration/radiofoundry/dota/radio_dota.inc
+!/tests/plus/test_dota_session.c
+!/tests/plus/test_dota_pack.c
+!/tests/plus/test_dota_fm.c
+!/tests/plus/test_dota_radio.inc
+# DDM32 Plus user data packs (tools/plus_datapack.py, docs/r14.md 7)
+!/tools/plus_datapack.py
+!/tools/test_datapack.py
+!/tools/datapack.py
+!/integration/radiofoundry/datapack/datapack.h
+!/integration/radiofoundry/datapack/datapack.c
+!/integration/radiofoundry/datapack/air_pack.h
+!/integration/radiofoundry/datapack/air_pack.c
+!/tests/plus/test_datapack.c
+!/integration/radiofoundry/dota/ui_dota.h
+!/integration/radiofoundry/dota/ui_dota.c
+!/tests/plus/test_ui_dota.c
+# DDM32 Plus round 14 APRS job (tools/plus_aprs.py, docs/plus.md)
+!/tools/plus_aprs.py
+!/tools/test_aprsx.py
+!/tests/plus/test_ui_aprsx.c
+!/tests/plus/ui_sim_aprsx.c
+!/tests/plus/ui_sim_aprsx.h
+!/tests/plus/test_aprs_mice.c
+!/integration/radiofoundry/aprsx/ui_aprsx.c
+!/integration/radiofoundry/aprsx/ui_aprsx.h
+# DDM32 Plus round 14 air items (branch r14-air): airfield table cleanup, air watch, 3D waterfall
+!/tools/test_air.py
+!/tests/plus/test_ui_air.c
+!/tests/plus/ui_sim_air.c
+!/tests/plus/ui_sim_air.h
+!/tests/plus/test_ui_datapack.c
+!/tests/plus/ui_sim_dpk.c
+!/tests/plus/ui_sim_dpk.h
+!/tools/plus_air.py
+!/integration/radiofoundry/air/radio_airwatch.inc
+!/integration/radiofoundry/air/ui_airwatch.inc
+!/tests/plus/test_airwatch_radio.inc
+!/integration/radiofoundry/toolbox/wf3d.c
+!/integration/radiofoundry/toolbox/wf3d.h
+!/tests/plus/test_wf3d.c
+!/tests/plus/test_ui_wf3d.c
+
+# DDM32 Plus round 14 xband: last calls (item 43), cross-band store and forward (item 46) (tools/plus_xband.py)
+!/tools/plus_xband.py
+!/tools/test_xband.py
+!/integration/radiofoundry/lastcall/lastcall.c
+!/integration/radiofoundry/lastcall/lastcall.h
+!/integration/radiofoundry/lastcall/ui_lastcall.c
+!/integration/radiofoundry/lastcall/ui_lastcall.h
+!/tests/plus/test_lastcall.c
+!/tests/plus/test_ui_lastcall.c
+!/integration/radiofoundry/xband/xband.c
+!/integration/radiofoundry/xband/xband.h
+!/integration/radiofoundry/xband/radio_xband.inc
+!/integration/radiofoundry/xband/ui_xband.c
+!/integration/radiofoundry/xband/ui_xband.h
+!/tests/plus/test_xband.c
+!/tests/plus/test_xband_radio.inc
+!/tests/plus/test_ui_xband.c
+# DDM32 Plus DMR receive audio diagnostics (tools/plus_dmraudio.py, branch fix-dmr-audio)
+!/tools/plus_dmraudio.py
+!/tools/test_dmraudio.py
+!/integration/radiofoundry/dmraudio/pcm_diag.inc
+!/tests/plus/test_dmraudio_pcm.c
+!/tests/plus/test_ui_dmraudio.c
+# DDM32 Plus r15 channels: zone size, DMR rows, digital monitor, Delete channel, NAC in decimal (tools/plus_chux.py)
+!/tools/plus_chux.py
+!/tools/test_chux.py
+!/tests/plus/test_zone_cap.c
+!/tests/plus/test_zone_radio.inc
+!/tests/plus/test_ui_chux.c
+!/tests/plus/test_any_group.c
+# branch r15-scan: search ranges and speed, multi-watch ring (tools/plus_scan.py)
+!/tools/plus_scan.py
+!/integration/radiofoundry/srange/srange.h
+!/integration/radiofoundry/srange/ui_srange.c
+!/integration/radiofoundry/srange/ui_srange.h
+!/tools/test_scan.py
+!/tests/plus/test_ui_scan.c
+!/tests/plus/ui_sim_scan.c
+!/tests/plus/ui_sim_scan.h
+!/tests/plus/test_scan_radio.inc
+!/tests/plus/test_search_model.c
+!/tests/plus/test_ui_mwfast.c
 # DDM32 Plus Windows program (win/README.md): sources, tests, docs and screenshots; never bin/, obj/ or publish output
 !/win/*.sln
 !/win/*.props

@@ -674,11 +674,12 @@ def main():
         "CONFIG_MSG_RX="+("y" if args.plus else "n"),
         "CONFIG_SSTV="+("y" if args.plus else "n"),
         "CONFIG_APRS_MSG="+("y" if args.plus else "n"),
-        "CONFIG_ID_DB="+("y" if args.plus and not args.public else "n"),
+        "CONFIG_ID_DB=n",	# the RadioID names come from the user's data pack (docs/r14.md 7); tools/iddb.py feeds tools/datapack.py
         "CONFIG_REPEATERS="+("y" if args.plus else "n"),
         "CONFIG_NAC_DEC="+("y" if args.plus else "n"),
         "CONFIG_PLUS_ART="+("y" if args.plus else "n"),
         "CONFIG_LARGE_SCALE="+("y" if args.plus else "n"),
+        "CONFIG_HOME_FREQ="+("y" if args.plus else "n"),
         "CONFIG_MULTI_WATCH="+("y" if args.plus else "n"),
         "CONFIG_MAP_TRACK="+("y" if args.plus else "n"),
         "CONFIG_AUTO_RPT="+("y" if args.plus else "n"),
@@ -708,6 +709,19 @@ def main():
         "CONFIG_MAP_COVERAGE="+("y" if args.plus else "n"),
         "CONFIG_GPS_DASH="+("y" if args.plus else "n"),
         "CONFIG_CLOCK_TOOLS="+("y" if args.plus else "n"),
+        "CONFIG_DOTA="+("y" if args.plus else "n"),	# DDM32 Plus DOTA Transfer (docs/dota.md)
+        "CONFIG_APRS_MICE="+("y" if args.plus else "n"),	# DDM32 Plus Mic-E beacons (round 14 item 47)
+        "CONFIG_APRS_STATION="+("y" if args.plus else "n"),	# DDM32 Plus APRS station page (round 14 item 49)
+        "CONFIG_AIR_WATCH="+("y" if args.plus else "n"),	# DDM32 Plus air watch (item 44b, tools/plus_air.py)
+        "CONFIG_SPECTRUM_WF3D="+("y" if args.plus else "n"),	# DDM32 Plus 3D waterfall (item 45, tools/plus_air.py)
+        "CONFIG_DATAPACK="+("y" if args.plus else "n"),	# DDM32 Plus user data packs (docs/r14.md 7)
+        "CONFIG_LAST_CALLS="+("y" if args.plus else "n"),	# DDM32 Plus last calls (docs/plus.md, item 43)
+        "CONFIG_XBAND="+("y" if args.plus else "n"),	# DDM32 Plus cross-band store and forward (docs/plus.md, item 46)
+        "CONFIG_DMR_AUDIO_DIAG="+("y" if args.plus else "n"),	# DDM32 Plus DMR receive audio diagnostics (tools/plus_dmraudio.py)
+        "CONFIG_CHAN_EXTRAS="+("y" if args.plus else "n"),	# DDM32 Plus r15 channels (tools/plus_chux.py)
+        "CONFIG_SEARCH_RANGE="+("y" if args.plus else "n"),	# DDM32 Plus search ranges (round 15 item 1, tools/plus_scan.py)
+        "CONFIG_SEARCH_FAST="+("y" if args.plus else "n"),	# DDM32 Plus faster searches (round 15 item 2, tools/plus_scan.py)
+        "CONFIG_MWATCH_FAST="+("y" if args.plus else "n"),	# DDM32 Plus faster multi-watch ring (round 15 item 3, tools/plus_scan.py)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:
@@ -770,6 +784,10 @@ def main():
                 "p25_lab_command":("playback_stats",)}.items():
                 extra+="call "+caller+" "+" ".join(targets)+"\n"
             extra+="call playback_amp_update dm32_speaker_pcm\n"
+            if args.plus:
+                from tools import plus_dota
+                extra+=plus_dota.STACK_EDGES	# DDM32 Plus DOTA: the session's io calls, the storage job
+                extra+=__import__("tools.plus_xband",fromlist=["x"]).STACK_EDGES	# DDM32 Plus cross-band: its voice wrappers and io
             edges.write_text((UP / "tools/stack_check_edges.txt").read_text()+extra)
             stack_args=[f"STACK_CHECK_ARGS=--edges {edges}"]
         with stack_log.open("w") as f:

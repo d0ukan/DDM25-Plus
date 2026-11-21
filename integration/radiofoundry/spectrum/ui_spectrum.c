@@ -7,7 +7,10 @@
  * off and on (RAM only, on at power on). Its buffer comes from the RTOS heap while the screen is on top with it on
  * (ui_spectrum_wf_tick gives it back once another screen is on top, Back and OK at once; back on top, the next draw
  * takes it again and the rows start over); when the heap has no room the bars are drawn alone and the screen says so
- * (tried again on the next entry or *). */
+ * (tried again on the next entry or *).
+ * CONFIG_SPECTRUM_WF3D (DDM32 Plus, item 45, ui/wf3d.h): a third view, the same rows as a ridge plot in perspective;
+ * * cycles waterfall > 3D > bars alone > waterfall (RAM only, the waterfall at power on); the 3D view keeps the
+ * waterfall's buffer and rows (no new RAM). */
 #include "config.h"
 #if CONFIG_SPECTRUM
 #include <string.h>
@@ -21,6 +24,9 @@
 #include "ui/ui_scratch.h"
 #if CONFIG_SPECTRUM_WF
 #include "ui/wfall.h"
+#if CONFIG_SPECTRUM_WF3D
+#include "ui/wf3d.h"
+#endif
 #ifdef UI_HOST_HEAP
 /* The host tests: their own counting allocator, which can be made to fail */
 void *ui_host_malloc(size_t n);
@@ -42,7 +48,13 @@ static uint32_t center_hz;
 
 #if CONFIG_SPECTRUM_WF
 static wf_t wf;			/* the rows; wf.buf from the heap while the screen is open with the waterfall on */
+#if CONFIG_SPECTRUM_WF3D
+enum { WF_VIEW_FLAT, WF_VIEW_3D, WF_VIEW_OFF, WF_VIEWS };
+static uint8_t wf_view;		/* the user's choice (*): the waterfall, the 3D view or the bars alone */
+#define wf_on	(wf_view != WF_VIEW_OFF)
+#else
 static bool wf_on = true;	/* the user's choice (*) */
+#endif
 static bool wf_no_room;		/* the last try found no room in the heap */
 
 static void wf_open(void)
@@ -152,6 +164,15 @@ static void __attribute__((noinline)) wf_draw(int x0, int bw, int top, int h)
 		}
 	}
 }
+#if CONFIG_SPECTRUM_WF3D
+/* The 3D view: the rows as wf3d draws them, in the waterfall's colours */
+static void __attribute__((noinline)) wf3d_view(int x0, int bw, int top, int h)
+{
+	const color_t slot[WF_SLOTS] = { ui_col.bg, ui_col.line, ui_col.idle, ui_col.dim, ui_col.rx, ui_col.warn,
+					 ui_col.warn, ui_col.tx };
+	wf3d_draw(&wf, x0, bw, top, h, slot, ui_col.bg);
+}
+#endif
 #endif
 
 static void spectrum_draw(void)
@@ -176,7 +197,11 @@ static void spectrum_draw(void)
 	if (wf_on && wf.buf == NULL && !wf_no_room)
 		wf_open();	/* back on top after another screen (which gave the buffer back): the rows start over */
 	if (wf_on && wf.buf != NULL) {
+#if CONFIG_SPECTRUM_WF3D
+		wf_h = (base - top) * (wf_view == WF_VIEW_3D ? 13 : 11) / 20;	/* the 3D view: a little more of it */
+#else
 		wf_h = (base - top) * 11 / 20;
+#endif
 		wf_top = base - wf_h;
 		base = wf_top - 3;
 		if (have && sv.sweeps != 0 && sv.sweeps != wf.sweeps && sv.center_hz == center_hz)
@@ -207,6 +232,11 @@ static void spectrum_draw(void)
 		gfx_vline(x0 + (sv.points / 2) * bw + bw / 2, top, base - top, ui_col.line);
 #if CONFIG_SPECTRUM_WF
 		if (wf_h > 0 && wf.points == sv.points) {
+#if CONFIG_SPECTRUM_WF3D
+			if (wf_view == WF_VIEW_3D)
+				wf3d_view(x0, bw, wf_top, wf_h);
+			else
+#endif
 			wf_draw(x0, bw, wf_top, wf_h);
 			gfx_vline(x0 + (sv.points / 2) * bw + bw / 2, wf_top, 2, ui_col.line);	/* the center */
 		}
@@ -265,12 +295,24 @@ static bool spectrum_key(const input_event_t *ev)
 	}
 #if CONFIG_SPECTRUM_WF
 	if (ev->gesture == GESTURE_PRESS && ev->action == ACT_QUICK) {
+#if CONFIG_SPECTRUM_WF3D
+		wf_view = (uint8_t)((wf_view + 1u) % WF_VIEWS);	/* waterfall > 3D (the same rows) > bars > waterfall */
+		if (wf_view == WF_VIEW_FLAT)
+			wf_open();
+		else if (wf_view == WF_VIEW_OFF)
+			wf_close();
+		else if (wf.buf == NULL && !wf_no_room)
+			wf_open();
+		ui_toast(!wf_on ? TR("Waterfall off") : wf.buf == NULL ? TR("Waterfall: no room") :
+			 wf_view == WF_VIEW_3D ? TR("3D waterfall") : TR("Waterfall on"));
+#else
 		wf_on = !wf_on;
 		if (wf_on)
 			wf_open();
 		else
 			wf_close();
 		ui_toast(!wf_on ? TR("Waterfall off") : wf.buf != NULL ? TR("Waterfall on") : TR("Waterfall: no room"));
+#endif
 		ui_dirty();
 		return true;
 	}

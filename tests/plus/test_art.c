@@ -269,7 +269,8 @@ static void test_wordmark(const char *dir)
 		row++;
 	}
 	CHECK(w == ART_WORD_W && h == ART_WORD_H && row == ART_WORD_H && split == ART_WORD_SPLIT, "wordmark header");
-	for (int scale = 1; scale <= 3; scale++) {
+	CHECK(3 + ART_WORD_W * 2 <= FB_W, "the wordmark fits a 240 px panel at 2x (the splash's scale)");
+	for (int scale = 1; scale <= 3 && 3 + ART_WORD_W * scale <= FB_W; scale++) {	// 3x only while it fits
 		const int ox = 3, oy = 200;
 		clear();
 		art_wordmark(ox, oy, scale, 0x00AA, 0x0BB0);

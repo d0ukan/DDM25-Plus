@@ -12,7 +12,7 @@
  *     from 10 minutes, Back / Up end it, Tools > Go-To opened again is not following;
  *   - item 30: Go-To's # opens the locator page; # types a locator with the keypad letters; centre, distance and
  *     bearing, our own locator; OK saves the waypoint; a bad locator is refused;
- *   - item 33: Tools > SOS key (rows, on / off), the SOS key's page with nothing chosen (nothing sent), Back cancels
+ *   - item 33: the SOS key's actions (rows, on / off), the SOS key's page with nothing chosen (nothing sent), Back cancels
  *     (nothing sent), OK and the key held confirm, the toasts, the key again offers Stop, the key works with the keys
  *     locked; nothing is asked to transmit before the confirmation. */
 #include <stdio.h>
@@ -461,12 +461,25 @@ static void sos_settings(void)
 	check(asks() == 0, "nothing sent from the settings");
 }
 
+/* Round 14 item 48: the actions are in Settings > Keys (its last row), no longer in Tools */
+static void sos_from_keys(void)
+{
+	ok_run("ok 7 8 up");
+	expect("screen=group shows=SOS_key");
+	layout();
+	ok_run("ok");
+	expect("screen=sos-set shows=APRS_SOS");
+	ok_run("back");
+	expect("screen=group");
+}
+
 static void sos_none(void)
 {
 	key(ACT_SOS, GESTURE_PRESS);
-	expect("screen=sos shows=No_SOS_actions_chosen");
+	expect("screen=sos shows=No_SOS_actions shows=Pick:_Settings_>_Keys");
+	layout();
 	ok_run("ok");
-	expect("screen=sos toast=No_SOS_actions_chosen:_Tools_>_SOS_key");
+	expect("screen=sos toast=No_SOS_actions:_Settings_>_Keys");
 	key(ACT_SOS, GESTURE_LONG);
 	ok_run("wait:3000");
 	check(asks() == 0 && !sos_active(), "nothing sent with every action off");
@@ -570,6 +583,7 @@ int main(void)
 		{ "I30 locator", loc_flow },
 		{ "I30 locator far and bad", loc_far },
 		{ "I33 settings", sos_settings },
+		{ "R14 SOS key in Settings > Keys", sos_from_keys },
 		{ "I33 nothing chosen", sos_none },
 		{ "I33 cancel, confirm, stop", sos_cancel_confirm },
 		{ "I33 key held, keys locked", sos_long_and_locked },
