@@ -49,6 +49,11 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
   operation only; while it runs the keys are locked (Back stops it) and Home shows CROSS. Up to 38 s an over (the
   memory; 3 minutes at most), the callsign in CW on each frequency used, then at least every 10 minutes. FM and P25
   are not possible this way on this radio (docs/plus.md). **Not tried on the radio yet** (rows XB-*).
+- DMR receive audio diagnostics (owner's report: received DMR audio crackly and artificial): Tools > Diagnostics shows
+  five new lines first (the voice queue, the speaker FIFO, the audio task's timing), and on that page 0 steps the
+  speaker FIFO feed between m0 (as before), m1 (one block of margin before the FIFO starts), m2 (paced, as P25) and
+  m3 (both); 9 zeroes the counters. Power-on is always m0: nothing changes until the owner presses 0. **For the radio
+  test rows DA-*;** the default changes once they show which feed sounds right.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

@@ -717,6 +717,7 @@ def main():
         "CONFIG_DATAPACK="+("y" if args.plus else "n"),	# DDM32 Plus user data packs (docs/r14.md 7)
         "CONFIG_LAST_CALLS="+("y" if args.plus else "n"),	# DDM32 Plus last calls (docs/plus.md, item 43)
         "CONFIG_XBAND="+("y" if args.plus else "n"),	# DDM32 Plus cross-band store and forward (docs/plus.md, item 46)
+        "CONFIG_DMR_AUDIO_DIAG="+("y" if args.plus else "n"),	# DDM32 Plus DMR receive audio diagnostics (tools/plus_dmraudio.py)
         f"OPT=-Os -ffile-prefix-map={DEST}=/radiofoundry -fdebug-prefix-map={DEST}=/radiofoundry "
         f"-DRFOUNDRY_SOURCE_EPOCH={git(UP, 'show', '-s', '--format=%ct', 'HEAD')}"]
     if args.classic:

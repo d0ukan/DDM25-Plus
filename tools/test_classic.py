@@ -902,5 +902,8 @@ def main():
     # DDM32 Plus round 14 xband: last calls of every mode and letter (tools/test_xband.py)
     import test_xband
     test_xband.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus DMR receive audio diagnostics: the PCM driver's counters and prefill, the page (tools/test_dmraudio.py)
+    import test_dmraudio
+    test_dmraudio.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

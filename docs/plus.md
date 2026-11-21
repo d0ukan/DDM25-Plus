@@ -2573,3 +2573,76 @@ header to the talkgroup from our ID, the terminator, the CW ID in FM on B and DM
 the FM channel and the memory, a refused transmission, a P25 worker that keeps its memory), `tests/plus/test_ui_xband.c`
 (10 flows, English and Turkish: the form, every refusal, the picker, the question, Home while it relays, the lock, the
 stop, an end by itself; the layout). Radio rows: `docs/plus-radio-test.md` "Round 14 xband", XB-*.
+
+## DMR receive audio diagnostics (`CONFIG_DMR_AUDIO_DIAG`, ours; branch `fix-dmr-audio`)
+
+Owner's report on v1.0.0-beta.3 (public build): received DMR audio sounds crackly / scratchy and artificial; our
+transmit is heard clean. Whether beta.2 or earlier builds did the same is not known.
+
+**What changed since beta.2, against the receive audio path.** None of it runs in that path during a call:
+
+| Change | Why it is not the cause |
+|---|---|
+| DOTA step 0, `PLUS_AUDIO_MUX_NO_APRS` | the ring was written only when `aprs_on`, set only through `rx_by_stream()`, which needs `board.audio_tap`; the DM-32 has none, so the ring was dead code before (`core/aprs/aprs.c` `rx_by_stream`) |
+| DOTA amplifier (`AMP_DOTA`, `speaker_click`, `afsk_monitor`) | only with `afsk_tx` (a DOTA FM transmission) or a click asked by a session (`radio_dm32.c` patch in `tools/plus_dota.py`) |
+| DOTA radio core, data service hook, beeps | `dota_request` / `dota_rf_poll` return at once without a session; the UDP hook only for DOTA's port |
+| Home frequency (`CONFIG_HOME_FREQ`) | one text row drawn by the UI task (priority 1, below the audio and DMR tasks at 5) |
+| Data packs (main after beta.3) | ID lookups run in the radio task (priority 4) on the data chip's own SPI bus with a mutex: no interrupt lock, nothing the audio task waits for |
+| Last calls, cross-band (main after beta.3) | last calls are fed in the UI task, RAM only; cross-band wraps the voice sink only while a session runs (`radio_xband.inc` `xb_take` / `xb_give`) |
+
+**The path itself** (unchanged since Classic r12): `dmr_call` (DMR task, priority 5) -> `ambeVoice.c` `sink_frame`
+(FEC, a queue of 8 frames, playback after 3) -> the audio task (priority 5, woken by the microphone interrupt every
+20 ms) runs `rx_block` -> the stock AMBE+2 decoder from the codec slot -> one 160-sample block into the speaker queue
+(4 slots) -> a 2 ms timer pushes 32-sample chunks into the HR_C7000 prompt FIFO while AUDIO_CONTROL b31 says there is
+room (`build_radiofoundry.py` r12 patch on `audio_pcm.c`).
+
+**Ranked candidates.**
+
+1. **No margin when the speaker starts** (most likely; a design weakness, host-tested). The speaker route turns on
+   inside the first voice block's callback and empties the queue; the next block is pushed into an empty FIFO at once,
+   so it and the queue hold exactly one block. Any later block that comes out of the decoder later than the first one
+   leaves the FIFO empty: a click / crackle, until enough late blocks have built a margin. A block's latency varies
+   with the decoder and with the DMR task (same priority, time sliced) handling a burst every 60 ms.
+   `tests/plus/test_dmraudio_pcm.c` reproduces it on the real driver: first block 2 ms, later ones 2 / 7 ms -> the
+   FIFO runs dry for 4 ms (mode 0); with one block of prefill, never. The FIFO has no empty flag and may replay stale
+   chunks when it runs dry (`modem-hrc7000.md` 8.4: "Flushing stale audio: fill with 0x7F bytes"): that would sound
+   rough rather than silent.
+2. **Feeding by the b31 flag instead of a clock.** P25 on this FIFO sounded "choppy, accelerated" with this feeding
+   and "works perfectly" paced at one chunk per 4 ms (lab `PROGRESS.md` 2026-11-06, `results/playback-pacing.json`:
+   legacy 546 full refusals and 86 pushes within 500 us; paced none). DMR still uses the b31 feeding (lab
+   `docs/receive-audio.md`: "Normal non-P25 audio retains legacy FIFO service"). That P25 test changed two things at
+   once, so it does not prove which one helped.
+3. **Frames lost or concealed** (`un`, `cc`, `ls`, `bd` counters): an underrun of the AMBE queue repeats the last frame
+   (robotic); `bd` / `be` high means a weak or distorted signal, not our audio path.
+4. **Decoder arguments.** `vocoder.c` calls the stock decoder with flags 0 and `r3 = D[0x1166]`; the vendor wrapper
+   passes "a flags word" not documented (`codec-dm32.md`: "Audio quality against the vendor firmware has not been
+   compared"). Only a comparison with another radio on the same transmission can point here; nothing is changed from
+   a guess (clean room: no stock disassembly).
+5. **Clipping**: `pk` near 32767 on normal speech would mean the decoded level clips at the DAC (codec DAC gain 0 dB).
+
+**What is built.** `tools/plus_dmraudio.py` (one line in `plus_features.prepare`, one switch), the driver part in
+`integration/radiofoundry/dmraudio/pcm_diag.inc` (included by `audio_pcm.c` after `pcm_playback.inc`):
+
+- Tools > Diagnostics, page one, five lines first (debug text, not translated; at most 26 characters, counters stop
+  at a cap):
+
+  | Line | Fields |
+  |---|---|
+  | `dv m1 in150 pl147` | FIFO feed mode; AMBE frames from the air; frames played |
+  | `dv cc2 un1 q4 pk12000` | blocks concealed; AMBE queue underruns; the queue's most; the call's peak sample |
+  | `dv bd3 ls4 be56` | frames FEC could not fix; frames lost; bit errors fixed |
+  | `sp gp7/4.0 fu300 dr1` | times the FIFO ran dry / the longest (ms), by an 8 kHz play model; FIFO full refusals; blocks dropped (each call's first block is dropped by the route change, as before) |
+  | `au bl2.0-8.0 sl1 ov2` | block latency min-max (microphone block complete -> speaker block queued, voice blocks only, ms); blocks 15 ms late or more; microphone blocks the audio task missed |
+
+- On that page with a channel shown: **0** steps the feed mode m0 -> m1 -> m2 -> m3 -> m0, **9** zeroes the counters
+  (the voice queue's, the FIFO's, the DMR glue's). m0 = as shipped; m1 = prefill (after the queue empties, the FIFO
+  waits for 2 queued blocks or 25 ms); m2 = P25's pacing for every stream; m3 = both. RAM only: power-on is m0.
+- Costs (public build on 743c1b7): FLASH 830,592 -> 831,984 B (+1,392), static RAM 209,368 -> 209,432 B (+64; 2,024 B
+  free). m1 adds 20 ms of delay at the start of each over and may cut up to 20 ms more of its tail (the route turns
+  off when the AMBE queue ends, which empties the speaker queue, as before).
+
+Tests: `tests/plus/test_dmraudio_pcm.c` (the real generated driver and audio task against a prompt FIFO model: m0 runs
+dry after a fast first block, m1 and m3 do not, the counters match the model, a one-block stream still plays, the
+mode applied while running, the reset), `tests/plus/test_ui_dmraudio.c` (the real formatter and digit handler cut out
+of the generated `diag_dm32.c`; 4 flows, English and Turkish, layout). Radio rows: `docs/plus-radio-test.md` "DMR
+receive audio", DA-*. Next: the default becomes the mode the rows show clean (one line), or the counters point at 3-5.

@@ -532,3 +532,23 @@ one on B (70 cm), or the SDR; an FM radio or the SDR on B to hear the CW ID.
 | XB-6 | Refusals: B 446.00625, 439.000, 145.600, 435.500, 144.800, 145.500 (= A), 162.550; the picker's repeater channel; Mode FM and P25; a radio name that is not a callsign | the toasts "PMR446: no repeaters allowed", "Repeater frequency" (x2), "Satellite segment", "APRS frequency", "A and B are the same", "Not an amateur band", "Repeater channel (RX and TX differ)", "DMR only for now", "Set your callsign ..."; nothing transmits |
 | XB-7 | Back while it sends (XB-3) | off the air at once, "Cross-band off"; the user's channel back (frequency, mode, power) |
 | XB-8 | Start from a P25 channel while it receives; stop after one relay | it starts within 2 s; after the stop the P25 channel receives again; Tools > Last call's P25 replay: nothing kept (the memory came back cleared) |
+
+DMR receive audio (Tools > Diagnostics, docs/plus.md "DMR receive audio diagnostics"). Receive only. Needs a steady
+DMR source on a channel: the other radio a few metres away on Low (its frequency, colour code, slot and talkgroup on
+the DM-32's channel), the same 20-30 s of speech each time; the volume as usual. Where possible also listen to the
+same over on a third, stock radio: it decodes the same transmission.
+
+| # | Do | Expect |
+|---|---|---|
+| DA-1 | On the DMR channel: Tools > Diagnostics, press 9; receive one 30 s over (m0, as shipped); photograph the five `dv` / `sp` / `au` lines and note how it sounded | the counters move (`in` and `pl` about 1,500 for 30 s); note `cc`, `un`, `bd`, `ls`, `gp` and its longest, `bl` min-max, `ov`, `pk` |
+| DA-2 | Press 0 once (`dv m1`), 9, the same over again; photograph | compare the sound with DA-1; `gp` stays 0 (or near it) if candidate 1 is the cause |
+| DA-3 | Press 0 (`m2`), 9, the same over; then 0 (`m3`), 9, the same over; photograph each | the sound, `gp` and `fu` for paced feeding alone and for both |
+| DA-4 | In m1: one over from the DM-32 to the other radio and its answer | our transmit unchanged (the modes touch only the speaker) |
+| DA-5 | In m1: a key beep, the talk permit tone, the start and end of a DMR call | beeps whole (20 ms later), no click at a call's start; the last syllable of an over not cut |
+| DA-6 | Power off and on; open Diagnostics | `dv m0`: the default came back |
+
+Reading the result: a mode that sounds clean with `gp0` where m0 had `gp` above 0 -> that mode becomes the default
+(candidates 1 / 2). `un` / `cc` growing in every mode -> the AMBE queue starves (DMR task or air timing). `bd` / `be`
+high -> the signal, not the audio path (move the radios, check the frequency). `pk` near 32767 on normal speech ->
+clipping. Every mode as rough as m0 with clean counters while the stock radio sounds clean on the same over -> the
+decoder call itself (candidate 4).
