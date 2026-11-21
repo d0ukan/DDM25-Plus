@@ -552,6 +552,21 @@ Reading the result: a mode that sounds clean with `gp0` where m0 had `gp` above 
 high -> the signal, not the audio path (move the radios, check the frequency). `pk` near 32767 on normal speech ->
 clipping. Every mode as rough as m0 with clean counters while the stock radio sounds clean on the same over -> the
 decoder call itself (candidate 4).
+
+Round 2 (after DA-1..3 on beta.4: `pk` about 1,000, about 2 bit errors fixed per frame at -100 dBm). Same source and
+over as DA-1. Stay in m0 (the shipped feed) unless a row says otherwise.
+
+| # | Do | Expect |
+|---|---|---|
+| DA-7 | Strong signal: the other radio 1-2 m away on High (or the DM-32 next to it), press 9, one over; photograph the page and note the `rx` line | `be` near 0 and `cc` / `ls` 0 at -60 dBm or stronger. If it now sounds clean, the cause was the signal (DA-10) |
+| DA-8 | Press 8 (`x2`), 9, the same over; then 8 (`x4`), 9; then 8 (`x8`), 9; photograph each | louder each step (turn the knob down to keep it comfortable); note whether the crackle / robotic sound stays the same relative to the voice, and `cl` / `po` (`po` about 2x, 4x, 8x `pk`; `cl` 0 until it clips) |
+| DA-9 | At the knob position you use, compare a key beep with the DMR voice at x1 | how much louder the beep is (the beep is about -12 dBFS, the voice about -30) |
+| DA-10 | Only if DA-7 still shows `be` well above 0 at a strong signal: Settings > Advanced > Freq trim, try -1.0 and +1.0 ppm (then back to 0), one over each after 9 | the trim with the lower `be`; if one is much lower the receiver is off frequency (measure it properly before keeping a trim) |
+| DA-11 | Power off and on | `dv m0 x1` |
+
+Reading round 2: `be` drops to about 0 at a strong signal and it sounds clean -> the signal / receiver (DA-10 decides
+which). Clean only at x4 / x8 -> the level: x2 or x4 becomes a fixed gain (or a setting). Rough at every level with
+`be` about 0 -> the decoder call itself (candidate 4), compared against a stock radio on the same over.
 ## Round 15 channels (branch `r15-channels`)
 
 Zones, DMR channel rows, digital monitor, Delete channel, P25 NAC in decimal (docs/plus.md "Round 15"). Receive only
@@ -616,3 +631,38 @@ owner's channel and licence).
 | MR-6 | The other radio sends P25 on C with the right NAC and talkgroup (TG 101, NAC 659) | held, the native receiver plays it, given back 1.5 s after the last voice, the ring goes on after the wait |
 | MR-7 | Watch channels 2 (dual watch) | as before: 150 ms a stop, no "Ring" line |
 | MR-8 | A weak FM signal near the squelch on one letter | it opens there as before (a single reading at 50 ms decides a quiet stop, as the squelch itself does); note if it is missed more than with the build before |
+
+## Round 16 airprov (branch `r16-airprov`)
+
+Airfields by province (Tools > Airfields, docs/plus.md "Airfields by province"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| AP-1 | Tools > Airfields | the first level: "All airfields (74)" (Turkish "Hepsi (74)"), "01 Adana (2)", "02 Adıyaman (1)", ... in plate order, only provinces with airfields, the last "76 Iğdır (1)"; Up from All goes round to it |
+| AP-2 | Down to "06 Ankara (5)", OK | the title "Airfields Ankara", Güvercinlik, Etimesgut, ... only Ankara's five, nearest first with distance and direction; Up / Down go round within the five |
+| AP-3 | In Ankara's list, # | the nearest Ankara airfield's details; Back: Ankara's list; Back: the first level with Ankara still picked; Back: Tools |
+| AP-4 | "34 İstanbul (5)" | Atatürk, Hezarfen, Samandıra, Sabiha Gökçen and İstanbul; "41 Kocaeli (1)" holds Cengiz Topel only; "33 Mersin (1)" Çukurova |
+| AP-5 | "07 Antalya (2)", OK on Antalya, Down to a frequency, OK | the list line "TWR 125.000 +1"; the details list all seven; OK tunes the VFO in AM (receive only) |
+| AP-6 | In Antalya's details, # | air watch on its six frequencies as before (Home's ring A..F); Back Back stops it |
+| AP-7 | "All airfields", OK | the whole list nearest first as before; # on the first level opens the nearest airfield's details |
+| AP-8 | With an air band pack installed (Settings > About shows it) | a province's list shows the pack's frequencies for the airfields it names, as "All" does |
+
+Spectrum in colour (Tools > Spectrum, docs/plus.md "The spectrum in colour"). Receive only.
+
+| # | Do | Expect |
+|---|---|---|
+| SC-1 | Tools > Spectrum on a busy band (or the other radio sending FM nearby), waterfall view | quiet points dark blue, weak ones blue / cyan, stronger green, yellow, orange, the strongest red; the bars and texts as before |
+| SC-2 | * (3D waterfall) | the ridges in the same colours by height: the strongest peaks red |
+| SC-3 | Settings > Display > Theme: Light, back to Tools > Spectrum | a pale blue for the weakest, darker blue, teal, green, dark yellow, orange, red on white; every colour distinct |
+| SC-4 | Look closely at the texts on the spectrum screen (title, frequency, Hit / Floor, the key hint) in both themes | readable; their edges may look a little harder than on other screens (the palette's entries go to the colours first) |
+| SC-5 | * again (bars alone), then *: waterfall | bars alone without colours; the waterfall back in colour |
+
+## Status strip signal bars (tools/plus_sigbar.py)
+
+| Row | Do | Expect |
+|---|---|---|
+| SB-1 | An FM channel with nothing on it, squelch at its usual level; watch the top right for a minute | the signal bars stay empty (they climbed and fell before) |
+| SB-2 | The other radio sends FM on that channel, near and then far | the bars fill while the squelch is open (more when near), empty again after the over |
+| SB-3 | A DMR channel: idle, then a call from the other radio | empty while idle; filled during the call; empty after it |
+| SB-4 | A P25 channel: idle, then a call | the same as SB-3 |
+| SB-5 | Monitor key held on an empty FM channel | the bars show the noise level while the monitor is open (the receiver is open: expected) |

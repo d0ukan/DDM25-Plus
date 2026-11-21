@@ -31,6 +31,7 @@ public partial class MainWindow : Window
         foreach (var p in pages)
             p.Init(state, this);
         state.Changed += () => Dispatcher.Invoke(RefreshAll);
+        ToolRunner.BusyChanged += () => Dispatcher.BeginInvoke(RefreshAll);
         Loc.Instance.Changed += RefreshAll;
         RestoreBounds_();
         RefreshAll();
@@ -78,11 +79,18 @@ public partial class MainWindow : Window
     }
 
     /// <summary>--show PAGE[:STEP[:BACKUP]] (screenshots, demos): open a page, a wizard step, and a verified backup as
-    /// "Mevcut yedeği seç..." does. Navigation and file reads only; a radio step still needs its own button.</summary>
+    /// "Mevcut yedeği seç..." does; health:demo and live:demo show made-up readings, channels:FOLDER a backup's
+    /// codeplug. Navigation and file reads only; a radio step still needs its own button.</summary>
     public void ShowFromArgs(string spec)
     {
         var parts = spec.Split(':', 3);
         OpenPage(parts[0]);
+        if (parts[0] == "health" && parts.Length > 1 && parts[1] == "demo")
+            Health.ShowDemo();                          // made-up views; no port
+        if (parts[0] == "live" && parts.Length > 1 && parts[1] == "demo")
+            Live.ShowDemo();                            // made-up polls; no port
+        if (parts[0] == "channels" && parts.Length > 1)
+            Channels.ShowBackup(spec[(spec.IndexOf(':', StringComparison.Ordinal) + 1)..]);   // files only
         if (parts[0] == "update" && parts.Length > 1 && int.TryParse(parts[1], out var step))
             Update.ShowStep(step);
         if (parts[0] == "update" && parts.Length > 2)
@@ -181,13 +189,14 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (Update.Busy || Restore.Busy || Packs.Busy)
+        if (Update.Busy || Restore.Busy || Packs.Busy || Health.Busy)
         {
             // closing would end a running tool half way (main_window.busy_text)
             MessageBox.Show(this, Loc.T("Main_BusyClose"), AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Warning);
             e.Cancel = true;
             return;
         }
+        Live.Stop();                                    // the live reader ends at its next step and closes the port
         var r = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
         state.Settings.Save("window", new System.Text.Json.Nodes.JsonObject
         {

@@ -911,5 +911,11 @@ def main():
     # DDM32 Plus round 15 scan: search ranges and speed, the multi-watch ring (tools/test_scan.py)
     import test_scan
     test_scan.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus status strip signal bars: filled only while something is heard (tools/test_sigbar.py)
+    import test_sigbar
+    test_sigbar.main(ROOT,APP,OUT,flags,host)
+    # DDM32 Plus round 16 airprov: airfields by province, the spectrum in colour (tools/test_airprov.py)
+    import test_airprov
+    test_airprov.main(ROOT,APP,OUT,flags,host)
 
 if __name__=='__main__':main()

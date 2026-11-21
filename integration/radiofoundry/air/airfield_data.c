@@ -6,83 +6,84 @@
 #if CONFIG_AIRFIELDS
 #include "ui/airfield_data.h"
 
-/* { lat_e5, lon_e5, first, count, kind, code, name } */
+/* { lat_e5, lon_e5, first, count, kind, code, name, province } */
 const air_field_t air_fields[AIR_FIELDS] = {
-	{ 3993500, 3274080, 0, 2, 2, "LTAB", "G\374vercinlik" },	/* Guvercinlik */
-	{ 4012810, 3299510, 2, 4, 0, "LTAC", "Esenbo\360a" },	/* Esenboga */
-	{ 3994980, 3268860, 6, 1, 1, "LTAD", "Etimesgut AB" },	/* Etimesgut AB */
-	{ 4007890, 3256560, 7, 1, 1, "LTAE", "Ak\375nc\375 AB" },	/* Akinci AB */
-	{ 3698220, 3528040, 8, 3, 2, "LTAF", "Adana \336akirpa\376a" },	/* Adana Sakirpasa */
-	{ 3700210, 3542590, 11, 3, 1, "LTAG", "\335ncirlik AB" },	/* Incirlik AB */
-	{ 3872640, 3060110, 14, 2, 1, "LTAH", "Afyon AB" },	/* Afyon AB */
-	{ 3689870, 3080050, 16, 7, 0, "LTAI", "Antalya" },	/* Antalya */
-	{ 3694720, 3747870, 23, 1, 0, "LTAJ", "Gaziantep O\360uzeli" },	/* Gaziantep Oguzeli */
-	{ 4131420, 3379580, 24, 0, 1, "LTAL", "Kastamonu" },	/* Kastamonu */
-	{ 3797900, 3256190, 24, 4, 0, "LTAN", "Konya" },	/* Konya */
-	{ 3835370, 3825390, 28, 2, 2, "LTAO", "Malatya Tulga" },	/* Malatya Tulga */
-	{ 4082940, 3552200, 30, 3, 1, "LTAP", "Amasya Merzifon" },	/* Amasya Merzifon */
-	{ 3981380, 3690350, 33, 1, 1, "LTAR", "Sivas Nuri Demira\360" },	/* Sivas Nuri Demirag */
-	{ 4150640, 3208860, 34, 0, 1, "LTAS", "Zonguldak \307aycuma" },	/* Zonguldak Caycuma */
-	{ 3843530, 3809100, 34, 2, 1, "LTAT", "Malatya Erha\347" },	/* Malatya Erhac */
-	{ 3877040, 3549540, 36, 3, 0, "LTAU", "Kayseri Erkilet" },	/* Kayseri Erkilet */
-	{ 3945150, 3136530, 39, 2, 1, "LTAV", "Sivrihisar" },	/* Sivrihisar */
-	{ 4032472, 3639056, 41, 1, 1, "LTAW", "Tokat" },	/* Tokat */
-	{ 3778560, 2970130, 42, 1, 1, "LTAY", "\307ardak" },	/* Cardak */
-	{ 3877190, 3453450, 43, 0, 0, "LTAZ", "Nev\376ehir Kapadokya" },	/* Nevsehir Kapadokya */
-	{ 4097191, 2882371, 43, 3, 0, "LTBA", "\335stanbul Atat\374rk" },	/* Istanbul Ataturk */
-	{ 3961930, 2792600, 46, 2, 1, "LTBF", "Bal\375kesir" },	/* Balikesir */
-	{ 4031800, 2797770, 48, 2, 1, "LTBG", "Band\375rma" },	/* Bandirma */
-	{ 4013770, 2642680, 50, 1, 1, "LTBH", "\307anakkale" },	/* Canakkale */
-	{ 3978410, 3058210, 51, 3, 1, "LTBI", "Eski\376ehir AB" },	/* Eskisehir AB */
-	{ 3829240, 2715700, 54, 5, 0, "LTBJ", "Adnan Menderes" },	/* Adnan Menderes */
-	{ 3851300, 2701010, 59, 1, 1, "LTBL", "\307i\360li AB" },	/* Cigli AB */
-	{ 3942670, 3001690, 60, 1, 1, "LTBN", "K\374tahya" },	/* Kutahya */
-	{ 3868150, 2947170, 61, 0, 1, "LTBO", "U\376ak" },	/* Usak */
-	{ 4073500, 3008330, 61, 1, 1, "LTBQ", "Cengiz Topel" },	/* Cengiz Topel */
-	{ 4025520, 2956260, 62, 0, 1, "LTBR", "Bursa Yeni\376ehir" },	/* Bursa Yenisehir */
-	{ 3671310, 2879250, 62, 4, 0, "LTBS", "Dalaman" },	/* Dalaman */
-	{ 3880890, 2783390, 66, 2, 1, "LTBT", "Akhisar" },	/* Akhisar */
-	{ 4113820, 2791910, 68, 3, 1, "LTBU", "Tekirda\360 \307orlu" },	/* Tekirdag Corlu */
-	{ 4110360, 2854770, 71, 2, 2, "LTBW", "\335stanbul Hezarfen" },	/* Istanbul Hezarfen */
-	{ 4099300, 2921650, 73, 1, 1, "LTBX", "\335stanbul Samand\375ra AB" },	/* Istanbul Samandira AB */
-	{ 3981164, 3051927, 74, 1, 0, "LTBY", "Hasan Polatkan" },	/* Hasan Polatkan */
-	{ 3911111, 3013040, 75, 0, 1, "LTBZ", "Zafer" },	/* Zafer */
-	{ 3859797, 3928348, 75, 0, 1, "LTCA", "Elaz\375\360" },	/* Elazig */
-	{ 4096687, 3808599, 75, 0, 1, "LTCB", "Ordu-Giresun" },	/* Ordu-Giresun */
-	{ 3789390, 4020100, 75, 3, 1, "LTCC", "Diyarbak\375r" },	/* Diyarbakir */
-	{ 3971020, 3952700, 78, 2, 1, "LTCD", "Erzincan" },	/* Erzincan */
-	{ 3995650, 4117020, 80, 0, 1, "LTCE", "Erzurum" },	/* Erzurum */
-	{ 4056220, 4311500, 80, 1, 1, "LTCF", "Kars" },	/* Kars */
-	{ 4099510, 3978970, 81, 1, 1, "LTCG", "Trabzon" },	/* Trabzon */
-	{ 3846820, 4333230, 82, 1, 1, "LTCI", "Van Ferit Melen" },	/* Van Ferit Melen */
-	{ 3792900, 4111660, 83, 2, 1, "LTCJ", "Batman" },	/* Batman */
-	{ 3874780, 4166120, 85, 2, 1, "LTCK", "Mu\376" },	/* Mus */
-	{ 3797890, 4184040, 87, 1, 1, "LTCL", "Siirt" },	/* Siirt */
-	{ 4201831, 3507177, 88, 0, 1, "LTCM", "Sinop" },	/* Sinop */
-	{ 3753883, 3695352, 88, 2, 1, "LTCN", "Kahramanmara\376" },	/* Kahramanmaras */
-	{ 3965564, 4302574, 90, 1, 1, "LTCO", "A\360r\375" },	/* Agri */
-	{ 3773140, 3846890, 91, 1, 1, "LTCP", "Ad\375yaman" },	/* Adiyaman */
-	{ 3722330, 4063170, 92, 1, 1, "LTCR", "Mardin" },	/* Mardin */
-	{ 3744566, 3889559, 93, 0, 0, "LTCS", "\336anl\375urfa GAP" },	/* Sanliurfa GAP */
-	{ 3997663, 4387665, 93, 3, 1, "LTCT", "I\360d\375r" },	/* Igdir */
-	{ 3886013, 4059449, 96, 0, 1, "LTCU", "Bing\366l" },	/* Bingol */
-	{ 3736470, 4205820, 96, 0, 1, "LTCV", "\336\375rnak \336erafettin El\347i" },	/* Sirnak Serafettin Elci */
-	{ 3754970, 4423810, 96, 0, 1, "LTCW", "Hakkari Y\374ksekova" },	/* Hakkari Yuksekova */
-	{ 3636079, 3628559, 96, 0, 1, "LTDA", "Hatay" },	/* Hatay */
-	{ 3689148, 3507124, 96, 0, 0, "LTDB", "\307ukurova" },	/* Cukurova */
-	{ 3851760, 2697740, 96, 1, 2, "LTFA", "Kakl\375\347" },	/* Kaklic */
-	{ 3795070, 2732900, 97, 1, 2, "LTFB", "Sel\347uk Efes" },	/* Selcuk Efes */
-	{ 3785540, 3036840, 98, 2, 1, "LTFC", "S\374leyman Demirel" },	/* Suleyman Demirel */
-	{ 3955253, 2701019, 100, 3, 0, "LTFD", "Bal\375kesir Koca Seyit" },	/* Balikesir Koca Seyit */
-	{ 3724931, 2766401, 103, 3, 0, "LTFE", "Milas Bodrum" },	/* Milas Bodrum */
-	{ 3629883, 3229702, 106, 1, 1, "LTFG", "Gazipa\376a-Alanya" },	/* Gazipasa-Alanya */
-	{ 4125399, 3656755, 107, 4, 1, "LTFH", "Samsun-\307ar\376amba" },	/* Samsun-Carsamba */
-	{ 4089860, 2930920, 111, 4, 0, "LTFJ", "Istanbul Sabiha G\366k\347en" },	/* Istanbul Sabiha Gokcen */
-	{ 4078707, 2660666, 115, 0, 1, "LTFL", "Ke\376an AB" },	/* Kesan AB */
-	{ 4127487, 2873214, 115, 3, 0, "LTFM", "\335stanbul" },	/* Istanbul */
-	{ 4117977, 4084880, 118, 4, 1, "LTFO", "Rize-Artvin" },	/* Rize-Artvin */
-	{ 3973886, 3237864, 122, 0, 1, "TR-0004", "Temelli AB" },	/* Temelli AB */
+	{ 3993500, 3274080, 0, 2, 2, "LTAB", "G\374vercinlik", 6 },	/* Guvercinlik */
+	{ 4012810, 3299510, 2, 4, 0, "LTAC", "Esenbo\360a", 6 },	/* Esenboga */
+	{ 3994980, 3268860, 6, 1, 1, "LTAD", "Etimesgut AB", 6 },	/* Etimesgut AB */
+	{ 4007890, 3256560, 7, 1, 1, "LTAE", "Ak\375nc\375 AB", 6 },	/* Akinci AB */
+	{ 3698220, 3528040, 8, 3, 2, "LTAF", "Adana \336akirpa\376a", 1 },	/* Adana Sakirpasa */
+	{ 3700210, 3542590, 11, 3, 1, "LTAG", "\335ncirlik AB", 1 },	/* Incirlik AB */
+	{ 3872640, 3060110, 14, 2, 1, "LTAH", "Afyon AB", 3 },	/* Afyon AB */
+	{ 3689870, 3080050, 16, 7, 0, "LTAI", "Antalya", 7 },	/* Antalya */
+	{ 3694720, 3747870, 23, 1, 0, "LTAJ", "Gaziantep O\360uzeli", 27 },	/* Gaziantep Oguzeli */
+	{ 4131420, 3379580, 24, 0, 1, "LTAL", "Kastamonu", 37 },	/* Kastamonu */
+	{ 3797900, 3256190, 24, 4, 0, "LTAN", "Konya", 42 },	/* Konya */
+	{ 3835370, 3825390, 28, 2, 2, "LTAO", "Malatya Tulga", 44 },	/* Malatya Tulga */
+	{ 4082940, 3552200, 30, 3, 1, "LTAP", "Amasya Merzifon", 5 },	/* Amasya Merzifon */
+	{ 3981380, 3690350, 33, 1, 1, "LTAR", "Sivas Nuri Demira\360", 58 },	/* Sivas Nuri Demirag */
+	{ 4150640, 3208860, 34, 0, 1, "LTAS", "Zonguldak \307aycuma", 67 },	/* Zonguldak Caycuma */
+	{ 3843530, 3809100, 34, 2, 1, "LTAT", "Malatya Erha\347", 44 },	/* Malatya Erhac */
+	{ 3877040, 3549540, 36, 3, 0, "LTAU", "Kayseri Erkilet", 38 },	/* Kayseri Erkilet */
+	{ 3945150, 3136530, 39, 2, 1, "LTAV", "Sivrihisar", 26 },	/* Sivrihisar */
+	{ 4032472, 3639056, 41, 1, 1, "LTAW", "Tokat", 60 },	/* Tokat */
+	{ 3778560, 2970130, 42, 1, 1, "LTAY", "\307ardak", 20 },	/* Cardak */
+	{ 3877190, 3453450, 43, 0, 0, "LTAZ", "Nev\376ehir Kapadokya", 50 },	/* Nevsehir Kapadokya */
+	{ 4097191, 2882371, 43, 3, 0, "LTBA", "\335stanbul Atat\374rk", 34 },	/* Istanbul Ataturk */
+	{ 3961930, 2792600, 46, 2, 1, "LTBF", "Bal\375kesir", 10 },	/* Balikesir */
+	{ 4031800, 2797770, 48, 2, 1, "LTBG", "Band\375rma", 10 },	/* Bandirma */
+	{ 4013770, 2642680, 50, 1, 1, "LTBH", "\307anakkale", 17 },	/* Canakkale */
+	{ 3978410, 3058210, 51, 3, 1, "LTBI", "Eski\376ehir AB", 26 },	/* Eskisehir AB */
+	{ 3829240, 2715700, 54, 5, 0, "LTBJ", "Adnan Menderes", 35 },	/* Adnan Menderes */
+	{ 3851300, 2701010, 59, 1, 1, "LTBL", "\307i\360li AB", 35 },	/* Cigli AB */
+	{ 3942670, 3001690, 60, 1, 1, "LTBN", "K\374tahya", 43 },	/* Kutahya */
+	{ 3868150, 2947170, 61, 0, 1, "LTBO", "U\376ak", 64 },	/* Usak */
+	{ 4073500, 3008330, 61, 1, 1, "LTBQ", "Cengiz Topel", 41 },	/* Cengiz Topel */
+	{ 4025520, 2956260, 62, 0, 1, "LTBR", "Bursa Yeni\376ehir", 16 },	/* Bursa Yenisehir */
+	{ 3671310, 2879250, 62, 4, 0, "LTBS", "Dalaman", 48 },	/* Dalaman */
+	{ 3880890, 2783390, 66, 2, 1, "LTBT", "Akhisar", 45 },	/* Akhisar */
+	{ 4113820, 2791910, 68, 3, 1, "LTBU", "Tekirda\360 \307orlu", 59 },	/* Tekirdag Corlu */
+	{ 4110360, 2854770, 71, 2, 2, "LTBW", "\335stanbul Hezarfen", 34 },	/* Istanbul Hezarfen */
+	{ 4099300, 2921650, 73, 1, 1, "LTBX", "\335stanbul Samand\375ra AB", 34 },	/* Istanbul Samandira AB */
+	{ 3981164, 3051927, 74, 1, 0, "LTBY", "Hasan Polatkan", 26 },	/* Hasan Polatkan */
+	{ 3911111, 3013040, 75, 0, 1, "LTBZ", "Zafer", 43 },	/* Zafer */
+	{ 3859797, 3928348, 75, 0, 1, "LTCA", "Elaz\375\360", 23 },	/* Elazig */
+	{ 4096687, 3808599, 75, 0, 1, "LTCB", "Ordu-Giresun", 52 },	/* Ordu-Giresun */
+	{ 3789390, 4020100, 75, 3, 1, "LTCC", "Diyarbak\375r", 21 },	/* Diyarbakir */
+	{ 3971020, 3952700, 78, 2, 1, "LTCD", "Erzincan", 24 },	/* Erzincan */
+	{ 3995650, 4117020, 80, 0, 1, "LTCE", "Erzurum", 25 },	/* Erzurum */
+	{ 4056220, 4311500, 80, 1, 1, "LTCF", "Kars", 36 },	/* Kars */
+	{ 4099510, 3978970, 81, 1, 1, "LTCG", "Trabzon", 61 },	/* Trabzon */
+	{ 3846820, 4333230, 82, 1, 1, "LTCI", "Van Ferit Melen", 65 },	/* Van Ferit Melen */
+	{ 3792900, 4111660, 83, 2, 1, "LTCJ", "Batman", 72 },	/* Batman */
+	{ 3874780, 4166120, 85, 2, 1, "LTCK", "Mu\376", 49 },	/* Mus */
+	{ 3797890, 4184040, 87, 1, 1, "LTCL", "Siirt", 56 },	/* Siirt */
+	{ 4201831, 3507177, 88, 0, 1, "LTCM", "Sinop", 57 },	/* Sinop */
+	{ 3753883, 3695352, 88, 2, 1, "LTCN", "Kahramanmara\376", 46 },	/* Kahramanmaras */
+	{ 3965564, 4302574, 90, 1, 1, "LTCO", "A\360r\375", 4 },	/* Agri */
+	{ 3773140, 3846890, 91, 1, 1, "LTCP", "Ad\375yaman", 2 },	/* Adiyaman */
+	{ 3722330, 4063170, 92, 1, 1, "LTCR", "Mardin", 47 },	/* Mardin */
+	{ 3744566, 3889559, 93, 0, 0, "LTCS", "\336anl\375urfa GAP", 63 },	/* Sanliurfa GAP */
+	{ 3997663, 4387665, 93, 3, 1, "LTCT", "I\360d\375r", 76 },	/* Igdir */
+	{ 3886013, 4059449, 96, 0, 1, "LTCU", "Bing\366l", 12 },	/* Bingol */
+	{ 3736470, 4205820, 96, 0, 1, "LTCV", "\336\375rnak \336erafettin El\347i", 73 },	/* Sirnak Serafettin Elci */
+	{ 3754970, 4423810, 96, 0, 1, "LTCW", "Hakkari Y\374ksekova", 30 },	/* Hakkari Yuksekova */
+	{ 3636079, 3628559, 96, 0, 1, "LTDA", "Hatay", 31 },	/* Hatay */
+	{ 3689148, 3507124, 96, 0, 0, "LTDB", "\307ukurova", 33 },	/* Cukurova */
+	{ 3851760, 2697740, 96, 1, 2, "LTFA", "Kakl\375\347", 35 },	/* Kaklic */
+	{ 3795070, 2732900, 97, 1, 2, "LTFB", "Sel\347uk Efes", 35 },	/* Selcuk Efes */
+	{ 3785540, 3036840, 98, 2, 1, "LTFC", "S\374leyman Demirel", 32 },	/* Suleyman Demirel */
+	{ 3955253, 2701019, 100, 3, 0, "LTFD", "Bal\375kesir Koca Seyit", 10 },	/* Balikesir Koca Seyit */
+	{ 3724931, 2766401, 103, 3, 0, "LTFE", "Milas Bodrum", 48 },	/* Milas Bodrum */
+	{ 3629883, 3229702, 106, 1, 1, "LTFG", "Gazipa\376a-Alanya", 7 },	/* Gazipasa-Alanya */
+	{ 4125399, 3656755, 107, 4, 1, "LTFH", "Samsun-\307ar\376amba", 55 },	/* Samsun-Carsamba */
+	{ 4089860, 2930920, 111, 4, 0, "LTFJ", "Istanbul Sabiha G\366k\347en", 34 },	/* Istanbul Sabiha Gokcen */
+	{ 4078707, 2660666, 115, 0, 1, "LTFL", "Ke\376an AB", 22 },	/* Kesan AB */
+	{ 4127487, 2873214, 115, 3, 0, "LTFM", "\335stanbul", 34 },	/* Istanbul */
+	{ 4117977, 4084880, 118, 4, 1, "LTFO", "Rize-Artvin", 53 },	/* Rize-Artvin */
+	{ 3973886, 3237864, 122, 0, 1, "TR-0004", "Temelli AB", 6 },	/* Temelli AB */
 };
+/* 54 provinces (01 2, 02 1, 03 1, 04 1, 05 1, 06 5, 07 2, 10 3, 12 1, 16 1, 17 1, 20 1, 21 1, 22 1, 23 1, 24 1, 25 1, 26 3, 27 1, 30 1, 31 1, 32 1, 33 1, 34 5, 35 4, 36 1, 37 1, 38 1, 41 1, 42 1, 43 2, 44 2, 45 1, 46 1, 47 1, 48 2, 49 1, 50 1, 52 1, 53 1, 55 1, 56 1, 57 1, 58 1, 59 1, 60 1, 61 1, 63 1, 64 1, 65 1, 67 1, 72 1, 73 1, 76 1), unknown 0; by district 1, outline 71, region 2 */
 
 const uint16_t air_field_count = AIR_FIELDS;
 

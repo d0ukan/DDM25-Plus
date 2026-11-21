@@ -10,7 +10,14 @@
  * row's airfields and the picked frequency (6 B).
  * CONFIG_AIR_WATCH (DDM32 Plus, item 44b): # in the details watches them: up to 6 (each channel name once, not the
  * ATIS) on the multi-watch ring, each letter its own VFO, received in AM; one frequency is simply tuned
- * (ui_airwatch.inc). */
+ * (ui_airwatch.inc).
+ *
+ * By province (CONFIG_AIR_PROV, DDM32 Plus round 16, as Tools > Repeaters): the screen opens on a first level, "All"
+ * (the whole list as above), then the provinces that have airfields in plate order ("06 Ankara (5)": the map's names),
+ * then "Unknown" when some airfields have no province. OK opens that province's list (nearest first or by code, the
+ * same rows, details, listen, air watch and #, all within the province); Back returns to the first level, Back there
+ * leaves. # on the first level: the nearest airfield's details in "All". Which groups have airfields is a bit each (one
+ * pass when the screen opens); a row's count is one pass when it is drawn. */
 #include "config.h"
 #if CONFIG_AIRFIELDS
 #include "board.h"
@@ -27,11 +34,28 @@
 #if CONFIG_AIR_WATCH
 #include "ui_svc.h"	/* UI_MW_MAX */
 #endif
+#if CONFIG_AIR_PROV
+#include <string.h>
+#include "ui/map.h"
+#endif
 
 static uint16_t sel = AIR_NONE, top = AIR_NONE;
 static uint8_t fsel;
 static bool info;
 static char done[48];		/* the toast after tuning (or watching) */
+
+#if CONFIG_AIR_PROV
+#define GRP_UNKNOWN	(AIR_PROVS + 1u)	/* the first level's groups: 0 All, 1..81 the plates, then Unknown */
+#define GRPS		(AIR_PROVS + 2u)
+static uint8_t present[(GRPS + 7u) / 8u];	/* group g has airfields (bit g; All always) */
+static uint8_t filt = AIR_PROV_ALL;		/* the list's province: AIR_PROV_ALL, a plate or AIR_PROV_UNKNOWN */
+static uint8_t gfocus;				/* the first level's picked row */
+static uint16_t gtop;				/* and its top row (ui_draw_list) */
+static bool groups;				/* the first level is shown */
+#define FILT	filt
+#else
+#define FILT	AIR_PROV_ALL
+#endif
 
 /* Where we are now (the position APRS would send, ambiguity and all) */
 static void here_now(air_here_t *h, int32_t *lat, int32_t *lon)
@@ -122,13 +146,13 @@ static void __attribute__((noinline)) draw_list(int y, const air_here_t *h, int3
 	if (rows < 1)
 		rows = 1;
 	/* Keep the picked row on the page: the top row moves only when the pick would leave it */
-	uint16_t rs = air_rank(h, sel), rt = top < air_field_count ? air_rank(h, top) : 0;
+	uint16_t rs = air_rank_in(h, sel, FILT), rt = top < air_field_count ? air_rank_in(h, top, FILT) : 0;
 	if (top >= air_field_count || rs < rt) {
 		top = sel;
 	} else if (rs >= rt + (uint16_t)rows) {
 		top = sel;
 		for (int k = 1; k < rows; k++) {
-			uint16_t p = air_next(h, top, -1);
+			uint16_t p = air_next_in(h, top, -1, FILT);
 			if (p == AIR_NONE)
 				break;
 			top = p;
@@ -138,9 +162,86 @@ static void __attribute__((noinline)) draw_list(int y, const air_here_t *h, int3
 	for (int k = 0; k < rows && i != AIR_NONE; k++) {
 		row(y, rh, i, i == sel, h, lat, lon);
 		y += rh;
-		i = air_next(h, i, 1);
+		i = air_next_in(h, i, 1, FILT);
 	}
 }
+
+#if CONFIG_AIR_PROV
+static bool grp_has(uint8_t g)
+{
+	return (present[g >> 3] >> (g & 7u)) & 1u;
+}
+
+/* The province filter of group g */
+static uint8_t grp_filter(uint8_t g)
+{
+	return g == 0 ? (uint8_t)AIR_PROV_ALL : g == GRP_UNKNOWN ? (uint8_t)AIR_PROV_UNKNOWN : g;
+}
+
+/* Which groups have airfields: one pass over the table */
+static void grp_scan(void)
+{
+	memset(present, 0, sizeof present);
+	present[0] = 1u;	/* All */
+	for (uint16_t i = 0; i < air_field_count; i++) {
+		uint8_t p = air_fields[i].prov;
+		uint8_t g = p >= 1u && p <= AIR_PROVS ? p : (uint8_t)GRP_UNKNOWN;
+		present[g >> 3] |= (uint8_t)(1u << (g & 7u));
+	}
+}
+
+static uint8_t grp_count(void)
+{
+	uint8_t n = 0;
+	for (uint8_t g = 0; g < GRPS; g++)
+		n += grp_has(g);
+	return n;
+}
+
+/* The group on row r of the first level */
+static uint8_t grp_at(uint8_t r)
+{
+	for (uint8_t g = 0; g < GRPS; g++)
+		if (grp_has(g) && r-- == 0)
+			return g;
+	return 0;
+}
+
+/* "All airfields (74)", "06 Ankara (5)", "Unknown (1)" */
+static void grp_item(uint16_t r, ui_item_t *it)
+{
+	uint8_t g = grp_at((uint8_t)r);
+	sbuf_t b;
+	sb_init(&b, it->label, sizeof it->label);
+	if (g == 0) {
+		sb_str(&b, TR("All airfields"));
+	} else if (g == GRP_UNKNOWN) {
+		sb_str(&b, TR("Unknown"));
+	} else {
+		sb_u32(&b, g, 2);
+		sb_chr(&b, ' ');
+		sb_str(&b, map_province_name((uint8_t)(g - 1u)));
+	}
+	sb_str(&b, " (");
+	sb_u32(&b, air_count_in(grp_filter(g)), 1);
+	sb_chr(&b, ')');
+}
+
+static void __attribute__((noinline)) draw_groups(void)
+{
+	ui_list_t l = {
+		.prefix = TR("Airfields"), .count = grp_count(), .focus = gfocus, .top = &gtop, .item = grp_item,
+		.hint = TR("^v pick  OK list  # nearest"),
+	};
+	ui_draw_list(ui_view(), &ui_st, &l);
+}
+
+/* The province list's title: the province's name, "Unknown", or nothing for All */
+static const char *filt_name(void)
+{
+	return filt == AIR_PROV_ALL ? "" : filt == AIR_PROV_UNKNOWN ? TR("Unknown") : map_province_name((uint8_t)(filt - 1u));
+}
+#endif
 
 static void __attribute__((noinline)) draw_info(int y, uint16_t i, const air_here_t *h, int32_t lat, int32_t lon)
 {
@@ -206,11 +307,20 @@ static void airfield_draw(void)
 {
 	air_here_t h;
 	int32_t lat = 0, lon = 0;
+#if CONFIG_AIR_PROV
+	if (groups && air_field_count != 0) {
+		draw_groups();
+		return;
+	}
+	const char *name = filt_name();
+#else
+	const char *name = "";
+#endif
 	gfx_clear(ui_col.bg);
-	int y = ui_draw_top(ui_view(), &ui_st, TR("Airfields"), "") + 2;
+	int y = ui_draw_top(ui_view(), &ui_st, TR("Airfields"), name) + 2;
 	here_now(&h, &lat, &lon);
 	if (sel >= air_field_count)
-		sel = air_nearest(&h);
+		sel = air_next_in(&h, AIR_NONE, 1, FILT);
 	if (info)
 		draw_info(y, sel, &h, lat, lon);
 	else
@@ -309,11 +419,49 @@ static void __attribute__((noinline)) watch_all(uint16_t i)
 }
 #endif
 
+#if CONFIG_AIR_PROV
+/* The first level: Up / Down pick (round), OK opens the group's list, # the nearest airfield's details (All), Back
+ * leaves the screen */
+static bool grp_key(const input_event_t *ev, bool press)
+{
+	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {
+		int dir = ev->action == ACT_ENC_STEP ? (ev->value > 0 ? 1 : -1) : ev->action == ACT_NAV_DOWN ? 1 : -1;
+		uint8_t n = grp_count();
+		gfocus = (uint8_t)((gfocus + n + dir) % n);
+		ui_dirty();
+		return true;
+	}
+	if ((ev->action == ACT_SELECT || ev->action == ACT_CONTEXT) && ev->gesture == GESTURE_PRESS) {
+		bool nearest = ev->action == ACT_CONTEXT;
+		if (nearest)
+			gfocus = 0;
+		filt = grp_filter(grp_at(gfocus));
+		groups = false;
+		sel = top = AIR_NONE;	/* the group's nearest (airfield_draw) */
+		info = nearest;
+		fsel = 0;
+		if (nearest) {
+			air_here_t h;
+			int32_t lat, lon;
+			here_now(&h, &lat, &lon);
+			sel = air_nearest(&h);
+		}
+		ui_dirty();
+		return true;
+	}
+	return false;
+}
+#endif
+
 static bool airfield_key(const input_event_t *ev)
 {
 	bool press = ev->gesture == GESTURE_PRESS || ev->gesture == GESTURE_REPEAT;
 	if (air_field_count == 0)
 		return false;
+#if CONFIG_AIR_PROV
+	if (groups)
+		return grp_key(ev, press);
+#endif
 	if (press && (ev->action == ACT_NAV_UP || ev->action == ACT_NAV_DOWN || ev->action == ACT_ENC_STEP)) {
 		int dir = ev->action == ACT_ENC_STEP ? (ev->value > 0 ? 1 : -1) : ev->action == ACT_NAV_DOWN ? 1 : -1;
 		if (info) {
@@ -324,8 +472,8 @@ static bool airfield_key(const input_event_t *ev)
 			air_here_t h;
 			int32_t lat, lon;
 			here_now(&h, &lat, &lon);
-			uint16_t nx = sel < air_field_count ? air_next(&h, sel, dir) : AIR_NONE;
-			sel = nx != AIR_NONE ? nx : air_next(&h, AIR_NONE, dir);	/* round from the end to the start */
+			uint16_t nx = sel < air_field_count ? air_next_in(&h, sel, dir, FILT) : AIR_NONE;
+			sel = nx != AIR_NONE ? nx : air_next_in(&h, AIR_NONE, dir, FILT);	/* round from the end to the start */
 		}
 		ui_dirty();
 		return true;
@@ -358,7 +506,7 @@ static bool airfield_key(const input_event_t *ev)
 		air_here_t h;
 		int32_t lat, lon;
 		here_now(&h, &lat, &lon);
-		sel = air_nearest(&h);
+		sel = air_next_in(&h, AIR_NONE, 1, FILT);	/* the nearest (of the province) */
 		info = true;
 		fsel = 0;
 		ui_dirty();
@@ -369,6 +517,14 @@ static bool airfield_key(const input_event_t *ev)
 		ui_dirty();
 		return true;
 	}
+#if CONFIG_AIR_PROV
+	/* Back from a province's list: the first level, its focus kept */
+	if (ev->action == ACT_BACK && ev->gesture == GESTURE_PRESS) {
+		groups = true;
+		ui_dirty();
+		return true;
+	}
+#endif
 	return false;
 }
 
@@ -377,6 +533,13 @@ static void airfield_enter(void)
 	sel = top = AIR_NONE;	/* the nearest first, each time the screen opens */
 	info = false;
 	fsel = 0;
+#if CONFIG_AIR_PROV
+	grp_scan();
+	filt = AIR_PROV_ALL;
+	groups = true;
+	gfocus = 0;
+	gtop = 0;
+#endif
 	ui_dirty();
 }
 

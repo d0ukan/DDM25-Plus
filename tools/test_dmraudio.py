@@ -4,7 +4,9 @@
 
 - tests/plus/test_dmraudio_pcm.c: the real generated PCM driver (audio_pcm.c + pcm_playback.inc + pcm_diag.inc) and its
   audio task against a model of the prompt FIFO: the shipped feeding runs dry after a fast first block, the prefill
-  does not, the counters see what the model hears;
+  does not, the counters see what the model hears, the idle stream's drops are not counted as losses;
+- tests/plus/test_dmraudio_gain.c: the decoded voice's digital gain in the generated ambeVoice.c (x1 unchanged,
+  saturation and its counter, the peak after it, the beeps mixed after it);
 - tests/plus/test_ui_dmraudio.c: Tools > Diagnostics in upstream's simulator, English and Turkish, with the real line
   formatter and digit handler cut out of the generated boards/dm32/diag_dm32.c."""
 import re
@@ -39,6 +41,14 @@ def main(ROOT, APP, OUT, flags, host):
          '-DAUDIO_PCM_C="' + str(APP / 'platform/hrc7000/audio_pcm.c') + '"',
          tp / 'test_dmraudio_pcm.c', 'src/p25/pcm_clock.c', '-o', OUT / 'test_dmraudio_pcm'], cwd=ROOT)
     run([OUT / 'test_dmraudio_pcm'], cwd=ROOT)
+
+    # The decoded voice's gain: the generated ambeVoice.c with the real FEC
+    run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-Wno-unused-parameter',
+         '-fsanitize=address,undefined', '-fno-sanitize-recover=undefined', '-fno-omit-frame-pointer',
+         '-I' + str(APP / 'core'), '-I' + str(APP / 'hal'), '-DCONFIG_DMR_AUDIO_DIAG=1',
+         tp / 'test_dmraudio_gain.c', APP / 'core/dmr/ambe/ambeVoice.c', APP / 'core/dmr/ambe/ambeFec.c',
+         '-o', OUT / 'test_dmraudio_gain'], cwd=ROOT)
+    run([OUT / 'test_dmraudio_gain'], cwd=ROOT)
 
     # The page: the formatter and the digit handler as generated, the types from the generated header
     diag = (APP / 'boards/dm32/diag_dm32.c').read_text()

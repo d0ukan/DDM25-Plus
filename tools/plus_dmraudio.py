@@ -9,15 +9,63 @@ The owner hears DMR receive audio crackly and artificial on v1.0.0-beta.3 while 
 changed between beta.2 and beta.3 runs in the receive audio path during a call, so the cause has to be found on the
 radio. This gives one session the evidence, with no cable and no second image:
 
-  Tools > Diagnostics, first page, five lines (debug text, not translated, like the page's other lines):
-    dv m<mode> in<AMBE frames in> pl<played>                         the AMBE voice queue (ambeVoice.c counters)
-    dv cc<concealed> un<underruns> q<queue max> pk<peak sample>
+  Tools > Diagnostics, first page, six lines (debug text, not translated, like the page's other lines):
+    dv m<mode> x<gain> in<AMBE frames in> pl<played>                 the AMBE voice queue (ambeVoice.c counters)
+    dv cc<concealed> un<underruns> q<queue max> pk<decoder's peak sample>
     dv bd<frames FEC could not fix> ls<lost> be<bit errors fixed>
-    sp gp<FIFO ran dry>/<longest, ms> fu<FIFO full refusals> dr<blocks dropped>   the prompt FIFO feed (pcm_diag.inc)
+    sp gp<FIFO ran dry>/<longest, ms> fu<FIFO full refusals> dr<blocks lost while playing>   the prompt FIFO feed
     au bl<block latency min>-<max, ms> sl<blocks 15 ms late> ov<mic blocks lost>  the audio task's timing
+    dv cl<samples clipped by the gain> po<peak sample after the gain>
   On that page, with a channel shown: 0 steps the FIFO feed mode (m0 as before, m1 prefill, m2 paced, m3 both),
-  9 zeroes the counters. RAM only: every power-on starts at m0, the shipped behavior.
+  8 steps a digital gain on the decoded voice (x1, x2, x4, x8, saturating; beeps keep their level), 9 zeroes the
+  counters. RAM only: every power-on starts at m0 and x1, the shipped behavior.
 """
+
+# The decoded voice's digital gain (round 2: the owner's radio showed the decoder's peak about 1,000 of 32,767 on
+# speech). In the audio callback after rx_block, before the beeps are mixed in: DMR and every mode on this sink
+AMBE_GAIN_VARS = r'''#if CONFIG_DMR_AUDIO_DIAG
+static uint8_t rx_gain_shift;		// DDM32 Plus voice gain (rx_gain): any task writes, the audio callback reads
+static uint32_t rx_clipped, rx_peak_out;	// the audio callback
+#endif
+'''
+AMBE_GAIN = r'''#if CONFIG_DMR_AUDIO_DIAG
+// DDM32 Plus DMR receive audio (tools/plus_dmraudio.py): a digital gain on the decoded voice, 2^rx_gain_shift
+// (Tools > Diagnostics, key 8; RAM only), saturating; the samples it clipped and the call's peak after it (their
+// variables are with the statistics, AMBE_GAIN_VARS)
+static void rx_gain(int16_t *spk)
+{
+	int32_t g = 1 << (LOAD(rx_gain_shift) & 3u);	// x1: the samples as they were
+	for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		int32_t v = (int32_t)spk[i] * g;
+		if (v > 32767 || v < -32768) {
+			v = v > 0 ? 32767 : -32768;
+			rx_clipped++;
+		}
+		uint32_t a = (uint32_t)(v < 0 ? -v : v);
+		if (a > rx_peak_out)
+			rx_peak_out = a;
+		spk[i] = (int16_t)v;
+	}
+}
+
+void ambeVoiceSetRxGain(uint8_t shift)
+{
+	STORE(rx_gain_shift, (uint8_t)(shift & 3u));
+}
+
+uint8_t ambeVoiceRxGain(void)
+{
+	return LOAD(rx_gain_shift);
+}
+
+void ambeVoiceRxLevel(uint32_t *clipped, uint32_t *peak_out)
+{
+	*clipped = rx_clipped;
+	*peak_out = rx_peak_out;
+}
+#endif
+
+'''
 
 DMRAUDIO = 'integration/radiofoundry/dmraudio/'
 ON = '#if CONFIG_DMR_AUDIO_DIAG\n'
@@ -28,7 +76,7 @@ ONB = '#if CONFIG_DMR_AUDIO_DIAG && CONFIG_DMR && CONFIG_DIAG\n'	# the page's pi
 DIAG_LINES = r'''#if CONFIG_DMR_AUDIO_DIAG && CONFIG_DMR && CONFIG_DIAG
 // DDM32 Plus DMR receive audio (tools/plus_dmraudio.py): the voice queue, the prompt FIFO feed, the audio task's timing.
 // At most 26 characters a line (the page's 8-pixel font inside the 240-pixel panel's insets): counters stop at a cap
-#define DMRAUDIO_LINES	5u
+#define DMRAUDIO_LINES	6u
 
 static void put_c(out_t *o, uint32_t v, uint32_t cap)
 {
@@ -48,18 +96,22 @@ static bool dmraudio_line(uint8_t i, char *buf, uint8_t len)
 	out_t o = { buf, buf + len - 1 };
 	ambe_voice_stats_t a;
 	hrc_pcm_diag_t p;
+	uint32_t clipped, peak_out;
 	ambeVoiceGetStats(&a);
 	hrc_audio_pcm_diag(&p);
+	ambeVoiceRxLevel(&clipped, &peak_out);
 	switch (i) {
-	case 0:		// the FIFO feed mode; AMBE frames from the air, frames played
+	case 0:		// the FIFO feed mode, the voice gain; AMBE frames from the air, frames played
 		put(&o, "dv m");
 		put_c(&o, p.mode, 9u);
+		put(&o, " x");
+		put_u(&o, 1u << (ambeVoiceRxGain() & 3u));
 		put(&o, " in");
 		put_c(&o, a.rx_in, 99999u);
 		put(&o, " pl");
 		put_c(&o, a.rx_frames, 99999u);
 		break;
-	case 1:		// blocks concealed (a frame repeated), queue underruns, the queue's most, the call's peak sample
+	case 1:		// blocks concealed (a frame repeated), queue underruns, the queue's most, the call's peak from the decoder
 		put(&o, "dv cc");
 		put_c(&o, a.rx_concealed, 999u);
 		put(&o, " un");
@@ -77,7 +129,7 @@ static bool dmraudio_line(uint8_t i, char *buf, uint8_t len)
 		put(&o, " be");
 		put_c(&o, a.rx_bit_errors, 99999u);
 		break;
-	case 3:		// the FIFO ran dry / the longest (ms), FIFO full refusals, blocks dropped
+	case 3:		// the FIFO ran dry / the longest (ms), FIFO full refusals, blocks lost while the speaker plays
 		put(&o, "sp gp");
 		put_c(&o, p.gaps, 999u);
 		put(&o, "/");
@@ -101,6 +153,12 @@ static bool dmraudio_line(uint8_t i, char *buf, uint8_t len)
 		put(&o, " ov");
 		put_c(&o, p.overruns, 999u);
 		break;
+	case 5:		// samples the voice gain clipped, the call's peak after the gain
+		put(&o, "dv cl");
+		put_c(&o, clipped, 99999u);
+		put(&o, " po");
+		put_c(&o, peak_out, 99999u);
+		break;
 	default:
 		return false;
 	}
@@ -108,12 +166,16 @@ static bool dmraudio_line(uint8_t i, char *buf, uint8_t len)
 	return true;
 }
 
-// On the diagnostics page with a channel shown (core/ui/ui_app.c ui_diag_key): 0 steps the FIFO feed mode, 9 zeroes
-// the counters behind the page
+// On the diagnostics page with a channel shown (core/ui/ui_app.c ui_diag_key): 0 steps the FIFO feed mode, 8 the
+// voice gain (x1, x2, x4, x8), 9 zeroes the counters behind the page (the mode and the gain stay)
 bool dm32_diag_digit(uint8_t d)
 {
 	if (d == 0u) {
 		hrc_audio_pcm_set_mode((uint8_t)((hrc_audio_pcm_mode() + 1u) & 3u));
+		return true;
+	}
+	if (d == 8u) {
+		ambeVoiceSetRxGain((uint8_t)((ambeVoiceRxGain() + 1u) & 3u));
 		return true;
 	}
 	if (d == 9u) {
@@ -140,9 +202,9 @@ typedef struct {
 	uint32_t slow;		// loud blocks queued 15 ms or more after their microphone block
 	uint32_t loud_blocks;
 	uint32_t prefills;	// prefills that ended (the FIFO started)
-	uint32_t chunks;	// chunks pushed, FIFO full refusals, blocks dropped (queue full, stale after a gate edge)
+	uint32_t chunks;	// chunks pushed; FIFO full refusals (normal while the b31 feed tops the FIFO up)
 	uint32_t full;
-	uint32_t dropped;
+	uint32_t dropped;	// blocks lost to a full queue while the speaker plays (not the idle stream's)
 	uint32_t overruns;	// microphone blocks the audio task missed (a 20 ms gap)
 } hrc_pcm_diag_t;
 void hrc_audio_pcm_diag(hrc_pcm_diag_t *out);
@@ -187,6 +249,11 @@ def prepare_dmraudio(transform, install):
         ('\t\tif (spk_loud[spk_tail]) {\n\t\t\tloud_pushed = hrc_micros();',
          ON + '\t\tpd_pushed(spk_loud[spk_tail]);\n#endif\n'
          '\t\tif (spk_loud[spk_tail]) {\n\t\t\tloud_pushed = hrc_micros();'),
+        ('\t\telse play_diag[gen == spk_gen ? 8 : 9]++;\n#endif\n',
+         '\t\telse play_diag[gen == spk_gen ? 8 : 9]++;\n#endif\n'
+         + ON + '\tif (gen == spk_gen && next == spk_tail && spk_routed) {\n'
+         '\t\tpd.dropped++;\t// DDM32 Plus: lost while the speaker plays (the idle stream fills the queue: not counted)\n'
+         '\t}\n#endif\n'),
         ('\t\t\tspk_loud[spk_head] = loud;\n\t\t\tspk_head = next;\n',
          '\t\t\tspk_loud[spk_head] = loud;\n\t\t\tspk_head = next;\n' + ON + '\t\t\tpd_queued(loud);\n#endif\n'),
         ('\tspeaker_pcm_cb = speaker_pcm;\n',
@@ -203,7 +270,27 @@ def prepare_dmraudio(transform, install):
          '\tplay_diag[5] = UINT32_MAX;\t// the shortest push gap: none yet\n\thrc_irq_restore(s);\n#endif\n'),
     ])
 
-    # The page: five lines first, the digits 0 and 9
+    # The decoded voice's gain (core/dmr/ambe/ambeVoice.c)
+    transform('core/dmr/ambe/ambeVoice.h', [
+        ('void ambeVoiceGetStats(ambe_voice_stats_t *out);\n',
+         'void ambeVoiceGetStats(ambe_voice_stats_t *out);\n' + ON +
+         '// DDM32 Plus (tools/plus_dmraudio.py): the decoded voice times 2^shift (0..3), saturating; RAM only, any task\n'
+         'void ambeVoiceSetRxGain(uint8_t shift);\nuint8_t ambeVoiceRxGain(void);\n'
+         '// The samples the gain clipped (until ambeVoiceResetStats), the latest call\'s peak after it\n'
+         'void ambeVoiceRxLevel(uint32_t *clipped, uint32_t *peak_out);\n#endif\n'),
+    ])
+    transform('core/dmr/ambe/ambeVoice.c', [
+        ('static ambe_voice_stats_t stats;\n', 'static ambe_voice_stats_t stats;\n' + AMBE_GAIN_VARS),
+        ('void ambeVoiceAudioBlock(const int16_t *mic, int16_t *spk, void *ctx)\n{\n',
+         AMBE_GAIN + 'void ambeVoiceAudioBlock(const int16_t *mic, int16_t *spk, void *ctx)\n{\n'),
+        ('\ttx_block(mic);\n\trx_block(spk);\n',
+         '\ttx_block(mic);\n\trx_block(spk);\n' + ON + '\trx_gain(spk);\t// DDM32 Plus: before the beeps are mixed in\n#endif\n'),
+        ('\t\tstats.rx_peak = 0;\n', '\t\tstats.rx_peak = 0;\n' + ON + '\t\trx_peak_out = 0;\n#endif\n'),
+        ('\tmemset(&stats, 0, sizeof(stats));\n',
+         '\tmemset(&stats, 0, sizeof(stats));\n' + ON + '\trx_clipped = rx_peak_out = 0;\n#endif\n'),
+    ])
+
+    # The page: six lines first, the digits 0, 8 and 9
     transform('hal/board.h', [
         ('\tvoid (*diag_reset)(void);\n',
          '\tvoid (*diag_reset)(void);\n'

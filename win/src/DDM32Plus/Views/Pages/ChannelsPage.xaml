@@ -2,28 +2,64 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:l="clr-namespace:DDM32Plus.Localization">
-    <!-- codeplug_tab.py: the codeplug decoded from a backup image, read only (next stage) -->
+    <!-- codeplug_tab.py: the codeplug decoded from a backup's data flash image (Core/Codeplug), read only: channels in
+         every mode, zones, contacts, RX group lists; search, zone and mode filters, CSV of what is shown -->
+    <UserControl.Resources>
+        <Style x:Key="Grid" TargetType="DataGrid">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="AlternatingRowBackground" Value="#f4f7fb" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#e3e3e3" />
+            <Setter Property="CanUserReorderColumns" Value="True" />
+            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="CanUserSortColumns" Value="True" />
+            <Setter Property="SelectionMode" Value="Extended" />
+            <Setter Property="FontSize" Value="{StaticResource Size1}" />
+            <Setter Property="EnableRowVirtualization" Value="True" />
+            <Setter Property="BorderBrush" Value="{StaticResource Frame}" />
+        </Style>
+    </UserControl.Resources>
     <DockPanel>
         <StackPanel DockPanel.Dock="Top">
             <TextBlock Style="{StaticResource PageTitle}" Text="{l:Tr Tab_Channels}" />
-            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Ch_Warn}" Foreground="{StaticResource AmberDark}" />
-            <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Ch_NoBackup}" />
-            <DockPanel Margin="0,6">
-                <TextBlock DockPanel.Dock="Left" Text="{l:Tr Ch_Search}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBox IsEnabled="False" ToolTip="{l:Tr Ch_SearchHint}" />
-            </DockPanel>
-            <Border Style="{StaticResource NextStage}">
-                <StackPanel>
-                    <TextBlock Text="{l:Tr Common_NextStageTitle}" FontWeight="Bold" FontSize="{StaticResource Size2}" />
-                    <TextBlock Style="{StaticResource Plain}" Text="{l:Tr Common_NextStage}" />
-                </StackPanel>
+            <Border Background="#fde2a7" CornerRadius="4" Padding="8,5" Margin="0,0,0,4">
+                <TextBlock Text="{l:Tr Ch_Warn}" Foreground="#3b2a00" FontWeight="Bold" TextWrapping="Wrap" />
             </Border>
+            <TextBlock x:Name="InfoText" Style="{StaticResource Plain}" FontSize="{StaticResource Size3}" Text="{l:Tr Ch_NoBackup}" />
+            <TextBlock x:Name="RadioText" Style="{StaticResource Plain}" Foreground="{StaticResource Grey}" />
+            <WrapPanel Margin="0,6,0,2">
+                <TextBlock Text="{l:Tr Ch_Search}" VerticalAlignment="Center" Margin="0,0,6,4" />
+                <TextBox x:Name="SearchBox" Width="260" Margin="0,0,14,4" ToolTip="{l:Tr Ch_SearchHint}" TextChanged="OnSearch" />
+                <TextBlock Text="{l:Tr Ch_Zone}" VerticalAlignment="Center" Margin="0,0,6,4" />
+                <ComboBox x:Name="ZoneBox" Width="190" Margin="0,0,14,4" SelectionChanged="OnFilter" />
+                <TextBlock Text="{l:Tr Ch_Mode}" VerticalAlignment="Center" Margin="0,0,6,4" />
+                <ComboBox x:Name="ModeBox" Width="120" Margin="0,0,14,4" SelectionChanged="OnFilter" />
+                <CheckBox x:Name="AllColumnsBox" Content="{l:Tr Ch_AllColumns}" ToolTip="{l:Tr Ch_AllColumnsTip}" VerticalAlignment="Center"
+                          Margin="0,0,14,4" Checked="OnColumns" Unchecked="OnColumns" />
+            </WrapPanel>
+            <WrapPanel Margin="0,0,0,4">
+                <Button x:Name="OpenButton" Style="{StaticResource IconButton}" Tag="&#xE8B7;" Margin="0,0,8,0" Content="{l:Tr Ch_Open}"
+                        ToolTip="{l:Tr Ch_OpenTip}" Click="OnOpen" />
+                <Button x:Name="ExportButton" Style="{StaticResource IconButton}" Tag="&#xE74E;" Margin="0,0,8,0" Content="{l:Tr Ch_Export}"
+                        ToolTip="{l:Tr Ch_ExportTip}" Click="OnExport" />
+                <TextBlock x:Name="ShownText" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{StaticResource Grey}" />
+            </WrapPanel>
         </StackPanel>
-        <TabControl Padding="4" Margin="0,4,0,0">
-            <TabItem Header="{l:Tr Ch_Channels}" />
-            <TabItem Header="{l:Tr Ch_Zones}" />
-            <TabItem Header="{l:Tr Ch_Contacts}" />
-            <TabItem Header="{l:Tr Ch_Lists}" />
+        <TabControl x:Name="Tabs" Padding="4" Margin="0,4,0,0" SelectionChanged="OnTab">
+            <TabItem Header="{l:Tr Ch_Channels}">
+                <DataGrid x:Name="ChannelGrid" Style="{StaticResource Grid}" Sorting="OnSorting" />
+            </TabItem>
+            <TabItem Header="{l:Tr Ch_Zones}">
+                <DataGrid x:Name="ZoneGrid" Style="{StaticResource Grid}" Sorting="OnSorting" MouseDoubleClick="OnZoneDoubleClick" />
+            </TabItem>
+            <TabItem Header="{l:Tr Ch_Contacts}">
+                <DataGrid x:Name="ContactGrid" Style="{StaticResource Grid}" Sorting="OnSorting" />
+            </TabItem>
+            <TabItem Header="{l:Tr Ch_Lists}">
+                <DataGrid x:Name="ListGrid" Style="{StaticResource Grid}" Sorting="OnSorting" />
+            </TabItem>
         </TabControl>
     </DockPanel>
 </UserControl>
