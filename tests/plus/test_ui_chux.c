@@ -5,7 +5,10 @@
  * screen a case ends on. Covers:
  *   1. zone size: the zone list's Add channel "16/80", the channel editor's Zones "12/80" beside a zone it is not in,
  *      Zones > Create New Zone "3/68"; a full zone (80): Add channel dimmed "80/80" and refused "Zone full: max 80
- *      channels", Copy here refused the same way. */
+ *      channels", Copy here refused the same way; a position whose channel can't be read shows;
+ *   2. DMR rows: a channel made DMR gets the first group contact; the RX group list picker offers Any right after
+ *      None, picking it says what it hears and the row reads "All TGs TS1", None says so too; saved; an RX only DMR
+ *      channel saves without a TX contact; Direct mode on says what it does. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -133,6 +136,74 @@ static void case_zone_unreadable(void)
 	layout();
 }
 
+/* Down (or Up) to the row whose label starts with label; false when it isn't there */
+static bool row(const char *label, const char *key)
+{
+	for (int k = 0; k < 40; k++) {
+		if (strncmp(ui_app_focus_label(), label, strlen(label)) == 0)
+			return true;
+		run(key);
+	}
+	printf("FAIL %s (%s): no row %s (focus %s)\n", name, turkish ? "tr" : "en", label, ui_app_focus_label());
+	fails++;
+	return false;
+}
+
+/* ---------------- 2. DMR rows ---------------- */
+
+/* The channel in use (COUNTY DMR) in its editor */
+static void dmr_channel(void)
+{
+	run("ok 5 ok");
+	expect("screen=channel shows=DMR shows=COUNTY_DMR");
+}
+
+static void case_dmr_rows(void)
+{
+	start("made DMR: the first group contact");
+	dmr_channel();
+	row(T("Mode", "Mod"), "up");
+	run("ok ok ok");	/* DMR, P25 (no contact), FM, DMR again (this build has no YSF / NXDN / dPMR) */
+	row(T("TX contact", "TX ki"), "down");
+	expect("shows=USA");
+	layout();
+	start("RX group list: Any after None, said, shown, saved");
+	dmr_channel();
+	row(T("RX list", "RX listesi"), "down");
+	run("ok");
+	expect("screen=chpick count=3 focus=County");
+	run("up");
+	expect(T("focus=Any:_all_TGs", "focus=T\374m\374:_t\374m_gruplar"));
+	layout();
+	run("ok");
+	expect(T("screen=channel toast=Any:_every_TG_on_this_slot", "screen=channel toast=T\374m\374:_bu_slottaki"));
+	run("wait:3000");	/* the toast gone */
+	expect(T("shows=All_TGs_TS1", "shows=T\374m_TG_TS1"));
+	layout();
+	run("long:ok");
+	expect("writes=1");
+	start("RX group list: None said");
+	dmr_channel();
+	row(T("RX list", "RX listesi"), "down");
+	run("ok up up ok");
+	expect(T("toast=None:_only_the_TX_contact's_TG", "toast=Yok:_yaln\375z_TX"));
+	start("RX only DMR channel saves without a TX contact");
+	dmr_channel();
+	row(T("TX contact", "TX ki\376isi"), "down");
+	run("ok");
+	row(T("None", "Yok"), "up");
+	run("ok");
+	row(T("RX only", "Yaln\375z RX"), "up");
+	run("ok long:ok");
+	expect("writes=1");
+	start("Direct mode on: said");
+	dmr_channel();
+	row(T("Direct mode", "Direkt mod"), "down");
+	run("ok");
+	expect(T("toast=Direct:_TX_on_the_RX_frequency", "toast=Direkt:_TX,_RX_frekans\375nda"));
+	layout();
+}
+
 typedef void (*case_fn)(void);
 
 static int run_case(case_fn fn)
@@ -152,7 +223,7 @@ static int run_case(case_fn fn)
 
 int main(void)
 {
-	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable };
+	static const case_fn cases[] = { case_zone_counts, case_zone_full, case_zone_unreadable, case_dmr_rows };
 	int bad = 0, n = 0;
 	for (int lang = 0; lang < 2; lang++) {
 		turkish = lang == 1;

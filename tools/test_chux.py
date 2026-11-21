@@ -40,6 +40,13 @@ def main(ROOT, APP, OUT, flags, host):
          APP / 'core/settings/settings.c', APP / 'core/storage/storage.c', host / 'sim/sim_flash.c',
          '-o', OUT / 'test_zone_cap'], cwd=ROOT)
     run([OUT / 'test_zone_cap'], cwd=ROOT)
+    # RX group list Any in the real DMR call layer: every talkgroup, not digital monitor
+    command = run(['make', '-Bn', 'dmrCallTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout
+    argv = shlex.split(next(line for line in command.splitlines() if ' -o dmrCallTest ' in line))
+    argv[argv.index('dmrCallTest.c')] = str(tp / 'test_any_group.c')
+    argv[argv.index('-o') + 1] = str(OUT / 'test_any_group')
+    run([*argv, '-I' + str(host), '-DCONFIG_DMR_ANY=1', '-DCONFIG_CHAN_EXTRAS=1'], cwd=host)
+    run([OUT / 'test_any_group'], cwd=host)
     # The screens, English and Turkish
     command = run(['make', '-Bn', 'uiFlowTest', 'SANITIZE=1'], cwd=host, capture_output=True, text=True).stdout
     argv = shlex.split(next(line for line in command.splitlines() if ' -o uiFlowTest ' in line))

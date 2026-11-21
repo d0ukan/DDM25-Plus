@@ -57,6 +57,10 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 - Zones show their size where channels are added: the zone list's Add channel row "26/80", the channel editor's
   Zones "26/80", Create New Zone "5/68"; a full zone says "Zone full: max 80 channels"; a channel the radio can't
   read shows in its zone as "27 ? Ch 123" instead of vanishing (Home skips it).
+- DMR channel editor: RX group list Any now means every talkgroup on the channel's slot (no longer digital
+  monitor: no private calls of others, Home no longer says DMon for it); "RX list" shows "All TGs TS1"; the picker offers
+  Any right after None and says in one line what Any or None hears; a channel made DMR gets the first group contact; an
+  RX only DMR channel saves without a TX contact; Direct mode explains itself.
 
 ## v1.0.0-beta.3 (2026-11-20)
 

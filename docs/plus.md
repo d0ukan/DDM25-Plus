@@ -2705,3 +2705,24 @@ Recommendation: **keep 80**. If the owner needs more in one place, the cheap pat
 "continued" zone the zone step reaches next), not bigger records. If 100 is ever wanted on our own format, first fold
 `ui_dual.c`'s 12 static zones into one shared buffer (-1,980 B at 80), which makes 100 fit with ~1,100 B margin left of
 the rule's; 128 and 250 need on-demand reads instead of whole-zone copies everywhere.
+
+### 2. DMR channel rows ("RX group list 'Any' doesn't work sensibly")
+
+Any was digital monitor in disguise: the radio core set the call layer's `hear_all` for it, so such a channel also
+played private calls between other stations, Home showed DMon whatever the user's toggle said, and the toggle could not
+turn it off (item 3). Any is now its own filter, `dmr_listen_filter_t.any_group`: **every group call on the channel's
+slot** (the talk target, the reply window and all call as before), nothing else; digital monitor is the user's alone.
+In the channel editor:
+
+| Row | Now |
+|---|---|
+| RX list (was "RX group list": the value didn't fit) | Any reads `All TGs TS1` (`All TGs` with timeslot Any); the picker offers None, **Any: all TGs**, then the lists (Any used to come after all 76 list slots); picking Any says "Any: every TG on this slot", None "None: only the TX contact's TG" |
+| Mode | a channel made DMR gets the first group contact as its TX contact when it has none, colour code 1 and timeslot 1 when it has none |
+| TX contact | an RX only DMR channel saves without one (before: "Pick a TX contact first" for every DMR channel) |
+| Direct mode | on: "Direct: TX on the RX frequency" |
+| Color code, Timeslot, Own ID | unchanged (Any colour code / timeslot make the channel RX only, as before; Own ID: empty is the radio's) |
+
+The VFO's RX list row (VFO settings) shows the same text. Tests: `tests/plus/test_any_group.c` in upstream's DMR call
+fixture (Any plays another talkgroup, not a private call between others, ours yes; digital monitor plays both),
+`tests/plus/test_ui_chux.c` (made DMR, the picker order, both one-liners, the row, save, RX only without a contact,
+Direct mode; English and Turkish, the layout).

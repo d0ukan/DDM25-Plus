@@ -18,8 +18,8 @@ def prepare_chux(transform, install):
         ('CONFIG_DATAPACK ?= n\nFEATURES += DATAPACK\n',
          'CONFIG_DATAPACK ?= n\nFEATURES += DATAPACK\n'
          'CONFIG_CHAN_EXTRAS ?= n\nFEATURES += CHAN_EXTRAS\n'
-         'ifeq ($(CONFIG_CHAN_EXTRAS),y)\nifneq ($(CONFIG_ZONE_EDIT)$(CONFIG_CHANNEL_EDIT),yy)\n'
-         '$(error CHAN_EXTRAS needs ZONE_EDIT=y and CHANNEL_EDIT=y)\nendif\nendif\n'),
+         'ifeq ($(CONFIG_CHAN_EXTRAS),y)\nifneq ($(CONFIG_ZONE_EDIT)$(CONFIG_CHANNEL_EDIT)$(CONFIG_DMR_ANY),yyy)\n'
+         '$(error CHAN_EXTRAS needs ZONE_EDIT=y, CHANNEL_EDIT=y and DMR_ANY=y)\nendif\nendif\n'),
     ])
     transform('core/config.h', [
         ('#ifndef CONFIG_DATAPACK\n',
@@ -27,6 +27,7 @@ def prepare_chux(transform, install):
          '#ifndef CONFIG_DATAPACK\n'),
     ])
     prepare_zone_size(transform)
+    prepare_dmr_rows(transform)
 
 
 def prepare_zone_size(transform):
@@ -98,3 +99,94 @@ def prepare_zone_size(transform):
          + '\t\treturn;\n\t}\n'),
     ])
 
+
+
+def prepare_dmr_rows(transform):
+    """2. The channel editor's DMR rows (owner: "RX group list 'Any' doesn't work sensibly"). Any was digital monitor in
+    disguise: it set the call layer's hear_all, so the channel also played private calls between other stations, Home
+    showed DMon whatever the user's toggle said, and the user's toggle could not turn it off. Any is now its own
+    filter, dmr_listen_filter_t.any_group: every group call on the channel's slot (the talk target, the reply and all
+    call as before), nothing else; digital monitor stays the user's. In the editor: Any reads "All TGs TS1" (or
+    "All TGs" with timeslot Any); the picker offers it right after None ("Any: all TGs") instead of after
+    the 76 lists; picking Any or None says in one line what the channel hears; a channel made DMR gets the first group
+    contact as its TX contact (it can't be saved without one) and colour code 1 / timeslot 1 if it had none; an RX only
+    DMR channel saves without a TX contact; Direct mode on says what it does."""
+    transform('core/dmr/call/dmr_call.h', [
+        ('\tbool any_ts;\t\t// DM32 Plus: either timeslot, no slot lock (the first heard holds the call)\n#endif\n',
+         '\tbool any_ts;\t\t// DM32 Plus: either timeslot, no slot lock (the first heard holds the call)\n#endif\n'
+         + _if('\tbool any_group;\t\t// DDM32 Plus: every group call on the slot (RX group list Any), not others\' private calls\n')),
+    ])
+    transform('core/dmr/call/dmr_call.c', [
+        ('\tif (f->hear_all || tg == DMR_ID_ALL_CALL)\n',
+         _if('\tif (f->hear_all || f->any_group || tg == DMR_ID_ALL_CALL)\n', '\tif (f->hear_all || tg == DMR_ID_ALL_CALL)\n')),
+    ])
+    transform('core/radio/radio_sm.c', [
+        ('\tcfg.listen.hear_all = cfg.listen.hear_all || ch->listen_list == CODEPLUG_LIST_ANY;\n',
+         _if('\tcfg.listen.any_group = ch->listen_list == CODEPLUG_LIST_ANY;\t// DDM32 Plus: not digital monitor (hear_all)\n',
+             '\tcfg.listen.hear_all = cfg.listen.hear_all || ch->listen_list == CODEPLUG_LIST_ANY;\n')),
+    ])
+    transform('core/ui/ui_menus.c', [
+        # "All TGs TS1" / "All TGs"
+        ('static void chinfo_item(uint16_t i, ui_item_t *it)\n',
+         _if('// DDM32 Plus: what RX group list Any hears, with the slot\n'
+             'static void sb_list_any(sbuf_t *b, uint8_t ts)\n{\n'
+             '\tif (ts == 1u || ts == 2u) {\n\t\tsb_str(b, TR("All TGs TS"));\n\t\tsb_chr(b, (char)(\'0\' + ts));\n'
+             '\t} else {\n\t\tsb_str(b, TR("All TGs"));\n\t}\n}\n\n')
+         + 'static void chinfo_item(uint16_t i, ui_item_t *it)\n'),
+        ('\t\tif (ch->listen_list == CODEPLUG_LIST_ANY) {\n\t\t\tsb_str(&b, TR("Any (all groups)"));\n\t\t\tbreak;\n\t\t}\n',
+         '\t\tif (ch->listen_list == CODEPLUG_LIST_ANY) {\n'
+         + _if('\t\t\tsb_list_any(&b, ch->timeslot);\n', '\t\t\tsb_str(&b, TR("Any (all groups)"));\n')
+         + '\t\t\tbreak;\n\t\t}\n'),
+        # A shorter label, so "All TGs TS1" fits beside it: "RX list"
+        ('\tstr_copy(it->label, sizeof it->label, tr(labels[r]));\n',
+         '\tstr_copy(it->label, sizeof it->label, tr(labels[r]));\n'
+         + _if('\tif (r == CE_LIST)\n\t\tstr_copy(it->label, sizeof it->label, TR("RX list"));\n')),
+        # The picker: None, Any, then the lists (raw 1 is Any, raw k + 1 list k)
+        ('\tif (ui_frame()->arg != 0 && raw == CODEPLUG_LISTS_MAX + 1u) {\n\t\tname = TR("Any (all groups)");\n'
+         '\t\traw = 0;\n\t}\n',
+         _if('\tif (ui_frame()->arg != 0 && raw == 1u) {\n\t\tname = TR("Any: all TGs");\n\t\traw = 0;\n'
+             '\t} else if (ui_frame()->arg != 0 && raw > 1u) {\n\t\traw--;\n\t}\n',
+             '\tif (ui_frame()->arg != 0 && raw == CODEPLUG_LISTS_MAX + 1u) {\n\t\tname = TR("Any (all groups)");\n'
+             '\t\traw = 0;\n\t}\n')),
+        ('\tif (ui_frame()->arg != 0 && ced_ch.listen_list == CODEPLUG_LIST_ANY)\n'
+         '\t\treturn (uint16_t)(CODEPLUG_LISTS_MAX + 1u);\n',
+         _if('\tif (ui_frame()->arg != 0)\n'
+             '\t\treturn ced_ch.listen_list == CODEPLUG_LIST_ANY ? 1u : ced_ch.listen_list ? (uint16_t)(ced_ch.listen_list + 1u) : 0u;\n',
+             '\tif (ui_frame()->arg != 0 && ced_ch.listen_list == CODEPLUG_LIST_ANY)\n'
+             '\t\treturn (uint16_t)(CODEPLUG_LISTS_MAX + 1u);\n')),
+        ('\telse if (raw == CODEPLUG_LISTS_MAX + 1u)\n\t\tced_ch.listen_list = CODEPLUG_LIST_ANY;\n#endif\n'
+         '\telse\n\t\tced_ch.listen_list = raw;\n\tui_pop();\n',
+         '\telse if (!CONFIG_CHAN_EXTRAS && raw == CODEPLUG_LISTS_MAX + 1u)\n\t\tced_ch.listen_list = CODEPLUG_LIST_ANY;\n'
+         '#endif\n\telse\n\t\tced_ch.listen_list = raw;\n'
+         + _if('\tif (ui_frame()->arg != 0) {\t// DDM32 Plus: raw 1 is Any, raw k + 1 list k\n'
+               '\t\tced_ch.listen_list = raw == 1u ? CODEPLUG_LIST_ANY : raw ? (uint16_t)(raw - 1u) : 0u;\n'
+               '\t\tui_pop();\n'
+               '\t\tif (raw <= 1u)\t// what the channel hears, in one line\n'
+               '\t\t\tui_toast(raw ? TR("Any: every TG on this slot") : TR("None: only the TX contact\'s TG"));\n'
+               '\t\treturn;\n\t}\n')
+         + '\tui_pop();\n'),
+        # Made DMR: a TX contact and a colour code / slot to start from
+        ('\t\t\tc->mode = c->mode == RADIO_MODE_DMR ? RADIO_MODE_FM : RADIO_MODE_DMR;\n\t\tbreak;\n',
+         '\t\t\tc->mode = c->mode == RADIO_MODE_DMR ? RADIO_MODE_FM : RADIO_MODE_DMR;\n'
+         + _if('\t\tif (c->mode == RADIO_MODE_DMR)\n\t\t\tced_dmr_defaults(c);\n')
+         + '\t\tbreak;\n'),
+        ('\tif (CONFIG_DMR && c->mode == RADIO_MODE_DMR && c->contact == 0)\n\t\treturn TR("Pick a TX contact first");\n',
+         _if('\tif (CONFIG_DMR && c->mode == RADIO_MODE_DMR && c->contact == 0 && !c->rx_only)\t// DDM32 Plus: RX only needs none\n',
+             '\tif (CONFIG_DMR && c->mode == RADIO_MODE_DMR && c->contact == 0)\n')
+         + '\t\treturn TR("Pick a TX contact first");\n'),
+        ('// The first problem that keeps the copy from being saved, as a toast; NULL when it can be saved\n',
+         _if('// DDM32 Plus: a channel just made DMR: the first group contact as its TX contact when it has none (it can\'t be\n'
+             '// saved without one), colour code 1 and timeslot 1 when it has none of either\n'
+             'static void ced_dmr_defaults(channel_t *c)\n{\n'
+             '#if CONFIG_DMR\n'
+             '\tstatic contact_t k;\t// static: the UI task\'s stack is short\n'
+             '\tfor (uint16_t i = 1; c->contact == 0 && i <= CODEPLUG_CONTACTS_MAX; i++)\n'
+             '\t\tif (codeplug_contact(i, &k) && k.type == CONTACT_GROUP)\n\t\t\tc->contact = i;\n'
+             '#endif\n'
+             '\tif (c->color_code > 15u && c->color_code != CODEPLUG_CC_ANY)\n\t\tc->color_code = 1;\n'
+             '\tif (c->timeslot == 0u)\n\t\tc->timeslot = 1;\n}\n\n')
+         + '// The first problem that keeps the copy from being saved, as a toast; NULL when it can be saved\n'),
+        ('\tcase CE_DMO: c->dmo = !c->dmo; break;\n',
+         _if('\tcase CE_DMO:\n\t\tc->dmo = !c->dmo;\n\t\tif (c->dmo)\n\t\t\tui_toast(TR("Direct: TX on the RX frequency"));\n\t\tbreak;\n',
+             '\tcase CE_DMO: c->dmo = !c->dmo; break;\n')),
+    ])

@@ -6126,3 +6126,31 @@ msgstr "Bölge dolu: en çok "
 #: core/ui/ui_menus.c
 msgid "Can't be read"
 msgstr "Okunamıyor"
+
+#: core/ui/ui_menus.c
+msgid "All TGs TS"
+msgstr "Tüm TG TS"
+
+#: core/ui/ui_menus.c
+msgid "All TGs"
+msgstr "Tüm TG"
+
+#: core/ui/ui_menus.c
+msgid "Any: all TGs"
+msgstr "Tümü: tüm gruplar"
+
+#: core/ui/ui_menus.c
+msgid "Any: every TG on this slot"
+msgstr "Tümü: bu slottaki tüm gruplar"
+
+#: core/ui/ui_menus.c
+msgid "None: only the TX contact's TG"
+msgstr "Yok: yalnız TX kişisinin grubu"
+
+#: core/ui/ui_menus.c
+msgid "Direct: TX on the RX frequency"
+msgstr "Direkt: TX, RX frekansında"
+
+#: core/ui/ui_menus.c
+msgid "RX list"
+msgstr "RX listesi"
