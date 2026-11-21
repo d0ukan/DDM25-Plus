@@ -193,7 +193,20 @@ def _app_entry(tag, name, version, data, notes_tr, notes_en):
             'size': len(data), 'notes': {'tr': notes_tr or '', 'en': notes_en or ''}}
 
 
+MOJIBAKE = ('Ã', 'Ä', 'Å', '�')	# UTF-8 read as cp1252 / Latin-1 (ç -> Ã§, ı -> Ä±, ş -> ÅŸ), or a lost byte
+
+
+def check_notes(args):
+    """Refuse release notes that were mangled on the way in (v1.0.0-beta.4's Turkish notes reached the manifest
+    double-encoded through a Windows shell). Pass them from Python as an argument list, or with PYTHONUTF8=1."""
+    for name in ('notes_tr', 'notes_en', 'app_notes_tr', 'app_notes_en', 'app_net_notes_tr', 'app_net_notes_en'):
+        text = getattr(args, name, None) or ''
+        if any(m in text for m in MOJIBAKE):
+            raise SystemExit(f'--{name.replace("_", "-")} looks double-encoded: {text[:60]!r}')
+
+
 def build(args, secret):
+    check_notes(args)
     out = Path(args.out)
     if out.exists():
         raise SystemExit(f'Refusing an existing --out: {out}')

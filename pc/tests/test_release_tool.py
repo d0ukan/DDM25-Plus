@@ -42,6 +42,18 @@ class ReleaseToolTest(unittest.TestCase):
             code = mr.main(args)
         return code, out, o.getvalue()
 
+    def test_double_encoded_notes_are_refused(self):
+        # v1.0.0-beta.4: "bandı" reached the manifest as "bandÄ±" through a Windows shell
+        mangled = 'hava bandı'.encode('utf-8').decode('cp1252', errors='replace')
+        for extra in (['--notes-tr', mangled], ['--app-net-notes-tr', 'Ã§ağrı']):
+            with self.assertRaisesRegex(SystemExit, 'double-encoded'):
+                self.run_build(*extra)
+        self.assertFalse((self.top / 'out').exists())
+        code, out, _ = self.run_build('--notes-tr', 'Sinyal çubukları, şelale, İlk beta')
+        self.assertEqual(code, 0)
+        notes = json.loads((out / 'ddm32-manifest.json').read_text(encoding='utf-8'))['firmware'][0]['notes']
+        self.assertEqual(notes['tr'], 'Sinyal çubukları, şelale, İlk beta')
+
     def test_keygen(self):
         text = self.key.read_text().strip()
         self.assertEqual(len(text), 64)
