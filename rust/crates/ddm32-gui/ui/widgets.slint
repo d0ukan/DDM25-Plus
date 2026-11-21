@@ -1,0 +1,197 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// The few widgets the program is made of, all coloured by Theme only.
+import { Theme } from "theme.slint";
+
+export global Tr {
+    in-out property <string> lang: "tr";
+    // T.t(lang, key): the text in the chosen language (the Rust table); `lang` makes bindings follow a change
+    pure callback t(string, string) -> string;
+}
+
+export component Label inherits Text {
+    color: Theme.text;
+    font-size: Theme.font;
+    wrap: word-wrap;
+    vertical-alignment: center;
+}
+
+export component Muted inherits Text {
+    color: Theme.text-muted;
+    font-size: Theme.font-small;
+    wrap: word-wrap;
+}
+
+export component Title inherits Text {
+    color: Theme.text;
+    font-size: Theme.font-title;
+    font-weight: 700;
+    wrap: word-wrap;
+}
+
+// kind: "primary" (the one obvious next step), "secondary", "danger"
+export component Button {
+    in property <string> text;
+    in property <string> kind: "secondary";
+    in property <bool> enabled: true;
+    in property <bool> big: false;
+    callback clicked;
+    min-height: root.big ? 64px : 46px;
+    max-height: root.big ? 120px : 56px;
+    vertical-stretch: 0;
+    min-width: 120px;
+    forward-focus: fs;
+    accessible-role: button;
+    accessible-label: root.text;
+    accessible-action-default => { if root.enabled { root.clicked(); } }
+
+    fs := FocusScope {
+        enabled: root.enabled;
+        key-pressed(event) => {
+            if (event.text == " " || event.text == "\n") && root.enabled { root.clicked(); return accept; }
+            reject
+        }
+    }
+    bg := Rectangle {
+        border-radius: Theme.radius;
+        background: !root.enabled ? Theme.disabled
+            : root.kind == "primary" ? (ta.has-hover ? Theme.primary-hover : Theme.primary)
+            : root.kind == "danger" ? Theme.danger
+            : (ta.has-hover ? Theme.button-hover : Theme.button);
+        border-width: fs.has-focus ? 3px : (root.kind == "secondary" ? 1px : 0px);
+        border-color: fs.has-focus ? Theme.focus : Theme.border;
+        Text {
+            text: root.text;
+            color: !root.enabled ? Theme.disabled-text
+                : root.kind == "primary" ? Theme.primary-text
+                : root.kind == "danger" ? Theme.window
+                : Theme.button-text;
+            font-size: root.big ? Theme.font-big : Theme.font;
+            font-weight: root.kind == "secondary" ? 400 : 700;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            wrap: word-wrap;
+            x: 16px;
+            width: parent.width - 32px;
+        }
+    }
+    ta := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => { fs.focus(); root.clicked(); }
+    }
+}
+
+export component Card inherits Rectangle {
+    background: Theme.surface;
+    border-radius: Theme.radius;
+    border-width: 1px;
+    border-color: Theme.border;
+}
+
+// A notice: kind "info", "warning", "danger", "success"
+export component Notice inherits Rectangle {
+    in property <string> text;
+    in property <string> kind: "info";
+    in property <bool> big: false;
+    background: kind == "danger" ? Theme.danger-bg : kind == "warning" ? Theme.warning-bg
+        : kind == "success" ? Theme.success-bg : Theme.surface-alt;
+    border-radius: Theme.radius;
+    border-width: kind == "danger" ? 2px : 0px;
+    border-color: Theme.danger;
+    min-height: t.preferred-height + 2 * Theme.pad;
+    preferred-height: self.min-height;
+    vertical-stretch: 0;
+    t := Text {
+        x: Theme.pad;
+        width: parent.width - 2 * Theme.pad;
+        text: root.text;
+        wrap: word-wrap;
+        vertical-alignment: center;
+        font-size: root.big ? Theme.font-big : Theme.font;
+        font-weight: root.big ? 700 : 400;
+        color: kind == "danger" ? Theme.danger-text : kind == "warning" ? Theme.warning-text
+            : kind == "success" ? Theme.success-text : Theme.text;
+    }
+}
+
+export component Check {
+    in property <string> text;
+    in-out property <bool> checked;
+    callback toggled;
+    min-height: 44px;
+    accessible-role: checkbox;
+    accessible-checked: root.checked;
+    accessible-label: root.text;
+    fs := FocusScope {
+        key-pressed(event) => {
+            if event.text == " " { root.checked = !root.checked; root.toggled(); return accept; }
+            reject
+        }
+    }
+    HorizontalLayout {
+        spacing: 12px;
+        Rectangle {
+            width: 28px; height: 28px; y: (parent.height - 28px) / 2;
+            border-radius: 6px;
+            border-width: fs.has-focus ? 3px : 2px;
+            border-color: fs.has-focus ? Theme.focus : Theme.border;
+            background: root.checked ? Theme.primary : Theme.surface;
+            // the tick, drawn (no font glyph needed)
+            if root.checked : Rectangle { width: 12px; height: 12px; border-radius: 3px; background: Theme.primary-text; }
+        }
+        Text { text: root.text; color: Theme.text; font-size: Theme.font; wrap: word-wrap; vertical-alignment: center; }
+    }
+    TouchArea { clicked => { fs.focus(); root.checked = !root.checked; root.toggled(); } }
+}
+
+// One choice of a list: a big row with a title and a line under it
+export component Choice {
+    in property <string> title;
+    in property <string> detail;
+    in property <bool> selected;
+    in property <bool> danger: false;
+    in property <bool> enabled: true;
+    callback clicked;
+    min-height: 72px;
+    vertical-stretch: 0;
+    accessible-role: button;
+    accessible-label: root.title;
+    fs := FocusScope {
+        enabled: root.enabled;
+        key-pressed(event) => {
+            if (event.text == " " || event.text == "\n") && root.enabled { root.clicked(); return accept; }
+            reject
+        }
+    }
+    Rectangle {
+        background: !root.enabled ? Theme.disabled : root.selected ? Theme.surface-alt : Theme.surface;
+        border-radius: Theme.radius;
+        border-width: fs.has-focus ? 3px : (root.selected ? 3px : 1px);
+        border-color: fs.has-focus ? Theme.focus : root.selected ? (root.danger ? Theme.danger : Theme.primary) : Theme.border;
+        VerticalLayout {
+            padding: 14px; spacing: 4px;
+            Text {
+                text: (root.selected ? "● " : "○ ") + root.title;
+                color: !root.enabled ? Theme.disabled-text : root.danger ? Theme.danger : Theme.text;
+                font-size: Theme.font; font-weight: 700; wrap: word-wrap;
+            }
+            Text { text: root.detail; color: !root.enabled ? Theme.disabled-text : Theme.text-muted; font-size: Theme.font-small; wrap: word-wrap; }
+        }
+    }
+    TouchArea { enabled: root.enabled; clicked => { fs.focus(); root.clicked(); } }
+}
+
+export component Progress inherits Rectangle {
+    in property <float> value; // 0..1
+    height: 14px;
+    vertical-stretch: 0;
+    border-radius: 7px;
+    background: Theme.surface-alt;
+    border-width: 1px;
+    border-color: Theme.border;
+    Rectangle {
+        x: 0; y: 0; height: parent.height; border-radius: 7px;
+        width: parent.width * clamp(root.value, 0, 1);
+        background: Theme.primary;
+    }
+}

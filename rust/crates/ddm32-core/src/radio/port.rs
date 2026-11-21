@@ -249,3 +249,26 @@ pub mod serial {
         }
     }
 }
+
+/// The serial ports of DM-32UV programming cables (WCH CH340 / CH341, USB VID 1A86 PID 7523 / 5523), listed by the OS
+/// without opening any of them. Empty in a build without the `radio` feature.
+#[cfg(feature = "radio")]
+pub fn cable_ports() -> Vec<String> {
+    let mut v: Vec<String> = serialport::available_ports()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|p| match &p.port_type {
+            serialport::SerialPortType::UsbPort(u) => u.vid == 0x1A86 && (u.pid == 0x7523 || u.pid == 0x5523),
+            _ => false,
+        })
+        .map(|p| p.port_name)
+        .collect();
+    v.sort();
+    v
+}
+
+/// The serial ports of DM-32UV programming cables: none in a build without the `radio` feature.
+#[cfg(not(feature = "radio"))]
+pub fn cable_ports() -> Vec<String> {
+    Vec::new()
+}

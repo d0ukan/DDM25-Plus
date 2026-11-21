@@ -1,0 +1,414 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// DDM32 Plus: one window. A home screen with one big action, a wizard that asks one thing per screen, and four plain
+// pages (backups, data packs, settings, about). Every colour from Theme, every text from Tr (tr / en).
+import { ScrollView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Tr, Label, Muted, Title, Button, Card, Notice, Check, Choice, Progress } from "widgets.slint";
+export { Theme, Tr }
+
+export struct VersionRow { version: string, label: string, notes: string, local: bool }
+export struct BackupRow { name: string, detail: string, origin: string, kind: string }
+
+export global App {
+    // 0 home, 1 update wizard, 2 backups and going back, 3 data packs, 4 settings, 5 about, 6 first start
+    in-out property <int> page: 0;
+    // the home screen
+    in property <string> radio-text;
+    in property <string> radio-kind: "info";
+    in property <string> update-text;
+    in property <string> backups-text;
+    // the wizard: 0 version, 1 backup choice, 2 backup, 3 check, 4 install, 5 done
+    in-out property <int> step: 0;
+    in property <[VersionRow]> versions;
+    in-out property <int> selected-version: 0;
+    in-out property <int> backup-choice: 0;   // 0 new backup, 1 last backup (quick), 2 no backup
+    in property <bool> quick-available;
+    in property <string> quick-backup;
+    in-out property <bool> understood;
+    in-out property <bool> confirm-open;
+    in property <bool> busy;
+    in property <bool> step-done;            // the current step succeeded: Next is open
+    in property <string> message;
+    in property <string> message-kind: "info";
+    in property <string> power-prompt;
+    in property <float> progress;
+    in property <string> progress-text;
+    in property <string> summary;
+    in property <string> details;
+    in-out property <bool> show-details;
+    in property <bool> radio-access;
+    // backups page
+    in property <[BackupRow]> backups;
+    in-out property <int> selected-backup: -1;
+    in property <string> backups-folder;
+    in property <bool> restore-ready;
+    // data packs
+    in property <string> pack-text;
+    in property <bool> pack-ready;
+    // settings
+    in-out property <int> channel: 0;   // 0 Latest, 1 Beta, 2 Test / Alpha
+    in-out property <bool> auto-check: true;
+    // about
+    in property <string> version;
+    in property <string> data-folder;
+    in property <string> key-id;
+
+    callback navigate(int);
+    callback refresh();
+    callback wizard-next();
+    callback wizard-back();
+    callback start-backup();
+    callback start-install();
+    callback choose-backup(int);
+    callback confirm-no-backup();
+    callback restore();
+    callback restore-plan();
+    callback pack-radioid();
+    callback pack-air();
+    callback pack-write();
+    callback set-theme(bool);
+    callback set-lang(string);
+    callback set-channel(int);
+    callback set-auto-check(bool);
+    callback open-backups-folder();
+}
+
+component Page inherits VerticalLayout {
+    in property <string> heading;
+    in property <bool> back: true;
+    padding: Theme.pad * 1.5;
+    spacing: Theme.gap;
+    HorizontalLayout {
+        spacing: Theme.gap;
+        if root.back : Button {
+            text: "← " + Tr.t(Tr.lang, "back_home");
+            enabled: !App.busy;
+            clicked => { App.navigate(0); }
+            horizontal-stretch: 0;
+            min-width: 190px;
+            max-width: 240px;
+        }
+        Title { text: root.heading; vertical-alignment: center; horizontal-stretch: 1; }
+    }
+    @children
+}
+
+component Home inherits Page {
+    heading: "DDM32 Plus";
+    back: false;
+    Notice { text: App.radio-text; kind: App.radio-kind; }
+    Button {
+        text: Tr.t(Tr.lang, "home_update");
+        kind: "primary";
+        big: true;
+        min-height: 96px;
+        clicked => { App.navigate(1); }
+    }
+    if App.update-text != "" : Muted { text: App.update-text; font-size: Theme.font; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Button { text: Tr.t(Tr.lang, "home_backups"); clicked => { App.navigate(2); } }
+        Button { text: Tr.t(Tr.lang, "home_packs"); clicked => { App.navigate(3); } }
+    }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Button { text: Tr.t(Tr.lang, "home_settings"); clicked => { App.navigate(4); } }
+        Button { text: Tr.t(Tr.lang, "home_about"); clicked => { App.navigate(5); } }
+    }
+    Muted { text: App.backups-text; }
+    Rectangle {}
+}
+
+component StepBar inherits HorizontalLayout {
+    spacing: 8px;
+    for name[i] in [Tr.t(Tr.lang, "s_version"), Tr.t(Tr.lang, "s_backup"), Tr.t(Tr.lang, "s_check"), Tr.t(Tr.lang, "s_install"), Tr.t(Tr.lang, "s_done")] : Rectangle {
+        property <int> n: i == 0 ? 0 : i == 1 ? 1 : i == 2 ? 3 : i == 3 ? 4 : 5;
+        property <bool> active: App.step == n || (i == 1 && App.step == 2);
+        height: 40px;
+        border-radius: Theme.radius;
+        background: active ? Theme.primary : App.step > n ? Theme.success-bg : Theme.surface-alt;
+        Text {
+            text: name;
+            color: active ? Theme.primary-text : App.step > n ? Theme.success-text : Theme.text-muted;
+            font-size: Theme.font-small;
+            font-weight: active ? 700 : 400;
+        }
+    }
+}
+
+component Wizard inherits Page {
+    heading: Tr.t(Tr.lang, "home_update");
+    StepBar {}
+    ScrollView {
+        vertical-stretch: 1;
+        VerticalLayout {
+            spacing: Theme.gap;
+            padding-right: 8px;
+            alignment: start;
+            // 0: which version
+            if App.step == 0 : VerticalLayout {
+                spacing: Theme.gap;
+                alignment: start;
+                Label { text: Tr.t(Tr.lang, "q_version"); font-size: Theme.font-big; }
+                for v[i] in App.versions : Choice {
+                    title: v.version + "   " + v.label;
+                    detail: v.notes;
+                    selected: App.selected-version == i;
+                    clicked => { App.selected-version = i; }
+                }
+                if App.versions.length == 0 : Notice { text: Tr.t(Tr.lang, "no_versions"); kind: "warning"; }
+            }
+            // 1: how to keep the radio safe
+            if App.step == 1 : VerticalLayout {
+                spacing: Theme.gap;
+                alignment: start;
+                Label { text: Tr.t(Tr.lang, "q_backup"); font-size: Theme.font-big; }
+                Choice {
+                    title: Tr.t(Tr.lang, "c_new"); detail: Tr.t(Tr.lang, "c_new_d");
+                    selected: App.backup-choice == 0;
+                    clicked => { App.choose-backup(0); }
+                }
+                Choice {
+                    title: Tr.t(Tr.lang, "c_quick");
+                    detail: App.quick-available ? Tr.t(Tr.lang, "c_quick_d") + " " + App.quick-backup : Tr.t(Tr.lang, "c_quick_none");
+                    enabled: App.quick-available;
+                    selected: App.backup-choice == 1;
+                    clicked => { App.choose-backup(1); }
+                }
+                Choice {
+                    title: Tr.t(Tr.lang, "c_none"); detail: Tr.t(Tr.lang, "c_none_d");
+                    danger: true;
+                    selected: App.backup-choice == 2;
+                    clicked => { App.choose-backup(2); }
+                }
+                if App.backup-choice == 2 : VerticalLayout {
+                    spacing: Theme.gap;
+                    Notice { text: Tr.t(Tr.lang, "none_warning"); kind: "danger"; }
+                    Check { text: Tr.t(Tr.lang, "none_understood"); checked <=> App.understood; }
+                }
+            }
+            // 2: the backup (a radio step: one button, the radio switched off and on)
+            if App.step == 2 : VerticalLayout {
+                spacing: Theme.gap;
+                alignment: start;
+                Notice { text: App.power-prompt; kind: "warning"; big: true; }
+                Button {
+                    text: Tr.t(Tr.lang, "b_start_backup"); kind: "primary"; big: true;
+                    enabled: !App.busy && !App.step-done && App.radio-access;
+                    clicked => { App.start-backup(); }
+                }
+            }
+            // 3: the check, in plain words; the numbers under Details
+            if App.step == 3 : VerticalLayout {
+                spacing: Theme.gap;
+                alignment: start;
+                Label { text: App.summary; font-size: Theme.font-big; }
+            }
+            // 4: the install (a radio step)
+            if App.step == 4 : VerticalLayout {
+                spacing: Theme.gap;
+                alignment: start;
+                Notice { text: App.power-prompt; kind: "warning"; big: true; }
+                Button {
+                    text: Tr.t(Tr.lang, "b_start_install"); kind: App.backup-choice == 2 ? "danger" : "primary"; big: true;
+                    enabled: !App.busy && !App.step-done && App.radio-access;
+                    clicked => { App.start-install(); }
+                }
+            }
+            // 5: done
+            if App.step == 5 : VerticalLayout {
+                spacing: Theme.gap;
+                alignment: start;
+                Notice { text: Tr.t(Tr.lang, "done_text"); kind: "success"; big: true; }
+            }
+            if App.busy || App.progress > 0 : VerticalLayout {
+                spacing: 6px;
+                Progress { value: App.progress; }
+                Muted { text: App.progress-text; }
+            }
+            if App.message != "" : Notice { text: App.message; kind: App.message-kind; }
+            if !App.radio-access && (App.step == 2 || App.step == 4) : Notice { text: Tr.t(Tr.lang, "no_radio_access"); kind: "warning"; }
+            if App.details != "" : VerticalLayout {
+                spacing: 6px;
+                Button {
+                    text: (App.show-details ? "− " : "+ ") + Tr.t(Tr.lang, "details");
+                    clicked => { App.show-details = !App.show-details; }
+                }
+                if App.show-details : Card {
+                    min-height: dt.preferred-height + 24px;
+                    dt := Text {
+                        x: 12px; width: parent.width - 24px;
+                        text: App.details; color: Theme.text-muted; font-size: 13px; font-family: "Consolas";
+                        wrap: word-wrap;
+                    }
+                }
+            }
+        }
+    }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        alignment: end;
+        vertical-stretch: 0;
+        if App.step > 0 && App.step < 5 : Button {
+            text: Tr.t(Tr.lang, "b_back"); enabled: !App.busy;
+            clicked => { App.wizard-back(); }
+        }
+        if App.step < 5 : Button {
+            text: Tr.t(Tr.lang, "b_next"); kind: "primary";
+            enabled: !App.busy && (App.step == 0 ? App.versions.length > 0
+                : App.step == 1 ? (App.backup-choice != 2 || App.understood)
+                : App.step-done);
+            clicked => { App.wizard-next(); }
+        }
+        if App.step == 5 : Button { text: Tr.t(Tr.lang, "b_finish"); kind: "primary"; clicked => { App.navigate(0); } }
+    }
+}
+
+component Backups inherits Page {
+    heading: Tr.t(Tr.lang, "home_backups");
+    Muted { text: Tr.t(Tr.lang, "backups_where") + " " + App.backups-folder; }
+    ScrollView {
+        vertical-stretch: 1;
+        VerticalLayout {
+            spacing: 8px;
+            padding-right: 8px;
+            alignment: start;
+            for b[i] in App.backups : Choice {
+                title: b.name; detail: b.detail;
+                selected: App.selected-backup == i;
+                clicked => { App.selected-backup = i; App.restore-plan(); }
+            }
+            if App.backups.length == 0 : Notice { text: Tr.t(Tr.lang, "backups_none"); }
+        }
+    }
+    if App.message != "" : Notice { text: App.message; kind: App.message-kind; }
+    if App.busy || App.progress > 0 : Progress { value: App.progress; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Button { text: Tr.t(Tr.lang, "b_open_folder"); clicked => { App.open-backups-folder(); } }
+        Button {
+            text: Tr.t(Tr.lang, "b_restore"); kind: "primary";
+            enabled: App.restore-ready && !App.busy && App.radio-access;
+            clicked => { App.restore(); }
+        }
+    }
+}
+
+component Packs inherits Page {
+    heading: Tr.t(Tr.lang, "home_packs");
+    Label { text: Tr.t(Tr.lang, "packs_intro"); }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Button { text: Tr.t(Tr.lang, "b_pack_radioid"); enabled: !App.busy; clicked => { App.pack-radioid(); } }
+        Button { text: Tr.t(Tr.lang, "b_pack_air"); enabled: !App.busy; clicked => { App.pack-air(); } }
+    }
+    if App.pack-text != "" : Notice { text: App.pack-text; kind: App.pack-ready ? "success" : "info"; }
+    if App.message != "" : Notice { text: App.message; kind: App.message-kind; }
+    Button {
+        text: Tr.t(Tr.lang, "b_pack_write"); kind: "primary";
+        enabled: App.pack-ready && !App.busy && App.radio-access;
+        clicked => { App.pack-write(); }
+    }
+    Muted { text: Tr.t(Tr.lang, "packs_note"); }
+    Rectangle {}
+}
+
+component Settings inherits Page {
+    heading: Tr.t(Tr.lang, "home_settings");
+    Label { text: Tr.t(Tr.lang, "set_lang"); font-weight: 700; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Choice { title: "Türkçe"; detail: ""; selected: Tr.lang == "tr"; clicked => { App.set-lang("tr"); } }
+        Choice { title: "English"; detail: ""; selected: Tr.lang == "en"; clicked => { App.set-lang("en"); } }
+    }
+    Label { text: Tr.t(Tr.lang, "set_theme"); font-weight: 700; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Choice { title: Tr.t(Tr.lang, "theme_light"); detail: ""; selected: !Theme.dark; clicked => { App.set-theme(false); } }
+        Choice { title: Tr.t(Tr.lang, "theme_dark"); detail: ""; selected: Theme.dark; clicked => { App.set-theme(true); } }
+    }
+    Label { text: Tr.t(Tr.lang, "set_channel"); font-weight: 700; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        Choice { title: Tr.t(Tr.lang, "ch_latest"); detail: Tr.t(Tr.lang, "ch_latest_d"); selected: App.channel == 0; clicked => { App.set-channel(0); } }
+        Choice { title: Tr.t(Tr.lang, "ch_beta"); detail: Tr.t(Tr.lang, "ch_beta_d"); selected: App.channel == 1; clicked => { App.set-channel(1); } }
+        Choice { title: Tr.t(Tr.lang, "ch_test"); detail: Tr.t(Tr.lang, "ch_test_d"); selected: App.channel == 2; danger: true; clicked => { App.set-channel(2); } }
+    }
+    Check {
+        text: Tr.t(Tr.lang, "set_auto");
+        checked <=> App.auto-check;
+        toggled => { App.set-auto-check(App.auto-check); }
+    }
+    Rectangle {}
+}
+
+component About inherits Page {
+    heading: Tr.t(Tr.lang, "home_about");
+    Card {
+        min-height: av.preferred-height;
+        av := VerticalLayout {
+            padding: Theme.pad; spacing: 8px;
+            Label { text: "DDM32 Plus " + App.version; font-weight: 700; font-size: Theme.font-big; }
+            Label { text: Tr.t(Tr.lang, "about_text"); }
+            Muted { text: Tr.t(Tr.lang, "about_data") + " " + App.data-folder; }
+            Muted { text: Tr.t(Tr.lang, "about_key") + " " + App.key-id; }
+            Muted { text: "d0ukan · TA2DOU — github.com/d0ukan/DDM32-Plus"; }
+            Muted { text: Tr.t(Tr.lang, "about_licence"); }
+            Muted { text: "Made with Slint (slint.dev)"; }
+        }
+    }
+    Rectangle {}
+}
+
+// the first start: the language, before anything else
+component FirstStart inherits VerticalLayout {
+    padding: Theme.pad * 2;
+    spacing: Theme.gap * 1.5;
+    alignment: center;
+    Title { text: "DDM32 Plus"; horizontal-alignment: center; }
+    Label { text: "Dil seçin / Choose a language"; horizontal-alignment: center; font-size: Theme.font-big; }
+    HorizontalLayout {
+        spacing: Theme.gap;
+        alignment: center;
+        Button { text: "Türkçe"; kind: "primary"; big: true; min-width: 220px; clicked => { App.set-lang("tr"); App.navigate(0); } }
+        Button { text: "English"; kind: "primary"; big: true; min-width: 220px; clicked => { App.set-lang("en"); App.navigate(0); } }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "DDM32 Plus";
+    preferred-width: 900px;
+    preferred-height: 720px;
+    min-width: 640px;
+    min-height: 560px;
+    background: Theme.window;
+    default-font-size: Theme.font;
+
+    if App.page == 0 : Home {}
+    if App.page == 1 : Wizard {}
+    if App.page == 2 : Backups {}
+    if App.page == 3 : Packs {}
+    if App.page == 4 : Settings {}
+    if App.page == 5 : About {}
+    if App.page == 6 : FirstStart {}
+
+    // the second confirmation of the install without backup
+    if App.confirm-open : Rectangle {
+        background: Theme.scrim;
+        TouchArea {}
+        Card {
+            width: min(parent.width - 80px, 560px);
+            height: cv.preferred-height;
+            cv := VerticalLayout {
+                padding: Theme.pad * 1.5; spacing: Theme.gap;
+                Title { text: Tr.t(Tr.lang, "confirm_title"); color: Theme.danger; }
+                Label { text: Tr.t(Tr.lang, "confirm_text"); }
+                HorizontalLayout {
+                    spacing: Theme.gap; alignment: end;
+                    Button { text: Tr.t(Tr.lang, "b_cancel"); clicked => { App.confirm-open = false; } }
+                    Button { text: Tr.t(Tr.lang, "b_confirm_none"); kind: "danger"; min-width: 260px; clicked => { App.confirm-no-backup(); } }
+                }
+            }
+        }
+    }
+}

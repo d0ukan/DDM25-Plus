@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/ddm32-core", "crates/ddm32-cli"]
+members = ["crates/ddm32-core", "crates/ddm32-cli", "crates/ddm32-gui"]
 
 [workspace.package]
 version = "3.0.0-alpha.1"
