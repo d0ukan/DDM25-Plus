@@ -78,7 +78,8 @@ int main(void)
 	uint32_t clipped, peak;
 	ambeVoiceInit(&audio, &vocoder);
 	ambeVoiceSetMixer(mix);
-	CHECK(ambeVoiceRxGain() == 0);
+	CHECK(ambeVoiceRxGain() == 1);	/* x2 at power-on */
+	ambeVoiceSetRxGain(0);
 
 	/* x1: the decoder's samples as they were */
 	call_start();

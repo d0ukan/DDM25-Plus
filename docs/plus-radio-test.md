@@ -562,7 +562,7 @@ over as DA-1. Stay in m0 (the shipped feed) unless a row says otherwise.
 | DA-8 | Press 8 (`x2`), 9, the same over; then 8 (`x4`), 9; then 8 (`x8`), 9; photograph each | louder each step (turn the knob down to keep it comfortable); note whether the crackle / robotic sound stays the same relative to the voice, and `cl` / `po` (`po` about 2x, 4x, 8x `pk`; `cl` 0 until it clips) |
 | DA-9 | At the knob position you use, compare a key beep with the DMR voice at x1 | how much louder the beep is (the beep is about -12 dBFS, the voice about -30) |
 | DA-10 | Only if DA-7 still shows `be` well above 0 at a strong signal: Settings > Advanced > Freq trim, try -1.0 and +1.0 ppm (then back to 0), one over each after 9 | the trim with the lower `be`; if one is much lower the receiver is off frequency (measure it properly before keeping a trim) |
-| DA-11 | Power off and on | `dv m0 x1` |
+| DA-11 | Power off and on | `dv m0 x1` (beta.5); `dv m3 x2` since beta.6 |
 
 Reading round 2: `be` drops to about 0 at a strong signal and it sounds clean -> the signal / receiver (DA-10 decides
 which). Clean only at x4 / x8 -> the level: x2 or x4 becomes a fixed gain (or a setting). Rough at every level with

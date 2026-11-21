@@ -10,7 +10,7 @@
 
 [![Lisans: GPL-3.0-or-later](https://img.shields.io/badge/lisans-GPL--3.0--or--later-blue)](LICENSING.md)
 [![Temel: Open25-DM32](https://img.shields.io/badge/temel-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
-[![Sürüm: v1.0.0-beta.4](https://img.shields.io/badge/s%C3%BCr%C3%BCm-v1.0.0--beta.4-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)
+[![Sürüm: v1.0.0-beta.6](https://img.shields.io/badge/s%C3%BCr%C3%BCm-v1.0.0--beta.6-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6)
 
 [English README](README.md)
 
@@ -39,8 +39,9 @@
 
 ## Durum
 
-DDM32 Plus **beta** aşamasındadır. En son ön sürüm **[v1.0.0-beta.4](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)** (2026-11-21), yeni Windows programı
-2.0.0-beta.1 ile birlikte. İkisi de yazarın telsizinde denendi (beta.3 ve beta.4 yeni programla kuruldu).
+DDM32 Plus **beta** aşamasındadır. En son ön sürüm **[v1.0.0-beta.6](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6)** (2026-11-21); Windows programı
+2.0.0-beta.3 ve yeni çok platformlu programın ilk sürümü 3.0.0-alpha.1 (Windows kurulumu; Linux ve macOS paketleri
+sonra) ile birlikte. Yeni özellikler ve DMR ses ayarları yazarın telsizinde denendi.
 Aşağıdaki her özellik yazıldı ve bilgisayarda testlerden geçti (telsizin ekran, radyo çekirdeği ve modemlerinin
 simülatörü), ama **birçok özellik henüz havada denenmedi**. Telsiz test notları:
 [`docs/plus-radio-test.md`](docs/plus-radio-test.md); sürüm değişiklikleri: [CHANGELOG.md](CHANGELOG.md).
@@ -130,7 +131,7 @@ APRS / havalimanları, DOTA, veri paketleri, çapraz bant, tanılama): [`docs/ku
 
 Windows 10/11 için **DDM32 Plus programlayıcı**yı kullanın (başka hiçbir şey kurmanız gerekmez):
 
-1. [Son sürümden](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4) `DDM32Plus-Setup-2.0.0-beta.1.exe` dosyasını indirip çalıştırın. Yalnızca sizin
+1. [Son sürümden](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6) `DDM32Plus-Setup-2.0.0-beta.3.exe` dosyasını indirip çalıştırın. Yalnızca sizin
    kullanıcınıza kurulur (yönetici izni istemez), Başlat menüsü ve masaüstü kısayolu oluşturur. Windows "bilinmeyen
    yayıncı" uyarısı verebilir (program henüz kod imzalı değil): **Ek bilgi → Yine de çalıştır**.
 2. İlk açılışta **Türkçe** ya da **English** seçin.
@@ -151,8 +152,7 @@ Eski Python programı (`DDM32Plus-1.0.0-beta.2.zip`, [`pc/`](pc/)) çalışmaya 
 ## Geliştirilmekte olanlar
 
 - DOTA Transfer'in (kanallar ve veri paketleri) ve DMR çapraz bant kaydet-ilet'in iki telsizle denenmesi.
-- DMR alım sesi: tanılama v1.0.0-beta.4'te (Araçlar > Tanılama); ses seviyesi inceleniyor.
-- İl il havalimanları, renkli 3D spektrum ve şelale.
+- Çok platformlu program 3.0.0-alpha.1: Linux (AppImage, .deb) ve macOS paketleri.
 
 ## Derleme
 

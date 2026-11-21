@@ -165,9 +165,9 @@ int main(void)
 	hrc_audio_pcm_attach(&chip, fake_speaker);
 	hrc_pcm_diag_t d;
 	hrc_audio_pcm_diag(&d);
-	CHECK(d.mode == 0 && d.loud_blocks == 0 && d.lat_min_us == UINT32_MAX);
+	CHECK(d.mode == (HRC_PCM_PREFILL | HRC_PCM_PACED) && d.loud_blocks == 0 && d.lat_min_us == UINT32_MAX);	/* m3 at power-on */
 
-	/* Mode 0, the shipped feeding: the FIFO starts on the first block with no margin, so the slower blocks after it
+	/* Mode 0, the feeding up to beta.5: the FIFO starts on the first block with no margin, so the slower blocks after it
 	 * leave it dry, and the driver's gap model sees what the FIFO model hears */
 	fresh(0);
 	call(50, 2000u, 7000u);

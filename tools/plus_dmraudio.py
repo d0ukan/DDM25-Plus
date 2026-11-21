@@ -18,13 +18,16 @@ radio. This gives one session the evidence, with no cable and no second image:
     dv cl<samples clipped by the gain> po<peak sample after the gain>
   On that page, with a channel shown: 0 steps the FIFO feed mode (m0 as before, m1 prefill, m2 paced, m3 both),
   8 steps a digital gain on the decoded voice (x1, x2, x4, x8, saturating; beeps keep their level), 9 zeroes the
-  counters. RAM only: every power-on starts at m0 and x1, the shipped behavior.
+  counters. RAM only: every power-on starts at m3 and x2 (since v1.0.0-beta.6: on the owner's radio m0 was rough at
+  every gain and m3 clean; x1 too quiet; x2 chosen so FM, which has no digital gain, is not left far quieter). P25 voice
+  gets the same fixed x2 in src/p25/voice.c
+  (under CONFIG_DMR_AUDIO_DIAG; key 8 steps the DMR-family gain only).
 """
 
 # The decoded voice's digital gain (round 2: the owner's radio showed the decoder's peak about 1,000 of 32,767 on
 # speech). In the audio callback after rx_block, before the beeps are mixed in: DMR and every mode on this sink
 AMBE_GAIN_VARS = r'''#if CONFIG_DMR_AUDIO_DIAG
-static uint8_t rx_gain_shift;		// DDM32 Plus voice gain (rx_gain): any task writes, the audio callback reads
+static uint8_t rx_gain_shift = 1;	// x2 at power-on; DDM32 Plus voice gain (rx_gain): any task writes, the audio callback reads
 static uint32_t rx_clipped, rx_peak_out;	// the audio callback
 #endif
 '''
@@ -208,7 +211,7 @@ typedef struct {
 	uint32_t overruns;	// microphone blocks the audio task missed (a 20 ms gap)
 } hrc_pcm_diag_t;
 void hrc_audio_pcm_diag(hrc_pcm_diag_t *out);
-// A mode (HRC_PCM_* bits; RAM only, 0 at power-on), applied to the stream running now and every later one
+// A mode (HRC_PCM_* bits; RAM only, both at power-on), applied to the stream running now and every later one
 void hrc_audio_pcm_set_mode(uint8_t mode);
 uint8_t hrc_audio_pcm_mode(void);
 #endif

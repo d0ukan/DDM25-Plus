@@ -179,6 +179,14 @@ void p25_voice_rx_dibit(p25_voice *v, uint8_t dibit)
 #endif
             }
         }
+#if defined(CONFIG_DMR_AUDIO_DIAG) && CONFIG_DMR_AUDIO_DIAG
+        /* DDM32 Plus: the decoded voice x2, saturating, the same level as DMR (owner 2026-11-21; docs/plus.md
+         * "DMR receive audio diagnostics", Result). Plus builds only; the lab and host builds keep the samples. */
+        for (unsigned k = 0; k < 160u; k++) {
+            int32_t g = (int32_t)pcm[k] * 2;
+            pcm[k] = (int16_t)(g > 32767 ? 32767 : g < -32768 ? -32768 : g);
+        }
+#endif
         if (v->sink) v->sink(v->sink_ctx, pcm);
     }
 }

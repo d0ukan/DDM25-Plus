@@ -11,7 +11,8 @@
  *    audio task's wake-up, the vocoder's decode, any task of the same priority in between), over loud blocks only.
  *    Its spread is the jitter the speaker queue must absorb.
  *
- * And two ways of feeding the FIFO, chosen at run time (RAM only, power-on default 0 = as before):
+ * And two ways of feeding the FIFO, chosen at run time (RAM only). Power-on default since v1.0.0-beta.6: both
+ * (mode 3), the owner's radio on 2026-11-21: m0 rough at any gain, m3 clean (docs/plus.md "Result"):
  *  - PD_PREFILL: after the queue is emptied (the speaker route turning on, a TX gate edge, a stream start) the FIFO
  *    starts only once PD_PREFILL_BLOCKS blocks are queued, or the first one is PD_PREFILL_US old. Without it the first
  *    block is pushed into an empty FIFO at once, so the next one has no margin at all: any block later than the first
@@ -29,7 +30,7 @@
 #define PD_CHUNK_US		(C7_PROMPT_CHUNK * 125u)	/* 32 samples at 8 kHz */
 #define PD_SLOW_US		15000u	/* a block this late used most of its 20 ms */
 
-static volatile uint8_t pd_mode;	/* HRC_PCM_PREFILL | HRC_PCM_PACED */
+static volatile uint8_t pd_mode = HRC_PCM_PREFILL | HRC_PCM_PACED;	/* the default: both (owner, 2026-11-21) */
 static bool pd_wait;			/* prefill: the FIFO waits for the margin */
 static bool pd_have_first;		/* a block was queued since the drop (pd_first_us) */
 static uint32_t pd_first_us;

@@ -5,6 +5,14 @@ DDM32 Plus is a fork of Open25-DM32 Classic (r13) for the Baofeng DM-32UV. See t
 
 ## Unreleased
 
+## v1.0.0-beta.6 (2026-11-21)
+
+With the Windows programmer 2.0.0-beta.3 and the cross-platform programmer 3.0.0-alpha.1 (Windows).
+
+- DMR receive audio fixed: the speaker is fed with one block of margin and at the P25 path's steady pace, and the
+  decoded voice gets x2 gain (`dv m3 x2` on Tools > Diagnostics is now the power-on default; NXDN, dPMR and YSF
+  share it, and P25 voice gets the same x2). On the author's radio the old feeding sounded crackly at any volume;
+  this setting sounds clean. FM is unchanged: its audio does not pass a digital stage (volume knob only).
 - Windows programmer 2.0.0-beta.2: new pages Radio health, Live panel and My channels (codeplug viewer with search
   and CSV export); one radio step at a time across all pages; read-only guard on the health and live readers.
 - Programmers (next C# version, and the Rust one): the program folder's subfolders have English names: `backups`,

@@ -10,7 +10,7 @@ by **d0ukan · TA2DOU**
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSING.md)
 [![Based on Open25-DM32](https://img.shields.io/badge/based%20on-Open25--DM32%20r13-6f42c1)](https://github.com/tylerwatt12/Open25-DM32)
-[![Release: v1.0.0-beta.4](https://img.shields.io/badge/release-v1.0.0--beta.4-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)
+[![Release: v1.0.0-beta.6](https://img.shields.io/badge/release-v1.0.0--beta.6-orange)](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6)
 
 [Türkçe README](README.tr.md)
 
@@ -37,9 +37,10 @@ by **d0ukan · TA2DOU**
 
 ## Status
 
-DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.4](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4)** (2026-11-21), with the new Windows
-programmer 2.0.0-beta.1. Both were installed and checked on the author's radio (beta.3 and beta.4 were
-installed with the new programmer).
+DDM32 Plus is in **beta**. The latest pre-release is **[v1.0.0-beta.6](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6)** (2026-11-21), with the Windows
+programmer 2.0.0-beta.3 and the first build of the new cross-platform programmer 3.0.0-alpha.1 (Windows setup; Linux
+and macOS packages to follow). The release candidate's new features and the DMR audio settings were checked on the
+author's radio.
 Every feature below is built and covered by host tests (a simulator of the radio's screens, radio core and
 modems), but **many features have not yet been tried on the air**. Radio test notes live in
 [`docs/plus-radio-test.md`](docs/plus-radio-test.md); changes per release in [CHANGELOG.md](CHANGELOG.md).
@@ -128,7 +129,7 @@ The whole interface is translated to Turkish (and remains available in English).
 
 Use the **DDM32 Plus programmer** for Windows 10/11 (nothing else to install):
 
-1. Download `DDM32Plus-Setup-2.0.0-beta.1.exe` from the [latest release](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.4) and run it.
+1. Download `DDM32Plus-Setup-2.0.0-beta.3.exe` from the [latest release](https://github.com/d0ukan/DDM32-Plus/releases/tag/v1.0.0-beta.6) and run it.
    It installs for your user only (no administrator prompt), with a Start menu and desktop shortcut. Windows may warn
    about an unknown publisher (the program is not code-signed yet): **More info → Run anyway**.
 2. On first start pick **Türkçe** or **English**.
@@ -149,8 +150,7 @@ The older Python programmer (`DDM32Plus-1.0.0-beta.2.zip`, [`pc/`](pc/)) still w
 ## In development
 
 - Two-radio tests of DOTA Transfer (channels and data packs) and of the DMR cross-band store-and-forward.
-- DMR receive audio: diagnostics are in v1.0.0-beta.4 (Tools > Diagnostics); the level is being looked at.
-- Airfields by province, colour 3D spectrum and waterfall.
+- The cross-platform programmer 3.0.0-alpha.1: Linux (AppImage, .deb) and macOS packages.
 
 ## Building
 

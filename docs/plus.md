@@ -2688,7 +2688,8 @@ Heard: m0 and m3 cleaner than m1 and m2, none clean. What this says:
 
 - Key **8** on the page: a digital gain on the decoded voice, x1 -> x2 -> x4 -> x8 -> x1, saturating at the 16-bit limits
   (`ambeVoice.c` `rx_gain`, in the audio callback after `rx_block`, before the beeps are mixed in: the beeps keep their
-  level; it also applies to NXDN / dPMR / YSF voice on the same sink). RAM only, x1 at power-on; 9 keeps it. x1 leaves
+  level; it also applies to NXDN / dPMR / YSF voice on the same sink). RAM only, x1 at power-on up to beta.5 (x2 since
+  beta.6, below); 9 keeps it. x1 leaves
   every sample as it was.
 - A sixth line `dv cl<clipped> po<peak out>`: samples the gain saturated (until 9) and the latest call's peak after the
   gain. The first line shows the gain: `dv m0 x1 in.. pl..`.
@@ -2700,6 +2701,14 @@ real FEC: x1 unchanged, x2 / x4 exact, x8 saturating with every clipped sample c
 the beeps mixed after it, the reset keeping the gain); `test_dmraudio_pcm.c` gains the idle-stream case (drops not
 counted) and the held-FIFO case (counted); `test_ui_dmraudio.c` 5 flows (key 8 added), English and Turkish. Radio rows
 DA-7..DA-11.
+
+**Result (owner's radio, v1.0.0-beta.5, 2026-11-21).** `m0 x4` sounded bad, `m3 x2` and `m3 x4` clean; the owner
+chose x2 (x4 would leave FM, which has no digital gain, much quieter than the digital modes). So the feeding was the cause (candidates 1 and 2 together: prefill and the P25 pacing for every stream)
+and the decoded voice was also too quiet. Since v1.0.0-beta.6 both are the power-on default: `dv m3 x2`
+(`pd_mode` in `pcm_diag.inc`, `rx_gain_shift` in `tools/plus_dmraudio.py`). The keys still step them for comparison
+(RAM only, back to m3 x2 at power-on). The gain also applies to NXDN / dPMR / YSF voice on the same sink, and P25's
+decoded voice gets the same x2, fixed (`src/p25/voice.c`, before the sink, plus builds only). FM cannot: its audio goes
+from the FD6818 straight to the amplifier and never passes the DAC (above); its level is the volume knob.
 
 ## Round 15: channels, zones and DMR rows (branch `r15-channels`, `CONFIG_CHAN_EXTRAS`)
 
